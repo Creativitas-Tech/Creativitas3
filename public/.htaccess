@@ -1,0 +1,10 @@
+RewriteEngine On
+RewriteBase /m080/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /m080/index.html [L,QSA]
+
+<IfModule LiteSpeed>
+    CacheDisable public /
+    CacheDisable private /
+</IfModule>

@@ -1,0 +1,218 @@
+body {
+  margin: 0;
+  font-size: 16px;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  /*  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',*/
+  /*    monospace;*/
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  
+  background-color: #000000;
+  color: #EEEEEE;
+  /*
+  background-color: #1C1C1C;
+  color: #EEEEEE;
+
+  background-color: #1C1C1C;
+  color: #FFC107;
+  */
+
+
+}
+
+/* Default hyperlink color */
+a {
+  color: red;
+  /* Change to whatever color you want */
+}
+
+/* Color when a hyperlink has been clicked/visited */
+a:visited {
+  color: orange;
+  /* Change to whatever color you want */
+}
+
+p {
+  line-height: 1.5;
+}
+
+li {
+  line-height: 1.5;
+  margin-top: .1em;
+  margin-bottom: .1em;
+}
+
+code {
+  font-family: 'Courier New',source-code-pro, Menlo, Monaco, Consolas, 
+    monospace;
+}
+
+.line-highlight {
+  background-color: blue !important;  /* Use !important to override active line background */
+  transition: none;
+}
+
+.line-highlight.fade-out {
+  transition: background-color 1s ease !important;  /* Apply transition only for fade-out */
+  background-color: transparent !important;         /* Fades to transparent */
+}
+
+.outer-container {
+  padding: 5px;
+  height: calc(100vh - 10px);
+  display: flex;
+  flex-direction: column;
+}
+
+.flex-container {
+  height: auto;
+  display: flex;
+  flex: 1;
+  flex-shrink: 0;
+}
+
+.flex-child {
+  height: auto;
+  min-width: 0;
+  width: 100%;
+  border: 5px solid rgb(255, 255, 255);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  flex-shrink: auto;
+}
+
+#container {
+  height: auto;
+  min-height: 250px;
+  flex-grow: 1;
+  flex-shrink: 0;
+  color: black;
+  background-color: grey;
+  overflow: visible;
+  /* Makes the div scrollable if the content overflows */
+}
+
+.center-content {
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.button-container {
+  margin: 5px;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: rgb(123, 127, 123)
+}
+
+.button-container:hover {
+  background-color: white;
+}
+
+.active {
+  background-color: white;
+}
+
+.invisible-button {
+  margin: 5px;
+  border: none;
+  background-color: black;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+}
+
+.icon {
+  max-width: 35px;
+  max-height: 25px;
+  border-radius: 8px;
+  flex: 1;
+}
+
+.icon:hover {
+  background-color: white;
+}
+
+.inactive {
+  background-color: rgb(123, 127, 123);
+}
+
+.p5-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 2px;
+}
+
+.canvas-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid gray;
+  background-color: LightGray;
+}
+
+.span-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-right: 4px;
+}
+
+.intro-container {
+  border: 1px solid gray;
+  padding: 5px;
+  overflow: visible;
+}
+
+.description-container {
+  max-height: auto;
+  border: 1px solid gray;
+  padding: 10px;
+  overflow: visible;
+}
+
+.text-button {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  word-wrap: break-word;
+  margin-left: 5px;
+  margin-right: 5px;
+  transition: transform 0.3s;
+}
+
+.text-button.list {
+  margin-bottom: 10px;
+  transform-origin: left;
+}
+
+.text-button:hover {
+  transform: scale(1.1);
+}
+
+.contents-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: auto;
+  border: 1px solid gray;
+}
+
+.center-self {
+  align-self: center;
+}
+
+.title {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.minimize {
+  display: none;
+}

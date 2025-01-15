@@ -1,0 +1,31 @@
+.outer-container {
+  padding: 5px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;  /* make sure overflow isn't restricting size */
+}
+
+.flex-container {
+    min-height: 200px;
+  display: flex;
+  flex: 1;
+  flex-shrink: auto;
+  overflow: visible;  /* make sure overflow isn't restricting size */
+}
+
+.flex-child {
+  min-width: 0;
+  min-height: 200px;
+  width: 100%;
+  border: 5px solid rgb(255, 255, 255);
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  flex-shrink: auto;
+}
+
+.container{
+    min-height: 200px;
+  height: auto;
+}

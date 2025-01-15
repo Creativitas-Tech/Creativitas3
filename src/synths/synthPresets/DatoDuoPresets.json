@@ -1,0 +1,38 @@
+{
+  "thickDistortion": {
+    "Accent": 0,
+    "bitcrusher": 0,
+    "Glide": 0,
+    "Delay Control": 0.0001,
+    "wave": 0.5,
+    "freq": 700,
+    "release": 0.8,
+    "res": 1,
+    "detune": 1,
+    "gain": 0.05
+  },
+  "default": {
+    "Accent": 0,
+    "bitcrusher": 0,
+    "Glide": 0,
+    "Delay Control": 0.05095,
+    "wave": 0.6950000000000002,
+    "freq": 1791.337256248868,
+    "release": 1.2970000000000006,
+    "res": 3.448777886795153,
+    "detune": 2,
+    "gain": 0.05
+  },
+  "shortNoisy": {
+    "Accent": 1,
+    "bitcrusher": 1,
+    "Glide": 0,
+    "Delay Control": 0.05088999999999999,
+    "wave": 0.45999999999999996,
+    "freq": 776.54211607628105,
+    "release": 0.604,
+    "res": 8.859313268874072,
+    "detune": 1.0099901,
+    "gain": 0.04450314575050762
+  }
+}
