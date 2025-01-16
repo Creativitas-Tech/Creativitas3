@@ -23,9 +23,6 @@ import Canvas from "./Canvas.js";
 import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction } from './visualizers/index.js';
 import * as waveshapers from './synths/waveshapers.js'
 import {stepper, expr} from  './Utilities.js'
-// Collab-Hub features
-import WebSocketClient from './collabSocket';
-import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
 
 import MidiKeyboard from './MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
@@ -113,7 +110,6 @@ function Editor(props) {
     window.Oscilloscope = Oscilloscope;
     window.Spectroscope = Spectroscope;
     window.Spectrogram = Spectrogram;
-    window.CollabHub = CollabHubDisplay;
     window.plotTransferFunction = PlotTransferFunction;
 
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
@@ -268,28 +264,7 @@ function Editor(props) {
         setThemeDef(selectedTheme);     
     };
 
-    //window.setTheme = setTheme
 
-    const [remoteCode, setRemoteCode] = useState({ viewer1: '', viewer2: '', viewer3: '' });
-    const [viewerNames, setViewerNames] = useState({ viewer1: 'Viewer 1', viewer2: 'Viewer 2', viewer3: 'Viewer 3' });
-    const [myName, setMyName] = useState('');
-
-    const wsClient = useRef(null);
-    // const wsClient = new WebSocketClient(wsUrl, (edit, senderId) => {
-    //     setReceivedCode((prevCode) => ({
-    //         ...prevCode,
-    //         [senderId]: (prevCode[senderId] || '') + '\n' + (Array.isArray(edit.text) ? edit.text.join('\n') : edit.text || '')
-    //     }));
-    // });
-
-    // Setter for myName to update senderId and label
-    const handleNameChange = (name) => {
-        setMyName(name);
-        wsClient.current.setUserId(name); // Set senderId in WebSocket client
-        //setViewerNames((prevNames) => ({ ...prevNames, viewer1: name })); // Update label for viewer 1 (assuming 'viewer1' is this client)
-    };
-    
-    
     /************************************************
      * 
      * Main useEffect and code parsing
@@ -317,93 +292,8 @@ function Editor(props) {
         //console.log('EditorView created:', view);
       };
 
-    function initCollab(roomName = 'famleLounge'){
-        window.chClient = new CollabHubClient(); // needs to happen once (!)
-        window.chTracker = new CollabHubTracker(window.chClient);
-
-        // collab-hub join a room
-        window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name
-
-    }
 
     useEffect(() => {
-        window.myName34 = handleNameChange
-        // collab-hub socket instance
-        wsClient.current = new WebSocketClient(wsUrl, (newCode, senderName) => {
-            const { from, to, text, fullText } = newCode;
-            const { lineNumber, content, execute } = newCode ;
-            console.log("Incoming code for:", senderName);
-            console.log(newCode )
-            if(execute){
-                console.log('exec', execute, senderName)
-                try{ eval(execute) }
-                catch(e){console.log(e)}
-            }
-
-            if(senderName){
-                console.log('siplay', senderName, fullText)
-                // Dynamically update viewer names if senderName is new
-                setViewerNames((prevNames) => {
-                    const updatedNames = { ...prevNames };
-
-                    // Check if senderName is already associated with a viewer
-                    let viewerKey = Object.keys(prevNames).find(
-                        (key) => prevNames[key] === senderName
-                    );
-
-                    // If not already assigned, find the next available viewer
-                    if (!viewerKey) {
-                        viewerKey = Object.keys(prevNames).find((key) => prevNames[key] === `Viewer ${key.slice(-1)}`);
-                        if (viewerKey) {
-                            updatedNames[viewerKey] = senderName; // Assign senderName to this viewer
-                        }
-                    }
-
-                    return updatedNames;
-                });
-
-
-        // Update the specific line for the sender's code
-                if (typeof lines !== 'undefined') {
-                    setRemoteCode((prevCode) => {
-                        const currentContent = prevCode[senderName] || '';
-                        const lines = currentContent.split('\n');
-                        
-                        // Update the specific line
-                        lines[lineNumber] = content;
-
-                        return {
-                            ...prevCode,
-                            [senderName]: lines.join('\n'), // Join lines back together
-                        };
-                    });
-                }
-
-            //update full text
-            if (typeof fullText !== 'undefined') {
-                setRemoteCode((prevCode) => ({
-                    ...prevCode,
-                    [senderName]: fullText, // Replace content for this viewer
-                }));
-            }
-
-                    // Update the correct viewer's code based on `from` and `to` positions
-            // setRemoteCode((prevCode) => {
-            //     const currentText = prevCode[senderName] || ''; // Get current code text for this viewer
-            //     const newText =
-            //         currentText.slice(0, from) + // Text before the insertion point
-            //         text + // New text to insert
-            //         currentText.slice(to); // Text after the insertion point
-
-            //     return {
-            //         ...prevCode,
-            //         [senderName]: newText, // Update only this viewer's code
-            //     };
-            // });
-            }
-        });        // // collab-hub join a room
-        // window.chClient.joinRoom('21m361-temp-room'); // TODO change this to the patch-specific room name
-
         setHighlightEnable(true)
 
         const container = document.getElementById('container');
@@ -444,32 +334,9 @@ function Editor(props) {
         };
 
         window.audioContext = Tone.context.rawContext;
-        // evaluate(`
-        //     // Enable multichannel output
-        //     //var AudioContext = window.AudioContext || window.webkitAudioContext;
-        //     window.audioContext = Tone.context.rawContext;
-        //     //Tone.setContext(window.audioContext); // Set Tone.js to use this AudioContext
-            
-        //     // Configure the audio context destination for multi-channel output
-        //     let maxChannelCount = window.audioContext.destination.maxChannelCount;
-        //     window.audioContext.destination.channelCount = maxChannelCount;
-        //     window.audioContext.destination.channelCountMode = "explicit";
-        //     window.audioContext.destination.channelInterpretation = "discrete";
-            
-        //     // Create and connect a channel merger
-        //     window.channelMerger = window.audioContext.createChannelMerger(maxChannelCount);
-        //     channelMerger.channelCount = 1;
-        //     channelMerger.channelCountMode = "explicit";
-        //     channelMerger.channelInterpretation = "discrete";
-        //     channelMerger.connect(window.audioContext.destination);
-        // `);
-
-
+ 
         return () => {
-            // Clean up the WebSocket connection on unmount
-            if (wsClient.current && wsClient.current.ws) {
-                wsClient.current.ws.close();
-            }
+
         };
     }, []);
 
@@ -664,10 +531,9 @@ function Editor(props) {
             const edit = {
                 execute: string, // Use the entire content as `fullText`
             };
-            wsClient.current.executeCode(edit);
 
             if (typeof window.gui !== 'undefined') {
-                if( p5Code.length > 2) window.gui.p5Code = p5Code;
+                //if( p5Code.length > 2) window.gui.p5Code = p5Code;
             } else {
                 //console.log(`Warning: p5 instance 'gui' does not exist.`);
             }
@@ -871,12 +737,6 @@ function Editor(props) {
         const state = viewUpdate.state.toJSON(stateFields);
         localStorage.setItem(`${props.page}EditorState`, JSON.stringify(state));
 
-        // Send the full content of `value` to the WebSocket server
-        // const edit = {
-        //     fullText: value, // Use the entire content as `fullText`
-        // };
-        // wsClient.current.sendEdit(edit);
-
         // Check if changes are present and extract the edited line
         if (viewUpdate.changes) {
             const lineChanges = [];
@@ -885,7 +745,7 @@ function Editor(props) {
 
                 // Get the start and end line numbers for the change
                 const startLine = doc.lineAt(from).number - 1; // 0-based index
-                const endLine = doc.lineAt(to).number - 1;
+                const endLine = doc.lineAt(to).number - 2;
 
                 // Get the full line content for each line in the change
                 for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
@@ -900,7 +760,6 @@ function Editor(props) {
                     lineNumber: lineChange.lineNumber,
                     content: lineChange.content,
                 };
-                wsClient.current.sendEdit(edit);
             });
         }
     };
@@ -932,37 +791,6 @@ function Editor(props) {
         // stopClicked();
         traverse(code);
     }
-    // const stopClicked = () => {
-    //     clearCanvases();
-    //     for (const key in vars) {
-    //         let variable = vars[key];
-    //         try {
-    //             variable.stop();
-    //         } catch (error) {
-    //             try {
-    //                 variable.disconnect()
-    //             } catch (error) {
-    //                 //console.log(variable)//No action needed
-    //             }
-    //         }
-    //     }
-
-    //     for (const [key, instances] of Object.entries(innerScopeVars)) {
-    //         for (const instance of instances) {
-    //             try {
-    //                 instance.stop();
-    //             } catch (error) {
-    //                 try {
-    //                     instance.disconnect()
-    //                 } catch (error) {
-    //                     //console.log(variable)//No action needed
-    //                 }
-    //             }
-    //         }
-    //         innerScopeVars[key] = [];
-    //     }
-    //     vars = {};
-    // }
 
     //Handle refresh/max/min buttons
     const refreshClicked = () => {
@@ -1133,7 +961,7 @@ function Editor(props) {
         // .replace(/\+/g, '-')
         // .replace(/\//g, '_')
         // .replace(/=+$/, ''); // Removes padding
-        const url = `https://ianhattwick.com/m361/?code=${compressedCode}`;
+        const url = `https://ianhattwick.com/creativitas/?code=${compressedCode}`;
         //const url = `http://localhost:3000/m361/?code=${compressedCode}`;
         navigator.clipboard.writeText(url);
         console.log('URL copied to clipboard');
@@ -1246,17 +1074,7 @@ function Editor(props) {
                             <button className="button-container" onClick={refreshClicked}>Starter Code</button>
                         </span>
                         <span className="span-container">
-
-                             {/* Input to set myName */}
-                            <label>
-                                Set Your Name: 
-                                <input
-                                    type="text"
-                                    value={myName}
-                                    onChange={(e) => handleNameChange(e.target.value)}
-                                />
-                            </label>
-           
+      
                             {/* Export options */}
                             <select id="exportOptions" onChange={exportCode} defaultValue="default">
                                 <option value="default" disabled>Export Code</option>
@@ -1302,25 +1120,7 @@ function Editor(props) {
             }
             {!p5Minimized &&
                 <div id="canvases" className="flex-child">
-                    <div id="remote-viewers" style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        {Object.keys(viewerNames).map((viewerKey) => (
-                            <div key={viewerKey} style={{ }}>
-                                <h4>{viewerNames[viewerKey]}</h4>
-                                <CodeMirror
-                                    value={remoteCode[viewerNames[viewerKey]] || ''}
-                                    extensions={[javascript()]}
-                                    readOnly={true}
-                                    height="20px"
-                                    theme="dark"
-                                    basicSetup={{
-                                        lineNumbers: false,
-                                        highlightActiveLine: false,
-                                        highlightActiveLineGutter: false,
-                                    }}
-                                />
-                            </div>
-                        ))}
-                    </div>
+                    
                     <span className="span-container">
                         {codeMinimized &&
                             <button className="button-container" onClick={codeMinClicked}>{"=>"}</button>

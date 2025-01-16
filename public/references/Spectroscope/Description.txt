@@ -1,0 +1,11 @@
+### Mandatory Arguments
+1. The argument to the Spectroscope constructor MUST be a valid html div. In our framework the name of the div will always be displayed above it. 
+2. When connecting an audio source to the oscilloscope, the argument to connect() MUST be the name of the scope followed by .input, e.g. vco.connect( spectrum.input )
+
+### Primary Properties & Methods
+#### Properties
+* maxFrequency: [Hertz] Sets the maximum frequency displayed on the Spectroscope. default: 24000
+#### Methods
+* setFftSize(): [fft size, power of 2] This sets the size of the FFT, which affects the resolution of the scope. Higher values will display longer time frames, lower values will zoom in. This value must be a power of 2, and the maximum value is 32768. Default: 4096.
+* start(): Begins drawing the waveform
+* stop(): stops drawing the waveform

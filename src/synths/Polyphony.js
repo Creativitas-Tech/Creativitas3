@@ -83,7 +83,7 @@ export class Polyphony extends MonophonicTemplate{
 
 		// Free any voice currently playing the requested note
 		const curIndex = this.getActiveNote(noteNum);
-		console.log(this.activeNotes, noteNum,  curIndex)
+		//console.log(this.activeNotes, noteNum,  curIndex)
 		if (curIndex >= 0 ) this.freeActiveNote(noteNum);
 		
 
@@ -125,7 +125,7 @@ export class Polyphony extends MonophonicTemplate{
 
     // Set a new active note (add it to the array)
     setActiveNote(index, midiNote) {
-    	console.log('set active ',index, midiNote)
+    	//console.log('set active ',index, midiNote)
         if (!this.activeNotes.includes(midiNote)) {
             this.activeNotes[index] = midiNote;  // Add only if not already active
         }
@@ -134,7 +134,7 @@ export class Polyphony extends MonophonicTemplate{
     // Free a specific active note (remove it from the array)
     freeActiveNote(midiNote) {
         const noteIndex = this.getActiveNote(midiNote);
-        console.log("free ", noteIndex)
+        //console.log("free ", noteIndex)
         //this.voice[noteIndex].triggerRelease()
         if (noteIndex !== -1) {
             this.activeNotes[noteIndex] = -1;  // Remove the note if found

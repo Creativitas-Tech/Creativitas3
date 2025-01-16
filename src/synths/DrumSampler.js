@@ -23,6 +23,8 @@ import { DrumTemplate } from './DrumTemplate';
 import DrumSamplerPresets from './synthPresets/DrumSamplerPresets.json';
 import {parseStringSequence, parseStringBeat} from '../TheoryModule'
 import {Parameter} from './ParameterModule.js'
+import { Seq } from '../Seq'
+import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule';
 /**
  * DrumSampler class extends DrumTemplate to create a drum sampler with various sound manipulation features.
  * It loads and triggers different drum samples based on the selected kit.
@@ -32,7 +34,6 @@ import {Parameter} from './ParameterModule.js'
 export class DrumSampler extends DrumTemplate{
   constructor(kit = "acoustic", gui=null) {
     super()
-    this.gui = gui
     this.gui = gui
     this.presets = DrumSamplerPresets
     this.name = "DrumSampler"
@@ -124,6 +125,7 @@ export class DrumSampler extends DrumTemplate{
         for(let i=0;i<10;i++) {
             this.subdivision[i] = '16n'
         }
+
   }//constructor
 
   //SETTERS AND GETTERS
@@ -282,19 +284,35 @@ export class DrumSampler extends DrumTemplate{
    * @param {string} arr - A string representing the drum pattern.
    * @param {string} subdivision - The rhythmic subdivision to use for the sequence (e.g., '8n', '16n').
    */
-  sequence(arr, subdivision = '8n', num = 0, iterations = 'Infinity') {
+  // sequence(arr, subdivision = '8n', num = 0, iterations = 'Infinity') {
 
-    this.seq[num] = parseStringSequence(arr)
+  //   this.seq[num] = parseStringSequence(arr)
 
-    this.createLoop(subdivision, num, iterations)
+  //   this.createLoop(subdivision, num, iterations)
 
-    // Initialize arrays for each drum voice
-    if (subdivision) this.subdivision[num] = subdivision;
+  //   // Initialize arrays for each drum voice
+  //   if (subdivision) this.subdivision[num] = subdivision;
 
-    //note: we have changed approaches
-    //the sequence is not split up at this point
-    //instead, it is parsed in the loop
-  } 
+  //   //note: we have changed approaches
+  //   //the sequence is not split up at this point
+  //   //instead, it is parsed in the loop
+  // } 
+
+  sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
+        this.start(num);
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.triggerDrum.bind(this));
+            this.seq[num].parent = this
+            this.seq[num].vals = parseStringSequence(arr)
+            this.seq[num].loopInstance.stop()
+            this.seq[num].createLoop = this.newCreateLoop
+            this.seq[num].createLoop()
+        } else {
+            console.log('update seq')
+            this.seq[num].drumSequence(arr, subdivision, phraseLength);
+        }
+    }
+
 
   /**
      * plays the provided sequence array initializes a Tone.Loop with the given subdivision.
@@ -318,8 +336,8 @@ export class DrumSampler extends DrumTemplate{
     //     //this.loopInstance[num].start()
     // }
 
-  createLoop(subdivision, num, iterations='Infinity'){
-        // Create a Tone.Loop
+  createLoop(subdivision, num, iterations='Infinity',){
+        // Create a Tone.Loopdsfg
         if (this.loopInstance[num] === null) {
             this.loopInstance[num] = new Tone.Loop(time => {
               //console.log(num)
@@ -339,13 +357,13 @@ export class DrumSampler extends DrumTemplate{
                 if(this.phraseLength[num] === 'infinite') return
                 this.phraseLength[num] -= 1
                 if(this.phraseLength[num] < 1) this.stop(num)
-            }, '4n').start(0);
+            }, subdivision).start(0);
 
             // Start the Transport
             Tone.Transport.start();
             console.log("loop started")
         }
-        this.loopInstance[num].iterations = iterations * this.seq[num].length
+        //this.loopInstance[num].iterations = iterations * this.seq[num].length
 
         if (subdivision) {
          // if(subdivision !== this.subdivision[num]){
@@ -356,22 +374,54 @@ export class DrumSampler extends DrumTemplate{
         this.start(num)
     }
 
-  triggerDrum(val, num, time){
-    //console.log(val,time)
+    newCreateLoop (){
+        // Create a Tone.Loop
+      console.log('loop made')
+            this.loopInstance = new Tone.Loop(time => {
+                if(this.enable=== 0) return
+                this.index = Math.floor(Tone.Transport.ticks / Tone.Time(this.subdivision).toTicks());
+                let curBeat = this.vals[this.index % this.vals.length];
+                //console.log("before transform", '.'+curBeat+'.')
+                curBeat = this.perform_transform(curBeat);
+                //console.log("after transform", '.'+curBeat+'.')
+
+                curBeat = this.checkForRandomElement(curBeat);
+
+                const event = parseStringBeat(curBeat, time);
+                console.log(event,curBeat, this.vals,time,this.index, this.subdivision)
+                for (const val of event) {
+                  this.parent.triggerDrum(val[0], 0, time + val[1] * (Tone.Time(this.subdivision)));
+                }
+                
+            }, this.subdivision).start(0);
+
+            this.setSubdivision(this.subdivision);
+            // Start the Transport
+            Tone.Transport.start();
+            console.log("loop started")
+        
+        
+        this.loopInstance.start()
+        Tone.Transport.start()
+    }
+
+  triggerDrum = (val, num, time)=>{
+    //console.log(val,time, this.kickVelocity[num],this)
+    val = val[0]
     switch(val){
       case '.': break;
-      case '0': this.new.trigger(this.kickVelocity[num],0,time); break; //just because. . . .
-      case 'O': this.new.trigger(this.kickVelocity[num],1,time); break;
+      case '0': this.new.trigger(1,0.1,time); break; //just because. . . .
+      case 'O': this.new.trigger(1,1,time); break;
       //case 'O': this.triggerVoice(this.kick,this.kickVelocity[num],time); break;
-      case 'o': this.triggerVoice(this.kick,this.kickGhostVelocity[num],time); break;
-      case 'X': this.triggerVoice(this.snare,this.snareVelocity[num],time); break;
-      case 'x': this.triggerVoice(this.snare,this.snareGhostVelocity[num],time); break;
+      case 'o': this.triggerVoice(this.kick,.5,time); break;
+      case 'X': this.triggerVoice(this.snare,1,time); break;
+      case 'x': this.triggerVoice(this.snare,.5,time); break;
       // case '*': this.triggerVoice(this.hihat,this.closedVelocity[num],time); break;
-      case '*': this.newHat.trigger(this.closedVelocity[num],0,time); break;
-      case '^': this.newHat.trigger(this.closedVelocity[num],1,time); break;
-      case '1': this.triggerVoice(this.tom[0],this.p1Velocity[num],time); break;
-      case '2': this.triggerVoice(this.tom[1],this.p2Velocity[num],time); break;
-      case '3': this.triggerVoice(this.tom[2],this.p3Velocity[num],time); break;
+      case '*': this.newHat.trigger(.75,0.1,time); break;
+      case '^': this.newHat.trigger(.75,1,time); break;
+      case '1': this.triggerVoice(this.tom[0],1,time); break;
+      case '2': this.triggerVoice(this.tom[1],1,time); break;
+      case '3': this.triggerVoice(this.tom[2],1,time); break;
       default: console.log('triggerDrum(), no matching drum voice ', val, '\n')
     }   
   }
@@ -595,6 +645,7 @@ class DrumVoice{
     this.env.release = decay*choke
   }
   trigger(amplitude, decay,time){
+    //console.log(amplitude,decay,time)
     this.env.release = decay == 0 ? this.decayTime * this.chokeRatio : this.decayTime
     this.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
     this.voice.start(time, this.startPoint)

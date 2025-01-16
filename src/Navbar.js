@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 function Navbar(props) {
     return (
         <span className="span-container" >
-            <div>21M.361 Electronic Composition</div>
+            <div>Creativitas</div>
             <span className="span-container">
                 {props.page !== "Home" &&
                     <Link to="/" className="text-button home-link" onClick={() => props.setPage('Home')}>

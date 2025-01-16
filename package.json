@@ -1,8 +1,8 @@
 {
-  "name": "m361",
+  "name": "Creativitas",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://ianhattwick.com/m361/",
+  "homepage": "https://ianhattwick.com/creativitas/",
   "dependencies": {
     "@codemirror/autocomplete": "^6.18.1",
     "@codemirror/commands": "^6.7.1",
@@ -72,7 +72,7 @@
     "minami": "^1.2.3",
     "taffydb": "^2.7.3"
   },
-  "description": "Audio Programming Environment for Electronic Music Explorations.",
+  "description": "Audio Programming Environment for Creativitas.",
   "main": "index.js",
   "author": "Ian Hattwick",
   "license": ""

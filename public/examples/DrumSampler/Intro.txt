@@ -1,0 +1,10 @@
+The DrumSampler object loads a bank of soundfiles and lets you easily sequence and manipulate them. The samples themselves come from the Tone.js example files, and are mostly drawn from other open-source projects.
+
+Each bank consists of:
+* Kick Drum (played with 'O'/loud of 'o'/soft)
+* Sanre Drum (played with 'X'/loud of 'x'/soft)
+* Closed hihat (played with 'x')
+* Open hihat (played with '^') - actually is the same sample as closed hihat but with a longer envelope
+* Percussion 1 (p1) (played with '1'). Generally a high tom sample
+* Percussion 2 (p2) (played with '2'). Generally a medium tom sample
+* Percussion 3 (p3) (played with '3'). Generally a low tom sample

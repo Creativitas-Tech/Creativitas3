@@ -1,0 +1,4 @@
+Displays a visual representation of an audio waveform
+* This representation is in the time-domain
+* the values are: x-axis(time), y-axis(amplitude)
+

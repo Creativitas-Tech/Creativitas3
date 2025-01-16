@@ -1,0 +1,5 @@
+### Getting started with synths and sequencers
+
+Daisy is a simple synthesizer. Execute the code in the box below by option-shift-return in each block, then play around with the synth controls to get a feel for how they work.
+
+Then try modifying the sequence to make a melody. Look at the notes below the codebox if you have questions. 

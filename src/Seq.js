@@ -2,12 +2,12 @@
 //current sequencer module jan 2025
 
 import * as Tone from 'tone';
-import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from './TheoryModule';
+import { Theory, parseStringSequence, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from './TheoryModule';
 
 export class Seq {
     constructor(synth, arr = [0], subdivision = '8n', phraseLength = 'infinite', num = 0, callback:null) {
         this.synth = synth; // Reference to the synthesizer
-        this.seq = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
+        this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         this.subdivision = subdivision;
         this.enable = 1;
         this.octave = 0;
@@ -20,14 +20,27 @@ export class Seq {
         this.loopInstance = null;
         this.num = num; // Sequence number, if needed
         this.callback = callback;
-
+        this.parent = null
         this.index = 0;
+
+        this.createLoop();
+        console.log('seq made')
+    }
+
+    sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
+        this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
+        this.phraseLength = phraseLength;
+        this.subdivision = subdivision;
+
+        if (this.loopInstance) {
+            this.loopInstance.dispose();
+        }
 
         this.createLoop();
     }
 
-    sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
-        this.seq = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
+    drumSequence(arr, subdivision = '8n', phraseLength = 'infinite') {
+        this.vals = Array.isArray(arr) ? arr : parseStringSequence(arr);
         this.phraseLength = phraseLength;
         this.subdivision = subdivision;
 
@@ -41,11 +54,12 @@ export class Seq {
     createLoop() {
         // Create a Tone.Loop
         this.loopInstance = new Tone.Loop(time => {
+            console.log('old loop')
             if (this.enable === 0) return;
 
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
 
-            let curBeat = this.seq[this.index % this.seq.length];
+            let curBeat = this.vals[this.index % this.vals.length];
 
             //console.log("before transform", '.'+curBeat+'.')
             curBeat = this.perform_transform(curBeat);
@@ -68,7 +82,7 @@ export class Seq {
             if (this.phraseLength < 1) this.stop();
         }, this.subdivision).start(0);
 
-        this.setSubdivision(this.subdivision);
+        //this.setSubdivision(this.subdivision);
 
         Tone.Transport.start();
     }
@@ -81,7 +95,7 @@ export class Seq {
         if (typeof curBeat === 'string' && curBeat.includes('?')) {
             let validElements = [];
 
-            this.seq.forEach(item => {
+            this.vals.forEach(item => {
                 if (typeof item === 'string') {
                     const letterPattern = /[#b]?[A-Ga-g]/g;
                     const symbolPattern = /[oOxX\*\^]/g;
@@ -148,12 +162,12 @@ export class Seq {
             return func(i);
         });
 
-        this.seq = arr.map(element => {
+        this.vals = arr.map(element => {
             return typeof element === 'string' ? element : Array.isArray(element) ? JSON.stringify(element) : element;
         });
 
         this.phraseLength = 'infinite';
-        this.sequence(this.seq, subdivision);
+        this.sequence(this.vals, subdivision);
     }
 
 

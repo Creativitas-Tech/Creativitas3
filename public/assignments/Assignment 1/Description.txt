@@ -1,0 +1,16 @@
+### Sequencing
+Some key points about creating a sequence:
+* the sequence must be inside quotes ''
+* brackets [ ] let you put more than one note in a beat
+* if notes are comma separated in brackets they will play at the same time
+  * this lets you play chords
+* a period '.' is a rest
+* the sequence method has three possible arguments:
+  * The sequence itself
+  * The playback rate, e.g. 8n or 4
+  * The sequence number, 0 by default.
+* each sequence has properties:
+  * octave: transposes the sequence
+  * sustain: sets how long the envelope stays in the sustain phase
+  * velocity: how loud the sequence is
+  * strum: the dealy when notes are played at the same time

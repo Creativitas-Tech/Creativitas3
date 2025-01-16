@@ -1,8 +1,8 @@
 RewriteEngine On
-RewriteBase /m080/
+RewriteBase /creativitas/
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^(.*)$ /m080/index.html [L,QSA]
+RewriteRule ^(.*)$ /creativitas/index.html [L,QSA]
 
 <IfModule LiteSpeed>
     CacheDisable public /

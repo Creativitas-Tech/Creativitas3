@@ -1,0 +1,13 @@
+### Mandatory Arguments
+1. The argument to the Oscilloscope constructor MUST be a valid html div. In our framework the name of the div will always be displayed above it. 
+2. When connecting an audio source to the oscilloscope, the argument to connect() MUST be the name of the scope followed by .input, e.g. vco.connect( scope.input )
+
+### Primary Properties & Methods
+#### Properties
+* theshold: [-1 to 1] The oscilloscope will look for waveform transitions from below to above the threshold, and when the waveform crosses that theshold it will trigger the drawing to start from that point.  For complex waveforms this may create inconsistencies - you can change the threshold to try and address this. Default: 0
+* enableTrigger: [0/1] Enables the use of the treshold to trigger the beginning of a drawing. Default: 1
+* gain: [0 to 1] optional input gain control. Set using scope.gain.value. Default: 1
+#### Methods
+* setFftSize(): [fft size, power of 2] This sets the size of the FFT, which affects the resolution of the scope. Higher values will display longer time frames, lower values will zoom in. This value must be a power of 2, and the maximum value is 32768. Default: 2048.
+* start(): Begins drawing the waveform
+* stop(): stops drawing the waveform

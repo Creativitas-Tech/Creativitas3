@@ -55,7 +55,7 @@ export class MonophonicTemplate {
         this.curPreset = null;
 
         // Sequencer related
-        this.sequences = []; // Array of Seq instances
+        this.seq = []; // Array of Seq instances
         this.turingMachine = null;
         this.callback = (i, time) => { }
         this.callbackLoop = new Tone.Loop((time) => {
@@ -69,8 +69,8 @@ export class MonophonicTemplate {
         this.drawingLoop = new Tone.Loop(time => {
             if (this.drawing.enabled === true) {
                 this.drawing.startVisualFrame();
-                if (this.sequences[this.seqToDraw]) {
-                    const seq = this.sequences[this.seqToDraw];
+                if (this.seq[this.seqToDraw]) {
+                    const seq = this.seq[this.seqToDraw];
                     if (seq.seq.length > 0) {
                         const index = Math.floor(Theory.ticks / Tone.Time(seq.subdivision).toTicks());
                         this.drawing.visualize(seq.seq, index);
@@ -389,14 +389,12 @@ export class MonophonicTemplate {
      */
     sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
         this.start(num);
-        if (!this.sequences[num]) {
-            this.sequences[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
         } else {
-            this.sequences[num].sequence(arr, subdivision, phraseLength);
+            this.seq[num].sequence(arr, subdivision, phraseLength);
         }
     }
-
-
 
     /**
      * Plays the provided sequence array initializes a Tone.Loop with the given subdivision.
@@ -407,24 +405,24 @@ export class MonophonicTemplate {
      * @param {string} num (default 0) - the sequence number. Up to 10 sequences per instance.
      */
     setSeq(arr, subdivision = '8n', num = 0) {
-        if (!this.sequences[num]) {
-            this.sequences[num] = new Seq(this, arr, subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, 'infinite', num, this.parseNoteString.bind(this));
         } else {
-            this.sequences[num].setSeq(arr, subdivision);
+            this.seq[num].setSeq(arr, subdivision);
         }
     }
 
     play(num = 0, length = null) {
-        if (this.sequences[num]) {
-            this.sequences[num].play(length);
+        if (this.seq[num]) {
+            this.seq[num].play(length);
         }
     }
 
     expr(func, len = 32, subdivision = '16n', num = 0) {
-        if (!this.sequences[num]) {
-            this.sequences[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
         }
-        this.sequences[num].expr(func, len, subdivision);
+        this.seq[num].expr(func, len, subdivision);
     }
 
     set velocitys(val) {
@@ -448,7 +446,7 @@ export class MonophonicTemplate {
     }
 
     set rolls(val) {
-        for (let seq of this.sequences) {
+        for (let seq of this.seq) {
             if (seq) seq.roll = val;
         }
     }
@@ -460,11 +458,11 @@ export class MonophonicTemplate {
      */
     setVelocity(velocity = 100, num = 'all') {
         if (num === 'all') {
-            for (let seq of this.sequences) {
+            for (let seq of this.seq) {
                 if (seq) seq.setVelocity(velocity);
             }
         } else {
-            if (this.sequences[num]) this.sequences[num].setVelocity(velocity);
+            if (this.seq[num]) this.seq[num].setVelocity(velocity);
         }
     }
 
@@ -476,11 +474,11 @@ export class MonophonicTemplate {
     setSustain(val = .1, num = 'all') {
         if (val <= 0) return;
         if (num === 'all') {
-            for (let seq of this.sequences) {
+            for (let seq of this.seq) {
                 if (seq) seq.setSustain(val);
             }
         } else {
-            if (this.sequences[num]) this.sequences[num].setSustain(val);
+            if (this.seq[num]) this.seq[num].setSustain(val);
         }
     }
 
@@ -492,11 +490,11 @@ export class MonophonicTemplate {
     setOctave(val = 0, num = 'all') {
         val = val < -4 ? -4 : val > 4 ? 4 : val;
         if (num === 'all') {
-            for (let seq of this.sequences) {
+            for (let seq of this.seq) {
                 if (seq) seq.setOctave(val);
             }
         } else {
-            if (this.sequences[num]) this.sequences[num].setOctave(val);
+            if (this.seq[num]) this.seq[num].setOctave(val);
         }
     }
 
@@ -507,11 +505,11 @@ export class MonophonicTemplate {
      */
     setSubdivision(sub = '8n', num = 'all') {
         if (num === 'all') {
-            for (let seq of this.sequences) {
+            for (let seq of this.seq) {
                 if (seq) seq.setSubdivision(sub);
             }
         } else {
-            if (this.sequences[num]) this.sequences[num].setSubdivision(sub);
+            if (this.seq[num]) this.seq[num].setSubdivision(sub);
         }
     }
 
@@ -522,11 +520,11 @@ export class MonophonicTemplate {
      */
     setTransform(transform, num = 'all') {
         if (num === 'all') {
-            for (let seq of this.sequences) {
+            for (let seq of this.seq) {
                 if (seq) seq.setTransform(transform);
             }
         } else {
-            if (this.sequences[num]) this.sequences[num].setTransform(transform);
+            if (this.seq[num]) this.seq[num].setTransform(transform);
         }
     }
 
@@ -536,8 +534,8 @@ export class MonophonicTemplate {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
-                    if (self.sequences[index]) {
-                        self.sequences[index].setSustain(value);
+                    if (self.seq[index]) {
+                        self.seq[index].setSustain(value);
                     }
                 }
                 return true; // Indicate success
@@ -551,8 +549,8 @@ export class MonophonicTemplate {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
-                    if (self.sequences[index]) {
-                        self.sequences[index].setVelocity(value);
+                    if (self.seq[index]) {
+                        self.seq[index].setVelocity(value);
                     }
                 }
                 return true;
@@ -566,8 +564,8 @@ export class MonophonicTemplate {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
-                    if (self.sequences[index]) {
-                        self.sequences[index].setOctave(value);
+                    if (self.seq[index]) {
+                        self.seq[index].setOctave(value);
                     }
                 }
                 return true;
@@ -581,8 +579,8 @@ export class MonophonicTemplate {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
-                    if (self.sequences[index]) {
-                        self.sequences[index].setSubdivision(value);
+                    if (self.seq[index]) {
+                        self.seq[index].setSubdivision(value);
                     }
                 }
                 return true;
@@ -596,8 +594,8 @@ export class MonophonicTemplate {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
-                    if (self.sequences[index]) {
-                        self.sequences[index].setRoll(value);
+                    if (self.seq[index]) {
+                        self.seq[index].setRoll(value);
                     }
                 }
                 return true;
@@ -611,8 +609,8 @@ export class MonophonicTemplate {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
-                    if (self.sequences[index]) {
-                        self.sequences[index].setTransform(value);
+                    if (self.seq[index]) {
+                        self.seq[index].setTransform(value);
                     }
                 }
                 return true;
@@ -622,23 +620,23 @@ export class MonophonicTemplate {
 
     start(num = 'all') {
         if (num === 'all') {
-            for (let seq of this.sequences) {
+            for (let seq of this.seq) {
                 if (seq) seq.start();
             }
             this.drawingLoop.start();
         } else {
-            if (this.sequences[num]) this.sequences[num].start();
+            if (this.seq[num]) this.seq[num].start();
         }
     }
 
     stop(num = 'all') {
         if (num === 'all') {
-            for (let seq of this.sequences) {
+            for (let seq of this.seq) {
                 if (seq) seq.stop();
             }
             this.drawingLoop.stop();
         } else {
-            if (this.sequences[num]) this.sequences[num].stop();
+            if (this.seq[num]) this.seq[num].stop();
         }
     }
 
@@ -653,7 +651,7 @@ export class MonophonicTemplate {
     }
 
     getNoteParam(val, index) {
-        const param = this.sequences[index][val]
+        const param = this.seq[index][val]
         if (Array.isArray(val)) return val[index % val.length];
         else return val;
     }
@@ -670,9 +668,9 @@ export class MonophonicTemplate {
 
         if (note < 0) return;
 
-        let octave = this.getNoteParam(this.sequences[0].octave, index);
-        let velocity = this.getNoteParam(this.sequences[0].velocity, index);
-        let sustain = this.getNoteParam(this.sequences[0].sustain, index);
+        let octave = this.getNoteParam(this.seq[0].octave, index);
+        let velocity = this.getNoteParam(this.seq[0].velocity, index);
+        let sustain = this.getNoteParam(this.seq[0].sustain, index);
         
         try {
             //console.log('trig', time, val[1], Tone.Time(this.subdivision))
@@ -680,7 +678,7 @@ export class MonophonicTemplate {
                 note + octave * 12,
                 velocity,
                 sustain,
-                time + val[1] * (Tone.Time(this.sequences[0].subdivision))
+                time + val[1] * (Tone.Time(this.seq[0].subdivision))
             );
         } catch (e) {
             console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * (Tone.Time(this.subdivision)));
