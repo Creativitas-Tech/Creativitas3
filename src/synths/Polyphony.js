@@ -30,11 +30,11 @@ export class Polyphony extends MonophonicTemplate{
 		this.voiceCounter = 0
 		this.activeNotes = []
 		this.noteOrder = []
+		this.noteOrderIndex = 0
 		this.voiceOrder = []
 		for (let i = 0; i < this.numVoices; i++) {
 			this.activeNotes.push(-1)
-			if (i === 0) {this.noteOrder.push(this.numVoices - 1)}
-			else {this.noteOrder.push(i - 1)}
+			this.noteOrder.push(i)
 		}
 	}
 
@@ -42,7 +42,7 @@ export class Polyphony extends MonophonicTemplate{
 	 * trigger methods
 	***************/
 	triggerAttack = function(val, vel=100, time=null){
-		console.log('ta ', val)
+		//console.log('ta ', val)
 		this.v = this.getNewVoice(val)
 		//val = val + Math.random()*this.slop - this.slop/2
 		if(time) this.voice[this.v].triggerAttack(val,vel,time) //midinote,velocity,time
@@ -53,7 +53,7 @@ export class Polyphony extends MonophonicTemplate{
 	triggerRelease = function(val, time=null){
 		this.v = this.getActiveNote(val)
 		if (this.v >= 0){
-			console.log('tr ', val, time, this.activeNotes[val], this.v, this.voice[this.v])
+			//console.log('tr ', val, time, this.activeNotes[val], this.v, this.voice[this.v])
 			if(time) this.voice[this.v].triggerRelease(time) //midinote,velocity,time
 			else this.voice[this.v].triggerRelease() 
 			this.freeActiveNote(val)
@@ -83,34 +83,30 @@ export class Polyphony extends MonophonicTemplate{
 
 		// Free any voice currently playing the requested note
 		const curIndex = this.getActiveNote(noteNum);
-		//console.log(this.activeNotes, noteNum,  curIndex)
-		if (curIndex >= 0 ) this.freeActiveNote(noteNum);
-		
+		if (curIndex >= 0 ) {
+			this.freeActiveNote(curIndex);
+		}
 
 		// Try to find a free voice
-		for (let i = 0; i < this.numVoices; i++) {
-			const curEnv = this.voice[i].env.value;
+		let weakestEnvValue = Infinity;
+		let leastRecent = this.getLeastRecentNotes()
+		let weakestVoice = leastRecent[0];
 
+		for (let i = 0; i < this.numVoices/2; i++) {
+			const curElement = this.noteOrder[i];
+			const curEnv = this.voice[curElement].env.value;
+			if (curEnv < weakestEnvValue && leastRecent.includes(curElement)) {
+			  weakestEnvValue = curEnv;
+			  weakestVoice = curElement;
+			}
+			
 			// Check if the envelope indicates a free voice
 			if (curEnv <= 0.01) { // Allow small floating-point tolerances
-			  this.setActiveNote(i, noteNum);
-			  return i;
+			  this.setActiveNote(curElement, noteNum);
+			  return curElement;
 			}
 		}
-
 		// No free voices: Implement voice stealing
-		let weakestVoice = 0;
-		let weakestEnvValue = Infinity;
-
-		// Find the voice with the smallest envelope value (least audible)
-		for (let i = 0; i < this.numVoices; i++) {
-			const curEnv = this.voice[i].env.value;
-			if (curEnv < weakestEnvValue) {
-			  weakestEnvValue = curEnv;
-			  weakestVoice = i;
-			}
-		}
-
 		// Steal the weakest voice
 		this.voice[weakestVoice].env.cancel();
 		this.setActiveNote(weakestVoice, noteNum);
@@ -125,19 +121,27 @@ export class Polyphony extends MonophonicTemplate{
 
     // Set a new active note (add it to the array)
     setActiveNote(index, midiNote) {
-    	//console.log('set active ',index, midiNote)
-        if (!this.activeNotes.includes(midiNote)) {
-            this.activeNotes[index] = midiNote;  // Add only if not already active
-        }
-    }
+		//console.log('set active', index, midiNote, this.noteOrder);
+
+		// Add the note only if it isn't already active
+		if (!this.activeNotes.includes(midiNote))  this.activeNotes[index] = midiNote;
+
+		// Update the noteOrder array
+		// Remove the index if it already exists in the array
+		const existingIndex = this.noteOrder.indexOf(index);
+		if (existingIndex !== -1) this.noteOrder.splice(existingIndex, 1);
+
+		this.noteOrder.push(index); // Add the index to the
+		}
+    getLeastRecentNotes() {
+    	return this.noteOrder.slice(0,this.numVoices/2)
+	}
 
     // Free a specific active note (remove it from the array)
-    freeActiveNote(midiNote) {
-        const noteIndex = this.getActiveNote(midiNote);
-        //console.log("free ", noteIndex)
-        //this.voice[noteIndex].triggerRelease()
-        if (noteIndex !== -1) {
-            this.activeNotes[noteIndex] = -1;  // Remove the note if found
+    freeActiveNote(index) {
+        if (index !== undefined && index >= 0) {
+        	this.voice[index].triggerRelease()
+            this.activeNotes[index] = -1;  // Remove the note if found
         }
     }
 

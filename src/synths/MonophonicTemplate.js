@@ -388,12 +388,12 @@ export class MonophonicTemplate {
      * @param {string} num (default 0) - the sequence number. Up to 10 sequences per instance.
      */
     sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
-        this.start(num);
         if (!this.seq[num]) {
             this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
         } else {
             this.seq[num].sequence(arr, subdivision, phraseLength);
         }
+        this.start(num);
     }
 
     /**
@@ -651,13 +651,13 @@ export class MonophonicTemplate {
     }
 
     getNoteParam(val, index) {
-        const param = this.seq[index][val]
+        //console.log(val, index,)
         if (Array.isArray(val)) return val[index % val.length];
         else return val;
     }
 
-    parseNoteString(val, time, index) {
-        //console.log(val,time,index)
+    parseNoteString(val, time, index, num) {
+        //console.log(val,time,index, num)
         if (val[0] === ".") return;
 
         const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
@@ -668,9 +668,10 @@ export class MonophonicTemplate {
 
         if (note < 0) return;
 
-        let octave = this.getNoteParam(this.seq[0].octave, index);
-        let velocity = this.getNoteParam(this.seq[0].velocity, index);
-        let sustain = this.getNoteParam(this.seq[0].sustain, index);
+        let octave = this.getNoteParam(this.seq[num].octave, index);
+        let velocity = this.getNoteParam(this.seq[num].velocity, index);
+        let sustain = this.getNoteParam(this.seq[num].sustain, index);
+        let subdivision = this.getNoteParam(this.seq[num].subdivision, index);
         
         try {
             //console.log('trig', time, val[1], Tone.Time(this.subdivision))
@@ -678,10 +679,10 @@ export class MonophonicTemplate {
                 note + octave * 12,
                 velocity,
                 sustain,
-                time + val[1] * (Tone.Time(this.seq[0].subdivision))
+                time + val[1] * (Tone.Time(this.seq[num].subdivision))
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * (Tone.Time(this.subdivision)));
+            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * (Tone.Time(subdivision)));
         }
     }
 }

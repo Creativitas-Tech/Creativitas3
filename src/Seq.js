@@ -24,7 +24,7 @@ export class Seq {
         this.index = 0;
 
         this.createLoop();
-        console.log('seq made')
+        //console.log('seq made')
     }
 
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
@@ -54,7 +54,7 @@ export class Seq {
     createLoop() {
         // Create a Tone.Loop
         this.loopInstance = new Tone.Loop(time => {
-            console.log('old loop')
+            //console.log('old loop')
             if (this.enable === 0) return;
 
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
@@ -75,14 +75,14 @@ export class Seq {
             for (let i = 1; i < event.length; i++) {
                 if (event_timings[i] === event_timings[i - 1]) event[i][1] = event[i - 1][1] + roll;
             }
-            for (const val of event) this.callback(val, time, this.num);
+            for (const val of event) this.callback(val, time, this.index, this.num);
 
             if (this.phraseLength === 'infinite') return;
             this.phraseLength -= 1;
             if (this.phraseLength < 1) this.stop();
         }, this.subdivision).start(0);
 
-        //this.setSubdivision(this.subdivision);
+        this.setSubdivision(this.subdivision);
 
         Tone.Transport.start();
     }
