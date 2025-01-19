@@ -1,0 +1,55 @@
+{
+  "basicLayout": {
+    "vco": {
+      "color": [150, 0, 0],
+      "boundingBox": { "x": 10, "y": 10, "width": 30, "height": 50 },
+      "offsets": { "x": 12, "y": 30 },
+      "groupA": ["type"],
+      "controlTypeA": "radioButton",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.75,
+      "theme": "dark"
+    },
+    "vcf": {
+      "color": [100, 0, 150],
+      "boundingBox": { "x": 30, "y": 10, "width": 40, "height": 50 },
+      "offsets": { "x": 10, "y": 30 },
+      "groupA": ["cutoff"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.6
+    },
+    "vca": {
+      "color": [100, 50, 100],
+      "boundingBox": { "x": 70, "y": 10, "width": 30, "height": 50 },
+      "offsets": { "x": 12, "y": 0 },
+      "groupA": ["level"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.6
+    },
+    "env": {
+      "color": [20, 100, 100],
+      "boundingBox": { "x": 10, "y": 60, "width": 50, "height": 50 },
+      "offsets": { "x": 8, "y": 300 },
+      "groupA": [],
+      "controlTypeA": "knob",
+      "controlTypeB": "fader",
+      "sizeA": 0.8,
+      "sizeB": 1.2
+    },
+    "lfo": {
+      "color": [20, 0, 100],
+      "boundingBox": { "x": 50, "y": 70, "width": 50, "height": 50 },
+      "offsets": { "x": 12, "y": 30 },
+      "groupA": ["rate"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.6
+    }
+  }
+}

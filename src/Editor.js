@@ -9,7 +9,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 
 
 //tone
-import { MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, ModDelay, Kick, DrumSampler, Simpler, Snare, Cymbal, Player  } from './synths/index.js';
+import { Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, ModDelay, Kick, DrumSampler, Simpler, Snare, Cymbal, Player  } from './synths/index.js';
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
@@ -167,7 +167,7 @@ function Editor(props) {
     window.QuadPanner = QuadPanner;
     window.Drummer = Drummer;
     window.DrumSynth = DrumSynth;
-    // window.Feedback = Feedback;
+    window.Twinkle = Twinkle;
     // window.Feedback = Feedback;
     // window.Feedback = Feedback;
 

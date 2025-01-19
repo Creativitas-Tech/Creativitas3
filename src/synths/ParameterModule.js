@@ -1,99 +1,69 @@
 /*
-
-//define parameters
-let paramDefinitions = [
-      {name:'time',min:0.01,max:1,curve:2,callback:this.setDelayTime},
-      {name:'feedback',min:0.0,max:1.2,curve:.7,callback:this.setFeedback}
-    ]
-
-    //populate array of parameters
-    this.param = this.generateParameters(paramDefinitions)
-    //generate setters and getters
-    this.createAccessors(this, this.param);
-
-
-    generateParameters(paramDefinitions) {
-    const params = {};
-    paramDefinitions.forEach((def) => {
-      const param = new Parameter(def);
-      params[def.name] = param;
-    });
-    return params;
-  }
-
-  createAccessors(parent, params) {
-    Object.keys(params).forEach((key) => {
-      Object.defineProperty(parent, key, {
-        get: () => params[key].value,
-        set: (newValue) => {
-          params[key].value = newValue;
-        },
-      });
-    });
-  }
-
-  //access parameters by:
-  object.time = .1 //called by gui element
-  object.feedback = .5
-
-  //also: setter should update a linked gui object
 */
 
+import basicLayout from './layouts/basicLayout.json';
+
 export class Parameter {
-  constructor(options) {
+  constructor(options, gui = null, layout = basicLayout) {
 
     this.name = options.name || 'param'
     this.min = options.min || 0;
     this.max = options.max || 1;
     this.curve = options.curve || 1; // Curve for value scaling
-    this._value = Array.isArray(options.value)?options.value : options.value || this.scaleValue(0.5, 0, 1, this.min, this.max, this.curve); // Real to normalized
     this.rawValue = this.unScaleValue(options.value || 0.5, 0, 1, this.min, this.max, this.curve); // Normalized to real
-    this.callback = options.callback || function(x){}
-    //this._value = this.min; // Initial value
-    this._value = Array.isArray(options.value)
-            ? [...options.value]
-            : (options.value || 0);
     this.normalizedValue = 0
+    this.group = options.group || 'default'; // Group assignment
+    this._value = Array.isArray(options.value) ? options.value
+        : options.value !== undefined ? options.value
+        : this.scaleValue(0.5, 0, 1, this.min, this.max, this.curve);
+    this.callback = options.callback || function () {};
+    this.control = null; // GUI control
+    this.gui = gui; // GUI framework
+    this.layout = layout || basicLayout; // Layout info
+    this.type = options.type || 'vcf'
+    this.radioOptions = options.radioOptions || null; // Store available options for radioBox
+    this.guiElements = []; // Store references to GUI elements for array values
+    this.labels = options.labels || null;
+    this.set(this._value)
+  };
 
-    // Automatically generate setter and getter for the parameter
-    
-    };
-
-    get(index = null) {
-      if (Array.isArray(this._value)) {
-          return index !== null ? this._value[index] : this._value;
-      }
-      return this._value;
+  get(index = null) {
+    if (Array.isArray(this._value)) {
+        return index !== null ? this._value[index] : this._value;
     }
-    set(newValue, index = null) {
-      console.log(newValue, index, this._value)
+    return this._value;
+  }
+  set(newValue, index = null, calledByGui=false) {
+    //console.log('set', this.name, newValue, this._value)
+    if (Array.isArray(this._value)) {
+        if (Array.isArray(newValue)) {
+            // Set entire array
+            this._value = [...newValue];
+            newValue.forEach((val, i) => this.callback(val, i));
+        } else if (index !== null) {
+            // Set specific index
+            this._value[index] = newValue;
+            this.callback(newValue, index);
+        } else {
+            // Fill array with single value
+            this._value.fill(newValue);
+            this._value.forEach((val, i) => this.callback(val, i));
+        }
+    } else {
+        // Scalar value
+        this._value = newValue;
+        this.callback(newValue, null);
+    }
+
+    // Update GUI if attached
+    // Update GUI elements
+    if(calledByGui==false){
       if (Array.isArray(this._value)) {
-          if (Array.isArray(newValue)) {
-              // Set the entire array
-              this._value.splice(0, this._value.length, ...newValue);
-              console.log('a', newValue)
-              for(let i=0;i<newValue.length;i++){
-                this.callback(newValue[i], i); // Callback for the entire array
-              }
-          } else if (index !== null) {
-              // Set individual array element
-              this._value[index] = newValue;
-              console.log('t', newValue, index)
-              this.callback(newValue, index); // Callback for the single element
-          } else {
-              // Fill the array with a single value
-            console.log('o', newValue, index)
-              this._value.fill(newValue);
-            for(let i=0;i<this._value.length;i++){
-                this.callback(this._value[i], i); // Callback for the entire array
-              }
-          }
-      } else {
-          // Set scalar value
-        console.log('x', newValue, index)
-          this._value = newValue;
-          this.callback(newValue, null);
+          this.guiElements.forEach((gui, i) => gui.forceSet(this._value[i]));
+      } else if (this.guiElements.length > 0) {
+          this.guiElements[0].forceSet(this._value);
       }
+    }
   }
   
 
@@ -104,6 +74,35 @@ export class Parameter {
       this.value = newValue; // Update the parameter when the control changes
     };
   }
+
+  createGui() {
+        const { x, y, width, height } = this.layout;
+        const groupColor = this.getGroupColor(this.group);
+
+        this.control = this.gui.Knob({
+            label: this.name,
+            min: this.min,
+            max: this.max,
+            size: width,
+            x:x,
+            y:y,
+            accentColor: groupColor,
+            callback: (value) => this.set(value),
+        });
+
+        // Sync initial value
+        this.control.setValue(this.get());
+    }
+
+    getGroupColor(group) {
+        const colors = {
+            vco: [200, 0, 0],
+            vcf: [0, 200, 0],
+            env: [0, 0, 200],
+            default: [100, 100, 100],
+        };
+        return colors[group] || colors.default;
+    }
 
   /**
    * Set the parameter value in real-world units (e.g., hertz or amplitude).

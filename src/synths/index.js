@@ -26,7 +26,7 @@ export { Feedback } from './Feedback.js';
 export { QuadPanner } from './Panner.js';
 export { Quadrophonic } from './Quadrophonic.js';
 export { Drummer } from './Drummer.js';
-// export { Feedback } from './Feedback.js';
+export { Twinkle } from './Twinkle.js';
 // export { Feedback } from './Feedback.js';
 // export { Feedback } from './Feedback.js';
 // export { Feedback } from './Feedback.js';
