@@ -172,15 +172,15 @@ export class Rumble extends MonophonicTemplate {
         else if(i==2)this.vcf_env.sustain = x
         else if(i==3)this.vcf_env.release = x
       }},
-    {name:'pwm',min:0,max:1,curve:1,value:[0,0,0],callback:(x,i=null)=>{
-        if(i==0)this.lfo_pwm_1.factor.value = x
-        else if(i==1)this.lfo_pwm_2.factor.value = x
-        else if(i==2)this.lfo_pwm_3.factor.value = x
-      }},
-    {name:'lfoRate',min:0,max:1000,curve:1,value:1,callback:(x,i=null)=>this.lfo.frequency.value=x},
-    {name:'distortion',min:0,max:1,curve:.35,value:1,callback:x=>{this.clip.factor.value = x}},
-    {name:'mix',min:0,max:1,curve:1,value:.35,callback:x=>{this.direct_level.factor.value = x}},
-      ]
+      {name:'pwm',min:0,max:1,curve:1,value:[0,0,0],callback:(x,i=null)=>{
+          if(i==0)this.lfo_pwm_1.factor.value = x
+          else if(i==1)this.lfo_pwm_2.factor.value = x
+          else if(i==2)this.lfo_pwm_3.factor.value = x
+        }},
+      {name:'lfoRate',min:0,max:1000,curve:1,value:1,callback:(x,i=null)=>this.lfo.frequency.value=x},
+      {name:'distortion',min:0,max:1,curve:.35,value:1,callback:x=>{this.clip.factor.value = x}},
+      {name:'mix',min:0,max:1,curve:1,value:.35,callback:x=>{this.direct_level.factor.value = x}},
+    ]
 
     this.param = this.generateParameters(paramDefinitions)
     this.createAccessors(this, this.param);

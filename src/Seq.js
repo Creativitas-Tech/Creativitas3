@@ -5,27 +5,49 @@ import * as Tone from 'tone';
 import { Theory, parseStringSequence, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from './TheoryModule';
 
 export class Seq {
-    constructor(synth, arr = [0], subdivision = '8n', phraseLength = 'infinite', num = 0, callback:null) {
+     constructor(synth, arr = [0], subdivision = '8n', phraseLength = 'infinite', num = 0, callback = null) {
         this.synth = synth; // Reference to the synthesizer
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
-        this.subdivision = subdivision;
-        this.enable = 1;
-        this.octave = 0;
-        this.sustain = .1;
-        this.roll = .02;
+        this._subdivision = subdivision; // Local alias
+        this._octave = 0;                // Local alias
+        this._sustain = 0.1;             // Local alias
+        this._roll = 0.02;               // Local alias
+        this._velocity = 100;            // Local alias
+        this._transform = (x) => x;      // Local alias
         this.phraseLength = phraseLength;
+        this.enable = 1;
         this.min = 24;
         this.max = 127;
-        this.velocity = 100;
         this.loopInstance = null;
-        this.num = num; // Sequence number, if needed
+        this.num = num;
         this.callback = callback;
-        this.parent = null
+        this.parent = null;
         this.index = 0;
 
         this.createLoop();
-        //console.log('seq made')
     }
+
+    get subdivision() { return this._subdivision;}
+    set subdivision(val) {
+        this._subdivision = val;
+        this.setSubdivision(val); // Update loop timing if needed
+    }
+    get octave() {return this._octave; }
+    set octave(val) {this._octave = val; }
+    get sustain() {return this._sustain;}
+    set sustain(val) {  this._sustain = val; }
+    get roll() {  return this._roll; }
+    set roll(val) {    this._roll = val; }
+     get velocity() { return this._velocity; }
+    set velocity(val) {  this._velocity = val; }
+     get transform() {  return this._transform;}
+    set transform(val) {
+        if (typeof val !== 'function') {
+            throw new TypeError('Transform must be a function');
+        }
+        this._transform = val;
+    }
+
 
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
@@ -47,7 +69,6 @@ export class Seq {
         if (this.loopInstance) {
             this.loopInstance.dispose();
         }
-
         this.createLoop();
     }
 
@@ -170,46 +191,11 @@ export class Seq {
         this.sequence(this.vals, subdivision);
     }
 
-
-    set rolls(val) {
-        this.roll = val;
-    }
-
-    set velocitys(val) {
-        this.velocity = val;
-    }
-
-    set octaves(val) {
-        this.octave = val;
-    }
-
-    set sustains(val) {
-        this.sustain = val;
-    }
-
-    setVelocity(velocity = 100) {
-        this.velocity = velocity;
-    }
-
-    setSustain(val = .1) {
-        if (val <= 0) return;
-        this.sustain = val;
-    }
-
-    setOctave(val = 0) {
-        val = val < -4 ? -4 : val > 4 ? 4 : val;
-        this.octave = val;
-    }
-
     setSubdivision(sub = '8n') {
-        this.subdivision = sub;
+        this._subdivision = sub;
         if (this.loopInstance) {
             this.loopInstance.interval = Tone.Time(this.subdivision);
         }
-    }
-
-    setRoll(val = 0) {
-        this.roll = val;
     }
 
     perform_transform(curBeat){
@@ -247,10 +233,6 @@ export class Seq {
             // console.log("returning", curBeat);
             return curBeat;
         }
-    }
-
-    transform(val){
-        return val;
     }
 
     setTransform(func){

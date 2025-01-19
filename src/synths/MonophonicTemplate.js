@@ -240,6 +240,24 @@ export class MonophonicTemplate {
     });
 }//createAccessors
 
+    setParameter(name, value, time = null) {
+        const param = this.param[name];
+        if (!param) throw new Error(`Parameter '${name}' does not exist.`);
+        
+        if (time) {
+            // Handle sequenced parameter updates
+            param.callback(value, time);
+        } else {
+            // Handle immediate parameter updates
+            param.callback(value);
+        }
+
+        // Update associated GUI elements
+        if (param.guiElement) {
+            param.guiElement.setValue(value);
+        }
+    }
+
     get() {
         let output = 'Parameters:\n';
         for (let key in this.param) {
@@ -425,93 +443,46 @@ export class MonophonicTemplate {
         this.seq[num].expr(func, len, subdivision);
     }
 
-    set velocitys(val) {
-        this.setVelocity(val);
-    }
-
-    set octaves(val) {
-        this.setOctave(val);
-    }
-
-    set sustains(val) {
-        this.setSustain(val);
-    }
-
-    set subdivisions(val) {
-        this.setSubdivision(val);
-    }
-
-    set transforms(val) {
-        this.setTransform(val);
-    }
-
-    set rolls(val) {
-        for (let seq of this.seq) {
-            if (seq) seq.roll = val;
+    set velocity(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].velocity = val
         }
     }
 
-    /**
-     * Sets the velocity for a loop
-     * 
-     * @param {string} velocity - MIDI velocity value
-     */
-    setVelocity(velocity = 100, num = 'all') {
-        if (num === 'all') {
-            for (let seq of this.seq) {
-                if (seq) seq.setVelocity(velocity);
-            }
-        } else {
-            if (this.seq[num]) this.seq[num].setVelocity(velocity);
+    set octave(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].octave = val
         }
     }
 
-    /**
-     * Sets the sustain for a loop
-     * 
-     * @param {number} val - Sustain value
-     */
-    setSustain(val = .1, num = 'all') {
-        if (val <= 0) return;
-        if (num === 'all') {
-            for (let seq of this.seq) {
-                if (seq) seq.setSustain(val);
-            }
-        } else {
-            if (this.seq[num]) this.seq[num].setSustain(val);
+    set sustain(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].sustain = val
         }
     }
 
-    /**
-     * Sets the octave for a loop
-     * 
-     * @param {number} val - Octave value
-     */
-    setOctave(val = 0, num = 'all') {
-        val = val < -4 ? -4 : val > 4 ? 4 : val;
-        if (num === 'all') {
-            for (let seq of this.seq) {
-                if (seq) seq.setOctave(val);
-            }
-        } else {
-            if (this.seq[num]) this.seq[num].setOctave(val);
+    set subdivision(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].subdivision = val
         }
     }
 
-    /**
-     * Sets the subdivision for the loop and adjusts the playback rate accordingly.
-     * 
-     * @param {string} sub - The subdivision to set (e.g., '16n', '8n', '4n', '2n').
-     */
-    setSubdivision(sub = '8n', num = 'all') {
-        if (num === 'all') {
-            for (let seq of this.seq) {
-                if (seq) seq.setSubdivision(sub);
-            }
-        } else {
-            if (this.seq[num]) this.seq[num].setSubdivision(sub);
+    set transform(val) {
+        if (typeof val !== 'function') {
+            console.warn(`Transform must be a function. Received: ${typeof val}`);
+            return;
+        }
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].transform = val
         }
     }
+
+    set roll(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].roll = val
+        }
+    }
+
 
     /**
      * Sets the transformation for the loop.
@@ -650,7 +621,7 @@ export class MonophonicTemplate {
         this.drawing = new ArrayVisualizer(arr, target, ratio);
     }
 
-    getNoteParam(val, index) {
+    getSeqParam(val, index) {
         //console.log(val, index,)
         if (Array.isArray(val)) return val[index % val.length];
         else return val;
@@ -668,10 +639,10 @@ export class MonophonicTemplate {
 
         if (note < 0) return;
 
-        let octave = this.getNoteParam(this.seq[num].octave, index);
-        let velocity = this.getNoteParam(this.seq[num].velocity, index);
-        let sustain = this.getNoteParam(this.seq[num].sustain, index);
-        let subdivision = this.getNoteParam(this.seq[num].subdivision, index);
+        let octave = this.getSeqParam(this.seq[num].octave, index);
+        let velocity = this.getSeqParam(this.seq[num].velocity, index);
+        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         
         try {
             //console.log('trig', time, val[1], Tone.Time(this.subdivision))

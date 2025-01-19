@@ -283,18 +283,3 @@ export class Daisies extends MonophonicTemplate{
   	console.log('Daisies is obsolete: use Polyphony(Daisy) instead')
 		}
 }
-
-// class audioElement{
-// 	constructor(toneCOnstrucor,tone_params,gui_type,gui_params){
-// 		this.main = new 	ToneConstructor()
-// 		this.mainCV = new Tone.Multiply().connect(this.main.frequency)
-// 		this.secondCV = new Tone.Multiply().connect(this.main.frequency)
-// 		this.threeCV = new Tone.Multiply().connect(this.main.frequency)
-
-// 		createtoneelement
-// 		createguielement
-// 		linkelements		
-// 	}
-// }
-
-//let i = new audioElement('Tone.Filter',{frequency:100},'gui.Knob',{x,y,min,max})
