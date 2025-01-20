@@ -59,7 +59,7 @@ export class Twinkle extends MonophonicTemplate {
     this.vca_lvl.connect(this.vca.factor)
     this.env = new Tone.Envelope();
     this.env.releaseCurve = 'linear'
-    this.env.decayCurve = 'linear'
+    this.env.decayCurve = 'exponential'
     this.env_depth = new Tone.Multiply()
     this.env.connect(this.env_depth)
     this.env_depth.connect(this.vca.factor)
@@ -79,7 +79,7 @@ export class Twinkle extends MonophonicTemplate {
     this.keyTracker.connect(this.vcf.frequency)
 
     let paramDefinitions = [
-      {name:'type',type:'vco',radioOptions:['square','saw','tri','sine'],callback:(x,time=null)=>{
+      {name:'type',type:'vco',value:'square',radioOptions:['square','saw','tri','sine'],callback:(x,time=null)=>{
           switch(x){
           case 'square': this.vco.type = 'pulse'; break;
             case 'saw': this.vco.type = 'sawtooth'; break;
@@ -91,7 +91,7 @@ export class Twinkle extends MonophonicTemplate {
       {name:'cutoff',type:'vcf',min:20.,max:10000,curve:2,callback:(x,time=null)=>this.cutoffSig.value = x},
       {name:'Q',type:'vcf',min:0.,max:30,curve:2,callback:(x,time=null)=>this.vcf.Q.value = x},
       {name:'keyTrack',type:'hidden',min:0.,max:2,curve:1,callback:(x,time=null)=>this.keyTracker.factor.value = x},
-      {name:'envDepth',type:'vcf',min:0.,max:5,curve:2,callback:(x,time=null)=>this.vcf_env_depth.factor.value = x},
+      {name:'envDepth',type:'vcf',min:-1000,max:5000,curve:2,callback:(x,time=null)=>this.vcf_env_depth.factor.value = x},
       {name:'level',value:0,type:'vca',min:0.,max:1,curve:2,callback:(x,time=null)=>this.vca_lvl.value = x},
       {name:'adsr',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
         labels:['attack','decay','sustain','release'],
@@ -113,6 +113,7 @@ export class Twinkle extends MonophonicTemplate {
     //for autocomplete
     this.autocompleteList = paramDefinitions.map(def => def.name);;
     //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
+    setTimeout(()=>{this.loadPreset('default')}, 500);
   }//constructor
 
   //envelopes
@@ -267,4 +268,124 @@ export class Twinkle extends MonophonicTemplate {
       border: 2 // Adjust as needed
     });
   }
+
+  /**
+     * Save a preset by name
+     * @param {string} name - Name of the preset to save
+     * @returns {void}
+     * @example synth.savePreset('default')
+     */
+    savePreset (name) {
+        const _preset = {};
+        for (let element of Object.values(this.param)) {
+            _preset[element.name] = element._value;
+        }
+        console.log(this.presets)
+        // Update the presetsData in memory
+        //console.log(this.presets);
+        if (!this.presets[name]) {
+            this.presets[name] = {};
+        }
+        this.presets[name] = _preset;
+
+        console.log(`Preset saved under ${this.name}/${name}`);
+    };
+
+    /**
+     * Download the presets data as a JSON file
+     * @returns {void}
+     * @example synth.downloadPresets()
+     */
+    downloadPresets ()  {
+        this.presetsData = this.presets;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.presetsData, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", `${this.name}Presets.json`);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
+
+    /**
+     * Load a preset by name
+     * @param {string} name - Name of the preset to load
+     * @returns {void}
+     * @example synth.loadPreset('default')
+     */
+    loadPreset(name) {
+        this.curPreset = name;
+        const presetData = this.presets[this.curPreset];
+
+        if (presetData) {
+            console.log("Loading preset ", this.curPreset);
+            for (let name in presetData) {
+                try {
+                    for (let element of Object.values(this.param)) {
+                        this.param[name].set(presetData[name])
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        } else {
+            console.log("No preset of name ", name);
+        }
+    }
+
+    logPreset() {
+        const presetData = this.presets[this.curPreset];
+
+        if (presetData) {
+
+          let output = 'Parameters:\n';
+          for (let key in presetData) {
+              const param = presetData[key];
+              if (Array.isArray(param)) {
+                  const formattedArray = param.map((value) => {
+                      if (typeof value === "number") {
+                          return Number(value.toFixed(2)); // Limit to 2 decimals
+                      }
+                      return value; // Keep non-numbers unchanged
+                  });
+
+                  output += `${key}: [${formattedArray.join(", ")}]\n`; // Add the array to output
+              }
+              else if(typeof param === 'number') output += `${key}: ${param.toFixed(2)}\n`;
+              else output += `${key}: ${param}\n`;
+          }
+          console.log(output);
+        }
+        /*
+
+        if (presetData) {
+            console.log("Preset " + this.curPreset);
+            for (let id in presetData) {
+                try {
+                    for (let element of Object.values(this.gui.elements)) {
+                        if (element.id === id) {
+                            if (element.type !== 'momentary') console.log(id, presetData[id]);
+                        }
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        } 
+  */
+        else {
+            console.log("No preset of name ", this.curPreset);
+        }
+    }
+
+    /**
+     * Console log all available presets
+     * @returns {void}
+     * @example synth.listPresets()
+     */
+    listPresets() {
+        console.log("Synth presets", this.presets);
+    }
+
 }
+

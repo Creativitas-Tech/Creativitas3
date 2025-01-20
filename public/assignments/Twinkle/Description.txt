@@ -1,0 +1,17 @@
+### ADSR envelopes
+
+Envelopes are how we change a sound over time. An ADSR envelope is based on how a piano sound might change:
+* Attack time: how quickly the sound fades in
+* Decay time: simulates a a quick decay to the steady sustain state
+* Sustain amplitude: this is like a piano note ringing out while you hold the key down
+* Release time: how quickly the note fades out when you release a key
+
+### Questions
+
+* What is the difference between the different VCO types, both what you see in the oscilloscope and spectrogram and also how they sound?
+
+* Why are there different controls for cutoff and envDepth? How are they similar? How are they different?
+
+* Explore the decay and release controls. How are they different? Is there a point where decay seems to not have an effect? Why?
+
+* Set the decay to a very low value, and explore the sequencer sustain (`s.sustain`, values from 0.01 to 0.5) and the ADSR sustain value. How do they work together?
