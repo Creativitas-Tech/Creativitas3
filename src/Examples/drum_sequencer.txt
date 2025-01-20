@@ -15,7 +15,7 @@ for (let i = 0; i < num_pads; i++) {
     x: 11 + 11*i,  // Position the toggle switches
     y: 11,
     border: 10,
-    borderColor: [128,0,128],
+    borderColor: [255,0,0],
     size: .7
   }));
   noteToggles_1[i].set(0);  // Default all to "off"
@@ -31,7 +31,7 @@ for (let i = 0; i < num_pads; i++) {
     x: 11 + 11*i, 
     y: 35,
     border: 10,
-    borderColor: [255,0,0],
+    borderColor: [0,128,0],
     size: .7
   }));
   noteToggles_2[i].set(0);  // default all to "on"
@@ -48,7 +48,7 @@ for (let i = 0; i < num_pads; i++) {
     x: 11 + 11*i, 
     y: 35+24,
     border: 10,
-    borderColor: [0,128,0],
+    borderColor: [0,0,255],
     size: .7
   }));
   noteToggles_3[i].set(0);  // default all to "off"
@@ -64,13 +64,12 @@ for (let i = 0; i < num_pads; i++) {
     x: 11 + 11*i, 
     y: 35+24*2,
     border: 10,
-    borderColor: [0,0,255],
+    borderColor: [128,0,128],
     size: .7
   }));
   noteToggles_4[i].set(0);  // default all to "off"
 }
 function changeLedColor(colorIndex, on){
-  console.log(colorIndex);
   let message = 0;
   let output = null;
   if(on){
@@ -80,16 +79,20 @@ function changeLedColor(colorIndex, on){
     message = [0x90 | 1, colorIndex, 127];
     output = midi.midi.outputs.get("output-2");
     output.send(message)
-    console.log("sent on msg");
   }else{
     message = [0x80 | 0, colorIndex, 127];
     output = midi.midi.outputs.get("output-2");
     output.send(message)
-    message = [0x80 | 1, colorIndex, 127];
+    message = [0x90 | 1, colorIndex, 127];
     output = midi.midi.outputs.get("output-2");
     output.send(message)
-    console.log("sent off msg");
   }
+}
+
+function blinkLed(colorIndex){
+  let message = [0x90 | 3, colorIndex, 127];
+  let output = midi.midi.outputs.get("output-2");
+  output.send(message)
 }
 
 setMidiInput(2);
@@ -105,16 +108,18 @@ let noteToggles = [noteToggles_1, noteToggles_2, noteToggles_3, noteToggles_4];
 let symbols = ['O', 'X', '^', '2'];
 let cur_lane = 0;
 changeLedColor(cur_lane, true);
-
+// sampler.callback = function(i, x){if(i%4==0) console.log("here")}
 
 setNoteOnHandler( (note,vel)=>{
   if (note == 9){
       cur_lane = (cur_lane+3)%4;
       changeLedColor(cur_lane, true);
+      // blinkLed(cur_lane);
   }
   else if (note == 10){
       cur_lane = (cur_lane+1)%4;
       changeLedColor(cur_lane, true);
+      // blinkLed(cur_lane);
   }
   else if (note >= 0 && note < 8){
       noteOns[cur_lane][note%60] = !noteOns[cur_lane][note%60];
