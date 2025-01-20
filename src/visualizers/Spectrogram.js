@@ -30,6 +30,7 @@ export const Spectrogram = function (_target, height = 100) {
     // Audio context and analyser node
     this.audioContext = window.audioContext || new (window.AudioContext || window.webkitAudioContext)();
     this.analyserNode = this.audioContext.createAnalyser();
+    this.analyserNode.smoothingTimeConstant = 0.0;
     this.input= new Tone.Multiply()
     this._gain = new Tone.Signal(0.1)
     this.input.connect( this.analyserNode )

@@ -80,6 +80,45 @@ export class MonophonicTemplate {
         }, '16n').start();
     }
 
+    
+    /**
+     * Save a preset by name
+     * @param {string} name - Name of the preset to save
+     * @returns {void}
+     * @example synth.savePreset('default')
+     */
+    savePreset (name) {
+        const _preset = {};
+        for (let element of Object.values(this.gui.elements)) {
+            _preset[element.id] = element.value;
+        }
+        console.log(this.presets, this.gui)
+        // Update the presetsData in memory
+        //console.log(this.presets);
+        if (!this.presets[name]) {
+            this.presets[name] = {};
+        }
+        this.presets[name] = _preset;
+
+        console.log(`Preset saved under ${this.name}/${name}`);
+    };
+
+    /**
+     * Download the presets data as a JSON file
+     * @returns {void}
+     * @example synth.downloadPresets()
+     */
+    downloadPresets ()  {
+        this.presetsData = this.presets;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.presetsData, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", `${this.name}Presets.json`);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
+
     /**
      * Load a preset by name
      * @param {string} name - Name of the preset to load

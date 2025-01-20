@@ -52,7 +52,7 @@ export class Polyphony extends MonophonicTemplate{
 
 	triggerRelease = function(val, time=null){
 		this.v = this.getActiveNote(val)
-		if (this.v >= 0){
+		if (this.v >= 0 && this.v != undefined){
 			//console.log('tr ', val, time, this.activeNotes[val], this.v, this.voice[this.v])
 			if(time) this.voice[this.v].triggerRelease(time) //midinote,velocity,time
 			else this.voice[this.v].triggerRelease() 
@@ -139,7 +139,7 @@ export class Polyphony extends MonophonicTemplate{
 
     // Free a specific active note (remove it from the array)
     freeActiveNote(index) {
-        if (index !== undefined && index >= 0) {
+        if (this.voice[index] !== undefined && index >= 0) {
         	this.voice[index].triggerRelease()
             this.activeNotes[index] = -1;  // Remove the note if found
         }
@@ -488,7 +488,7 @@ initGui(selfRef, gui) {
 
 	panic = function(){
 		for(let i=0;i<this.numVoices;i++){
-			this.voice[this.v].triggerRelease()
+			this.voice[i].triggerRelease()
 			this.activeNotes[i]  = -1
 		}
 	}
