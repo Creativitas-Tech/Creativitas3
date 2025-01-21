@@ -133,6 +133,7 @@ function Editor(props) {
     window.setCCHandler = midi.midiHandlerInstance.setCCHandler.bind(midi.midiHandlerInstance);
     window.sendCC = midi.midiHandlerInstance.sendCC.bind(midi.midiHandlerInstance);
     window.sendNote = midi.midiHandlerInstance.sendNoteOn.bind(midi.midiHandlerInstance);
+    window.sendNoteOff = midi.midiHandlerInstance.sendNoteOff.bind(midi.midiHandlerInstance);
 
     //synths
     window.NoiseVoice = NoiseVoice
@@ -171,6 +172,7 @@ function Editor(props) {
     // window.Feedback = Feedback;
     // window.Feedback = Feedback;
 
+    window.create_sequencer_gui = create_sequencer_gui;
 
     //utilities
     window.stepper = stepper
@@ -247,7 +249,78 @@ function Editor(props) {
     //console.log('test')
     const value = localStorage.getItem(`${props.page}Value`) || props.starterCode;
     
-
+    function create_sequencer_gui(gui){
+        let num_pads = 8
+        gui.createCanvas(700,200); 
+        let noteToggles_1 = [];
+        let noteOn_1 = [true, true, true, true, true, true, true, true];
+        for (let i = 0; i < num_pads; i++) {
+          noteToggles_1.push(gui.Toggle({
+            callback: function (x) {
+              noteOn_1[i] = x == 0 ? false : true;  // Toggle noteOn for the sequence
+            },
+            label: " ",
+            x: 11 + 11*i,  // Position the toggle switches
+            y: 15,
+            border: 10,
+            borderColor: [255,0,0],
+            size: .7
+          }));
+          noteToggles_1[i].set(0);  // Default all to "off"
+        }
+        let noteOn_2 = [true, true, true, true, true, true, true, true];  // toggle states for sequence steps
+        let noteToggles_2 = [];
+        for (let i = 0; i < num_pads; i++) {
+          noteToggles_2.push(gui.Toggle({
+            callback: function (x) {
+              noteOn_2[i] = x == 0 ? false : true; 
+            },
+            label: " ",
+            x: 11 + 11*i, 
+            y: 39,
+            border: 10,
+            borderColor: [0,128,0],
+            size: .7
+          }));
+          noteToggles_2[i].set(0);  // default all to "on"
+        }
+        let noteOn_3 = [true, true, true, true, true, true, true, true]; 
+        let noteToggles_3 = [];
+        for (let i = 0; i < num_pads; i++) {
+          noteToggles_3.push(gui.Toggle({
+            label: " ", 
+            callback: function (x) {
+              noteOn_3[i] = x == 0 ? false : true; 
+            },
+            label: " ",
+            x: 11 + 11*i, 
+            y: 35+28,
+            border: 10,
+            borderColor: [0,0,255],
+            size: .7
+          }));
+          noteToggles_3[i].set(0);  // default all to "off"
+        }
+        let noteOn_4 = [true, true, true, true, true, true, true, true]; 
+        let noteToggles_4 = [];
+        for (let i = 0; i < num_pads; i++) {
+          noteToggles_4.push(gui.Toggle({
+            callback: function (x) {
+              noteOn_4[i] = x == 0 ? false : true; 
+            },
+            label: " ",
+            x: 11 + 11*i, 
+            y: 39+24*2,
+            border: 10,
+            borderColor: [128,0,128],
+            size: .7
+          }));
+          noteToggles_4[i].set(0);  // default all to "off"
+        }
+        let noteOns = [noteOn_1, noteOn_2, noteOn_3, noteOn_4];
+        let noteToggles = [noteToggles_1, noteToggles_2, noteToggles_3, noteToggles_4];
+        return [noteOns, noteToggles];
+      }
 
     /************************************************
      * 
