@@ -299,16 +299,17 @@ export class DrumSampler extends DrumTemplate{
   // } 
 
   sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
-        this.start(num);
+        //this.start(num);
+    console.log(arr)
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.triggerDrum.bind(this));
+            this.seq[num] = new Seq(this, '0', subdivision, phraseLength, num, this.triggerDrum.bind(this));
             this.seq[num].parent = this
             this.seq[num].vals = parseStringSequence(arr)
             this.seq[num].loopInstance.stop()
             this.seq[num].createLoop = this.newCreateLoop
             this.seq[num].createLoop()
         } else {
-            console.log('update seq')
+            //console.log('update seq')
             this.seq[num].drumSequence(arr, subdivision, phraseLength);
         }
     }
@@ -388,7 +389,7 @@ export class DrumSampler extends DrumTemplate{
                 curBeat = this.checkForRandomElement(curBeat);
 
                 const event = parseStringBeat(curBeat, time);
-                console.log(event,curBeat, this.vals,time,this.index, this.subdivision)
+                //console.log(event,curBeat, this.vals,time,this.index, this.subdivision)
                 for (const val of event) {
                   this.parent.triggerDrum(val[0], 0, time + val[1] * (Tone.Time(this.subdivision)));
                 }
@@ -410,10 +411,10 @@ export class DrumSampler extends DrumTemplate{
     val = val[0]
     switch(val){
       case '.': break;
-      case '0': this.new.trigger(1,0.1,time); break; //just because. . . .
+      case '0': this.new.trigger(1,1,time); break; //just because. . . .
       case 'O': this.new.trigger(1,1,time); break;
       //case 'O': this.triggerVoice(this.kick,this.kickVelocity[num],time); break;
-      case 'o': this.triggerVoice(this.kick,.5,time); break;
+      case 'o': this.new.trigger(.5,1.5,time); break;
       case 'X': this.triggerVoice(this.snare,1,time); break;
       case 'x': this.triggerVoice(this.snare,.5,time); break;
       // case '*': this.triggerVoice(this.hihat,this.closedVelocity[num],time); break;
@@ -626,7 +627,7 @@ class DrumVoice{
       }},
       {name:'amp',min:0,max:1,curve:2,callback:x=>this.output.factor.value = x},
       {name:'dry',min:0,max:1,curve:2,callback:x=>this.dryOut.factor.value = x},
-      {name:'rate',min:-10,max:10,curve:1,callback:x=>{
+      {name:'rate',value:1, min:-10,max:10,curve:1,callback:x=>{
         this.voice.playbackRate = Math.abs(x)
         if(x<0) this.voice.reverse = true
       }},
@@ -645,30 +646,93 @@ class DrumVoice{
     this.env.release = decay*choke
   }
   trigger(amplitude, decay,time){
-    //console.log(amplitude,decay,time)
-    this.env.release = decay == 0 ? this.decayTime * this.chokeRatio : this.decayTime
-    this.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
-    this.voice.start(time, this.startPoint)
-    this.env.triggerAttackRelease(0.001, time)
+    //console.log(amplitude,decay,time, this.voice)
+    try{
+      this.env.release = decay == 0 ? this.decayTime * this.chokeRatio : this.decayTime
+      this.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
+      this.voice.start(time, this.startPoint)
+      //this.voice.start()
+      this.env.triggerAttackRelease(0.001, time)
+    } catch(e){
+        console.log('time error', e)
+    }
+
+    
   }
 
   generateParameters(paramDefinitions) {
         const params = {};
         paramDefinitions.forEach((def) => {
-        const param = new Parameter(def);
-        params[def.name] = param;
+            const param = new Parameter(def);
+            params[def.name] = param;
         });
         return params;
     }
 
     createAccessors(parent, params) {
-        Object.keys(params).forEach((key) => {
-          Object.defineProperty(parent, key, {
-            get: () => params[key].value,
-            set: (newValue) => {
-              params[key].value = newValue;
+      console.log(params)
+    Object.keys(params).forEach((key) => {
+        const param = params[key];
+
+        // Ensure the Parameter object has a `set` method
+        if (typeof param.set !== 'function') {
+            throw new Error(`Parameter '${key}' does not have a set method`);
+        }
+
+        // Proxy to handle array-like access
+        const proxyHandler = {
+            get(target, prop) {
+                if (typeof prop === 'string' && !isNaN(prop)) {
+                    // Access individual array element
+                    return target.get(parseInt(prop));
+                }
+                return target.get();
             },
-          });
+            set(target, prop, value) {
+                console.log(target, prop, value)
+                if (typeof prop === 'string' && !isNaN(prop)) {
+                    // Set individual array element
+                    target.set(value, parseInt(prop));
+                    return true;
+                }
+                // Set the entire array or scalar value
+                target.set(value);
+                return true;
+            }
+        };
+
+        // Define the accessor property on the parent
+        Object.defineProperty(parent, key, {
+            get: () => new Proxy(param, proxyHandler),
+            set: (newValue) => param.set(newValue),
         });
+    });
+}//createAccessors
+
+    setParameter(name, value, time = null) {
+        const param = this.param[name];
+        if (!param) throw new Error(`Parameter '${name}' does not exist.`);
+        
+        if (time) {
+            // Handle sequenced parameter updates
+            param.callback(value, time);
+        } else {
+            // Handle immediate parameter updates
+            param.callback(value);
+        }
+
+        // Update associated GUI elements
+        if (param.guiElement) {
+            param.guiElement.setValue(value);
+        }
+    }
+
+    get() {
+        let output = 'Parameters:\n';
+        for (let key in this.param) {
+            const param = this.param[key];
+            output += `${param.name}: ${param._value}\n`;
+        }
+        console.log(output);
     }
 }
