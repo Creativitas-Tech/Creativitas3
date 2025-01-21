@@ -1,0 +1,39 @@
+//4 lane drum sequencer
+
+//synth setup
+const sampler = new DrumSampler()
+const output = new Tone.Multiply(.1).toDestination()
+const verb = new Diffuseur()
+sampler.connect(output)
+let symbols = ['O', 'X', '^', '2'];
+let cur_lane = 0;
+
+//gui setup
+let noteOns = [];
+let noteToggles = [];
+let gui = new p5(sketch, Canvas);
+[noteOns, noteToggles] = create_sequencer_gui(gui);
+
+//midi setup
+setMidiInput(2);
+setMidiOutput(2);
+sendNote(cur_lane, 127, 1); //set led colors
+sendNote(cur_lane, 127, 2);
+
+setNoteOnHandler( (note,vel)=>{
+  if (note == 9){
+      cur_lane = (cur_lane+3)%4;
+      sendNote(cur_lane, 127, 1); //update led colors
+      sendNote(cur_lane, 127, 2);
+  }
+  else if (note == 10){
+      cur_lane = (cur_lane+1)%4;
+      sendNote(cur_lane, 127, 1);
+      sendNote(cur_lane, 127, 2);
+  }
+  else if (note >= 0 && note < 8){
+      noteOns[cur_lane][note%60] = !noteOns[cur_lane][note%60];
+      noteToggles[cur_lane][note%60].set(noteOns[cur_lane][note%60] ? 1 : 0);
+      sampler.sequence(noteOns[cur_lane].map(value => (value ? symbols[cur_lane] : '.')).join(''), '4n', cur_lane);
+  }
+})

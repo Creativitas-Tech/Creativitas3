@@ -1,0 +1,84 @@
+//Robin Arpeggiator
+
+let num_pads = 8
+let noteVals = [0,1,2,3,4,5,6,7];
+let pitch = -1;
+let pattern = 0
+let original_seq = []
+let labels = ["Original", "Ascending", "Descending", "Random", "PingPong"]
+
+//Synth setup
+let s = new Rumble()
+let output = new Tone.Multiply(.1).toDestination()
+s.connect(output)
+s.sequence([])
+
+setMidiInput(2)
+
+//gui setup
+let gui2 = new p5(sketch, Canvas);
+gui2.createCanvas(700,200);
+let toggles = [];
+let noteOn = [true, true, true, true, true, true, true, true]; 
+for (let i = 0; i < num_pads; i++) {
+  toggles.push(gui2.Toggle({
+    callback: function (x) {
+      noteOn[i] = x == 0 ? false : true;  // Toggle noteOn for the sequence
+    },
+    label: " ",
+    x: 11 + 11*i,  // Position the toggle switches
+    y: 50,
+    border: 10,
+    borderColor: [0,128,0],
+    size: 1
+  }));
+  toggles[i].set(0);  // Default all to "off"
+}
+let curOrderLabel = gui2.Text({
+  label: labels[0],
+  border: 1,
+  y: 85,
+  x: 15
+})
+
+//MIDI handling
+setNoteOnHandler( (note,vel)=>{
+  console.log(note);
+  if (note == 9){
+      pattern = (pattern + 1)%5;
+      curOrderLabel.label = labels[pattern];
+  }else if (note == 10){
+      pattern = (pattern + 4)%5;
+      curOrderLabel.label = labels[pattern];
+  }else{
+    pitch = noteVals.indexOf(note);
+    if(pitch == -1){
+      return;
+    }
+    if(original_seq.includes(pitch)){
+       original_seq = original_seq.filter(element => element !== pitch);
+       toggles[noteVals.indexOf(note)].set(0);
+    }else{
+      original_seq.push(pitch);
+      toggles[noteVals.indexOf(note)].set(1);
+    }
+  }
+  if (pattern == 0){ //inputted order
+    s.seq[0] = original_seq;
+  } else if(pattern == 1){ //ascending
+    s.seq[0] = original_seq.slice().sort();
+  } else if(pattern == 2){ //descending
+    s.seq[0] = original_seq.slice().sort().reverse();
+  }else if(pattern == 3){ //random
+    s.seq[0] = original_seq.slice().sort(() => Math.random() - 0.5);
+  }else if(pattern == 4){ //pingpong
+    if(s.seq[0].length < 3){
+      return;
+    }
+    s.seq[0] = original_seq.slice().sort().slice(1);
+    s.seq[0] = s.seq[0].concat(original_seq.slice().sort().reverse().slice(1));
+  }
+})
+setNoteOffHandler((note, vel)=>{
+  return;
+})
