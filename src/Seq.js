@@ -81,6 +81,7 @@ export class Seq {
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
 
             let curBeat = this.vals[this.index % this.vals.length];
+            if(curBeat == undefined) curBeat = '.'
 
             //console.log("before transform", '.'+curBeat+'.')
             curBeat = this.perform_transform(curBeat);
@@ -199,10 +200,12 @@ export class Seq {
     }
 
     perform_transform(curBeat){
+        if(curBeat === '[]') return '.'
         if(!isNaN(Number(curBeat))){ //make sure it's a number
             // console.log("returning", String(this.transform(Number(curBeat))))
             return String((this.transform(Number(curBeat))));
         }else if(curBeat[0]==='['){ //it's an array
+            if(curBeat.length <3) return '.'
             for(let i = 0; i < curBeat.length; i++){
                 if(!isNaN(Number(curBeat[i])) && curBeat[i].trim() !== ""){
                     let curNum = curBeat[i];

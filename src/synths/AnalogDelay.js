@@ -71,11 +71,11 @@ export class AnalogDelay {
       {name:'feedback',min:0.0,max:1.2,curve:.7,callback:this.setFeedback},
       {name:'damping',min:100,max:10000,curve:2,callback:this.setFilterFrequency},
       {name:'hpf',min:10,max:2000,curve:2,callback:value=>this.highpass.frequency.value = value},
-      {name:'dry',min:0.0,max:1.2,curve:2,callback:value=>this.drySig.factor.value = value},
+      {name:'dry',value:0,min:0.0,max:1.2,curve:2,callback:value=>this.drySig.factor.value = value},
       {name:'wet',min:0.0,max:1.2,curve:2,callback:value=>this.wetSig.factor.value = value},
       {name:'gain',min:0.0,max:1,curve:0.2,callback:value=>this.ws_input.factor.value = value},
       {name:'amp',min:0.0,max:1.2,curve:2,callback:value=>this.output.factor.value = value},
-      {name:'delayRatio',min:0.5,max:1,curve:1,callback:value=>{
+      {name:'delayRatio',value:0,min:0.5,max:1,curve:1,callback:value=>{
         this._delayRatio = value
         this.setDelayTime(this.delay.delayTime.value)}},
     ]
