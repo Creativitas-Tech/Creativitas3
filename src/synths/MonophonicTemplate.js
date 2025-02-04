@@ -71,9 +71,9 @@ export class MonophonicTemplate {
                 this.drawing.startVisualFrame();
                 if (this.seq[this.seqToDraw]) {
                     const seq = this.seq[this.seqToDraw];
-                    if (seq.seq.length > 0) {
+                    if (seq.vals.length > 0) {
                         const index = Math.floor(Theory.ticks / Tone.Time(seq.subdivision).toTicks());
-                        this.drawing.visualize(seq.seq, index);
+                        this.drawing.visualize(seq.vals, index);
                     }
                 }
             }
@@ -126,25 +126,28 @@ export class MonophonicTemplate {
      * @example synth.loadPreset('default')
      */
     loadPreset(name) {
-        this.curPreset = name;
-        const presetData = this.presets[this.curPreset];
+        setTimeout(()=>{
+            this.curPreset = name;
+            const presetData = this.presets[this.curPreset];
 
-        if (presetData) {
-            console.log("Loading preset ", this.curPreset);
-            for (let id in presetData) {
-                try {
-                    for (let element of Object.values(this.gui.elements)) {
-                        if (element.id === id) {
-                            if (element.type !== 'momentary') element.set(presetData[id]);
+            if (presetData) {
+                console.log("Loading preset ", this.curPreset);
+                for (let id in presetData) {
+                    try {
+                        for (let element of Object.values(this.gui.elements)) {
+                            //console.log(element.id, element)
+                            if (element.id === id) {
+                                if (element.type !== 'momentary') element.set(presetData[id]);
+                            }
                         }
+                    } catch (e) {
+                        console.log(e);
                     }
-                } catch (e) {
-                    console.log(e);
                 }
+            } else {
+                console.log("No preset of name ", name);
             }
-        } else {
-            console.log("No preset of name ", name);
-        }
+        },50)
     }
 
     logPreset() {
@@ -682,17 +685,19 @@ export class MonophonicTemplate {
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
         let sustain = this.getSeqParam(this.seq[num].sustain, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
-        
+        //octave = 0
+        //velocity=100
+
         try {
             //console.log('trig', time, val[1], Tone.Time(this.subdivision))
             this.triggerAttackRelease(
                 note + octave * 12,
                 velocity,
                 sustain,
-                time + val[1] * (Tone.Time(this.seq[num].subdivision))
+                time + val[1] * (Tone.Time(subdivision))
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * (Tone.Time(subdivision)));
+            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision));
         }
     }
 }
