@@ -158,7 +158,7 @@ export class Rumble extends MonophonicTemplate {
       }},
       {name:'cutoff',min:20.,max:20000,curve:2,callback:(x)=>this.cutoffSig.value = x},
       {name:'Q',min:0.,max:30,curve:2,callback:(x)=>this.vcf.Q.value = x},
-      {name:'keyTracking',min:0.,max:2,curve:1,callback:(x)=>this.keyTracking.factor.value = x},
+      {name:'keyTrack',min:0.,max:2,curve:1,callback:(x)=>this.keyTracking.factor.value = x},
       {name:'vcfEnvDepth',min:0.,max:1000,curve:2,callback:(x)=>this.vcf_env_depth.factor.value = x},
       {name:'adsr',min:0,max:100,curve:1,value:[.01,.1,.5,.5],callback:(x,i=null)=>{
         if(i==0)this.env.attack = x
