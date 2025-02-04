@@ -1,0 +1,18 @@
+The expr() method gives you a way to define sequences algorithmically. 
+* e.g. `s.expr( i=> i%8%3)`
+* `s.expr( function, (optional) sequence length, (optional) sequence rhythm, (optional) sequence number)`
+
+The function needs to be in the form of `i=> i`. 
+* `i=> i%4` gives [0,1,2,3]
+* `i=> i/4+i%3` gives [0,1,2,0, 2,3,1,2, 4,2,3,4, etc.]
+
+You can use ternary if then statements:
+* `i=> (conditionan) ? (execute if true) : ·execute if false)`
+* `i=> i%4==0 ? i%16 : '.'` gives '0... 4... 8... 12...'
+
+If the function goes onto two lines you must return the final value:
+`i=>{
+	if(i%8==0) return 0
+	else if(i%3==1) return 1
+	else return i%3	
+}`

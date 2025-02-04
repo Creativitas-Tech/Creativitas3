@@ -1,0 +1,14 @@
+A sampler playback object based on Tone.Player.
+
+For Player, the sequencer can either retrigger the sample at different points within the sample, or can control pitch of the sample
+* `p.sequenceTime = false` to enable pitch control
+* pitch control is a bit wonky - if you really want this a better option is to use the Simpler
+
+When sequencing time, the sequencer value determines where in the audiofile the sample is played from 
+* `p.baseUnit` determines how many chunks the audiofile is split into, and the sequencer value determines which chunk to play
+* `p.baseUnit = 8` and `p.sequence('0 1 2 3 4 5 6 7')` plays the whole audiofile
+
+Loading samples:
+* use predefined samples (call p.listSamples() for the list)
+* use a url to a cors compliant website
+* call load() with no argument to upload a file from your computer

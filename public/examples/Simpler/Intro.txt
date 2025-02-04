@@ -1,0 +1,1 @@
+A simple polyphonic sampler for playing back pitched samples.

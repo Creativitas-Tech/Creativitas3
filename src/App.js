@@ -18,16 +18,16 @@ function App() {
   const [markdownContent, setMarkdownContent] = useState("");
 
   const exampleFiles = [
-    'DrumSampler', 
+    'DrumSampler', 'Player', 'Rumble', 'Simpler'
     //'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
   ];
   const assignmentFiles = [
-    'Assignment 1', 'Twinkle'
+    'Assignment 1', 'Twinkle', 'Robin Sensors', 'Robin Examples'
     //'Grids1', 'Comp5', 'Comp6',  'SamplePlayer', 'Comp7', 'Algorithms', 'Comp8', 'Comp9'
   ];
   const referenceFiles = [
     // 'DrumSampler', 'Rumble', 'Simpler', 
-     'Oscilloscope', 'Spectroscope'
+     'Oscilloscope', 'Spectroscope','Theory','Sequencing','Debugging',`Expr`
   ];
 
   const homeStarterCode = `/*

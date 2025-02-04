@@ -1,0 +1,17 @@
+What do you do when things don't work as expected?
+* Try refreshing the page and trying again.
+* Open the javascript console (search for how to do this for your browser) and see what messages are posted
+* Try executing one line at a time and monitoring the console. This will help you identify which code is having problems
+
+You can also `console.log()` any named element like variable, objects, or functions - just to see what they are doing
+* Many objects have dedicated logging methods like:
+* `s.get()` to log synth parameters
+
+If you are experimenting with audio objects, try using an oscilloscope to monitor the output of individual audio objects.
+* `s.connect( scope.input)` will connect an object to the scope
+* `s.disconnect( scope.input)` will disconnect an object from the scope
+
+It can also be helpful just to turn up the volume:
+* `output.factor.value = .5` for the main output
+* many synths have output value as well, e.g.
+* `s.output.factor.value`

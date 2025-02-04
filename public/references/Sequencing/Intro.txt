@@ -1,0 +1,23 @@
+There are lots of ways to sequence events. Synths typically create note sequences using strings:
+* `s.seq('0 2 4 2 0 -3 -2 -1')`
+* an optional second argument sets the rhythm value for the sequence
+* `s.seq('0 1 2 3', '8n')`
+* Available rhythm values: '16n', '8n', '4n', '2n', '1n'
+
+There are several special symbols you can use:
+* '.' periods create rests
+* '0@4' the '@' symbol repeats notes
+* '[2 4]' brackets group notes into one beat
+* '[0,2,4]' notes separated by commas are played at the same time
+* notes can be modified using accidentals, '0 2b 4' or '1 3# 5'
+
+There are several additional sequencer parameters:
+* `s.sustain = 0.1` sets the length of the sustain phase for ADSR envelopes
+* `s.octave = 1` transposes the sequence by octave
+* `s.velocity = 100` sets the velocity (amplitude) of the sequence
+* `s.start()` and `s.stop()` work as expected
+
+All synths have 10 possible simultaneous sequencers. You can access them using s.seq[0] through s.seq[9]. Changing sequencer parameters as shown above updates all sequences. You can also target individual sequences:
+* `s.seq[0].sustain = .1`
+* `s.seq[2].stop()`
+

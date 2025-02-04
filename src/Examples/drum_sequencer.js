@@ -1,23 +1,34 @@
 //4 lane drum sequencer
+Theory.tempo = 90
 
 //synth setup
 const sampler = new DrumSampler()
 const output = new Tone.Multiply(.1).toDestination()
 const verb = new Diffuseur()
 sampler.connect(output)
-let symbols = ['O', 'X', '^', '2'];
-let cur_lane = 0;
+sampler.connect(verb), verb.connect(output)
 
-//gui setup
+let gui2 = new p5(sketch,Canvas)
+sampler.initGui(gui2)
+
+sampler.loadPreset('breakbeat')
+verb.load('spring') //or plate or hall
+verb.output.factor.value = .6
+
+//sequencer gui setup
 let noteOns = [];
 let noteToggles = [];
 let gui = new p5(sketch, Canvas);
 [noteOns, noteToggles] = create_sequencer_gui(gui);
+let symbols = ['O', 'X', '^', '2'];
+let cur_lane = 0;
 
 //midi setup
 setMidiInput(2);
 setMidiOutput(2);
-sendNote(cur_lane, 127, 1); //set led colors
+
+//setting LEDs on robin
+sendNote(cur_lane, 127, 1); //color, brightness, LED#
 sendNote(cur_lane, 127, 2);
 
 setNoteOnHandler( (note,vel)=>{
@@ -34,6 +45,8 @@ setNoteOnHandler( (note,vel)=>{
   else if (note >= 0 && note < 8){
       noteOns[cur_lane][note%60] = !noteOns[cur_lane][note%60];
       noteToggles[cur_lane][note%60].set(noteOns[cur_lane][note%60] ? 1 : 0);
-      sampler.sequence(noteOns[cur_lane].map(value => (value ? symbols[cur_lane] : '.')).join(''), '4n', cur_lane);
+      sampler.sequence(noteOns[cur_lane].map(value => (value ? symbols[cur_lane] : '.')).join(''), '8n', cur_lane);
   }
 })
+setNoteOffHandler((note,vel)=>{})
+setCCHandler((note,vel)=>{})
