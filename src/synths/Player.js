@@ -8,6 +8,7 @@ import * as Tone from 'tone';
 //import SimplerPresets from './synthPresets/SimplerPresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Theory, parsePitchStringSequence, parsePitchStringBeat,getChord, pitchNameToMidi, intervalToMidi} from '../TheoryModule'
+import { Seq } from '../Seq'
 
 class CustomPlayer extends Tone.Player {
     set playbackRate(rate) {
@@ -63,7 +64,7 @@ export class Player extends MonophonicTemplate {
 
         this.sample = ''
         this.sampleDuration = 0
-        this._baseUnit = 1
+        this._baseUnit = 16
         this.seqControlsPitch = false
         this._start = 0
         this._end = 100
@@ -71,27 +72,27 @@ export class Player extends MonophonicTemplate {
         this._baseNote = 60
 
         let paramDefinitions = [
-          {name:'volume',min:-36,max:0,curve:1,callback:x=>this.player.volume.value = Tone.gainToDb(x)},
-          {name:'cutoff',min:100,max:10000,curve:2,callback:value=>this.cutoffSig.value = value},
-          {name:'Q',min:0.0,max:20,curve:2,callback:value=>this.vcf.Q.value = value},
-          {name:'filterType',min:0.0,max:20,curve:2,callback:value=>this.vcf.type = value},
-          {name:'filterEnvDepth',min:0.0,max:5000,curve:2,callback:value=>this.vcfEnvDepth.factor.value = value},
-            {name:'loopStart',min:0,max:10000,curve:1,callback:x=>this.player.loopStart =x},
-            {name:'loopEnd',min:0,max:10000,curve:1,callback:x=>this.player.loopEnd =x},
-            {name:'loop',min:0,max:1,curve:1,callback:x=>this.player.loop = x>0},
-            {name:'fadeIn',min:0,max:10,curve:3,callback:x=>this.player.fadeIn =x},
-            {name:'fadeOut',min:0,max:10,curve:3,callback:x=>this.player.fadeOut =x},
-            {name:'baseUnit',min:-36,max:0,curve:1,callback:x=>this._baseUnit =x},
-            {name:'playbackRate',min:0,max:1000,curve:1,callback:x=>{
+          {name:'volume',value: -6,min:-36,max:0,curve:1,callback:x=>this.player.volume.value = x},
+          {name:'cutoff',value:20000,min:100,max:10000,curve:2,callback:value=>this.cutoffSig.value = value},
+          {name:'Q',min:0.0,value:0,max:20,curve:2,callback:value=>this.vcf.Q.value = value},
+          {name:'filterType',value:'lowpass',min:0.0,max:20,curve:2,callback:value=>this.vcf.type = value},
+          {name:'filterEnvDepth',value:0,min:0.0,max:5000,curve:2,callback:value=>this.vcfEnvDepth.factor.value = value},
+            {name:'loopStart',value:0,min:0,max:10000,curve:1,callback:x=>this.player.loopStart =x},
+            {name:'loopEnd',value:1,min:0,max:10000,curve:1,callback:x=>this.player.loopEnd =x},
+            {name:'loop',value:false, min:0,max:1,curve:1,callback:x=>this.player.loop = x>0},
+            {name:'fadeIn',value:0.005, min:0,max:10,curve:3,callback:x=>this.player.fadeIn =x},
+            {name:'fadeOut',value: 0.1,min:0,max:10,curve:3,callback:x=>this.player.fadeOut =x},
+            {name:'baseUnit',value:16, min:0,max:60000,curve:1,callback:x=>this._baseUnit =x},
+            {name:'playbackRate',value:1,min:0,max:1000,curve:1,callback:x=>{
                 if(x<0)this.player.reverse = 1
                 this._playbackRate=Math.abs(x); 
                 this.player.playbackRate = Math.abs(x)
             }},
-            {name:'sequenceTime',min:0,max:1,curve:1,callback:x=>this.seqControlsPitch = (x>0)},
-            {name:'startTime',min:0,max:10000,curve:1,callback:x=>this._start = x},
-            {name:'endTime',min:0,max:10000,curve:1,callback:x=>this._end = x},
+            {name:'sequenceTime',value:true,min:0,max:1,curve:1,callback:x=>this.seqControlsPitch = !x},
+            {name:'startTime',value:0, min:0,max:10000,curve:1,callback:x=>this._start = x},
+            {name:'endTime',value:1, min:0,max:10000,curve:1,callback:x=>this._end = x},
             {name:'baseNote',min:0,max:127,curve:1,callback:x=>this._baseNote = x},
-            {name:'reverse',min:0,max:1,curve:1,callback:x=> {
+            {name:'reverse',value:false, min:0,max:1,curve:1,callback:x=> {
                 if(x>0) this.player.reverse = 1
                 else this.player.reverse = 0
             }},
@@ -106,7 +107,6 @@ export class Player extends MonophonicTemplate {
           {name:'Q',min:0.0,max:20,curve:2,callback:value=>this.vcf.Q.value = value},
           {name:'filterEnvDepth',min:0.0,max:5000,curve:2,callback:value=>this.vcfEnvDepth.factor.value = value},
           ]
-
 
         this.param = this.generateParameters(paramDefinitions)
         this.createAccessors(this, this.param);
@@ -156,6 +156,7 @@ export class Player extends MonophonicTemplate {
             try{
                 this.player.load(file)
                 console.log('file loaded from ', file)
+                this.getSampleDuration()
                 return
             }catch{}
           console.error(`The sample "${file}" is not available.`);
@@ -224,32 +225,34 @@ export class Player extends MonophonicTemplate {
     triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
         //console.log(freq,amp,dur,time)
         amp = amp/127
+        dur+=.2
         if(time){
             if(!this.seqControlsPitch) {
-                //console.log(freq,dur)
+                //console.log('noy', freq,dur)
                 if(this._playbackRate!= this.player.playbackRate) this.player.playbackRate = this._playbackRate
-                this.player.start(time,freq, dur)
+                this.player.start(time,freq)
             }
             else {
-                //console.log('pitch',freq,amp,dur,time)
+                //console.log('pitch',dur.toFixed(2), this._start,time)
                 this.player.playbackRate = this.midiToRate(freq)
-                this.player.start(time, this._start, dur)
+                this.player.start(time, this._start)
             }
             this.filterEnv.triggerAttackRelease(dur,time)
             this.vca.factor.setValueAtTime(amp, time)
-        } else{
-            if(!this.seqControlsPitch) {
-                if(this._playbackRate!= this.player.playbackRate) this.player.playbackRate = this._playbackRate
-                this.player.start(Tone.now(),freq, dur)
-            }
-            else {
-                //console.log('pitch',freq,amp,dur,time)
-                this.player.playbackRate = this.midiToRate(freq)
-                this.player.start(Tone.now(), this._start, dur)
-            }
-            this.filterEnv.triggerAttackRelease(dur)
-            this.vca.factor.setValueAtTime(amp)
-        }
+         } 
+        //else{
+        //     if(!this.seqControlsPitch) {
+        //         if(this._playbackRate!= this.player.playbackRate) this.player.playbackRate = this._playbackRate
+        //         this.player.start(Tone.now(),freq, dur)
+        //     }
+        //     else {
+        //         //console.log('pitch',freq,amp,dur,time)
+        //         this.player.playbackRate = this.midiToRate(freq)
+        //         this.player.start(Tone.now(), this._start, dur)
+        //     }
+        //     this.filterEnv.triggerAttackRelease(dur)
+        //     this.vca.factor.setValueAtTime(amp)
+        // }
     }//attackRelease
 
     midiToRate(note){
@@ -306,15 +309,31 @@ export class Player extends MonophonicTemplate {
         },100);
     }
 
+    /**
+     * Sequences the provided array of notes and initializes a Tone.Loop with the given subdivision.
+     *
+     * @param {string} arr - The sequence of notes as a string.
+     * @param {string} [subdivision] - The rhythmic subdivision for the loop (e.g., '16n', '8n').
+     * @param {string} num (default 0) - the sequence number. Up to 10 sequences per instance.
+     */
+    sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].sequence(arr, subdivision, phraseLength);
+        }
+        this.start(num);
+    }
 
     /*
     For Player the sequencer controls the sample start time by default.
     - sample start times are normalized where 0-1 is the length of the sample
     this.seqControlsPitch allows controlling sample pitch instead
     */
-    parseNoteString(val, time, num){
+    parseNoteString(val, time, index, num){
         if(this.sampleDuration==0){
                 console.log(`Sample duration: 0 seconds`)
+                this.getSampleDuration()
                 return;
             } 
         //console.log(val,val[0]*this.sampleDuration,time,num)
@@ -344,13 +363,19 @@ export class Player extends MonophonicTemplate {
         const div = val[1]
         if(note < 0) return
 
-        //console.log(note, this.velocity[num], this.sustain[num], time)
+        let octave = this.getSeqParam(this.seq[num].octave, index);
+        let velocity = this.getSeqParam(this.seq[num].velocity, index);
+        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
+        if(!this.seqControlsPitch) note = note / this._baseUnit
+        note = note+octave
+        //console.log(note, velocity, sustain, time)
       // this.player.start(time + div * (Tone.Time(this.subdivision[num])), note, this.sustain[num]);
    //return
        try{
-            this.triggerAttackRelease(note + this.sequences[num].octave*12, this.sequences[num].velocity, this.sequences[num].sustain, time + div * (Tone.Time(this.subdivision[num])));
+            this.triggerAttackRelease(note, velocity, sustain, time + div * Tone.Time(subdivision));
         } catch(e){
-            console.log('invalid note', note + this.sequences[num].octave *12, this.sequences[num].velocity, this.sequences[num].sustain)
+            console.log('invalid note', note , velocity, sustain)
         }
     }
 }
