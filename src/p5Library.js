@@ -96,7 +96,7 @@ export const sketch = (p) => {
     }
 
     p.windowResized = function () {
-        p.divResized();
+        //p.divResized();
     };
 
     p.openWebcam = function(width, height) {
