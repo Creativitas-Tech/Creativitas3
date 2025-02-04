@@ -11,11 +11,6 @@
  * closedEnv -> hatVca.factor
  * 
  * kick has a dry output pre-comp and distortion
- * 
- * 
- * 
- * 
- * 
  */
 
 import * as Tone from 'tone';
@@ -32,7 +27,7 @@ import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitch
  * extends DrumTemplate
  */
 export class DrumSampler extends DrumTemplate{
-  constructor(kit = "acoustic", gui=null) {
+  constructor(kit = "default", gui=null) {
     super()
     this.gui = gui
     this.presets = DrumSamplerPresets
@@ -95,14 +90,14 @@ export class DrumSampler extends DrumTemplate{
     this.dry_kick.connect(this.output)
     //
 
-    this.new = new DrumVoice()
-    this.new.output.connect(this.comp)
+    this.newKick = new DrumVoice()
+    this.newKick.output.connect(this.comp)
     this.newHat = new DrumVoice()
     this.newHat.output.connect(this.comp)
     this.p1 = new DrumVoice()
     this.p1.output.connect(this.comp)
 
-    this.loadSamples(this.kit)
+    setTimeout(()=>this.loadSamples(this.kit),100)
     this.hatDecay = .05
     this.prevTime = 0
 
@@ -119,7 +114,7 @@ export class DrumSampler extends DrumTemplate{
     if (this.gui !== null) {
             this.initGui()
             this.hideGui();
-            this.loadPreset('default');
+            setTimeout(this.loadPreset('default'),1000);
         }
 
         for(let i=0;i<10;i++) {
@@ -231,12 +226,15 @@ export class DrumSampler extends DrumTemplate{
 
      if (this.kit in this.drumFolders) {
       console.log(`Drumsampler loading ${this.kit}`);
+      this.baseUrl = "https://tonejs.github.io/audio/drum-samples/".concat(this.drumFolders[this.kit]);
+    } else if(this.kit === 'default'){
+        this.baseUrl = "./audio/drumDefault";
     } else {
       console.error(`The kit "${this.kit}" is not available.`);
       return
     }
 
-    this.baseUrl = "https://tonejs.github.io/audio/drum-samples/".concat(this.drumFolders[this.kit]);
+    
     this.urls = {
       "C3": "/kick.mp3",
       "D3": "/snare.mp3",
@@ -245,14 +243,18 @@ export class DrumSampler extends DrumTemplate{
       "G3": "/tom2.mp3",
       "A3": "/tom3.mp3"
     }
-    this.kick.load( this.baseUrl.concat("/kick.mp3") )
-    this.snare.load( this.baseUrl.concat("/snare.mp3") )
-    this.hihat.load( this.baseUrl.concat("/hihat.mp3") )
-    this.newHat.voice.load( this.baseUrl.concat("/hihat.mp3") )
-    this.tom[0].load( this.baseUrl.concat("/tom1.mp3") )
-    this.tom[1].load( this.baseUrl.concat("/tom2.mp3") )
-    this.tom[2].load( this.baseUrl.concat("/tom3.mp3") )
-    this.new.voice.load( this.baseUrl.concat("/kick.mp3") )
+    try{
+      this.kick.load( this.baseUrl.concat("/kick.mp3") )
+      this.snare.load( this.baseUrl.concat("/snare.mp3") )
+      this.hihat.load( this.baseUrl.concat("/hihat.mp3") )
+      this.newHat.voice.load( this.baseUrl.concat("/hihat.mp3") )
+      this.tom[0].load( this.baseUrl.concat("/tom1.mp3") )
+      this.tom[1].load( this.baseUrl.concat("/tom2.mp3") )
+      this.tom[2].load( this.baseUrl.concat("/tom3.mp3") )
+      this.newKick.voice.load( this.baseUrl.concat("/kick.mp3") )
+    } catch(e){
+      console.log('unable to load samples - try calling loadPreset(`default`)')
+    }
   }
 
   /**
@@ -411,14 +413,14 @@ export class DrumSampler extends DrumTemplate{
     val = val[0]
     switch(val){
       case '.': break;
-      case '0': this.new.trigger(1,1,time); break; //just because. . . .
-      case 'O': this.new.trigger(1,1,time); break;
+      case '0': this.newKick.trigger(1,1,time); break; //just because. . . .
+      case 'O': this.newKick.trigger(1,1,time); break;
       //case 'O': this.triggerVoice(this.kick,this.kickVelocity[num],time); break;
-      case 'o': this.new.trigger(.5,1.5,time); break;
+      case 'o': this.newKick.trigger(.5,1.5,time); break;
       case 'X': this.triggerVoice(this.snare,1,time); break;
       case 'x': this.triggerVoice(this.snare,.5,time); break;
       // case '*': this.triggerVoice(this.hihat,this.closedVelocity[num],time); break;
-      case '*': this.newHat.trigger(.75,0.1,time); break;
+      case '*': this.newHat.triggerChoke(.75,0.1,time); break;
       case '^': this.newHat.trigger(.75,1,time); break;
       case '1': this.triggerVoice(this.tom[0],1,time); break;
       case '2': this.triggerVoice(this.tom[1],1,time); break;
@@ -428,9 +430,9 @@ export class DrumSampler extends DrumTemplate{
   }
   triggerNew(voice, amplitude, time){
     console.log('new')
-    this.new.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
-    this.new.voice.start(time)
-    this.new.env1.triggerAttackRelease(0.001, time)
+    this.newKick.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
+    this.newKick.voice.start(time)
+    this.newKick.env1.triggerAttackRelease(0.001, time)
   }
 
   triggerVoice(voice, amplitude, time){
@@ -456,7 +458,7 @@ export class DrumSampler extends DrumTemplate{
       voice.start( time )
       if(curEnv !== null) curEnv.triggerAttackRelease(.001, time)
     } catch(e){
-      console.log('time error')
+      //console.log('time error')
     }
     // } else { console.log('caught time error', time, this.prevTime)}
     // this.prevTime = time
@@ -490,6 +492,38 @@ export class DrumSampler extends DrumTemplate{
         }
       }
 
+  /**
+     * Load a preset by name
+     * @param {string} name - Name of the preset to load
+     * @returns {void}
+     * @example synth.loadPreset('default')
+     */
+    loadPreset(name) {
+        setTimeout(()=>{
+          this.curPreset = name;
+        const presetData = this.presets[this.curPreset];
+
+        if (presetData) {
+            console.log("Loading preset ", this.curPreset, presetData);
+            for (let id in presetData) {
+                try {
+                    for (let element of Object.values(this.gui_elements)) {
+                        
+                        if (element.id === id) {
+                          //console.log(id, presetData[id])
+                            if (element.type !== 'momentary') element.set(presetData[id]);
+                        }
+                    }
+                } catch (e) {
+                    console.log(e);
+                }
+            }
+        } else {
+            console.log("No preset of name ", name);
+        }
+      },1000)
+    }
+
   /** create a visual gui on the gui element.
    * The gui element can be passed in the constructor or here
    * @param {number} [x = 10] - base X position
@@ -506,11 +540,11 @@ export class DrumSampler extends DrumTemplate{
       this.values_array = [];
 
       // Create GUI elements for VCA controls (factor controls)
-      const kick_vca_knob = this.createKnob('Kick', 0, 40, 0, 1, .5, [200, 50, 0], x => this.kick_gain.factor.value = x);
+      const kick_vca_knob = this.createKnob('Kick', 0, 40, 0, 1, .5, [200, 50, 0], x => this.newKick.output.factor.value = x);
       const snare_vca_knob = this.createKnob('Snare', 0, 20, 0, 1, .5, [200, 50, 0], x => this.snare_gain.factor.value = x);
-      const hat_vca_knob = this.createKnob('Hihat', 0, 0, 0, 1, .5, [200, 50, 0], x => this.hihat_vca.factor.value = x);
+      const hat_vca_knob = this.createKnob('Hihat', 0, 0, 0, 1, .5, [200, 50, 0], x => this.newHat.output.factor.value = x);
       const toms_vca_knob = this.createKnob('Toms', 0, 60, 0, 1, .5, [200, 50, 0], x => {this.tom_gain[0].factor.value = x; this.tom_gain[1].factor.value = x ;this.tom_gain[2].factor.value = x});
-      const kick_decay_knob = this.createKnob('decay', 10, 40, 0, 1, .5, [200, 50, 0], x => this.kickEnv.release = x*10+.01);
+      const kick_decay_knob = this.createKnob('decay', 10, 40, 0, 1, .5, [200, 50, 0], x => this.newKick.decay = x*10+.01);
       const snare_decay_knob = this.createKnob('decay', 10, 20, 0, 1, .5, [200, 50, 0], x => this.snareEnv.release = x*10+.01);
       const toms_decay_knob = this.createKnob('decay', 10, 60, 0, 1, .5, [200, 50, 0], x => {this.tomEnv[0].release = x*10+.01; this.tomEnv[1].release = x*10+.01 ;this.tomEnv[2].release = x*10+.01});
       
@@ -518,9 +552,9 @@ export class DrumSampler extends DrumTemplate{
       const dry_kick_knob = this.createKnob('Dry Kick', 40, 40, 0, 1, .4, [200, 50, 0], x => this.dry_kick.factor.value = x);
 
       // Create GUI elements for Playback Rate controls
-      const kick_rate_knob = this.createKnob('rate', 20, 40, 0., 2, .4, [200, 50, 0], x => this.kick.playbackRate = x);
+      const kick_rate_knob = this.createKnob('rate', 20, 40, 0., 2, .4, [200, 50, 0], x => this.newKick.rate = x);
       const snare_rate_knob = this.createKnob('rate', 20, 20, 0., 2, .4, [200, 50, 0], x => this.snare.playbackRate = x);
-      const hat_rate_knob = this.createKnob('rate', 20, 0, 0., 2, .4, [200, 50, 0], x => this.hihat.playbackRate = x);
+      const hat_rate_knob = this.createKnob('rate', 20, 0, 0., 2, .4, [200, 50, 0], x => this.newHat.rate = x);
       const tom1_rate_knob = this.createKnob('1 Rate', 20, 60, 0., 2, .4, [200, 50, 0], x => this.tom[0].playbackRate = x);
       const tom2_rate_knob = this.createKnob('2 Rate', 30, 60, 0., 2, .4, [200, 50, 0], x => this.tom[1].playbackRate = x);
       const tom3_rate_knob = this.createKnob('3 Rate', 40, 60, 0., 2, .4, [200, 50, 0], x => this.tom[2].playbackRate = x);
@@ -533,8 +567,8 @@ export class DrumSampler extends DrumTemplate{
       const distort_knob = this.createKnob('Distort', 60, 60, 0, 1, .5, [200, 50, 0], x => this.distortion.distortion = x);
 
       // Create GUI element for Hat Decay
-      const hihat_decay_knob = this.createKnob('Closed Decay', 40, 0, 0.01, .5, .75, [200, 50, 0], x => this.closedEnv.release = x);
-      const open_decay_knob = this.createKnob('Open Decay', 50, 0, 0.01, 2, .75, [200, 50, 0], x => this.openEnv.decay = x);
+      const hihat_decay_knob = this.createKnob('Closed Decay', 40, 0, 0.01, 1, .75, [200, 50, 0], x => this.newHat.choke = x);
+      const open_decay_knob = this.createKnob('Open Decay', 50, 0, 0.01, 2, .75, [200, 50, 0], x => this.newHat.decay = x);
   
       const kit_dropdown = this.gui.Dropdown({
         label: 'kit', dropdownOptions: this.drumkitList,
@@ -619,11 +653,9 @@ class DrumVoice{
     let paramDefinitions = [
       {name:'choke',min:0.,max:1,curve:2,callback:x=>{
         this.chokeRatio = x
-        this.env.release = x*this.decayTime
       }},
-      {name:'decay',min:0.0,max:10,curve:2,callback:x=>{
+      {name:'decay',min:0.0,max:5,curve:3,callback:x=>{
         this.decayTime = x
-        this.env.release = x*this.chokeRatio
       }},
       {name:'amp',min:0,max:1,curve:2,callback:x=>this.output.factor.value = x},
       {name:'dry',min:0,max:1,curve:2,callback:x=>this.dryOut.factor.value = x},
@@ -645,10 +677,10 @@ class DrumVoice{
     this.chokeRatio = choke
     this.env.release = decay*choke
   }
-  trigger(amplitude, decay,time){
+  triggerSample(amplitude, decay,time){
     //console.log(amplitude,decay,time, this.voice)
     try{
-      this.env.release = decay == 0 ? this.decayTime * this.chokeRatio : this.decayTime
+      //this.env.release = decay == 0 ? this.decayTime * this.chokeRatio : this.decayTime
       this.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
       this.voice.start(time, this.startPoint)
       //this.voice.start()
@@ -656,9 +688,17 @@ class DrumVoice{
     } catch(e){
         console.log('time error', e)
     }
-
-    
   }
+    trigger(amplitude, decay,time){
+      this.env.release =  this.decayTime
+      this.env.decay =  this.decayTime 
+      this.triggerSample(amplitude, decay,time)
+    }
+    triggerChoke(amplitude, decay,time){
+      this.env.release =  this.decayTime * this.chokeRatio
+      this.env.decay =  this.decayTime * this.chokeRatio
+      this.triggerSample(amplitude, decay,time)
+    }
 
   generateParameters(paramDefinitions) {
         const params = {};
