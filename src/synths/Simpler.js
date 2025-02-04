@@ -42,7 +42,7 @@ export class Simpler extends MonophonicTemplate {
         this.sample = ''
 
         let paramDefinitions = [
-          {name:'volume',min:-36,max:0,curve:1,callback:x=>this.sampler.volume.value = Tone.gainToDb(x)},
+          {name:'volume',min:-36,max:0,curve:1,callback:x=>{this.sampler.volume.value = Math.pow(10,x/20)}},
           {name:'attack',min:0.01,max:1,curve:2,callback:x=>{this.sampler.attack=x}},
           {name:'release',min:.01,max:10,curve:2,callback:x=>{ this.sampler.release=x }},
           {name:'cutoff',min:100,max:10000,curve:2,callback:value=>this.cutoffSig.value = value},
@@ -160,16 +160,17 @@ export class Simpler extends MonophonicTemplate {
     }
 
     triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
-        this.sampler.release = this.release 
+        this.param.release = this.release 
         freq = Tone.Midi(freq).toFrequency()
         amp = amp/127
+        console.log(freq,amp,dur)
         if(time){
             this.sampler.triggerAttackRelease(freq, dur, time, amp)
             this.filterEnv.triggerAttackRelease(dur,time)
             this.vca.factor.setValueAtTime(amp, time)
         } else{
-            this.sampler.triggerAttackRelease(freq, dur)
-            this.filterEnv.triggerAttackRelease(dur)
+            //this.sampler.triggerAttackRelease(freq, dur)
+            //this.filterEnv.triggerAttackRelease(dur)
         }
     }//attackRelease
 
