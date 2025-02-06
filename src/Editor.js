@@ -24,6 +24,9 @@ import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction } from '.
 import * as waveshapers from './synths/waveshapers.js'
 import {stepper, expr} from  './Utilities.js'
 
+import WebSocketClient from './collabSocket';
+import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
+
 import MidiKeyboard from './MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
 
@@ -111,6 +114,7 @@ function Editor(props) {
     window.Spectroscope = Spectroscope;
     window.Spectrogram = Spectrogram;
     window.plotTransferFunction = PlotTransferFunction;
+    window.CollabHub = CollabHubDisplay;
 
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
     window.disableAsciiInput = asciiCallbackInstance.disable.bind(asciiCallbackInstance);
@@ -343,6 +347,15 @@ function Editor(props) {
      * Main useEffect and code parsing
      * 
      *************************************************/
+
+     function initCollab(roomName = 'famleLounge'){
+        window.chClient = new CollabHubClient(); // needs to happen once (!)
+        window.chTracker = new CollabHubTracker(window.chClient);
+
+        // collab-hub join a room
+        window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name
+
+    }
 
     //const value = 'let CHANNEL = 3'
     const [height, setHeight] = useState(false);
@@ -812,6 +825,7 @@ function Editor(props) {
 
         // Check if changes are present and extract the edited line
         if (viewUpdate.changes) {
+          try{
             const lineChanges = [];
             viewUpdate.changes.iterChanges((from, to, inserted) => {
                 const doc = viewUpdate.state.doc;
@@ -834,6 +848,7 @@ function Editor(props) {
                     content: lineChange.content,
                 };
             });
+          } catch(e){}
         }
     };
 
