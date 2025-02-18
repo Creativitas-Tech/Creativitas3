@@ -419,6 +419,7 @@ class Element {
 
     drawValue(x,y){
         let output = this.value
+        //console.log(this.value,x,y)
         this.p.stroke(this.setColor(this.textColor))
         this.p.textSize(this.textSize*10);
         this.p.strokeWeight(0.00001 * this.textSize*20);

@@ -20,7 +20,7 @@ import * as Tone from 'tone';
  * 
  * @class
  */
-export const Oscilloscope = function( _target, ratio = 4 / 10) {
+export const Oscilloscope = function( _target= 'Canvas', ratio = 4 / 10) {
     // Get the target DOM element and set dimensions based on the provided ratio
     this.target = document.getElementById(_target);
     this.width = this.target.offsetWidth;
