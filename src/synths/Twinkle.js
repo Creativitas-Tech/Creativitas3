@@ -4,21 +4,6 @@ Twinkle
 Single vco monosynth
 * vco->vcf->vca->output
 
-methods:
-- connect
-- setADSR(a,d,s,r)
-
-
-properties set directly:
-frequency.value
-velocitySig.value
-cutoff_cv.value
-vca_lvl.value
-cutoffSig.value
-vcf_env_depth.factor
-keyTracking.factor
-lfo.frequency
-
 */
 import p5 from 'p5';
 import * as Tone from 'tone';
@@ -26,6 +11,8 @@ import TwinklePresets from './synthPresets/TwinklePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
+import paramDefinitions from './params/twinkleParams.js';
+import { sketch } from '../p5Library.js'
 
 export class Twinkle extends MonophonicTemplate {
   constructor (gui = null) {
@@ -78,40 +65,13 @@ export class Twinkle extends MonophonicTemplate {
     this.frequency.connect(this.keyTracker)
     this.keyTracker.connect(this.vcf.frequency)
 
-    let paramDefinitions = [
-      {name:'type',type:'vco',value:'square',radioOptions:['square','saw','tri','sine'],callback:(x,time=null)=>{
-          switch(x){
-          case 'square': this.vco.type = 'pulse'; break;
-            case 'saw': this.vco.type = 'sawtooth'; break;
-              case 'tri': this.vco.type = 'triangle'; break;
-                case 'sine': this.vco.type = 'sine'; break;
-          }
-        }
-      },
-      {name:'cutoff',type:'vcf',min:20.,max:10000,curve:2,callback:(x,time=null)=>this.cutoffSig.value = x},
-      {name:'Q',type:'vcf',min:0.,max:30,curve:2,callback:(x,time=null)=>this.vcf.Q.value = x},
-      {name:'keyTrack',type:'hidden',min:0.,max:2,curve:1,callback:(x,time=null)=>this.keyTracker.factor.value = x},
-      {name:'envDepth',type:'vcf',min:-1000,max:5000,curve:2,callback:(x,time=null)=>this.vcf_env_depth.factor.value = x},
-      {name:'level',value:0,type:'vca',min:0.,max:1,curve:2,callback:(x,time=null)=>this.vca_lvl.value = x},
-      {name:'adsr',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
-        labels:['attack','decay','sustain','release'],
-        callback:(x,i=null)=>{
-          if( Array.isArray(x)){
-            if( x.length<=4) this.setADSR(x[0],x[1],x[2],x[3])
-          }
-          else if(i==0)this.env.attack = x
-          else if(i==1)this.env.decay = x
-          else if(i==2)this.env.sustain = x
-          else if(i==3)this.env.release = x
-        }
-    }
-    ]
-
-    this.param = this.generateParameters(paramDefinitions)
+    // Bind parameters with this instance
+    this.paramDefinitions = paramDefinitions(this)
+    this.param = this.generateParameters(this.paramDefinitions)
     this.createAccessors(this, this.param);
 
     //for autocomplete
-    this.autocompleteList = paramDefinitions.map(def => def.name);;
+    this.autocompleteList = this.paramDefinitions.map(def => def.name);;
     //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
     setTimeout(()=>{this.loadPreset('default')}, 500);
   }//constructor
@@ -157,8 +117,11 @@ export class Twinkle extends MonophonicTemplate {
   //GUI
   // Initialize GUI
   initGui(gui=null) {
+    let target = document.getElementById('Canvas');
+        //console.log(this.gui)
+        this.gui = new p5(sketch,target );
     //console.log('init', this.param)
-    this.gui = gui
+    //this.gui = gui
     const layout = basicLayout.basicLayout;
 
     // Group parameters by type

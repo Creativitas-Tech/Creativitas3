@@ -408,7 +408,7 @@ export class DrumSampler extends DrumTemplate{
         Tone.Transport.start()
     }
 
-  triggerDrum = (val, num, time)=>{
+  triggerDrum = (val, num=0, time=Tone.immediate())=>{
     //console.log(val,time, this.kickVelocity[num],this)
     val = val[0]
     switch(val){

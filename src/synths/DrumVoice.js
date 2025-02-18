@@ -1,7 +1,10 @@
+import p5 from 'p5';
 import * as Tone from 'tone';
 import {Parameter} from './ParameterModule.js'
 import dlayout from './layouts/drumLayout.json';
 import { DrumTemplate } from './DrumTemplate';
+import paramDefinitions from './params/drumVoiceParams.js';
+import { sketch } from '../p5Library.js'
 
 export class DrumSynth extends DrumTemplate{
     constructor(options = {}) {
@@ -47,7 +50,7 @@ export class DrumSynth extends DrumTemplate{
 
         // Waveshaper and gain for tone
         this.drive = new Tone.Gain(this.params.toneGain);
-        this.waveshaper = new Tone.WaveShaper(x => Math.sin(x * Math.PI));
+        this.waveshaper = new Tone.WaveShaper(value=> Math.tanh(value*4));
         this.vco.connect(this.drive);
         this.drive.connect(this.waveshaper)
 
@@ -111,51 +114,15 @@ export class DrumSynth extends DrumTemplate{
         this.vcfEnvDepth.connect(this.finalFilter.frequency)
         this.env.connect(this.vcfEnvDepth)
 
-        let paramDefinitions = [
-            {name:'type',type:'vco',value:'square',radioOptions:['square','saw','tri','sine'],callback:(x,time=null)=>{
-                  switch(x){
-                  case 'square': this.vco.type = 'square'; break;
-                    case 'saw': this.vco.type = 'sawtooth'; break;
-                      case 'tri': this.vco.type = 'triangle'; break;
-                        case 'sine': this.vco.type = 'sine'; break;
-                  }
-                }
-              },
-            {name:'drive2',type:'vco',min:0.,max:2,curve:2,callback:(x,time=null)=>this.drive.gain.value = x},
-            {name:'fm',type:'vcf',min:0.,max:10,curve:2,callback:(x,time=null)=>this.modIndex.value = x},
-            {name:'am',type:'vcf',min:0.,max:2,curve:2,callback:(x,time=null)=>this.amDepth.gain.value = x},
-            {name:'harm',type:'vcf',min:1.,max:20,curve:1,callback:(x,time=null)=>this.harmonicity.factor.value = (x)},
-            {name:'cutoff',type:'vcf',min:50.,max:10000,curve:2,callback:(x,time=null)=>this.cutoffSig.value = x},
-            {name:'Q',type:'vcf',min:0.,max:20,curve:0.7,callback:(x,time=null)=>this.finalFilter.Q.value = x},
-            {name:'noiseG',type:'vca',min:0.,max:1.5,curve:2,callback:(x,time=null)=>this.noiseGain.gain.value = x},
-            {name:'toneG',type:'vca',min:0.,max:1.5,curve:2,callback:(x,time=null)=>this.drive.gain.value = x},
-            {name:'vol',type:'vca',min:0.,max:2,curve:2,callback:(x,time=null)=>this.output.factor.value = x},
-            {name:'drop',type:'vco',min:0.,max:5000,curve:2,callback:(x,time=null)=>this.pitchEnvDepth.factor.value = x},
-            {name:'decay',type:'env',min:0.,max:5,curve:2,callback:(x,time=null)=>{ this.env.decay = x; this.env.release = x }},
-            {name:'pDecay',type:'env',min:0.,max:1,curve:2,callback:(x,time=null)=>{ this.pitchEnvelope.decay = x; this.pitchEnvelope.release = x }},
-            {name:'nDecay',type:'env',min:0.,max:5,curve:2,callback:(x,time=null)=>{ this.noiseEnv.decay = x; this.noiseEnv.release = x }},
-            {name:'nFreq',type:'vcf',min:100.,max:10000,curve:2,callback:(x,time=null)=>{ this.noiseCutoff.value = x; }},
-            {name:'nEnv',type:'env',min:0.,max:5000,curve:3,callback:(x,time=null)=>this.noiseVcfEnvDepth.factor.value = x},
-            {name:'vcfEnv',type:'vcf',min:0.,max:5000,curve:3,callback:(x,time=null)=>this.vcfEnvDepth.factor.value = x},
-            // {name:'adsr',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
-            //     labels:['attack','decay','sustain','release'],
-            //     callback:(x,i=null)=>{ this.setADSR('env',x, i) }
-            // },
-            // {name:'noise',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
-            //     labels:['attack','decay','sustain','release'],
-            //     callback:(x,i=null)=>{ this.setADSR('noise',x, i) }
-            // },
-            // {name:'pitch',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
-            //     labels:['attack','decay','sustain','release'],
-            //     callback:(x,i=null)=>{ this.setADSR('pitch',x, i) }
-            // },
-        ]
+        
 
-        this.param = this.generateParameters(paramDefinitions)
+        // Bind parameters with this instance
+        this.paramDefinitions = paramDefinitions(this)
+        this.param = this.generateParameters(this.paramDefinitions)
         this.createAccessors(this, this.param);
 
         //for autocomplete
-        this.autocompleteList = paramDefinitions.map(def => def.name);;
+        this.autocompleteList = this.paramDefinitions.map(def => def.name);;
         //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
         setTimeout(()=>{this.loadPreset('default')}, 500);
     }
@@ -309,8 +276,10 @@ export class DrumSynth extends DrumTemplate{
     //GUI
   // Initialize GUI
   initGui(gui=null) {
-    //console.log('init', this.param)
-    this.gui = gui
+    let target = document.getElementById('Canvas');
+        //console.log(this.gui)
+     this.gui = new p5(sketch,target );
+
     const layout = dlayout.layout;
 
     // Group parameters by type

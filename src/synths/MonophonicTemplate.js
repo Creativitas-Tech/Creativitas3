@@ -1,11 +1,14 @@
 // MonophonicTemplate.js
 
 import * as Tone from 'tone';
+import * as p5 from 'p5';
 import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule';
 import { Seq } from '../Seq'
 import { TuringMachine } from '../Turing'
 import { ArrayVisualizer } from '../visualizers/VisualizeArray';
 import { Parameter } from './ParameterModule.js'
+import { sketch } from '../p5Library.js'
+
 
 /**
  * Represents a Monophonic Synth
@@ -243,44 +246,72 @@ export class MonophonicTemplate {
         return params;
     }
 
+
+
     createAccessors(parent, params) {
-    Object.keys(params).forEach((key) => {
-        const param = params[key];
+        Object.keys(params).forEach((key) => {
+            const param = params[key];
+            let currentSeq = null; // Track active sequence
 
-        // Ensure the Parameter object has a `set` method
-        if (typeof param.set !== 'function') {
-            throw new Error(`Parameter '${key}' does not have a set method`);
-        }
+            if (typeof param.set !== 'function' || typeof param.get !== 'function') {
+                throw new Error(`Parameter '${key}' does not have valid get/set methods`);
+            }
 
-        // Proxy to handle array-like access
-        const proxyHandler = {
-            get(target, prop) {
-                if (typeof prop === 'string' && !isNaN(prop)) {
-                    // Access individual array element
-                    return target.get(parseInt(prop));
-                }
-                return target.get();
-            },
-            set(target, prop, value) {
-                console.log(target, prop, value)
-                if (typeof prop === 'string' && !isNaN(prop)) {
-                    // Set individual array element
-                    target.set(value, parseInt(prop));
+            // Proxy handler to intercept method calls
+            const proxyHandler = {
+                get(target, prop) {
+                    //console.log(target,prop)
+                    if (prop === 'sequence') return (valueArray, subdivision = '16n') => {
+                        if (currentSeq) {
+                            currentSeq.dispose(); // Dispose of existing sequence
+                        }
+                        currentSeq = new Seq(
+                            parent,
+                            valueArray,
+                            subdivision,
+                            'infinite',
+                            0,
+                            (v, time) => param.set(Number(v[0]),null,false, time) // Ensure time is passed
+                        );
+                    };
+                    if (prop === 'stop') return () => {
+                        if (currentSeq) {
+                            currentSeq.dispose();
+                            currentSeq = null;
+                        }
+                    };
+                    return target.get(); // Return the current value
+                },
+                set(target, _, newValue) {
+                    console.log(target, _, newValue)
+                    if (Array.isArray(newValue)) {
+                        if (currentSeq) currentSeq.dispose();
+                        currentSeq = new Seq(
+                            parent,
+                            newValue,
+                            param.subdivision || '16n',
+                            'infinite',
+                            0,
+                            (v, time) => param.set(Number(v[0]),null,false, time) // Ensure time is passed
+                        );
+                    } else {
+                        if (currentSeq) {
+                            currentSeq.dispose();
+                            currentSeq = null;
+                        }
+                        param.set(newValue);
+                    }
                     return true;
                 }
-                // Set the entire array or scalar value
-                target.set(value);
-                return true;
-            }
-        };
+            };
 
-        // Define the accessor property on the parent
-        Object.defineProperty(parent, key, {
-            get: () => new Proxy(param, proxyHandler),
-            set: (newValue) => param.set(newValue),
+            // Define the parameter with a Proxy
+            Object.defineProperty(parent, key, {
+                get: () => new Proxy(param, proxyHandler),
+                set: (newValue) => param.set(newValue),
+            });
         });
-    });
-}//createAccessors
+    }//accessors
 
     setParameter(name, value, time = null) {
         const param = this.param[name];
@@ -320,10 +351,10 @@ export class MonophonicTemplate {
      */
     setADSR(a, d, s, r) {
         if (this.env) {
-            this.env.attack = a > 0.001 ? a : 0.001;
-            this.env.decay = d > 0.01 ? d : 0.01;
-            this.env.sustain = Math.abs(s) < 1 ? s : 1;
-            this.env.release = r > 0.01 ? r : 0.01;
+            this.attack = a > 0.001 ? a : 0.001;
+            this.decay = d > 0.01 ? d : 0.01;
+            this.sustain = Math.abs(s) < 1 ? s : 1;
+            this.release = r > 0.01 ? r : 0.01;
         }
     }
 
@@ -356,7 +387,11 @@ export class MonophonicTemplate {
      * synth.initGui(gui, 10, 10)
      */
     initGui(gui, x = 10, y = 10) {
-        this.gui = gui;
+        let target = document.getElementById('Canvas');
+        //console.log(this.gui)
+        this.gui = new p5(sketch,target );
+        //console.log(this.gui)
+        //this.gui = gui
         this.x = x;
         this.y = y;
         this.gui_elements = [];

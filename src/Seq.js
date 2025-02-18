@@ -1,5 +1,5 @@
 // Seq.js
-//current sequencer module jan 2025
+//current sequencer module feb 2025
 
 import * as Tone from 'tone';
 import { Theory, parseStringSequence, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from './TheoryModule';
@@ -59,6 +59,7 @@ export class Seq {
         }
 
         this.createLoop();
+        this.start()   
     }
 
     drumSequence(arr, subdivision = '8n', phraseLength = 'infinite') {
@@ -97,7 +98,15 @@ export class Seq {
             for (let i = 1; i < event.length; i++) {
                 if (event_timings[i] === event_timings[i - 1]) event[i][1] = event[i - 1][1] + roll;
             }
+
+            //main callback for triggering notes
             for (const val of event) this.callback(val, time, this.index, this.num);
+
+            //check for sequencing params
+            // try{
+            // for(params in this.synth.param){
+            //     if(Array.isArray(params)) this.synth.setValueAtTime
+            // }}
 
             if (this.phraseLength === 'infinite') return;
             this.phraseLength -= 1;
@@ -200,12 +209,12 @@ export class Seq {
     }
 
     perform_transform(curBeat){
-        if(curBeat === '[]') return '.'
+        //console.log('trans', curBeat)
         if(!isNaN(Number(curBeat))){ //make sure it's a number
             // console.log("returning", String(this.transform(Number(curBeat))))
             return String((this.transform(Number(curBeat))));
         }else if(curBeat[0]==='['){ //it's an array
-            if(curBeat.length <3) return '.'
+            //if(curBeat.length <3) return '.'
             for(let i = 0; i < curBeat.length; i++){
                 if(!isNaN(Number(curBeat[i])) && curBeat[i].trim() !== ""){
                     let curNum = curBeat[i];
@@ -232,13 +241,26 @@ export class Seq {
                 }
             }
             return curBeat;
+        }else if(curBeat === '[]') {
+            this.transform('.')
+            return '.'
         }else{
             // console.log("returning", curBeat);
+            this.transform('.')
             return curBeat;
         }
     }
 
     setTransform(func){
         this.transform = func;
+    }
+    dispose() {
+        this.stop();
+        if (this.loopInstance) {
+            this.loopInstance.dispose();
+        }
+        this.parent = null;
+        this.sequence = null;
+        this.callback = null;
     }
 }
