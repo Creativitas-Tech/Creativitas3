@@ -15,6 +15,7 @@ async function bundleSynthDependencies() {
     const ignoreFullPaths = ignorePaths.map(p => path.join(srcDir, p));
     const synthsDir = path.join(srcDir, 'synths');
     const visualizersDir = path.join(srcDir, 'visualizers');
+    const webExportsDir = path.join(srcDir, 'WebExports');
     // any paths that should be ignored just marked as processed
     ignoreFullPaths.forEach(p => processedFiles.add(p));
 
@@ -90,7 +91,8 @@ async function bundleSynthDependencies() {
         path.join(srcDir, 'TheoryModule.js'),
         path.join(srcDir, 'p5Library.js'),
         path.join(srcDir, 'p5Elements.js'),
-        path.join(srcDir, 'p5Themes.js')
+        path.join(srcDir, 'p5Themes.js'),
+        path.join(srcDir, 'Midi.js')
     ];
 
     for (const filePath of coreFiles) {
@@ -103,6 +105,11 @@ async function bundleSynthDependencies() {
     // TODO: Don't rely on importing MonophonicTemplate.js first. It should
     // already be one of the first classes imported due to the import dependency handling code
     await processFile(path.join(synthsDir, 'MonophonicTemplate.js'));
+    // Get all required
+    const required_files = await fsp.readdir(webExportsDir);
+    for (const file of required_files) {
+        await processFile(path.join(webExportsDir, file));
+    }
 
     // Get all synth files
     const files = await fsp.readdir(synthsDir);

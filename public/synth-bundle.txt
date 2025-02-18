@@ -3984,6 +3984,346 @@ const sketch = (p) => {
 };
 
 
+var midi = null;
+var muted = false;
+
+var outputMidiID = null;
+
+var midiMsgs = {};
+var ccCallbacks = {};
+
+/****** load webMIDI API ******/
+if (navigator.requestMIDIAccess) {
+    navigator.requestMIDIAccess()
+        .then(onMIDISuccess)
+        .catch(onMIDIFailure);
+} else {
+    console.log("Web MIDI API is not supported in this browser.");
+    // Handle the situation gracefully, e.g., show a notification to the user
+}
+
+function onMIDISuccess(midiAccess) {
+    console.log("MIDI ready!");
+    midi = midiAccess;  // store in the global
+    // Tone.Transport.start()
+    console.log(getMidiIO())
+    // initializeCodeBox();
+    //setupClock();
+
+    eval('globalThis.setMidiInput1 = setMidiInput;');
+}
+
+function onMIDIFailure(msg) {
+    console.error(`Failed to get MIDI access - ${msg}`);
+}
+
+function setMidiInput(inputID) {
+    //in case only one id is inputted, turn into array
+    if (!Array.isArray(inputID)) inputID = [inputID];
+
+    //reset inputs
+    midi.inputs.forEach(function (key, val) { key.onmidimessage = null; })
+
+    for (var id of inputID) {
+        if (id in midi_input_ids & midi.inputs.get(midi_input_ids[id]) != null) {
+            midi.inputs.get(midi_input_ids[id]).onmidimessage = handleMidiInput;
+            console.log("MIDI input set to: " + midi_input_names[id]);
+        } else { console.warn('Invalid input ID'); }
+    }
+}
+
+function setMidiOutput(outputID) {
+    if (Array.isArray(outputID)) {
+        console.warn('Can only handle one MIDI output. Please enter one ID.')
+    }
+    if (outputID in midi_output_ids & midi.outputs.get(midi_output_ids[outputID]) != null) {
+        outputMidiID = midi_output_ids[outputID];
+        console.log("MIDI output set to: " + midi_output_names[outputID]);
+        
+        // Set the MIDI output in MidiHandler
+        midiHandlerInstance.setOutput(midi.outputs.get(outputMidiID));
+    } else { console.warn('Invalid output ID'); }
+}
+
+/****** load webMIDI API ******/
+class MidiHandler {
+    constructor() {
+        this.noteOnHandler = (note, velocity=127, channel=1) => {
+            console.log('Default Note On Handler:', note, velocity);
+            console.log(`Define your own note on handler like this:\nsetNoteOnHandler(( note, vel, (optional:channel) ) => { <your code here> }) `)
+        };
+        this.noteOffHandler = (note, velocity=0, channel=1) => {
+            console.log('Default Note Off Handler:', note, velocity);
+            console.log(`Define your own note off handler like this:\nsetNoteOffHandler(( note, vel, (optional:channel) ) => { <your code here> }) `)
+        };
+        this.CCHandler = (controller, value, channel=1) => {
+            console.log('Default CC Handler:', controller, value);
+            console.log(`Define your own CC handler like this:\nsetCCHandler(( cc, value, (optionaL:channel) ) => { <your code here> }) `)
+        };
+
+        this.midiOutput = null; // Reference to the active MIDI output
+    }
+
+    // Set the MIDI output port
+    setOutput(output) {
+        this.midiOutput = output;
+    }
+
+    // Send Note On message
+    sendNoteOn(note, velocity = 127, channel = 1) {
+        console.log(note, velocity, channel)
+        if (this.midiOutput) {
+            const status = 0x90 | (channel - 1); // Note On status byte
+            this.midiOutput.send([status, note, velocity]);
+        } else {
+            console.warn('No MIDI output is set.');
+        }
+    }
+
+    // Send Note Off message
+    sendNoteOff(note, velocity = 0, channel = 1) {
+        console.log(note, velocity, channel)
+        if (this.midiOutput) {
+            const status = 0x80 | (channel - 1); // Note Off status byte
+            this.midiOutput.send([status, note, velocity]);
+        } else {
+            console.warn('No MIDI output is set.');
+        }
+    }
+
+    // Send Control Change (CC) message
+    sendCC(controller, value, channel = 1) {
+        if (this.midiOutput) {
+            const status = 0xB0 | (channel - 1); // Control Change status byte
+            this.midiOutput.send([status, controller, value]);
+        } else {
+            console.warn('No MIDI output is set.');
+        }
+    }
+
+    handleNoteOn(note, velocity, channel) {
+        this.noteOnHandler(note, velocity, channel);
+    }
+    handleNoteOff(note, velocity, channel) {
+        this.noteOffHandler(note, velocity, channel);
+    }
+    handleCC(controller, value, channel) {
+        this.CCHandler(controller, value, channel);
+    }
+
+    setNoteOnHandler(func) {
+        this.noteOnHandler = func;
+    }
+    setNoteOffHandler(func) {
+        this.noteOffHandler = func;
+    }
+    setCCHandler(func) {
+        this.CCHandler = func;
+    }
+}
+const midiHandlerInstance = new MidiHandler();
+
+var midi_input_ids = {};
+var midi_output_ids = {};
+var midi_input_names = {};
+var midi_output_names = {};
+
+function getMidiIO() {
+    var midiInputs = 'MIDI Inputs:\n';
+    var midiOutputs = 'MIDI Outputs:\n';
+    var inputID = null;
+    var outputID = null;
+
+    var num = 1;
+    for (var output of midi.outputs) {
+        midiOutputs += num + ': ' + output[1].name + '\n'; //+ '\', ID: \'' + output[1].id + '\'\n';
+        outputID = output[1].id;
+        midi_output_ids[num] = outputID;
+        midi_output_names[num] = output[1].name;
+        num += 1;
+    }
+
+    num = 1;
+    for (var input of midi.inputs) {
+        midiInputs += num + ': ' + input[1].name + '\n'; // + '\', ID: \'' + input[1].id + '\'\n';
+        inputID = input[1].id;
+        midi_input_ids[num] = inputID;
+        midi_input_names[num] = input[1].name;
+        num += 1;
+    }
+    return midiInputs + midiOutputs
+}
+
+function handleMidiInput(message) {
+    //console.log(message)
+    let channel = (message.data[0] & 15) + 1
+    
+    if (message.data[1] != null) {
+        let status = message.data[0]
+        //console.log('midi', status, message.data[1], message.data[2])
+        if (status >= 128 && status <= 159) {
+            let note = message.data[1]
+            let velocity = message.data[2]
+            //note off msg
+            if (status >= 128 && status <= 143 || velocity < 1) {
+                midiHandlerInstance.handleNoteOff(note, velocity, channel)
+            }
+            //note on msg
+            else {
+                midiHandlerInstance.handleNoteOn(note, velocity, channel)
+            }
+        } else if (status >= 176 && status <= 191) {
+            let cc = message.data[1]
+            let value = message.data[2]
+            midiHandlerInstance.handleCC(cc, value, channel)
+        }
+    }
+}
+
+/*
+This class mimics the midi keyboard react component.
+It is a hassle to find a way to programmatically convert the component to usable html and js,
+so here is an alternative
+*/
+class MidiKeyboard {
+    constructor() {
+        this.midiOn = false;
+        this.notesOn = new Set();
+        this.activeKeys = {};
+        this.octave = 4;
+        this.keyToNote = {
+            90: { "midi": 60, "pitch": "C" },     // Z
+            83: { "midi": 61, "pitch": "C#/Db" }, // S
+            88: { "midi": 62, "pitch": "D" },     // X
+            68: { "midi": 63, "pitch": "D#/Eb" }, // D
+            67: { "midi": 64, "pitch": "E" },     // C
+            86: { "midi": 65, "pitch": "F" },     // V
+            71: { "midi": 66, "pitch": "F#/Gb" }, // G
+            66: { "midi": 67, "pitch": "G" },     // B
+            72: { "midi": 68, "pitch": "G#/Ab" }, // H
+            78: { "midi": 69, "pitch": "A" },     // N
+            74: { "midi": 70, "pitch": "A#/Bb" }, // J
+            77: { "midi": 71, "pitch": "B" },     // M
+            188: { "midi": 72, "pitch": "C" },    // ,
+            76: { "midi": 73, "pitch": "C#/Db" }, // L
+            190: { "midi": 74, "pitch": "D" },    // .
+            186: { "midi": 75, "pitch": "D#/Eb" }, // ;
+            191: { "midi": 76, "pitch": "E" },    // /
+            
+            // second octave
+            81: { "midi": 72, "pitch": "C" },     // Q
+            50: { "midi": 73, "pitch": "C#/Db" }, // 2
+            87: { "midi": 74, "pitch": "D" },     // W
+            51: { "midi": 75, "pitch": "D#/Eb" }, // 3
+            69: { "midi": 76, "pitch": "E" },     // E
+            82: { "midi": 77, "pitch": "F" },     // R
+            53: { "midi": 78, "pitch": "F#/Gb" }, // 5
+            84: { "midi": 79, "pitch": "G" },     // T
+            54: { "midi": 80, "pitch": "G#/Ab" }, // 6
+            89: { "midi": 81, "pitch": "A" },     // Y
+            55: { "midi": 82, "pitch": "A#/Bb" }, // 7
+            85: { "midi": 83, "pitch": "B" },     // U
+            73: { "midi": 84, "pitch": "C" },     // I
+            57: { "midi": 85, "pitch": "C#/Db" }, // 9
+            79: { "midi": 86, "pitch": "D" },     // O
+            48: { "midi": 87, "pitch": "D#/Eb" }, // 0
+            80: { "midi": 88, "pitch": "E" }      // P
+        };
+
+        this.init();
+    }
+
+    init() {
+        // Add event listeners
+        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+        document.addEventListener('keyup', this.handleKeyUp.bind(this));
+        
+        // Get DOM elements
+        // WARNING: These are assumed to be defined for web exports
+        this.keyboardButton = document.getElementById('keyboard-button');
+        this.keyboardIcon = document.getElementById('keyboard-icon');
+        this.notesDisplay = document.getElementById('notes-display');
+        
+        // Add click handler
+        this.keyboardButton.addEventListener('click', this.toggleMidi.bind(this));
+    }
+
+    handleKeyDown(event) {
+        if (this.midiOn) {
+            const keyCode = event.keyCode;
+            if (!this.activeKeys[keyCode]) {
+                this.activeKeys[keyCode] = true;
+                try {
+                    let note = this.keyToNote[keyCode];
+                    let midiNote = note["midi"] + (this.octave - 4) * 12;
+                    if (midiNote <= 127) {
+                        this.notesOn.add(midiNote);
+                        this.updateNotesDisplay();
+                        if (window.midiHandlerInstance) {
+                            window.midiHandlerInstance.handleNoteOn(midiNote, 100);
+                        }
+                    }
+                } catch (error) {
+                    if (keyCode === 37) {
+                        this.decreaseOctave();
+                    } else if (keyCode === 39) {
+                        this.increaseOctave();
+                    }
+                }
+            }
+        }
+    }
+
+    handleKeyUp(event) {
+        if (this.midiOn) {
+            const keyCode = event.keyCode;
+            this.activeKeys[keyCode] = false;
+            try {
+                let note = this.keyToNote[keyCode];
+                let midiNote = note["midi"] + (this.octave - 4) * 12;
+                if (midiNote <= 127) {
+                    this.notesOn.delete(midiNote);
+                    this.updateNotesDisplay();
+                    if (window.midiHandlerInstance) {
+                        window.midiHandlerInstance.handleNoteOff(midiNote, 0);
+                    }
+                }
+            } catch (error) {
+                // Ignore errors for non-mapped keys
+            }
+        }
+    }
+
+    toggleMidi() {
+        this.midiOn = !this.midiOn;
+        this.keyboardIcon.className = `icon ${this.midiOn ? 'active' : 'inactive'}`;
+    }
+
+    increaseOctave() {
+        if (this.octave < 7) {
+            this.octave++;
+        }
+    }
+
+    decreaseOctave() {
+        if (this.octave > 1) {
+            this.octave--;
+        }
+    }
+
+    updateNotesDisplay() {
+        this.notesDisplay.innerHTML = Array.from(this.notesOn)
+            .map(note => `<div>${note}</div>`)
+            .join('');
+    }
+}
+
+// Initialize the keyboard when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.midiKeyboard = new MidiKeyboard();
+});
+
+
 /*
 DelayOp
 
@@ -9971,202 +10311,6 @@ class Kick{
 }
 
 
-var midi = null;
-var muted = false;
-
-var outputMidiID = null;
-
-var midiMsgs = {};
-var ccCallbacks = {};
-
-/****** load webMIDI API ******/
-if (navigator.requestMIDIAccess) {
-    navigator.requestMIDIAccess()
-        .then(onMIDISuccess)
-        .catch(onMIDIFailure);
-} else {
-    console.log("Web MIDI API is not supported in this browser.");
-    // Handle the situation gracefully, e.g., show a notification to the user
-}
-
-function onMIDISuccess(midiAccess) {
-    console.log("MIDI ready!");
-    midi = midiAccess;  // store in the global
-    // Tone.Transport.start()
-    console.log(getMidiIO())
-    // initializeCodeBox();
-    //setupClock();
-
-    eval('globalThis.setMidiInput1 = setMidiInput;');
-}
-
-function onMIDIFailure(msg) {
-    console.error(`Failed to get MIDI access - ${msg}`);
-}
-
-function setMidiInput(inputID) {
-    //in case only one id is inputted, turn into array
-    if (!Array.isArray(inputID)) inputID = [inputID];
-
-    //reset inputs
-    midi.inputs.forEach(function (key, val) { key.onmidimessage = null; })
-
-    for (var id of inputID) {
-        if (id in midi_input_ids & midi.inputs.get(midi_input_ids[id]) != null) {
-            midi.inputs.get(midi_input_ids[id]).onmidimessage = handleMidiInput;
-            console.log("MIDI input set to: " + midi_input_names[id]);
-        } else { console.warn('Invalid input ID'); }
-    }
-}
-
-function setMidiOutput(outputID) {
-    if (Array.isArray(outputID)) {
-        console.warn('Can only handle one MIDI output. Please enter one ID.')
-    }
-    if (outputID in midi_output_ids & midi.outputs.get(midi_output_ids[outputID]) != null) {
-        outputMidiID = midi_output_ids[outputID];
-        console.log("MIDI output set to: " + midi_output_names[outputID]);
-        
-        // Set the MIDI output in MidiHandler
-        midiHandlerInstance.setOutput(midi.outputs.get(outputMidiID));
-    } else { console.warn('Invalid output ID'); }
-}
-
-/****** load webMIDI API ******/
-class MidiHandler {
-    constructor() {
-        this.noteOnHandler = (note, velocity=127, channel=1) => {
-            console.log('Default Note On Handler:', note, velocity);
-            console.log(`Define your own note on handler like this:\nsetNoteOnHandler(( note, vel, (optional:channel) ) => { <your code here> }) `)
-        };
-        this.noteOffHandler = (note, velocity=0, channel=1) => {
-            console.log('Default Note Off Handler:', note, velocity);
-            console.log(`Define your own note off handler like this:\nsetNoteOffHandler(( note, vel, (optional:channel) ) => { <your code here> }) `)
-        };
-        this.CCHandler = (controller, value, channel=1) => {
-            console.log('Default CC Handler:', controller, value);
-            console.log(`Define your own CC handler like this:\nsetCCHandler(( cc, value, (optionaL:channel) ) => { <your code here> }) `)
-        };
-
-        this.midiOutput = null; // Reference to the active MIDI output
-    }
-
-    // Set the MIDI output port
-    setOutput(output) {
-        this.midiOutput = output;
-    }
-
-    // Send Note On message
-    sendNoteOn(note, velocity = 127, channel = 1) {
-        console.log(note, velocity, channel)
-        if (this.midiOutput) {
-            const status = 0x90 | (channel - 1); // Note On status byte
-            this.midiOutput.send([status, note, velocity]);
-        } else {
-            console.warn('No MIDI output is set.');
-        }
-    }
-
-    // Send Note Off message
-    sendNoteOff(note, velocity = 0, channel = 1) {
-        console.log(note, velocity, channel)
-        if (this.midiOutput) {
-            const status = 0x80 | (channel - 1); // Note Off status byte
-            this.midiOutput.send([status, note, velocity]);
-        } else {
-            console.warn('No MIDI output is set.');
-        }
-    }
-
-    // Send Control Change (CC) message
-    sendCC(controller, value, channel = 1) {
-        if (this.midiOutput) {
-            const status = 0xB0 | (channel - 1); // Control Change status byte
-            this.midiOutput.send([status, controller, value]);
-        } else {
-            console.warn('No MIDI output is set.');
-        }
-    }
-
-    handleNoteOn(note, velocity, channel) {
-        this.noteOnHandler(note, velocity, channel);
-    }
-    handleNoteOff(note, velocity, channel) {
-        this.noteOffHandler(note, velocity, channel);
-    }
-    handleCC(controller, value, channel) {
-        this.CCHandler(controller, value, channel);
-    }
-
-    setNoteOnHandler(func) {
-        this.noteOnHandler = func;
-    }
-    setNoteOffHandler(func) {
-        this.noteOffHandler = func;
-    }
-    setCCHandler(func) {
-        this.CCHandler = func;
-    }
-}
-const midiHandlerInstance = new MidiHandler();
-
-var midi_input_ids = {};
-var midi_output_ids = {};
-var midi_input_names = {};
-var midi_output_names = {};
-
-function getMidiIO() {
-    var midiInputs = 'MIDI Inputs:\n';
-    var midiOutputs = 'MIDI Outputs:\n';
-    var inputID = null;
-    var outputID = null;
-
-    var num = 1;
-    for (var output of midi.outputs) {
-        midiOutputs += num + ': ' + output[1].name + '\n'; //+ '\', ID: \'' + output[1].id + '\'\n';
-        outputID = output[1].id;
-        midi_output_ids[num] = outputID;
-        midi_output_names[num] = output[1].name;
-        num += 1;
-    }
-
-    num = 1;
-    for (var input of midi.inputs) {
-        midiInputs += num + ': ' + input[1].name + '\n'; // + '\', ID: \'' + input[1].id + '\'\n';
-        inputID = input[1].id;
-        midi_input_ids[num] = inputID;
-        midi_input_names[num] = input[1].name;
-        num += 1;
-    }
-    return midiInputs + midiOutputs
-}
-
-function handleMidiInput(message) {
-    //console.log(message)
-    let channel = (message.data[0] & 15) + 1
-    
-    if (message.data[1] != null) {
-        let status = message.data[0]
-        //console.log('midi', status, message.data[1], message.data[2])
-        if (status >= 128 && status <= 159) {
-            let note = message.data[1]
-            let velocity = message.data[2]
-            //note off msg
-            if (status >= 128 && status <= 143 || velocity < 1) {
-                midiHandlerInstance.handleNoteOff(note, velocity, channel)
-            }
-            //note on msg
-            else {
-                midiHandlerInstance.handleNoteOn(note, velocity, channel)
-            }
-        } else if (status >= 176 && status <= 191) {
-            let cc = message.data[1]
-            let value = message.data[2]
-            midiHandlerInstance.handleCC(cc, value, channel)
-        }
-    }
-}
-
 /*
 MidiOut
  
@@ -10177,7 +10321,7 @@ MidiOut
 ;
 //;
 ;
-
+;
 
 
 class MidiOut extends MonophonicTemplate {
@@ -10186,7 +10330,7 @@ class MidiOut extends MonophonicTemplate {
     this.isGlide = false
     this.name = "MidiOut"
     console.log(this.name, " loaded")
-    this.midiOutput = Midi.midiHandlerInstance
+    this.midiOutput = midiHandlerInstance
     this.channel = 1
 
     

@@ -8,7 +8,7 @@ import p5 from 'p5';
 import * as Tone from 'tone';
 //import RumblePresets from './synthPresets/RumblePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
-import * as Midi from '../Midi.js'
+import { midiHandlerInstance } from '../Midi.js';
 import {Theory, parsePitchStringSequence, parsePitchStringBeat,getChord, pitchNameToMidi, intervalToMidi} from '../TheoryModule'
 
 export class MidiOut extends MonophonicTemplate {
@@ -17,7 +17,7 @@ export class MidiOut extends MonophonicTemplate {
     this.isGlide = false
     this.name = "MidiOut"
     console.log(this.name, " loaded")
-    this.midiOutput = Midi.midiHandlerInstance
+    this.midiOutput = midiHandlerInstance
     this.channel = 1
 
     

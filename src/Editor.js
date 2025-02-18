@@ -1137,6 +1137,12 @@ function Editor(props) {
                 <div id="controls">
                     <button onclick="runCode()">Run Code</button>
                     <button onclick="stopCode()">Stop</button>
+                <div class="span-container" id="keyboard-container">
+                    <div id="notes-display"></div>
+                    <button class="invisible-button" id="keyboard-button">
+                        <img class="icon inactive" id="keyboard-icon" src="./Icons/keyboard.png" alt="Keyboard" />
+                    </button>
+                </div>
                 </div>
 
                 <!-- Canvas containers -->
@@ -1147,6 +1153,15 @@ function Editor(props) {
                 <script>
                     // Synth class definitions and dependencies
                     ${synthCode}
+
+                    // Initialize MIDI
+                    window.midiHandlerInstance = midiHandlerInstance;
+                    window.setNoteOnHandler = midiHandlerInstance.setNoteOnHandler.bind(midiHandlerInstance);
+                    window.setNoteOffHandler = midiHandlerInstance.setNoteOffHandler.bind(midiHandlerInstance);
+                    window.setCCHandler = midiHandlerInstance.setCCHandler.bind(midiHandlerInstance);
+                    window.sendCC = midiHandlerInstance.sendCC.bind(midiHandlerInstance);
+                    window.sendNote = midiHandlerInstance.sendNoteOn.bind(midiHandlerInstance);
+                    window.sendNoteOff = midiHandlerInstance.sendNoteOff.bind(midiHandlerInstance);
 
                     // Initialize canvases with their original dimensions
                     const canvasStates = ${JSON.stringify(canvasStates)};
