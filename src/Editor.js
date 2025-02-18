@@ -1086,28 +1086,135 @@ function Editor(props) {
     };
       //end export dialog support
 
-    function exportAsWebPage(code) {
-        alert("exporting as web page will happen, eventually. . . . :-)")
-        /*
+    async function exportAsWebPage() {
+        const code = localStorage.getItem(`${props.page}Value`);
+        // Get all active p5 canvases and their states
+        const canvasStates = [];
+        const canvasElements = document.querySelectorAll('canvas');
+        canvasElements.forEach((canvas, index) => {
+            if (canvas.parentElement && canvas.parentElement.id) {
+                const canvasState = {
+                    id: canvas.parentElement.id,
+                    width: canvas.width,
+                    height: canvas.height,
+                };
+                canvasStates.push(canvasState);
+            }
+        });
+
+        // Load the bundled synth code from public assets
+        let synthCode = '';
+        try {
+            const response = await fetch('/creativitas/synth-bundle.txt');
+            if (!response.ok) throw new Error('Failed to load synth bundle');
+            synthCode = await response.text();
+        } catch (error) {
+            console.error('Error loading synth bundle:', error);
+            synthCode = '// Failed to load synth bundle';
+        }
+
+        // Create HTML template with required dependencies
         const htmlContent = `
             <!DOCTYPE html>
             <html lang="en">
             <head>
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Exported Code</title>
+                <title>Creativitas Exported Code</title>
+                
+                <!-- External Dependencies -->
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.0.4/Tone.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.0/p5.js"></script>
+                
+                <style>
+                    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+                    canvas { display: block; margin-bottom: 10px; }
+                    #controls { margin-bottom: 20px; }
+                    .canvas-container { margin-bottom: 20px; }
+                </style>
             </head>
             <body>
-                <pre>${code}</pre>
+                <div id="controls">
+                    <button onclick="runCode()">Run Code</button>
+                    <button onclick="stopCode()">Stop</button>
+                </div>
+
+                <!-- Canvas containers -->
+                ${canvasStates.map(state => `
+                    <div class="canvas-container" id="${state.id}" style="width: ${state.width}px; height: ${state.height}px;"></div>
+                `).join('')}
+
+                <script>
+                    // Synth class definitions and dependencies
+                    ${synthCode}
+
+                    // Initialize canvases with their original dimensions
+                    const canvasStates = ${JSON.stringify(canvasStates)};
+                    
+                    // Create p5 instances for each canvas
+                    const p5Instances = canvasStates.map(state => {
+                        return new p5((p) => {
+                            p.setup = function() {
+                                p.createCanvas(state.width, state.height);
+                                p.noLoop();
+                            };
+                            p.draw = function() {
+                                // Will be overridden by user code
+                            };
+                        }, state.id);
+                    });
+
+                    // Function to run user code
+                    async function runCode() {
+                        try {
+                            // Start audio context
+                            await Tone.start();
+                            window.audioContext = Tone.context.rawContext;
+                            
+                            // Clear previous state
+                            Tone.Transport.stop();
+                            Tone.Transport.cancel();
+                            
+                            // Run user code
+                            eval(document.getElementById('userCode').textContent);
+                        } catch (error) {
+                            console.error('Error running code:', error);
+                            alert('Error running code: ' + error.message);
+                        }
+                    }
+
+                    // Function to stop all sound
+                    function stopCode() {
+                        Tone.Transport.stop();
+                        Tone.Transport.cancel();
+                        const context = Tone.context;
+                        const now = context.currentTime;
+                        context.suspend(now);
+                    }
+                </script>
+
+                <!-- User Code -->
+                <script id="userCode" type="text/javascript">
+                    ${code}
+                </script>
             </body>
             </html>
         `;
+
+        // Create a Blob with the HTML content
         const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        
+        // Create a link element and trigger download
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = 'code.html';
+        a.href = url;
+        a.download = 'creativitas-export.html';
+        document.body.appendChild(a);
         a.click();
-        */
+        
+        // Clean up
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     /************************************************

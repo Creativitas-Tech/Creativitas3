@@ -4,9 +4,9 @@ created by Kayli Requenez F23
 */
 
 import p5 from 'p5';
-import themes from './p5Themes.json';
+import p5Themes from './p5Themes.json';
 
-let activeTheme = themes.themes['default']; // Default theme preset
+let activeTheme = p5Themes.themes['default']; // Default theme preset
 
 
 
@@ -18,15 +18,15 @@ export function debug(){
 //************** THEME DEFINITIONS *************/
 // Function to list available themes
 export function listThemes() {
-  console.log( Object.keys(themes.themes) ) 
+  console.log( Object.keys(p5Themes.themes) ) 
 }
 
 export function setTheme(themeName) {
-    if (!themes.themes[themeName]) {
+    if (!p5Themes.themes[themeName]) {
         console.error(`Theme '${themeName}' not found.`);
         return;
   } 
-    activeTheme = themes.themes[themeName]; // Default theme preset
+    activeTheme = p5Themes.themes[themeName]; // Default theme preset
 }
 
 // Function to update theme parameters

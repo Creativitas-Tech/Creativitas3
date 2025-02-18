@@ -36,8 +36,9 @@
     "web-vitals": "^4.2.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "node scripts/bundle-synths.js && react-scripts start",
+    "build": "node scripts/bundle-synths.js && react-scripts build",
+    "bundle-synths": "node scripts/bundle-synths.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose"

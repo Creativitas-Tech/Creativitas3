@@ -14,7 +14,7 @@ import p5 from 'p5';
 import * as Tone from 'tone';
 import { DelayOp } from './DelayOp.js';
 import {Parameter} from './ParameterModule.js'
-import './userInterface.css';
+// import './userInterface.css';
 
 
 export class AnalogDelay {
