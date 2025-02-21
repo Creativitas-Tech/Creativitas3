@@ -639,6 +639,12 @@ export class MonophonicTemplate {
         }
     }
 
+    set orn(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].orn = val
+        }
+    }
+
     set octave(val) {
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].octave = val

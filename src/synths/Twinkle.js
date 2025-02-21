@@ -83,7 +83,7 @@ export class Twinkle extends MonophonicTemplate {
     if(time){
       this.env.triggerAttack(time)
       this.frequency.setValueAtTime(freq, time)
-      this.velocitySig.setValueAtTime(amp,time)
+      this.velocitySig.linearRampToValueAtTime(amp, time + 0.01);
     } else {
       this.env.triggerAttack()
       this.frequency.value = freq
@@ -105,7 +105,9 @@ export class Twinkle extends MonophonicTemplate {
     if(time){
       this.env.triggerAttackRelease(dur, time)
       this.frequency.setValueAtTime(freq, time)
-      this.velocitySig.setValueAtTime(amp,time)
+      //this.velocitySig.cancelScheduledValues(time);
+      this.velocitySig.setTargetAtTime(amp, time, 0.005); // 0.03s time constant for smoother fade
+      //this.velocitySig.linearRampToValueAtTime(amp, time + 0.005);
     } else{
       this.env.triggerAttackRelease(dur)
       this.frequency.value = freq

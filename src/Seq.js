@@ -3,6 +3,7 @@
 
 import * as Tone from 'tone';
 import { Theory, parseStringSequence, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from './TheoryModule';
+import { orn } from './Ornament';
 
 export class Seq {
      constructor(synth, arr = [0], subdivision = '8n', phraseLength = 'infinite', num = 0, callback = null) {
@@ -13,6 +14,7 @@ export class Seq {
         this._sustain = 0.1;             // Local alias
         this._roll = 0.02;               // Local alias
         this._velocity = 100;            // Local alias
+        this._orn = 0;            // Local alias
         this._transform = (x) => x;      // Local alias
         this.phraseLength = phraseLength;
         this.enable = 1;
@@ -23,6 +25,18 @@ export class Seq {
         this.callback = callback;
         this.parent = null;
         this.index = 0;
+
+        //(note, pattern=1, scalar=1, length=4)
+        this.ornaments = [
+            [1,1,1],
+            [2,2,2],
+            [1,2,3],
+            [2,1,2],
+            [1,1,8],
+            [1,2,4],
+            [2,1,4],
+            [4,1,4]
+        ]
 
         this.createLoop();
     }
@@ -38,9 +52,11 @@ export class Seq {
     set sustain(val) {  this._sustain = val; }
     get roll() {  return this._roll; }
     set roll(val) {    this._roll = val; }
-     get velocity() { return this._velocity; }
+    get velocity() { return this._velocity; }
     set velocity(val) {  this._velocity = val; }
-     get transform() {  return this._transform;}
+    get orn() { return this._orn; }
+    set orn(val) {  this._orn = val; }
+    get transform() {  return this._transform;}
     set transform(val) {
         if (typeof val !== 'function') {
             throw new TypeError('Transform must be a function');
@@ -90,7 +106,9 @@ export class Seq {
 
             curBeat = this.checkForRandomElement(curBeat);
 
-            const event = parsePitchStringBeat(curBeat, time);
+            let event = parsePitchStringBeat(curBeat, time);
+
+            event = this.applyOrnamentation(event)
 
             // Roll chords
             const event_timings = event.map(subarray => subarray[1]);
@@ -116,6 +134,38 @@ export class Seq {
         this.setSubdivision(this.subdivision);
 
         Tone.Transport.start();
+    }
+
+    applyOrnamentation(event) {
+        let ornIndex;
+
+        // Check if _orn is an array, if so, index into it using this.index
+        if (Array.isArray(this._orn)) {
+            ornIndex = this._orn[this.index % this._orn.length]; // Select dynamically from array
+        } else {
+            ornIndex = this._orn % this.ornaments.length; // Use as a number
+        }
+
+        let [pattern, scalar, length] = this.ornaments[ornIndex]; // Get ornament parameters
+
+        let ornamentedEvent = [];
+        //console.log('orn', this._orn, pattern, scalar, length);
+
+        let numEvents = event.length * length; // Total number of notes in the ornamented event
+        let noteSpacing = 1 / numEvents; // Uniformly distribute notes
+
+        for (let [pitch, t] of event) {
+            let ornNotes = orn(pitch, pattern, scalar, length);
+            //console.log('ornNotes', ornNotes);
+
+            ornNotes.forEach((ornPitch, i) => {
+                if (ornPitch !== '.') { // Skip rests in the ornament pattern
+                    ornamentedEvent.push([ornPitch, i * noteSpacing]);
+                }
+            });
+        }
+
+        return ornamentedEvent;
     }
 
     checkForRandomElement(curBeat) {
