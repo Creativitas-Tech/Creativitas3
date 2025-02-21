@@ -22,9 +22,8 @@ const paramDefinitions = (synth) => [
         name:'harm',type:'vcf',
         min:1.,max:20,curve:1,
         isSignal: 'true', connectTo: synth.harmonicity.factor,
-        callback:(x,time=null)=>synth.harmonicity.factor.value = (x)
-    }
-        ,
+        callback:(x,time=null)=>{synth.harmonicity.factor.value = (x)}
+        },
     {
         name:'cutoff',type:'vcf',
         min:50.,max:10000,curve:2,

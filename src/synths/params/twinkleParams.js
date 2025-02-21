@@ -23,14 +23,39 @@ const paramDefinitions = (synth) => [
             }
         }
     },
-    { name: 'Q', type: 'vcf', min: 0, max: 30, curve: 2, callback: function(x) { synth.vcf.Q.value = x; } },
-    { name: 'keyTrack', type: 'hidden', min: 0, max: 2, curve: 1, callback: function(x) { synth.keyTracker.factor.value = x; } },
-    { name: 'envDepth', type: 'vcf', min: -1000, max: 5000, curve: 2, callback: function(x) { synth.vcf_env_depth.factor.value = x; } },
-    { name: 'level', type: 'vca', min: 0, max: 1, curve: 2, value: 0, callback: function(x) { synth.vca_lvl.value = x; } },
-    { name: 'attack', type: 'env', min: 0, max: 1, curve: 2, value: 0.01, callback: function(x) { synth.env.attack = x; } },
-    { name: 'decay', type: 'env', min: 0, max: 1, curve: 2, value: 0.1, callback: function(x) { synth.env.decay = x; } },
-    { name: 'sustain', type: 'env', min: 0, max: 1, curve: 2, value: 0.5, callback: function(x) { synth.env.sustain = x; } },
-    { name: 'release', type: 'env', min: 0, max: 1, curve: 2, value: 0.5, callback: function(x) { synth.env.release = x; } }
+    { 
+        name: 'Q', type: 'vcf', 
+        min: 0, max: 30, curve: 2, 
+        callback: function(x) { synth.vcf.Q.value = x; } 
+    },
+    { 
+        name: 'keyTrack', type: 'hidden', 
+        min: 0, max: 2, curve: 1, 
+        callback: function(x) { synth.keyTracker.factor.value = x; } },
+    { 
+        name: 'envDepth', type: 'vcf', 
+        min: -1000, max: 5000, curve: 2, 
+        callback: function(x) { synth.vcf_env_depth.factor.value = x; } },
+    { 
+        name: 'level', type: 'vca', 
+        min: 0, max: 1, curve: 2, value: 0, 
+        callback: function(x) { synth.vca_lvl.value = x; } },
+    { 
+        name: 'attack', type: 'env', 
+        min: 0, max: 1, curve: 2, value: 0.01, 
+        callback: function(x) { synth.env.attack = x; } },
+    { 
+        name: 'decay', type: 'env', 
+        min: 0, max: 1, curve: 2, value: 0.1, 
+        callback: function(x) { synth.env.decay = x; } },
+    { 
+        name: 'sustain', type: 'env', 
+        min: 0, max: 1, curve: 2, value: 0.5, 
+        callback: function(x) { synth.env.sustain = x; } },
+    { 
+        name: 'release', type: 'env', 
+        min: 0, max: 1, curve: 2, value: 0.5, 
+        callback: function(x) { synth.env.release = x; } }
 ];
 
 export default paramDefinitions;

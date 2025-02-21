@@ -13,7 +13,6 @@ import { Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, An
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
-import {Sequencer} from './Sequencer.js';
 import {MultiVCO} from './MultiVCO.js'
 import p5 from 'p5';
 import * as Tone from 'tone';
@@ -156,7 +155,6 @@ function Editor(props) {
     window.Diffuseur = Diffuseur
     window.KP = KP
     window.Sympathy = Sympathy
-    window.Sequencer = Sequencer
     window.MultiVCO = MultiVCO
     window.Kick = Kick
     window.Cymbal = Cymbal
