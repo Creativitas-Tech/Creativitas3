@@ -839,8 +839,7 @@ export class MonophonicTemplate {
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
         let sustain = this.getSeqParam(this.seq[num].sustain, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
-        //octave = 0
-        //velocity=100
+        let lag = this.getSeqParam(this.seq[num].lag, index);
 
         try {
             //console.log('trig', time, val[1], Tone.Time(this.subdivision))
@@ -848,10 +847,10 @@ export class MonophonicTemplate {
                 note + octave * 12,
                 velocity,
                 sustain,
-                time + val[1] * (Tone.Time(subdivision))
+                time + val[1] * (Tone.Time(subdivision)) + lag
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision));
+            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
         }
     }
 }

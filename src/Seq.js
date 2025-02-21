@@ -15,6 +15,7 @@ export class Seq {
         this._roll = 0.02;               // Local alias
         this._velocity = 100;            // Local alias
         this._orn = 0;            // Local alias
+        this._lag = 0;            // Local alias
         this._transform = (x) => x;      // Local alias
         this.phraseLength = phraseLength;
         this.enable = 1;
@@ -56,6 +57,8 @@ export class Seq {
     set velocity(val) {  this._velocity = val; }
     get orn() { return this._orn; }
     set orn(val) {  this._orn = val; }
+    get lag() { return this._lag; }
+    set lag(val) {  this._lag = val; }
     get transform() {  return this._transform;}
     set transform(val) {
         if (typeof val !== 'function') {
@@ -92,7 +95,7 @@ export class Seq {
     createLoop() {
         // Create a Tone.Loop
         this.loopInstance = new Tone.Loop(time => {
-            //console.log('old loop')
+            console.log('old loop')
             if (this.enable === 0) return;
 
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
@@ -118,6 +121,7 @@ export class Seq {
             }
 
             //main callback for triggering notes
+            console.log(event, time, this.index, this.num)
             for (const val of event) this.callback(val, time, this.index, this.num);
 
             //check for sequencing params

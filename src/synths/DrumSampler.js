@@ -302,7 +302,7 @@ export class DrumSampler extends DrumTemplate{
 
   sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
         //this.start(num);
-    console.log(arr)
+    console.log(arr,num)
         if (!this.seq[num]) {
             this.seq[num] = new Seq(this, '0', subdivision, phraseLength, num, this.triggerDrum.bind(this));
             this.seq[num].parent = this
@@ -381,6 +381,7 @@ export class DrumSampler extends DrumTemplate{
         // Create a Tone.Loop
       console.log('loop made')
             this.loopInstance = new Tone.Loop(time => {
+              //console.log(this.num)
                 if(this.enable=== 0) return
                 this.index = Math.floor(Tone.Transport.ticks / Tone.Time(this.subdivision).toTicks());
                 let curBeat = this.vals[this.index % this.vals.length];
@@ -393,7 +394,7 @@ export class DrumSampler extends DrumTemplate{
                 const event = parseStringBeat(curBeat, time);
                 //console.log(event,curBeat, this.vals,time,this.index, this.subdivision)
                 for (const val of event) {
-                  this.parent.triggerDrum(val[0], 0, time + val[1] * (Tone.Time(this.subdivision)));
+                  this.parent.triggerDrum(val[0], time + val[1] * (Tone.Time(this.subdivision)), this.index, this.num);
                 }
                 
             }, this.subdivision).start(0);
@@ -408,9 +409,24 @@ export class DrumSampler extends DrumTemplate{
         Tone.Transport.start()
     }
 
-  triggerDrum = (val, num=0, time=Tone.immediate())=>{
-    //console.log(val,time, this.kickVelocity[num],this)
+  triggerDrum = (val, time=Tone.immediate(), index = 0, num=0)=>{
+    //console.log(val,time,index,num)
     val = val[0]
+    let octave = this.getSeqParam(this.seq[num].octave, index);
+        let velocity = this.getSeqParam(this.seq[num].velocity, index);
+        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
+        let lag = this.getSeqParam(this.seq[num].lag, index);
+
+      let subdivisionTime = Tone.Time(subdivision).toSeconds();
+
+    // Calculate lag as a percentage of subdivision
+    let lagTime = (lag) * subdivisionTime;
+    //console.log(lag, subdivisionTime, lagTime)
+
+    // Apply lag to time
+    time = time + lagTime;
+
     switch(val){
       case '.': break;
       case '0': this.newKick.trigger(1,1,time); break; //just because. . . .
