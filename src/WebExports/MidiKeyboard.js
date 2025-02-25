@@ -27,7 +27,7 @@ class MidiKeyboard {
             190: { "midi": 74, "pitch": "D" },    // .
             186: { "midi": 75, "pitch": "D#/Eb" }, // ;
             191: { "midi": 76, "pitch": "E" },    // /
-            
+
             // second octave
             81: { "midi": 72, "pitch": "C" },     // Q
             50: { "midi": 73, "pitch": "C#/Db" }, // 2
@@ -55,13 +55,13 @@ class MidiKeyboard {
         // Add event listeners
         document.addEventListener('keydown', this.handleKeyDown.bind(this));
         document.addEventListener('keyup', this.handleKeyUp.bind(this));
-        
+
         // Get DOM elements
-        // WARNING: These are assumed to be defined for web exports
+        // WARNING: These are assumed to be defined
         this.keyboardButton = document.getElementById('keyboard-button');
         this.keyboardIcon = document.getElementById('keyboard-icon');
         this.notesDisplay = document.getElementById('notes-display');
-        
+
         // Add click handler
         this.keyboardButton.addEventListener('click', this.toggleMidi.bind(this));
     }
@@ -131,7 +131,7 @@ class MidiKeyboard {
 
     updateNotesDisplay() {
         this.notesDisplay.innerHTML = Array.from(this.notesOn)
-            .map(note => `<div>${note}</div>`)
+            .map(note => `<div class="note-pill">${note}</div>`)
             .join('');
     }
 }

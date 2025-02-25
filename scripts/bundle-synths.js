@@ -11,6 +11,14 @@ async function bundleSynthDependencies() {
     const ignorePaths = [
         "synths/Sequencer.js",
     ]
+    const coreFiles = [
+        'AsciiKeyboard.js',
+        'TheoryModule.js',
+        'p5Library.js',
+        'p5Elements.js',
+        'p5Themes.js',
+        'Midi.js',
+    ]
     const srcDir = path.join(__dirname, '..', 'src');
     const ignoreFullPaths = ignorePaths.map(p => path.join(srcDir, p));
     const synthsDir = path.join(srcDir, 'synths');
@@ -48,9 +56,9 @@ async function bundleSynthDependencies() {
                 return;
             }
 
-            const ast = acorn.parse(content, { 
+            const ast = acorn.parse(content, {
                 sourceType: 'module',
-                ecmaVersion: 'latest' 
+                ecmaVersion: 'latest'
             });
 
             // Find all imports
@@ -59,7 +67,7 @@ async function bundleSynthDependencies() {
                     const importPath = node.source.value;
                     // Skip external imports
                     // This includes Tone, for example, and should be handled as a special case
-                    if (!importPath.startsWith('.')) return; 
+                    if (!importPath.startsWith('.')) return;
 
                     const resolvedPath = path.resolve(path.dirname(filePath), importPath);
                     let fullPath = resolvedPath;
@@ -87,24 +95,17 @@ async function bundleSynthDependencies() {
     }
 
     // Process core files first
-    const coreFiles = [
-        path.join(srcDir, 'TheoryModule.js'),
-        path.join(srcDir, 'p5Library.js'),
-        path.join(srcDir, 'p5Elements.js'),
-        path.join(srcDir, 'p5Themes.js'),
-        path.join(srcDir, 'Midi.js')
-    ];
+    const coreFilePaths = [];
+    for (const coreFile of coreFiles) {
+        coreFilePaths.push(path.join(srcDir, coreFile));
+    }
 
-    for (const filePath of coreFiles) {
+    for (const filePath of coreFilePaths) {
         if (fs.existsSync(filePath)) {
             await processFile(filePath);
         }
     }
 
-    // Then process MonophonicTemplate.js
-    // TODO: Don't rely on importing MonophonicTemplate.js first. It should
-    // already be one of the first classes imported due to the import dependency handling code
-    await processFile(path.join(synthsDir, 'MonophonicTemplate.js'));
     // Get all required
     const required_files = await fsp.readdir(webExportsDir);
     for (const file of required_files) {
@@ -141,9 +142,9 @@ async function bundleSynthDependencies() {
         // JSON files don't need dependency resolution
         if (!filePath.endsWith('.json')) {
             try {
-                const ast = acorn.parse(content, { 
+                const ast = acorn.parse(content, {
                     sourceType: 'module',
-                    ecmaVersion: 'latest' 
+                    ecmaVersion: 'latest'
                 });
 
                 walk.simple(ast, {
@@ -178,21 +179,19 @@ async function bundleSynthDependencies() {
             processedContent = `${content};`;
         } else {
             processedContent = content
-            // Remove import statements
-            .replace(/(?:import\s+.*?|{[^}]*}|\*\s+as\s+\w+)\s+from\s+['"].*?['"]/gs, '')
-            // Remove export statements
-            .replace(/export\s+(default\s+)?/g, '')
-            // Add window assignments for classes
-            .replace(/class\s+(\w+)/, (match, className) => {
-                return `class ${className}`;
-            });
+                // Remove import statements
+                .replace(/(?:import\s+.*?|{[^}]*}|\*\s+as\s+\w+)\s+from\s+['"].*?['"]/gs, '')
+                // Remove export statements
+                .replace(/export\s+(default\s+)?/g, '')
+                // Add window assignments for classes
+                .replace(/class\s+(\w+)/, (match, className) => {
+                    return `class ${className}`;
+                });
         }
 
         sortedCode.push(processedContent);
     }
 
-    // Visit all files starting with MonophonicTemplate
-    visit(path.join(synthsDir, 'MonophonicTemplate.js'));
     for (const [filePath] of dependencies) {
         visit(filePath);
     }
@@ -201,11 +200,11 @@ async function bundleSynthDependencies() {
     // Having the js helps us see if there are any syntax errors ahead of time
     const outputPath = path.join(__dirname, '..', 'src', 'generated', 'synth-bundle.js');
     const publicPath = path.join(__dirname, '..', 'public', 'synth-bundle.txt');
-    
+
     await fsp.mkdir(path.dirname(outputPath), { recursive: true });
     await fsp.writeFile(outputPath, sortedCode.join('\n\n'));
     await fsp.writeFile(publicPath, sortedCode.join('\n\n'));
-    
+
     console.log(`Bundled synth code written to ${outputPath} and ${publicPath}`);
 }
 

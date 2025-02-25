@@ -9,12 +9,12 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 
 
 //tone
-import { Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, ModDelay, Kick, DrumSampler, Simpler, Snare, Cymbal, Player  } from './synths/index.js';
+import { Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, ModDelay, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
-import {Sequencer} from './Sequencer.js';
-import {MultiVCO} from './MultiVCO.js'
+import { Sequencer } from './Sequencer.js';
+import { MultiVCO } from './MultiVCO.js'
 import p5 from 'p5';
 import * as Tone from 'tone';
 import * as TheoryModule from './TheoryModule.js';
@@ -22,13 +22,14 @@ import * as TheoryModule from './TheoryModule.js';
 import Canvas from "./Canvas.js";
 import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction } from './visualizers/index.js';
 import * as waveshapers from './synths/waveshapers.js'
-import {stepper, expr} from  './Utilities.js'
+import { stepper, expr } from './Utilities.js'
 
 import WebSocketClient from './collabSocket';
 import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
 
 import MidiKeyboard from './MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
+import webExportHTMLContentGenerator from './WebExportGenerator.ts';
 
 const midi = require('./Midi.js');
 const LZString = require('lz-string');
@@ -38,42 +39,42 @@ const LZString = require('lz-string');
 const stateFields = { history: historyField };
 
 // List of available themes
-const themeNames = ['gruvboxDark', 'gruvboxLight', 'okaidia', 'bbedit', 
-  'basicDark', 'basicDarkInit', 'basicLight', 'basicLightInit'];
+const themeNames = ['gruvboxDark', 'gruvboxLight', 'okaidia', 'bbedit',
+    'basicDark', 'basicDarkInit', 'basicLight', 'basicLightInit'];
 
 // Load the theme dynamically based on the theme name
 const loadTheme = async (themeName) => {
-  try {
-    let themeModule;
-    switch (themeName) {
-      case 'gruvboxDark':
-      case 'gruvboxLight':
-        themeModule = await import('@uiw/codemirror-theme-gruvbox-dark');
-        return themeName === 'gruvboxDark' ? themeModule.gruvboxDark : themeModule.gruvboxLight;
-      case 'okaidia':
-        themeModule = await import('@uiw/codemirror-theme-okaidia');
-        return themeModule.okaidia;
-      case 'bbedit':
-        themeModule = await import('@uiw/codemirror-theme-bbedit');
-        return themeModule.bbedit;
-      case 'basicDark':
-      case 'basicDarkInit':
-      case 'basicDarkStyle':
-      case 'basicLight':
-      case 'basicLightInit':
-      case 'basicLightStyle':
-      case 'defaultSettingsBasicDark':
-      case 'defaultSettingsBasicLight':
-        themeModule = await import('@uiw/codemirror-theme-basic');
-        return themeModule[themeName];
-      default:
-        throw new Error(`Theme ${themeName} not found`);
+    try {
+        let themeModule;
+        switch (themeName) {
+            case 'gruvboxDark':
+            case 'gruvboxLight':
+                themeModule = await import('@uiw/codemirror-theme-gruvbox-dark');
+                return themeName === 'gruvboxDark' ? themeModule.gruvboxDark : themeModule.gruvboxLight;
+            case 'okaidia':
+                themeModule = await import('@uiw/codemirror-theme-okaidia');
+                return themeModule.okaidia;
+            case 'bbedit':
+                themeModule = await import('@uiw/codemirror-theme-bbedit');
+                return themeModule.bbedit;
+            case 'basicDark':
+            case 'basicDarkInit':
+            case 'basicDarkStyle':
+            case 'basicLight':
+            case 'basicLightInit':
+            case 'basicLightStyle':
+            case 'defaultSettingsBasicDark':
+            case 'defaultSettingsBasicLight':
+                themeModule = await import('@uiw/codemirror-theme-basic');
+                return themeModule[themeName];
+            default:
+                throw new Error(`Theme ${themeName} not found`);
+        }
+    } catch (error) {
+        console.error(`Selected theme "${themeName}" does not exist. Try using a number like setTheme(2).`)
+        const fallbackModule = await import('@uiw/codemirror-theme-gruvbox-dark');
+        return fallbackModule.okaidia; // Fallback theme
     }
-  } catch (error) {
-    console.error(`Selected theme "${themeName}" does not exist. Try using a number like setTheme(2).`)
-    const fallbackModule = await import('@uiw/codemirror-theme-gruvbox-dark');
-    return fallbackModule.okaidia; // Fallback theme
-  }
 }; //loadTheme
 
 // Define effects to add and clear decorations
@@ -82,21 +83,21 @@ const clearAllDecorationsEffect = StateEffect.define();
 
 // Define a StateField to manage the decorations
 const decorationsField = StateField.define({
-  create() {
-    return Decoration.none;
-  },
-  update(decorations, transaction) {
-    decorations = decorations.map(transaction.changes);
-    for (let effect of transaction.effects) {
-      if (effect.is(addDecorationEffect)) {
-        decorations = decorations.update({ add: [effect.value] });
-      } else if (effect.is(clearAllDecorationsEffect)) {
-        decorations = Decoration.none;  // Clear all decorations
-      }
-    }
-    return decorations;
-  },
-  provide: f => EditorView.decorations.from(f)
+    create() {
+        return Decoration.none;
+    },
+    update(decorations, transaction) {
+        decorations = decorations.map(transaction.changes);
+        for (let effect of transaction.effects) {
+            if (effect.is(addDecorationEffect)) {
+                decorations = decorations.update({ add: [effect.value] });
+            } else if (effect.is(clearAllDecorationsEffect)) {
+                decorations = Decoration.none;  // Clear all decorations
+            }
+        }
+        return decorations;
+    },
+    provide: f => EditorView.decorations.from(f)
 });
 
 
@@ -160,8 +161,8 @@ function Editor(props) {
     window.MultiVCO = MultiVCO
     window.Kick = Kick
     window.Cymbal = Cymbal
-    window.DrumSampler = DrumSampler 
-    window.Simpler = Simpler   
+    window.DrumSampler = DrumSampler
+    window.Simpler = Simpler
     window.Snare = Snare;
     window.ModDelay = ModDelay;
     window.Player = Player;
@@ -181,15 +182,15 @@ function Editor(props) {
     //utilities
     window.stepper = stepper
     window.expr = expr
-    window.enableHighlight = (x)=>{setHighlightEnable(x)}
+    window.enableHighlight = (x) => { setHighlightEnable(x) }
     // lib
     window.drumPatterns = drumPatterns;
-    window.expr = (func, len=32) => {
+    window.expr = (func, len = 32) => {
         return Array.from({ length: len }, (_, i) => {
             return func(i)
         })
     }
-    window.autocomplete = (val)=>{setUseAutoComplete(val)}
+    window.autocomplete = (val) => { setUseAutoComplete(val) }
     // window.displayCode = (val) => {
     //     displayRemoteCode.current = val;
     //     console.log('Remote code display enabled.');
@@ -202,29 +203,29 @@ function Editor(props) {
             configurable: true
         });
         console.log('t is defined')
-    } else {}//console.log('tght is already defined')}
+    } else { }//console.log('tght is already defined')}
 
-    
+
 
 
     var curLineNum = 0;
 
     //math
-    window.tri = (i)=>{return Math.abs(i%1-.5)*4-1}
+    window.tri = (i) => { return Math.abs(i % 1 - .5) * 4 - 1 }
     window.pi = 3.141592
-    window.rand = (min,max=null)=>{
-        if(max=null) return floor(Math.random()*min)
-        else return floor(Math.random()*(max-min))+min
+    window.rand = (min, max = null) => {
+        if (max = null) return floor(Math.random() * min)
+        else return floor(Math.random() * (max - min)) + min
     }
     const {
-      sign, floor, ceil, round, max, min, pow, sqrt, abs, sin, cos, tan, log, exp, PI, random
+        sign, floor, ceil, round, max, min, pow, sqrt, abs, sin, cos, tan, log, exp, PI, random
     } = Math;
 
     /************************************************
      * 
      * Code caching and URL decoding
      * 
-     *************************************************/ 
+     *************************************************/
     // Save history in browser
     const serializedState = localStorage.getItem(`${props.page}EditorState`);
 
@@ -233,7 +234,7 @@ function Editor(props) {
     function urlDecode() {
         const URLParams = new URLSearchParams(window.location.search);
         const compressedCode = URLParams.get('code');
-        let encodedContent =  LZString.decompressFromEncodedURIComponent(compressedCode)
+        let encodedContent = LZString.decompressFromEncodedURIComponent(compressedCode)
         if (encodedContent) {
             console.log(encodedContent)
             // encodedContent = encodedContent
@@ -252,93 +253,93 @@ function Editor(props) {
     urlDecode();
     //console.log('test')
     const value = localStorage.getItem(`${props.page}Value`) || props.starterCode;
-    
-    function create_sequencer_gui(gui){
+
+    function create_sequencer_gui(gui) {
         let num_pads = 8
-        gui.createCanvas(700,200); 
+        gui.createCanvas(700, 200);
         let noteToggles_1 = [];
         let noteOn_1 = [true, true, true, true, true, true, true, true];
         for (let i = 0; i < num_pads; i++) {
-          noteToggles_1.push(gui.Toggle({
-            callback: function (x) {
-              noteOn_1[i] = x == 0 ? false : true;  // Toggle noteOn for the sequence
-            },
-            label: " ",
-            x: 11 + 11*i,  // Position the toggle switches
-            y: 15,
-            border: 10,
-            borderColor: [255,0,0],
-            size: .7
-          }));
-          noteToggles_1[i].set(0);  // Default all to "off"
+            noteToggles_1.push(gui.Toggle({
+                callback: function (x) {
+                    noteOn_1[i] = x == 0 ? false : true;  // Toggle noteOn for the sequence
+                },
+                label: " ",
+                x: 11 + 11 * i,  // Position the toggle switches
+                y: 15,
+                border: 10,
+                borderColor: [255, 0, 0],
+                size: .7
+            }));
+            noteToggles_1[i].set(0);  // Default all to "off"
         }
         let noteOn_2 = [true, true, true, true, true, true, true, true];  // toggle states for sequence steps
         let noteToggles_2 = [];
         for (let i = 0; i < num_pads; i++) {
-          noteToggles_2.push(gui.Toggle({
-            callback: function (x) {
-              noteOn_2[i] = x == 0 ? false : true; 
-            },
-            label: " ",
-            x: 11 + 11*i, 
-            y: 39,
-            border: 10,
-            borderColor: [0,128,0],
-            size: .7
-          }));
-          noteToggles_2[i].set(0);  // default all to "on"
+            noteToggles_2.push(gui.Toggle({
+                callback: function (x) {
+                    noteOn_2[i] = x == 0 ? false : true;
+                },
+                label: " ",
+                x: 11 + 11 * i,
+                y: 39,
+                border: 10,
+                borderColor: [0, 128, 0],
+                size: .7
+            }));
+            noteToggles_2[i].set(0);  // default all to "on"
         }
-        let noteOn_3 = [true, true, true, true, true, true, true, true]; 
+        let noteOn_3 = [true, true, true, true, true, true, true, true];
         let noteToggles_3 = [];
         for (let i = 0; i < num_pads; i++) {
-          noteToggles_3.push(gui.Toggle({
-            label: " ", 
-            callback: function (x) {
-              noteOn_3[i] = x == 0 ? false : true; 
-            },
-            label: " ",
-            x: 11 + 11*i, 
-            y: 35+28,
-            border: 10,
-            borderColor: [0,0,255],
-            size: .7
-          }));
-          noteToggles_3[i].set(0);  // default all to "off"
+            noteToggles_3.push(gui.Toggle({
+                label: " ",
+                callback: function (x) {
+                    noteOn_3[i] = x == 0 ? false : true;
+                },
+                label: " ",
+                x: 11 + 11 * i,
+                y: 35 + 28,
+                border: 10,
+                borderColor: [0, 0, 255],
+                size: .7
+            }));
+            noteToggles_3[i].set(0);  // default all to "off"
         }
-        let noteOn_4 = [true, true, true, true, true, true, true, true]; 
+        let noteOn_4 = [true, true, true, true, true, true, true, true];
         let noteToggles_4 = [];
         for (let i = 0; i < num_pads; i++) {
-          noteToggles_4.push(gui.Toggle({
-            callback: function (x) {
-              noteOn_4[i] = x == 0 ? false : true; 
-            },
-            label: " ",
-            x: 11 + 11*i, 
-            y: 39+24*2,
-            border: 10,
-            borderColor: [128,0,128],
-            size: .7
-          }));
-          noteToggles_4[i].set(0);  // default all to "off"
+            noteToggles_4.push(gui.Toggle({
+                callback: function (x) {
+                    noteOn_4[i] = x == 0 ? false : true;
+                },
+                label: " ",
+                x: 11 + 11 * i,
+                y: 39 + 24 * 2,
+                border: 10,
+                borderColor: [128, 0, 128],
+                size: .7
+            }));
+            noteToggles_4[i].set(0);  // default all to "off"
         }
         let noteOns = [noteOn_1, noteOn_2, noteOn_3, noteOn_4];
         let noteToggles = [noteToggles_1, noteToggles_2, noteToggles_3, noteToggles_4];
         return [noteOns, noteToggles];
-      }
+    }
 
     /************************************************
      * 
      * Handle Themes
      * 
-     *************************************************/ 
+     *************************************************/
 
     const [themeDef, setThemeDef] = useState(); // Default theme
 
     const setTheme = async (themeName) => {
-        if( typeof themeName === 'number') themeName = themeNames[themeName%themeNames.length]
+        if (typeof themeName === 'number') themeName = themeNames[themeName % themeNames.length]
         const selectedTheme = await loadTheme(themeName);
         console.log(`Current codebox theme: ${themeName}. \nChange theme with setTheme(number or string)`)
-        setThemeDef(selectedTheme);     
+        setThemeDef(selectedTheme);
     };
 
 
@@ -348,7 +349,7 @@ function Editor(props) {
      * 
      *************************************************/
 
-     function initCollab(roomName = 'famleLounge'){
+    function initCollab(roomName = 'famleLounge') {
         window.chClient = new CollabHubClient(); // needs to happen once (!)
         window.chTracker = new CollabHubTracker(window.chClient);
 
@@ -373,10 +374,10 @@ function Editor(props) {
     const [maximized, setMaximized] = useState('');
 
     // Ensure editorView is set properly when the editor is created
-      const onCreateEditor = (view) => {
+    const onCreateEditor = (view) => {
         setEditorView(view);  // Capture the editorView instance
         //console.log('EditorView created:', view);
-      };
+    };
 
 
     useEffect(() => {
@@ -387,40 +388,40 @@ function Editor(props) {
             setHeight(`${container.clientHeight}px`);
         }
         loadTheme('okaidia').then((loadedTheme) => {
-        setTheme('okaidia');
-    });
+            setTheme('okaidia');
+        });
 
-      Array.prototype.rotate = function(n) {
-          // Ensure n is an integer, and handle negative rotation
-          n = n % this.length;  // This ensures n stays within array bounds
-          if (n < 0) n += this.length;  // For negative rotation, we add the array length
+        Array.prototype.rotate = function (n) {
+            // Ensure n is an integer, and handle negative rotation
+            n = n % this.length;  // This ensures n stays within array bounds
+            if (n < 0) n += this.length;  // For negative rotation, we add the array length
 
-          // Perform the rotation
-          return this.slice(n).concat(this.slice(0, n));
+            // Perform the rotation
+            return this.slice(n).concat(this.slice(0, n));
         };
 
-        Array.prototype.peek = function(n) {
-          // Ensure n is an integer, and handle negative rotation
-          n = n % this.length;  // This ensures n stays within array bounds
-          if (n < 0) n += this.length;  // For negative rotation, we add the array length
+        Array.prototype.peek = function (n) {
+            // Ensure n is an integer, and handle negative rotation
+            n = n % this.length;  // This ensures n stays within array bounds
+            if (n < 0) n += this.length;  // For negative rotation, we add the array length
 
-          // return the element at n
-          return this[Math.floor(n)]
+            // return the element at n
+            return this[Math.floor(n)]
         };
 
-        Array.prototype.poke = function(n, v) {
-          // Ensure n is an integer, and handle negative rotation
-          n = n % this.length;  // This ensures n stays within array bounds
-          if (n < 0) n += this.length;  // For negative rotation, we add the array length
-          let temp = this[n]
-          //modify the array
-          this[Math.floor(n)]=v
-          //return the previous value of the changed element
-          return temp
+        Array.prototype.poke = function (n, v) {
+            // Ensure n is an integer, and handle negative rotation
+            n = n % this.length;  // This ensures n stays within array bounds
+            if (n < 0) n += this.length;  // For negative rotation, we add the array length
+            let temp = this[n]
+            //modify the array
+            this[Math.floor(n)] = v
+            //return the previous value of the changed element
+            return temp
         };
 
         window.audioContext = Tone.context.rawContext;
- 
+
         return () => {
 
         };
@@ -472,7 +473,7 @@ function Editor(props) {
 
         //Take action when we see a VariableDeclaration Node
         const visitors = {
-            
+
             VariableDeclaration(node, state, c) {
                 //remove kind (let/var/const)
                 //console.log('1',string)
@@ -632,8 +633,8 @@ function Editor(props) {
         let cleanedCode = removeComments();
         //console.log(node)
         function isAudioNode(node) {
-            try{ return node.context || node instanceof AudioContext;}
-            catch(e){console.log(e)}
+            try { return node.context || node instanceof AudioContext; }
+            catch (e) { console.log(e) }
         }
         for (const [key, instances] of Object.entries(innerScopeVars)) {
             if (!cleanedCode.includes(key)) {
@@ -685,7 +686,7 @@ function Editor(props) {
             var line = code.split('\n')[curLineNum - 1];
             traverse(line);
             //flashLine(editorView,curLineNum)
-            if(highlightEnable) addLineDecoration(curLineNum-1)
+            if (highlightEnable) addLineDecoration(curLineNum - 1)
         } catch (error) {
             console.log(error);
         }
@@ -709,78 +710,78 @@ function Editor(props) {
                 line = lines[linepos];
             }
             traverse(lines.slice(start, linepos).join('\n'));
-            if(highlightEnable) flashBlock (start, linepos-1, 1000)
+            if (highlightEnable) flashBlock(start, linepos - 1, 1000)
         } catch (error) {
             console.log(error);
         }
     }
 
     const addLineDecoration = (lineNumber, duration = 1000) => {
-      if (editorView) {
-        const line = editorView.state.doc.line(lineNumber + 1);
-        //console.log(line)
-        // Create a blue background decoration (without fade-out initially)
-        const deco = Decoration.line({ class: "line-highlight" }).range(line.from);
+        if (editorView) {
+            const line = editorView.state.doc.line(lineNumber + 1);
+            //console.log(line)
+            // Create a blue background decoration (without fade-out initially)
+            const deco = Decoration.line({ class: "line-highlight" }).range(line.from);
 
-        // Apply the highlight immediately
-        const transaction = editorView.state.update({
-          effects: addDecorationEffect.of(deco)
-        });
-        editorView.dispatch(transaction);
+            // Apply the highlight immediately
+            const transaction = editorView.state.update({
+                effects: addDecorationEffect.of(deco)
+            });
+            editorView.dispatch(transaction);
 
-        // Add the fade-out class after a short delay to trigger the fade-out effect
-        setTimeout(() => {
-          const elements = document.getElementsByClassName('line-highlight');
-          for (let el of elements) {
-            el.classList.add('fade-out');  // Add the fade-out class after the highlight
-          }
-        }, 300); // Small delay to allow the initial highlight to appear instantly
+            // Add the fade-out class after a short delay to trigger the fade-out effect
+            setTimeout(() => {
+                const elements = document.getElementsByClassName('line-highlight');
+                for (let el of elements) {
+                    el.classList.add('fade-out');  // Add the fade-out class after the highlight
+                }
+            }, 300); // Small delay to allow the initial highlight to appear instantly
 
-        // Remove the highlight after the specified duration
-        setTimeout(() => {
-          const clearTransaction = editorView.state.update({
-            effects: clearAllDecorationsEffect.of(null) // Remove decoration
-          });
-          editorView.dispatch(clearTransaction);
-        }, duration);
-      }
+            // Remove the highlight after the specified duration
+            setTimeout(() => {
+                const clearTransaction = editorView.state.update({
+                    effects: clearAllDecorationsEffect.of(null) // Remove decoration
+                });
+                editorView.dispatch(clearTransaction);
+            }, duration);
+        }
     };
 
     // Add decoration to a block of lines
-  const flashBlock = (startLine, endLine, duration = 1000) => {
-    
-    if (editorView) {
-      const decorations = [];
+    const flashBlock = (startLine, endLine, duration = 1000) => {
 
-      // Loop through each line in the block and create a decoration
-      for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
-        const line = editorView.state.doc.line(lineNumber + 1);  // CodeMirror uses 1-based line numbers
-        const deco = Decoration.line({ class: "line-highlight" }).range(line.from);
-        
-        // Apply each decoration as its own transaction
-        const transaction = editorView.state.update({
-          effects: addDecorationEffect.of(deco)
-        });
-        editorView.dispatch(transaction);
-      }
+        if (editorView) {
+            const decorations = [];
 
-      // Add fade-out class after a delay (longer delay might be needed for smooth appearance)
-      setTimeout(() => {
-        const elements = document.getElementsByClassName('line-highlight');
-        for (let el of elements) {
-          el.classList.add('fade-out');  // Add fade-out class to each highlighted line
+            // Loop through each line in the block and create a decoration
+            for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
+                const line = editorView.state.doc.line(lineNumber + 1);  // CodeMirror uses 1-based line numbers
+                const deco = Decoration.line({ class: "line-highlight" }).range(line.from);
+
+                // Apply each decoration as its own transaction
+                const transaction = editorView.state.update({
+                    effects: addDecorationEffect.of(deco)
+                });
+                editorView.dispatch(transaction);
+            }
+
+            // Add fade-out class after a delay (longer delay might be needed for smooth appearance)
+            setTimeout(() => {
+                const elements = document.getElementsByClassName('line-highlight');
+                for (let el of elements) {
+                    el.classList.add('fade-out');  // Add fade-out class to each highlighted line
+                }
+            }, 200); // Small delay to apply the fade-out class
+
+            // Set a timeout to remove the block decoration after the duration
+            setTimeout(() => {
+                const clearTransaction = editorView.state.update({
+                    effects: clearAllDecorationsEffect.of(null) // Remove the block decoration
+                });
+                editorView.dispatch(clearTransaction);
+            }, duration);
         }
-      }, 200); // Small delay to apply the fade-out class
-
-      // Set a timeout to remove the block decoration after the duration
-      setTimeout(() => {
-        const clearTransaction = editorView.state.update({
-          effects: clearAllDecorationsEffect.of(null) // Remove the block decoration
-        });
-        editorView.dispatch(clearTransaction);
-      }, duration);
-    }
-  };
+    };
 
     function removedSpaces() {
         let lines = code.split("\n");
@@ -813,8 +814,8 @@ function Editor(props) {
         }
 
         if (editorView) {
-          const currentDoc = editorView.state.doc.toString(); // Get the current content
-          //console.log(currentDoc);
+            const currentDoc = editorView.state.doc.toString(); // Get the current content
+            //console.log(currentDoc);
         }
 
         localStorage.setItem(`${props.page}Value`, value);
@@ -825,30 +826,30 @@ function Editor(props) {
 
         // Check if changes are present and extract the edited line
         if (viewUpdate.changes) {
-          try{
-            const lineChanges = [];
-            viewUpdate.changes.iterChanges((from, to, inserted) => {
-                const doc = viewUpdate.state.doc;
+            try {
+                const lineChanges = [];
+                viewUpdate.changes.iterChanges((from, to, inserted) => {
+                    const doc = viewUpdate.state.doc;
 
-                // Get the start and end line numbers for the change
-                const startLine = doc.lineAt(from).number - 1; // 0-based index
-                const endLine = doc.lineAt(to).number - 2;
+                    // Get the start and end line numbers for the change
+                    const startLine = doc.lineAt(from).number - 1; // 0-based index
+                    const endLine = doc.lineAt(to).number - 2;
 
-                // Get the full line content for each line in the change
-                for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
-                    const lineContent = doc.line(lineNumber + 1).text;
-                    lineChanges.push({ lineNumber, content: lineContent });
-                }
-            });
+                    // Get the full line content for each line in the change
+                    for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
+                        const lineContent = doc.line(lineNumber + 1).text;
+                        lineChanges.push({ lineNumber, content: lineContent });
+                    }
+                });
 
-            // Send each edited line to the WebSocket server
-            lineChanges.forEach((lineChange) => {
-                const edit = {
-                    lineNumber: lineChange.lineNumber,
-                    content: lineChange.content,
-                };
-            });
-          } catch(e){}
+                // Send each edited line to the WebSocket server
+                lineChanges.forEach((lineChange) => {
+                    const edit = {
+                        lineNumber: lineChange.lineNumber,
+                        content: lineChange.content,
+                    };
+                });
+            } catch (e) { }
         }
     };
 
@@ -865,7 +866,7 @@ function Editor(props) {
         // }
         else if (event.altKey && event.key === 'Enter') {
             evaluateLine();
-        }   
+        }
     };
 
 
@@ -891,8 +892,8 @@ function Editor(props) {
      * autocompletion
      * 
      *************************************************/
-   
-    const usefulCompletions = ["frequency", "factor","Oscillator","Filter","Tone","value"];
+
+    const usefulCompletions = ["frequency", "factor", "Oscillator", "Filter", "Tone", "value"];
     const [useAutoComplete, setUseAutoComplete] = useState(true);
 
     function getClassMethods(obj) {
@@ -908,71 +909,71 @@ function Editor(props) {
             // Get own property names of the current prototype
             const propertyNames = Object.getOwnPropertyNames(currentPrototype)
                 .filter(name => name !== "constructor");
-    
+
             functions = functions.concat(propertyNames);
-    
+
             // Move up the prototype chain
             currentPrototype = Object.getPrototypeOf(currentPrototype);
         }
 
         return Array.from(new Set(functions)); // Remove duplicates
     }
-    
 
-    function getMethodCompletions(object){
+
+    function getMethodCompletions(object) {
         let methods = (getClassMethods(object)).map((method) => ({
             label: method,
             type: "function",
             //detail: `${method}() - Method from MyClass`,
-          }));
+        }));
         //console.log(params);
         return methods;
     }
 
-    function sortCompletions(suggestions){
+    function sortCompletions(suggestions) {
         suggestions.sort((a, b) => {
             // Check if labels begin with "_"
             const aIsUnderscore = a.label.startsWith('_');
             const bIsUnderscore = b.label.startsWith('_');
-            
+
             // Move items starting with "_" to the end
             if (aIsUnderscore && !bIsUnderscore) return 1;
             if (!aIsUnderscore && bIsUnderscore) return -1;
-            
+
             // If both labels start (or do not start) with "_", keep original order
             return 0;
-          });
+        });
 
-          // Now go through custom useful suggestions
-          usefulCompletions.forEach((element) => {
+        // Now go through custom useful suggestions
+        usefulCompletions.forEach((element) => {
             suggestions.sort((a, b) => {
                 const aIsUseful = a.label == element;
                 const bIsUseful = b.label == element;
-                
+
                 if (aIsUseful && !bIsUseful) return -1;
                 if (!aIsUseful && bIsUseful) return 1;
-                
+
                 return 0;
-              });
-          });
+            });
+        });
 
     }
-      
+
     function objectFunctionCompleter(context) {
         if (!useAutoComplete) {
             return null;
         }
-    
+
         const word = context.matchBefore(/([\sa-zA-Z0-9().]+)\.([a-zA-Z0-9()]*)$/); // Match "objectName.method"
         if (!word || (word.from === word.to && !context.explicit)) return null;
-    
+
         const [_, objectName, typedMethod] = word.text.match(/([\sa-zA-Z0-9().]+)\.([a-zA-Z0-9()]*)$/) || [];
         // console.log(objectName);
-    
+
         if (!objectName) return null; // No valid object name detected
-    
+
         const typed = typedMethod;
-    
+
         // Helper function to attempt evaluation of an object name and return suggestions
         function tryGetSuggestions(evalExpression) {
             try {
@@ -982,19 +983,19 @@ function Editor(props) {
 
                 //get suggestions defined in each class
                 let definedSuggestions = [];
-                try{
+                try {
                     definedSuggestions = eval(evalExpression).autocompleteList.filter((item) =>
                         item.startsWith(typed)
                     );
                     definedSuggestions = definedSuggestions.map(label => ({
                         label: label,
                         type: 'function'
-                      }));
-                    if(definedSuggestions == undefined){
+                    }));
+                    if (definedSuggestions == undefined) {
                         definedSuggestions = [];
                     }
-                }catch(error){
-                    
+                } catch (error) {
+
                 }
 
                 sortCompletions(suggestions);
@@ -1007,7 +1008,7 @@ function Editor(props) {
                 return null;
             }
         }
-    
+
         // Attempt to get suggestions using progressively simpler expressions
         return (
             tryGetSuggestions(objectName) ||
@@ -1016,7 +1017,7 @@ function Editor(props) {
             (console.debug("Unable to autocomplete"), null)
         );
     }
-    
+
 
     /************************************************
      * 
@@ -1084,149 +1085,25 @@ function Editor(props) {
         URL.revokeObjectURL(url);
         console.log(`Exporting file with name: ${filename}`);
     };
-      //end export dialog support
+    //end export dialog support
 
     async function exportAsWebPage() {
         const code = localStorage.getItem(`${props.page}Value`);
-        // Get all active p5 canvases and their states
-        const canvasStates = [];
-        const canvasElements = document.querySelectorAll('canvas');
-        canvasElements.forEach((canvas, index) => {
-            if (canvas.parentElement && canvas.parentElement.id) {
-                const canvasState = {
-                    id: canvas.parentElement.id,
-                    width: canvas.width,
-                    height: canvas.height,
-                };
-                canvasStates.push(canvasState);
-            }
-        });
-
-        // Load the bundled synth code from public assets
-        let synthCode = '';
-        try {
-            const response = await fetch('/creativitas/synth-bundle.txt');
-            if (!response.ok) throw new Error('Failed to load synth bundle');
-            synthCode = await response.text();
-        } catch (error) {
-            console.error('Error loading synth bundle:', error);
-            synthCode = '// Failed to load synth bundle';
-        }
 
         // Create HTML template with required dependencies
-        const htmlContent = `
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Creativitas Exported Code</title>
-                
-                <!-- External Dependencies -->
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.0.4/Tone.js"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.0/p5.js"></script>
-                
-                <style>
-                    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
-                    canvas { display: block; margin-bottom: 10px; }
-                    #controls { margin-bottom: 20px; }
-                    .canvas-container { margin-bottom: 20px; }
-                </style>
-            </head>
-            <body>
-                <div id="controls">
-                    <button onclick="runCode()">Run Code</button>
-                    <button onclick="stopCode()">Stop</button>
-                <div class="span-container" id="keyboard-container">
-                    <div id="notes-display"></div>
-                    <button class="invisible-button" id="keyboard-button">
-                        <img class="icon inactive" id="keyboard-icon" src="./Icons/keyboard.png" alt="Keyboard" />
-                    </button>
-                </div>
-                </div>
-
-                <!-- Canvas containers -->
-                ${canvasStates.map(state => `
-                    <div class="canvas-container" id="${state.id}" style="width: ${state.width}px; height: ${state.height}px;"></div>
-                `).join('')}
-
-                <script>
-                    // Synth class definitions and dependencies
-                    ${synthCode}
-
-                    // Initialize MIDI
-                    window.midiHandlerInstance = midiHandlerInstance;
-                    window.setNoteOnHandler = midiHandlerInstance.setNoteOnHandler.bind(midiHandlerInstance);
-                    window.setNoteOffHandler = midiHandlerInstance.setNoteOffHandler.bind(midiHandlerInstance);
-                    window.setCCHandler = midiHandlerInstance.setCCHandler.bind(midiHandlerInstance);
-                    window.sendCC = midiHandlerInstance.sendCC.bind(midiHandlerInstance);
-                    window.sendNote = midiHandlerInstance.sendNoteOn.bind(midiHandlerInstance);
-                    window.sendNoteOff = midiHandlerInstance.sendNoteOff.bind(midiHandlerInstance);
-
-                    // Initialize canvases with their original dimensions
-                    const canvasStates = ${JSON.stringify(canvasStates)};
-                    
-                    // Create p5 instances for each canvas
-                    const p5Instances = canvasStates.map(state => {
-                        return new p5((p) => {
-                            p.setup = function() {
-                                p.createCanvas(state.width, state.height);
-                                p.noLoop();
-                            };
-                            p.draw = function() {
-                                // Will be overridden by user code
-                            };
-                        }, state.id);
-                    });
-
-                    // Function to run user code
-                    async function runCode() {
-                        try {
-                            // Start audio context
-                            await Tone.start();
-                            window.audioContext = Tone.context.rawContext;
-                            
-                            // Clear previous state
-                            Tone.Transport.stop();
-                            Tone.Transport.cancel();
-                            
-                            // Run user code
-                            eval(document.getElementById('userCode').textContent);
-                        } catch (error) {
-                            console.error('Error running code:', error);
-                            alert('Error running code: ' + error.message);
-                        }
-                    }
-
-                    // Function to stop all sound
-                    function stopCode() {
-                        Tone.Transport.stop();
-                        Tone.Transport.cancel();
-                        const context = Tone.context;
-                        const now = context.currentTime;
-                        context.suspend(now);
-                    }
-                </script>
-
-                <!-- User Code -->
-                <script id="userCode" type="text/javascript">
-                    ${code}
-                </script>
-            </body>
-            </html>
-        `;
+        const htmlContent = await webExportHTMLContentGenerator(code);
 
         // Create a Blob with the HTML content
         const blob = new Blob([htmlContent], { type: 'text/html' });
         const url = URL.createObjectURL(blob);
-        
+
         // Create a link element and trigger download
         const a = document.createElement('a');
         a.href = url;
         a.download = 'creativitas-export.html';
         document.body.appendChild(a);
         a.click();
-        
+
         // Clean up
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
@@ -1284,7 +1161,7 @@ function Editor(props) {
                             <button className="button-container" onClick={refreshClicked}>Starter Code</button>
                         </span>
                         <span className="span-container">
-      
+
                             {/* Export options */}
                             <select id="exportOptions" onChange={exportCode} defaultValue="default">
                                 <option value="default" disabled>Export Code</option>
@@ -1317,12 +1194,12 @@ function Editor(props) {
                                     mode: 'javascript',
                                 }}
                                 theme={themeDef}
-                                extensions={[javascript({ jsx: true }),decorationsField,autocompletion({override: [objectFunctionCompleter]})]}
+                                extensions={[javascript({ jsx: true }), decorationsField, autocompletion({ override: [objectFunctionCompleter] })]}
                                 onChange={handleCodeChange}
                                 onKeyDown={handleKeyDown}
                                 onStatistics={handleStatistics}
                                 height={height}
-                                onCreateEditor={onCreateEditor}  
+                                onCreateEditor={onCreateEditor}
                             />
                         }
                     </div>
@@ -1330,7 +1207,7 @@ function Editor(props) {
             }
             {!p5Minimized &&
                 <div id="canvases" className="flex-child">
-                    
+
                     <span className="span-container">
                         {codeMinimized &&
                             <button className="button-container" onClick={codeMinClicked}>{"=>"}</button>
