@@ -1,6 +1,7 @@
-const paramDefinitions = (synth) => [
+export const paramDefinitions = (synth) => [
     {
       name:'time', min:0.01, max:1, curve:2,
+      type: 'vco',
       callback: function(value) {
         synth.delay.delayTime.value = value
         synth.delayR.delayTime.value = value*synth._delayRatio
@@ -8,6 +9,7 @@ const paramDefinitions = (synth) => [
     },
     {
       name:'feedback', min:0.0, max:1.2, curve:.7,
+      type: 'vco',
       callback: function(value) {
         synth.feedbackMult.factor.value = value; 
         synth.feedbackMultR.factor.value = value
@@ -28,33 +30,38 @@ const paramDefinitions = (synth) => [
     },
     {
       name:'dry', value:0, min:0.0, max:1.2, curve:2,
+      type:'vca',
       callback: function(value) {
         synth.drySig.factor.value = value
       }
     },
     {
       name:'wet', min:0.0, max:1.2, curve:2,
+      type:'vca',
       callback: function(value) {
         synth.wetSig.factor.value = value
       }
     },
     {
       name:'gain', min:0.0, max:1, curve:0.2,
+      type:'vca',
       callback: function(value) {
         synth.ws_input.factor.value = value
       }
     },
     {
       name:'amp', min:0.0, max:1.2, curve:2,
+      type:'vca',
       callback: function(value) {
         synth.output.factor.value = value
       },
     },
     {
       name:'delayRatio', value:0, min:0.5, max:1, curve:1,
+      type:'vco',
       callback: function(value) {
         synth._delayRatio = value
-        synth.setDelayTime(synth.delay.delayTime.value)
+        synth.time = synth.delay.delayTime.value
       }
     }
   ]

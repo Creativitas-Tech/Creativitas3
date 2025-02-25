@@ -15,10 +15,9 @@ import * as Tone from 'tone';
 import { DelayOp } from './DelayOp.js';
 import {Parameter} from './ParameterModule.js'
 import './userInterface.css';
-import paramDefinitions from './params/analogDelayParams.js';
+import { paramDefinitions } from './params/analogDelayParams.js';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import basicLayout from './layouts/basicLayout.json';
-
 
 export class AnalogDelay extends MonophonicTemplate {
   /**
@@ -28,6 +27,9 @@ export class AnalogDelay extends MonophonicTemplate {
    * @param {number} [initialFB=0] - Initial feedback amount.
    */
   constructor(initialTime = 1, initialFB = 0) {
+    super()
+    this.name = 'analogDelay'
+
     this.input = new Tone.Multiply(1);
     this.highpass = new Tone.Filter({ type: 'highpass', frequency: 20, Q: 0 });
     this.ws_input = new Tone.Multiply(0.125);
