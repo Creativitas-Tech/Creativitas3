@@ -49,6 +49,7 @@ export class MonophonicTemplate {
         this.presets = {};
         this.gui_elements = [];
         this.gui = null;
+        this.guiContainer = null;
         this.layout = basicLayout
         this.poly_ref = null;
         this.super = null;
@@ -404,14 +405,12 @@ export class MonophonicTemplate {
      * const gui = new p5(sketch, 'Canvas1');
      * synth.initGui(gui, 10, 10)
      */
-    initGui(gui=null) {
-        let target = document.getElementById('Canvas');
-            //console.log(this.gui)
-            this.gui = new p5(sketch,target );
-        //console.log('init', this.param)
-        //this.gui = gui
-        const layout = this.layout
-        console.log(layout)
+    initGui(gui = null) {
+        this.guiContainer = document.getElementById('Canvas');
+        this.gui = new p5(sketch, this.guiContainer);
+
+        const layout = this.layout;
+        //console.log(layout);
 
         // Group parameters by type
         const groupedParams = {};
@@ -425,42 +424,38 @@ export class MonophonicTemplate {
             const groupLayout = layout[groupType];
             if (!groupLayout) return;
             if (groupType === 'hidden') return;
-          
 
+            let indexOffset = 0;
 
-            let indexOffset = 0
             groupedParams[groupType].forEach((param, index) => {
-              const isGroupA = groupLayout.groupA.includes(param.name);
+                const isGroupA = groupLayout.groupA.includes(param.name);
+                const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
+                const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
 
-              // Calculate size and control type
-              const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
-              const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
-              // Calculate offsets
-              let xOffset = 0//groupLayout.offsets.x * (index % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-              let yOffset = 0//groupLayout.offsets.y * Math.floor(index / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-              if( Array.isArray( param._value )){
-                param._value.forEach((_, i) => {
-                  // Calculate offsets
-                 xOffset = groupLayout.offsets.x * ((index+indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-                 yOffset = groupLayout.offsets.y * Math.floor((index+indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-                
-                  // Calculate absolute positions
-                  const x = groupLayout.boundingBox.x + xOffset;
-                  const y = groupLayout.boundingBox.y + yOffset;
-                  this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, i });
-                  indexOffset++
-                })
-              } else{
-                xOffset = groupLayout.offsets.x * ((index+indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-                yOffset = groupLayout.offsets.y * Math.floor((index+indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-              
-                // Calculate absolute positions
-                const x = groupLayout.boundingBox.x + xOffset;
-                const y = groupLayout.boundingBox.y + yOffset;
-                // Create GUI element
-                this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color });    
-              }
+                // **Retrieve the current parameter value**
+                const paramValue = param.get ? param.get() : param._value;
 
+                if (Array.isArray(paramValue)) {
+                    paramValue.forEach((value, i) => {
+                        let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                        let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                        const x = groupLayout.boundingBox.x + xOffset;
+                        const y = groupLayout.boundingBox.y + yOffset;
+
+                        this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, i, value });
+                        indexOffset++;
+                    });
+                } else {
+                    let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                    let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                    const x = groupLayout.boundingBox.x + xOffset;
+                    const y = groupLayout.boundingBox.y + yOffset;
+
+                    // Pass the **retrieved parameter value** to GUI
+                    this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, value: paramValue });
+                }
             });
         });
     }
@@ -470,8 +465,9 @@ export class MonophonicTemplate {
      * @returns {void}
      */
     hideGui() {
-        for (let i = 0; i < this.gui_elements.length; i++) {
-            this.gui_elements[i].hide = true;
+        if (this.gui) {
+            this.gui.remove(); // Properly destroy p5 instance
+            this.gui = null;
         }
     }
 
@@ -480,7 +476,7 @@ export class MonophonicTemplate {
      * @returns {void}
      */
     showGui() {
-        for (let i = 0; i < this.gui_elements.length; i++) this.gui_elements[i].hide = false;
+        this.initGui()
     }
 
     // Create individual GUI element
@@ -504,6 +500,7 @@ export class MonophonicTemplate {
                 label: i ? param.labels[i] : param.name,
                 min: param.min,
                 max: param.max,
+                value: param._value,
                 curve: param.curve,
                 size: size , // Scale size
                 x,
@@ -520,6 +517,7 @@ export class MonophonicTemplate {
             return this.gui.RadioButton({
                 label: i ? param.labels[i] : param.name,
                 radioOptions: param.radioOptions,
+                value: param._value,
                 x:x,
                 y:y+10,
                 accentColor: color,
