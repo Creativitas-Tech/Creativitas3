@@ -9,9 +9,8 @@ import { MonophonicTemplate } from './MonophonicTemplate';
 import {stepper} from  '../Utilities.js'
 
 export class Polyphony extends MonophonicTemplate{
-	constructor(voice,num=8, gui= null){
+	constructor(voice,num=8){
 		super()
-    this.gui = gui
     this.name = voice.name
 		this.numVoices = num
 		this.slop = .05
@@ -19,7 +18,7 @@ export class Polyphony extends MonophonicTemplate{
 		//audio
 		this.voice = []
 		for(let i=0;i<this.numVoices;i++) this.voice.push(new voice)
-		this.output = new Tone.Multiply(1/this.numVoices)
+		this.output = new Tone.Multiply(1/(this.numVoices/4))
 		this.hpf = new Tone.Filter({type:'highpass', rolloff:-12, Q:0, cutoff:50})
 		for(let i=0;i<this.numVoices;i++) this.voice[i].output.connect( this.hpf)
 		this.hpf.connect(this.output)
@@ -187,9 +186,9 @@ export class Polyphony extends MonophonicTemplate{
     }
 
 
-initGui(selfRef, gui) {
+initGui(selfRef) {
   this.voice[0].super = selfRef;
-  this.voice[0].initGui(gui);
+  this.voice[0].initGui();
   const elements = this.voice[0].gui_elements;
 
   // Function to modify the value expression by replacing 'x' with 'e'

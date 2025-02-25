@@ -77,6 +77,7 @@ Main List of Parameters & how to set them:
 
 */
 
+import { sketch } from '../p5Library.js'
 import p5 from 'p5';
 import * as Tone from 'tone';
 import DaisiesPresets from './synthPresets/DaisiesPresets.json';
@@ -232,7 +233,10 @@ export class Daisy extends MonophonicTemplate{
   	// 	console.log("initGui is called when a synth is created.\n Call synth.showGui() to see it.")
   	// 	return;
   	// }
-  	this.gui = gui
+  	let target = document.getElementById('Canvas');
+            //console.log(this.gui)
+            this.gui = new p5(sketch,target );
+
   	this.x = x
   	this.y = y
   	this.vco_mix = this.createKnob('vco_mix', 0, 5, 0, 1, 0.75, [200,50,0],x=>this.crossfade_constant.value= x);

@@ -1,6 +1,7 @@
 import p5 from 'p5';
 import * as Tone from 'tone';
 import {Parameter} from './ParameterModule.js'
+import presets from './synthPresets/DrumSynthPresets.json';
 import dlayout from './layouts/drumLayout.json';
 import { DrumTemplate } from './DrumTemplate';
 import paramDefinitions from './params/drumVoiceParams.js';
@@ -24,14 +25,19 @@ export class DrumSynth extends DrumTemplate{
             volume: 0.5,
         };
         this.params = { ...defaults, ...options };
+        this.layout = dlayout
+        this.name = 'DrumSynth'
+        this.presets = presets
 
 
         // Oscillator and AM stage
         this.frequency = new Tone.Signal(this.params.toneFrequency)
+        this.tuning = new Tone.Multiply(1)
         this.harmonicity = new Tone.Multiply(1); // Modulation depth
         this.frequency.connect( this.harmonicity)
         this.vco = new Tone.Oscillator(this.params.toneFrequency, "sine").start();
-        this.frequency.connect(this.vco.frequency)
+        this.frequency.connect(this.tuning)
+        this.tuning.connect(this.vco.frequency)
         this.modVco = new Tone.Oscillator(this.params.toneFrequency * this.params.amRatio, "sine").start();
         this.harmonicity.connect( this. modVco.frequency)
         this.amDepth = new Tone.Gain(0.); // Modulation depth
@@ -87,10 +93,11 @@ export class DrumSynth extends DrumTemplate{
         this.pitchEnvelope.connect(this.pitchEnvDepth)
         this.pitchEnvDepth.connect(this.vco.frequency)
         this.pitchEnvDepth.connect(this.harmonicity)
-        this.pitchEnvelope.releaseCurve = 'linear'
-        this.pitchEnvelope.decayCurve = 'linear'
+        //this.pitchEnvelope.releaseCurve = 'linear'
+        //this.pitchEnvelope.decayCurve = 'linear'
 
         this.toneVca = new Tone.Multiply()
+        this.toneGain = new Tone.Gain(1)
         this.env.connect(this.toneVca.factor)
         this.waveshaper.connect(this.toneVca);
         this.noiseVca = new Tone.Multiply()
@@ -107,7 +114,8 @@ export class DrumSynth extends DrumTemplate{
         this.finalFilter.type =  "lowpass"
         this.finalFilter.Q.value =  this.params.resonance
         this.output = new Tone.Multiply(this.params.volume);
-        this.toneVca.connect(this.finalFilter);
+        this.toneVca.connect(this.toneGain);
+        this.toneGain.connect(this.finalFilter);
         this.noiseVca.connect(this.finalFilter);
         this.finalFilter.connect(this.output);
         this.vcfEnvDepth = new Tone.Multiply();
@@ -154,9 +162,9 @@ export class DrumSynth extends DrumTemplate{
 
     // Trigger a drum hit
     trigger(time = Tone.now()) {
-        this.env.triggerAttackRelease(.05, time);
-        this.noiseEnv.triggerAttackRelease(.05, time);
-        this.pitchEnvelope.triggerAttackRelease(.05, time);
+        this.env.triggerAttackRelease(.01, time);
+        this.noiseEnv.triggerAttackRelease(.01, time);
+        this.pitchEnvelope.triggerAttackRelease(.01, time);
     }
 
     triggerAttackRelease(val=48, vel = 100, dur = 0.01, time = null) {
@@ -166,8 +174,7 @@ export class DrumSynth extends DrumTemplate{
             this.frequency.setValueAtTime(Tone.Midi(val).toFrequency(), time);
             this.env.triggerAttackRelease(.01, time);
             this.noiseEnv.triggerAttackRelease(.01, time);
-            this.pitchEnvelope.triggerAttackRelease(.01
-                , time);
+            this.pitchEnvelope.triggerAttackRelease(.01 , time);
         } else {
             //this.frequency.value = Tone.Midi(val).toFrequency();
             //this.env.triggerAttackRelease(dur);

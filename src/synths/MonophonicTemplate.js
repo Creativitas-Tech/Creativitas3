@@ -49,6 +49,7 @@ export class MonophonicTemplate {
         this.presets = {};
         this.gui_elements = [];
         this.gui = null;
+        this.layout = basicLayout
         this.poly_ref = null;
         this.super = null;
         this.frequency = new Tone.Signal();
@@ -409,7 +410,8 @@ export class MonophonicTemplate {
             this.gui = new p5(sketch,target );
         //console.log('init', this.param)
         //this.gui = gui
-        const layout = basicLayout.basicLayout;
+        const layout = this.layout
+        console.log(layout)
 
         // Group parameters by type
         const groupedParams = {};
