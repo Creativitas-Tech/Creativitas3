@@ -72,8 +72,26 @@ async function webExportHTMLContentGenerator(userCode: String) {
             </head>
             <body>
                 <div id="controls">
-                    <button onclick="runCode()">Run Code</button>
-                    <button onclick="stopCode()">Stop</button>
+                    <button onclick="stopCode()">Restart</button>
+                    <p>BPM: <span id="bpmValue">120</span></p>
+                    
+                    <input 
+                        type="range" 
+                        id="bpmSlider" 
+                        min="10" 
+                        max="300" 
+                        value="120"
+                        oninput="updateBPM(this.value)"
+                    >
+                    
+                    <input 
+                        type="number" 
+                        id="bpmInput" 
+                        min="10" 
+                        max="300" 
+                        value="120"
+                        oninput="updateBPM(this.value)"
+                    >
                 <div class="span-container" id="keyboard-container">
                     <button class="invisible-button" id="keyboard-button">
                         <img class="icon inactive" id="keyboard-icon" src="https://n54omxuiol.ufs.sh/f/K0nF6SKQt5rdQI0fYSZ76iwjnab1uNgOfU42I3KsEv8Yh9Cr" alt="Keyboard" />
@@ -85,9 +103,22 @@ async function webExportHTMLContentGenerator(userCode: String) {
                 <!-- Canvas container -->
                 <div class="canvas-container" id="Canvas"></div>
 
+                <div id="volumeWarning" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+                    <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
+                        <h2>⚠️ Volume Warning</h2>
+                        <p>This page contains audio content. Please ensure your volume is at a comfortable level.</p>
+                        <button onclick="acknowledgeWarning()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">I understand</button>
+                    </div>
+                </div>
+
                 <script>
                     // Synth class definitions and dependencies
                     ${synthCode}
+
+                    function acknowledgeWarning() {
+                        document.getElementById('volumeWarning').style.display = 'none';
+                        runCode();
+                    }
 
                     // Initialize ASCII
                     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
@@ -119,6 +150,8 @@ async function webExportHTMLContentGenerator(userCode: String) {
                             
                             // Run user code
                             eval(document.getElementById('userCode').textContent);
+
+                            updateBPM(Theory.tempo);
                         } catch (error) {
                             console.error('Error running code:', error);
                             alert('Error running code: ' + error.message);
@@ -128,6 +161,13 @@ async function webExportHTMLContentGenerator(userCode: String) {
                     // Function to stop all sound (just reloads the page, there is too much to fix otherwise)
                     function stopCode() {
                         location.reload();
+                    }
+
+                    function updateBPM(value) {
+                        Theory.tempo = parseInt(value);
+                        document.getElementById('bpmValue').textContent = value;
+                        document.getElementById('bpmSlider').value = value;
+                        document.getElementById('bpmInput').value = value;
                     }
                 </script>
 
