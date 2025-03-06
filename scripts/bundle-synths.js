@@ -13,6 +13,7 @@ async function bundleSynthDependencies() {
     ]
     const coreFiles = [
         'AsciiKeyboard.js',
+        'CollabHub.js',
         'TheoryModule.js',
         'p5Library.js',
         'p5Elements.js',

@@ -65,7 +65,8 @@ async function webExportHTMLContentGenerator(userCode: String) {
                 <!-- External Dependencies -->
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.0.4/Tone.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.0/p5.js"></script>
-                
+                <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>               
+
                 <style>
                 ${css}
                 </style>
@@ -115,11 +116,6 @@ async function webExportHTMLContentGenerator(userCode: String) {
                     // Synth class definitions and dependencies
                     ${synthCode}
 
-                    function acknowledgeWarning() {
-                        document.getElementById('volumeWarning').style.display = 'none';
-                        runCode();
-                    }
-
                     // Initialize ASCII
                     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
                     window.disableAsciiInput = asciiCallbackInstance.disable.bind(asciiCallbackInstance);
@@ -133,6 +129,20 @@ async function webExportHTMLContentGenerator(userCode: String) {
                     window.sendCC = midiHandlerInstance.sendCC.bind(midiHandlerInstance);
                     window.sendNote = midiHandlerInstance.sendNoteOn.bind(midiHandlerInstance);
                     window.sendNoteOff = midiHandlerInstance.sendNoteOff.bind(midiHandlerInstance);
+
+                    // Initialize CollabHub
+                    // WARNING: Given as function because user will have initCollab() in their code!!!
+                    function initCollab (roomName = "web-export-famle") {
+                        window.chClient = new CollabHubClient(); // needs to happen once (!)
+                        window.chTracker = new CollabHubTracker(window.chClient);
+                        // collab-hub join a room
+                        window.chClient.joinRoom("web-export-famle");
+                    }
+
+                    function acknowledgeWarning() {
+                        document.getElementById('volumeWarning').style.display = 'none';
+                        runCode();
+                    }
 
                     // Function to run user code
                     async function runCode() {
