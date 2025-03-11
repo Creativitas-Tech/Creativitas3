@@ -14,7 +14,7 @@ const paramDefinitions = (synth) => [
     { 
         name: 'cutoff', type: 'vcf', 
         min: 20, max: 10000, curve: 2,
-        isSignal: 'true', connectTo: synth=>synth.vcf.frequency, 
+        isSignal: 'true', connectTo: synth=>synth.cutoffSig, 
         callback: function(x, time = null) {
             if (time) {
                 synth.cutoffSig.setValueAtTime(x, time);
