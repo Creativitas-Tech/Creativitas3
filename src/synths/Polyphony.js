@@ -7,11 +7,12 @@ import p5 from 'p5';
 import * as Tone from 'tone';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {stepper} from  '../Utilities.js'
+import { sketch } from '../p5Library.js'
 
 export class Polyphony extends MonophonicTemplate{
 	constructor(voice,num=8){
 		super()
-    this.name = voice.name
+    	this.name = voice.name
 		this.numVoices = num
 		this.slop = .05
 
@@ -35,6 +36,85 @@ export class Polyphony extends MonophonicTemplate{
 			this.activeNotes.push(-1)
 			this.noteOrder.push(i)
 		}
+
+		this.initParamsFromVoices() 
+	}
+
+	initParamsFromVoices() {
+	    const voiceParams = this.voice[0].param; // Take params from first voice as template
+
+	    Object.keys(voiceParams).forEach((paramName) => {
+	        const isSignal = voiceParams[paramName].isSignal;
+
+	        const paramProxy = new Proxy(
+			    () => {}, // Function base for callable
+			    {
+			        get: (_, prop) => {
+			            if (prop === 'sequence') {
+			                return (valueArray, subdivision = '16n') => {
+			                    this.voice.forEach(v => v.startSequence(paramName, valueArray, subdivision));
+			                };
+			            }
+			            if (prop === 'stop') {
+			                return () => {
+			                    this.voice.forEach(v => v.stopSequence(paramName));
+			                };
+			            }
+			            if (prop === 'set') {
+			                return (value, time = null, source = null) => {
+			                    this.voice.forEach(v => v.param[paramName].set(value, time, source));
+			                };
+			            }
+			            if (prop === 'value') {
+			                return this.voice[0].param[paramName].get(); // Read value
+			            }
+			        },
+			        set: (_, __, value) => {
+			            this.voice.forEach(v => v.stopSequence(paramName)); // Stop seq when manually set
+			            this.voice.forEach(v => v.param[paramName].set(value, null, false));
+			            return true;
+			        }
+			    }
+			);
+
+	        // Assign s.cutoff = paramProxy (callable for set, methods like sequence/stop)
+	        Object.defineProperty(this, paramName, {
+	            get: () => paramProxy,
+	            set: (value, source = null) => {
+	            	this.voice.forEach(v=>{
+	                	v.stopSequence(paramName) // Stop seq when manually set
+	            		if (Array.isArray(value)) {
+                        	v.startSequence(paramName, value);
+	                    } else {
+	                        v.param[paramName].set(value, null, false)
+	                    }
+	            	})},
+	            configurable: true,
+	            enumerable: true
+	        });
+
+	        // Assign explicit param object for value access and control
+	        this[paramName+'_param'] = {
+	            name: paramName,
+	            isSignal,
+	            get: () => this.voice[0].param[paramName].get(),
+	            set: (value, time = null, source = null) => this.voice.forEach(v => v.param[paramName].set(value, time, source)),
+	            sequence: (valueArray, subdivision = '8n') => {
+	            	this.voice.forEach(v => {
+	            		v.startSequence(paramName,valueArray,subdivision)
+	            		//v.params[paramName].sequence(valueArray, subdivision)
+	            })},
+	            stop: () => this.voice.forEach(v => v.stopSequence(paramName))
+	        };
+
+	        // Optional: Quick value access via s.cutoff_value
+	        Object.defineProperty(this, paramName + '_value', {
+	            get: () => this.voice[0].param[paramName].get(),
+	            set: (value) => this.voice.forEach(v => v.param[paramName].set(value, null, false)),
+	            configurable: true,
+	            enumerable: true
+	        });
+	    });
 	}
 
 	/**************** 
@@ -185,154 +265,127 @@ export class Polyphony extends MonophonicTemplate{
 	    }
     }
 
-
-initGui(selfRef) {
-  this.voice[0].super = selfRef;
-  this.voice[0].initGui();
-  const elements = this.voice[0].gui_elements;
-
-  // Function to modify the value expression by replacing 'x' with 'e'
-  const modifyValueExpression = (val) => val ? val.replace(/\bx\b/g, 'e') : null;
-  //const modifyValueExpression = (val) => val// ? val.replace(/\bx\b/g, 'e') : null;
-
-	function stringIsFunction(variableName, context = window) {
-		return /\(.*\)/.test(variableName)
-  	}
-
-	function getFunctionDetails(funcString) {
-	  // Remove any extra spaces and the "x => " part
-	  funcString = funcString.trim().replace(/^.*=>\s*/, '');
-
-	  // Check if the function is a block (has curly braces)
-	  if (funcString.startsWith('{') && funcString.endsWith('}')) {
-	    // Extract the code inside the curly braces
-	    funcString = funcString.slice(1, -1).trim();
+    updateAllVoices = (paramName, value) => {
+	  for (let v = 0; v < this.numVoices; v++) {
+	    this.voice[v].param[paramName].set(value,null,false);
 	  }
+	};
 
-	  // Now try to match the function call and capture the function name and arguments
-	  const match = funcString.match(/([a-zA-Z_$][0-9a-zA-Z_$]*)\s*\((.*)\)/);
-	  if (match) {
-	    const functionName = match[1];
-	    const argsString = match[2];
-	    return { functionName, argsString };
-	  }
+	initGui(gui = null) {
+	    this.guiContainer = document.getElementById('Canvas');
+	    this.gui = new p5(sketch, this.guiContainer);
 
-	  return null;
+	    const layout = this.voice[0].layout; // Grab layout from first voice
+	    const params = this.voice[0].param; // First voice's params as template
+
+	    // Group parameters by type
+	    const groupedParams = {};
+	    Object.values(params).forEach((param) => {
+	        if (!groupedParams[param.type]) groupedParams[param.type] = [];
+	        groupedParams[param.type].push(param);
+	    });
+
+	    // Create GUI for each group
+	    Object.keys(groupedParams).forEach((groupType) => {
+	        const groupLayout = layout[groupType];
+	        if (!groupLayout || groupType === 'hidden') return;
+
+	        let indexOffset = 0;
+
+	        groupedParams[groupType].forEach((param, index) => {
+	            const paramName = param.name; // Name of the param (e.g., "cutoff")
+	            const isGroupA = groupLayout.groupA.includes(paramName);
+	            const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
+	            const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
+	            console.log(paramName)
+	            // Get actual param value for initialization, NOT the proxy
+				const paramValue = param.get ? param.get() : param._value; // or this.voice[0].param[paramName].get()
+				const values = Array.isArray(paramValue) ? paramValue : [paramValue];
+
+	            values.forEach((value, i) => {
+	            	console.log(value,i)
+	                let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+	                let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+	                const x = groupLayout.boundingBox.x + xOffset;
+	                const y = groupLayout.boundingBox.y + yOffset;
+
+	                // Callback to update polyphonic param when GUI is used
+	                const callback = (e) => {
+					    if (Array.isArray(this[paramName])) {
+					        // For array-type params like ADSR
+					        const updatedArray = [...this[paramName]]; // Copy current value
+					        updatedArray[i] = e; // Update the specific index
+					        this[paramName+'_param'].set(updatedArray, null,'gui'); // ✅ Use the param's set() to propagate to all voices
+					    } else {
+					        // For scalar params
+					        this[paramName+'_param'].set(e,null,'gui'); // ✅ Use param set() to update all voices
+					    }
+					};
+					
+	                // Create GUI element linked to polyphony params
+	                this.createGuiElement(param, {
+	                    x,
+	                    y,
+	                    size,
+	                    controlType,
+	                    color: groupLayout.color,
+	                    i, // index for arrays
+	                    value, // initial value
+	                    callback // callback for real-time updates
+	                });
+
+	                indexOffset++;
+	            });
+	        });
+	    });
 	}
 
-  // Function to generate a new callback based on the parameter and value expression
-  /* Three cases
-  		- x => param.value = x
-  		- x => param.value = function(x)
-  		- function(x)
-  */
-  const createCallback = (param, val, element) => {
-  	
-  	const modifiedVal = modifyValueExpression(val);
-  	let voiceTarget = this.voice[0];
-
-  	let keys = param.split('.');
-     const lastKey = keys[keys.length - 1];
-
-     //console.log('cb', param, val, keys)
-
-	if (!val) {
-		const modifiedParam = modifyValueExpression(param);
-	     const funcDetails = getFunctionDetails(modifiedParam);
-	    // console.log('details', funcDetails, modifiedParam)
-		if (!funcDetails) {
-		console.error("Invalid function string");
-		return null;
-		}
-
-		const { functionName, argsString } = funcDetails;
-
-		// console.log('cb is function', param, val, functionName, argsString)
-		if (!functionName) {
-		console.error("Invalid function string");
-		return null;
-		}
-
-		// Return a new function that updates the target for each voice
-		return (e) => {
-		  for (let j = 0; j < this.numVoices; j++) {
-		    const func = this.voice[j][functionName];
-
-		    let voiceTarget = this.voice[j];
-		    for (let k = 0; k < keys.length - 1; k++) {
-		      voiceTarget = voiceTarget[keys[k]];
-		    }
-
-		    const evaluatedArgs = argsString.replace(/\bx\b/g, e);
-		    //console.log('args', evaluatedArgs, argsString)
-		    let argsArray;
-		    try {argsArray = new Function('e', `return [${evaluatedArgs}]`)(e);} 
-		    catch (error) {}
-		    //console.log(j,'func1', this.voice[j][functionName], argsArray)
-		    try { this.voice[j][functionName](...argsArray);} catch (error) {}
-		  }
-		};
- 	}//done
-
-    else {
-      for (let k = 0; k < keys.length - 1; k++) {
-
-        if (voiceTarget[keys[k]] === undefined) {
-          console.log('Voice target undefined');
-          return;
+	createGuiElement(param, { x, y, size, controlType, color, i = null, value, callback }) {
+    //console.log(x, y, size, controlType, color,i, value, callback)
+    //return
+    if (controlType === 'knob') {
+        param.guiElements.push(this.gui.Knob({
+            label: i !== 0 ? param.labels[i] : param.name,
+            min: param.min,
+            max: param.max,
+            value: value, // Use provided value, not param._value
+            size: size, // Scale size
+            curve: param.curve,
+            x,
+            y,
+            accentColor: color,
+            callback: callback // ✅ Correct callback for Polyphony
+        }));
+    } else if (controlType === 'fader') {
+        param.guiElements.push(this.gui.Fader({
+            label: i !== 0 ? param.labels[i] : param.name,
+            min: param.min,
+            max: param.max,
+            value: value, // Use provided value
+            curve: param.curve,
+            size: size,
+            x,
+            y,
+            accentColor: color,
+            callback: callback // ✅ Correct callback for Polyphony
+        }));
+    } else if (controlType === 'radioButton') {
+        if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
+            console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
+            return null;
         }
-        voiceTarget = voiceTarget[keys[k]];
-      }
-      //console.log(param, modifiedVal, lastKey, stringIsFunction(modifiedVal, this))
-      
-      //if a function is used to get the value of x
-      //e.g. x=> this.param.value = function(x)
-      if( stringIsFunction(modifiedVal, this) ){
-      	const modifiedVal2 = modifiedVal.replace(/^this\./, '').replace(/\(.*\)$/, '');
-      	let func = this.voice[0][modifiedVal2]
-      	console.log('value is function', func, param, modifiedVal2)
-      	return (e) => {
-      		for (let j = 0; j < this.numVoices; j++) {
-      			let func = this.voice[j][modifiedVal2]
-      			voiceTarget = this.voice[j]
-      			for (let k = 0; k < keys.length - 1; k++) voiceTarget = voiceTarget[keys[k]];
-	      		voiceTarget[lastKey] = func(e);
-	      		//console.log(j,'func2', voiceTarget, modifiedVal)
-	    	}
-      	}
-      }//done
 
-		//if the value being set uses .value
-      return (e) =>{
-      	//console.log(param, e)
-      	this.set(param, eval(e))
-      }
+        return this.gui.RadioButton({
+            label: i !== 0 ? param.labels[i] : param.name,
+            radioOptions: param.radioOptions,
+            value: value, // Use provided value
+            x: x,
+            y: y + 10,
+            accentColor: color,
+            callback: callback // ✅ Correct callback for Polyphony
+        });
     }
-  };//createCalback
-
-  // Main loop to iterate over GUI elements and set their callbacks
-  elements.forEach((element) => {
-  	//console.log(element, element.callback)
-    try {
-      if (!element.callback) return;
-
-      const funcString = element.callback.toString();
-      if (funcString.includes('this.super')) return;
-
-      let param = this.generateParamString(element.callback);
-      const val = this.retrieveValueExpression(element.callback);
-
-      if (!param) {
-        param = this.applyFunctionToAllVoices(element.callback);
-      }
-
-      const callback = createCallback(param, val, element);
-      //console.log(element, callback)
-      element.callback = callback;
-    } catch (error) {
-      console.log('Invalid GUI element:', element, error);
-    }
-  });
 }
 
 	/**
@@ -405,67 +458,21 @@ initGui(selfRef) {
 
 
 	 retrieveValueExpression(assignment) {
-    const fnString = assignment.toString();
+	    const fnString = assignment.toString();
 
-    // Adjusted regex to capture everything after the = sign, including optional semicolon
-    const regex = /this\.([\w\d_\.]+)\s*=\s*(.+);?/;
-    const match = fnString.match(regex);
+	    // Adjusted regex to capture everything after the = sign, including optional semicolon
+	    const regex = /this\.([\w\d_\.]+)\s*=\s*(.+);?/;
+	    const match = fnString.match(regex);
 
-    if (match) {
-        // Return the value expression part (everything after '=')
-        return match[2].trim();  // Trimming to remove extra spaces if needed
-    }
+	    if (match) {
+	        // Return the value expression part (everything after '=')
+	        return match[2].trim();  // Trimming to remove extra spaces if needed
+	    }
 
-    return null;
-}
+	    return null;
+	}
 
-	//SET PARAMETERS
-
-	set(param, value, time = Tone.now()) {
-    //console.log('set', param, value);
-
-    // Split the parameter into keys (to access nested properties)
-    let keys = param.split('.');
-
-    for (let i = 0; i < this.numVoices; i++) {
-        let target = this.voice[i];
-
-        // Traverse through the nested objects based on the keys
-        for (let j = 0; j < keys.length - 1; j++) {
-            if (target[keys[j]] === undefined) {
-                console.error(`Parameter ${keys[j]} does not exist on voice ${i}`);
-                return;
-            }
-            target = target[keys[j]];
-        }
-
-        const lastKey = keys[keys.length - 1];
-
-        // Ensure `value` is always treated as a function
-        const finalValue = typeof value === 'function' ? value() : value;
-
-        //console.log(target, finalValue)
-
-        if (target[lastKey] !== undefined) {
-            if (target[lastKey]?.value !== undefined) {
-                console.log(`Current value: ${target[lastKey].value}, Setting new value: ${finalValue}`);
-
-                if (time === null) {
-                    target[lastKey].value = finalValue;  // Set value immediately
-                } else {
-                    target[lastKey].linearRampToValueAtTime(finalValue, time + 0.1);  // Ramp to value
-                }
-            } else {
-                // If it's not an object with `value`, set directly
-                target[lastKey] = finalValue;
-            }
-        } else {
-            console.error(`Parameter ${lastKey} does not exist on voice ${i}`);
-        }
-    }
-}
-
-/**** PRESETS ***/
+	/**** PRESETS ***/
 
 	loadPreset(name) {
 		//for(let i=0;i<this.numVoices;i++) this.voice[i].loadPreset(name)

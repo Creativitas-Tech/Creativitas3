@@ -22,7 +22,7 @@ export class Twinkle extends MonophonicTemplate {
     this.presets = TwinklePresets
     this.isGlide = false
     this.name = "Twinkle"
-    console.log(this.name, " loaded, available preset: ", this.presets)
+    //console.log(this.name, " loaded, available preset: ", this.presets)
 
     // Initialize the main frequency control
     this.frequency = new Tone.Signal(200);

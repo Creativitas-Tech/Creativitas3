@@ -174,23 +174,7 @@ export class MonophonicTemplate {
           }
           console.log(output);
         }
-        /*
 
-        if (presetData) {
-            console.log("Preset " + this.curPreset);
-            for (let id in presetData) {
-                try {
-                    for (let element of Object.values(this.gui.elements)) {
-                        if (element.id === id) {
-                            if (element.type !== 'momentary') console.log(id, presetData[id]);
-                        }
-                    }
-                } catch (e) {
-                    console.log(e);
-                }
-            }
-        } 
-  */
         else {
             console.log("No preset of name ", this.curPreset);
         }
@@ -262,13 +246,11 @@ export class MonophonicTemplate {
     generateParameters(paramDefinitions) {
         const params = {};
         paramDefinitions.forEach((def) => {
-            const param = new Parameter(def);
+            const param = new Parameter(this,def);
             params[def.name] = param;
         });
         return params;
     }
-
-
 
     createAccessors(parent, params) {
         Object.keys(params).forEach((key) => {
@@ -281,31 +263,26 @@ export class MonophonicTemplate {
 
             // Proxy handler to intercept method calls
             const proxyHandler = {
-                get(target, prop) {
-                    //console.log(target,prop)
+                get(target, prop,value=null) {
                     if (prop === 'sequence') return (valueArray, subdivision = '16n') => {
-                        if (currentSeq) {
-                            currentSeq.dispose(); // Dispose of existing sequence
-                        }
-                        currentSeq = new Seq(
-                            parent,
-                            valueArray,
-                            subdivision,
-                            'infinite',
-                            0,
-                            (v, time) => param.set(Number(v[0]),null,false, time) // Ensure time is passed
-                        );
+                        param.sequence(valueArray,subdivision)
                     };
                     if (prop === 'stop') return () => {
+                        param.stop()
+                    };
+                    if (prop === 'set') return () => {
+                        //console.log('set',target,prop,value)
+                        const rawValue = (typeof value === 'function') ? value() : value.value;
                         if (currentSeq) {
                             currentSeq.dispose();
                             currentSeq = null;
                         }
+                        //console.log(target,prop,rawValue)
+                        param.set(value,null,false) 
                     };
                     return target.get(); // Return the current value
                 },
                 set(target, _, newValue) {
-                    console.log(target, _, newValue)
                     if (Array.isArray(newValue)) {
                         if (currentSeq) currentSeq.dispose();
                         currentSeq = new Seq(
@@ -330,26 +307,35 @@ export class MonophonicTemplate {
             // Define the parameter with a Proxy
             Object.defineProperty(parent, key, {
                 get: () => new Proxy(param, proxyHandler),
-                set: (newValue) => param.set(newValue),
+                set: (newValue) => {
+                    if (Array.isArray(newValue)) {
+                        param.sequence(newValue)
+                    } else {
+                        param.stop()
+                        param.set(newValue);
+                    }
+                },
             });
         });
     }//accessors
 
-    setParameter(name, value, time = null) {
-        const param = this.param[name];
-        if (!param) throw new Error(`Parameter '${name}' does not exist.`);
-        
-        if (time) {
-            // Handle sequenced parameter updates
-            param.callback(value, time);
-        } else {
-            // Handle immediate parameter updates
-            param.callback(value);
-        }
+    // Method to trigger the sequence in the Proxy
+    startSequence(paramName, valueArray, subdivision = '16n') {
+        const param = this.param[paramName];
 
-        // Update associated GUI elements
-        if (param.guiElement) {
-            param.guiElement.setValue(value);
+        if (param ) {
+            param.sequence(valueArray, subdivision);
+        } else {
+            console.warn(`Param ${paramName} has no sequence method or doesn't exist.`);
+        }
+    }
+
+    stopSequence(paramName) {
+        const param = this.param[paramName];
+        if (param.seq ) {
+            param.stop(); 
+        } else {
+            console.warn(`Param ${paramName} has no stop method or doesn't exist.`);
         }
     }
 
