@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { timingManager } from './TimingManager.js';
 //codemirror
 import CodeMirror from '@uiw/react-codemirror';
 import { historyField } from '@codemirror/commands';
@@ -109,6 +110,13 @@ function Editor(props) {
     window.p5 = p5;
     window.Tone = Tone;
     window.Theory = TheoryModule.Theory;
+    
+    // // Initialize timing manager
+    // useEffect(() => {
+    //     timingManager.initialize().then(() => {
+    //         window.timing = timingManager;
+    //     });
+    // }, []);
     window.ws = waveshapers
     //window.ml5 = ml5;
     window.Oscilloscope = Oscilloscope;
@@ -355,7 +363,6 @@ function Editor(props) {
 
         // collab-hub join a room
         window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name
-
     }
 
     //const value = 'let CHANNEL = 3'

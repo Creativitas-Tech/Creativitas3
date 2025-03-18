@@ -1,9 +1,20 @@
+async function getBundledTimingPackages() {
+    try {
+        const response = await fetch('/creativitas/timing-bundle.min.js');
+        if (!response.ok) throw new Error('Failed to load timing bundle');
+        return await response.text();
+    } catch (error) {
+        console.error('Error loading timing packages:', error);
+        return '// Failed to load timing packages';
+    }
+}
+
 async function webExportHTMLContentGenerator(userCode: String) {
 
     // Load the bundled synth code from public assets
     let synthCode = '';
     try {
-        const response = await fetch('/creativitas/synth-bundle.txt');
+        const response = await fetch('/creativitas/synth-bundle.min.js');
         if (!response.ok) throw new Error('Failed to load synth bundle');
         synthCode = await response.text();
     } catch (error) {
@@ -66,7 +77,9 @@ async function webExportHTMLContentGenerator(userCode: String) {
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/15.0.4/Tone.js"></script>
                 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.11.0/p5.js"></script>
                 <script src="https://cdn.socket.io/4.8.1/socket.io.min.js" integrity="sha384-mkQ3/7FUtcGyoppY6bz/PORYoGqOl7/aSUMn2ymDOJcapfS6PHqxhRTMh1RR0Q6+" crossorigin="anonymous"></script>               
-
+                <script>
+                ${await getBundledTimingPackages()}
+                </script>
                 <style>
                 ${css}
                 </style>
@@ -93,12 +106,15 @@ async function webExportHTMLContentGenerator(userCode: String) {
                         value="120"
                         oninput="updateBPM(this.value)"
                     >
-                <div class="span-container" id="keyboard-container">
-                    <button class="invisible-button" id="keyboard-button">
-                        <img class="icon inactive" id="keyboard-icon" src="https://n54omxuiol.ufs.sh/f/K0nF6SKQt5rdQI0fYSZ76iwjnab1uNgOfU42I3KsEv8Yh9Cr" alt="Keyboard" />
-                    </button>
-                    <div id="notes-display"></div>
-                </div>
+
+                    <div class="span-container" id="keyboard-container">
+                        <button class="invisible-button" id="keyboard-button">
+                            <img class="icon inactive" id="keyboard-icon" src="https://n54omxuiol.ufs.sh/f/K0nF6SKQt5rdQI0fYSZ76iwjnab1uNgOfU42I3KsEv8Yh9Cr" alt="Keyboard" />
+                        </button>
+                        <div id="notes-display"></div>
+                    </div>
+                    <input type="checkbox" id="timing-object-toggle">
+                    <label for="timing-object-toggle" id="timing-toggle-label">Use Timing Object</label>
                 </div>
 
                 <!-- Canvas container -->
@@ -115,6 +131,10 @@ async function webExportHTMLContentGenerator(userCode: String) {
                 <script>
                     // Synth class definitions and dependencies
                     ${synthCode}
+
+
+                    // Connect the timing checkbox to its handler
+                    document.getElementById('timing-object-toggle').addEventListener('change', handleTimingManager);
 
                     // Initialize ASCII
                     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
@@ -142,6 +162,33 @@ async function webExportHTMLContentGenerator(userCode: String) {
                     function acknowledgeWarning() {
                         document.getElementById('volumeWarning').style.display = 'none';
                         runCode();
+                    }
+
+                    function handleTimingManager(e) {
+                        const {checked} = e.target;
+                        if (checked) {
+                            // Only initialize timing manager when checkbox is checked
+                            if (!window.usableTimingManager) {
+                                e.target.disabled = true;
+                                document.getElementById('timing-toggle-label').textContent = ' Initializing Timing Object...';
+                                
+                                // Initialize timing manager
+                                window.timingManager.initialize().then((manager) => {
+                                    window.usableTimingManager = manager;
+                                    window.usableTimingManager.setShouldUse();
+                                    window.usableTimingManager.startTimer();
+                                    
+                                    e.target.disabled = false;
+                                    document.getElementById('timing-toggle-label').textContent = ' Use Timing Object';
+                                });
+                            } else {
+                                window.usableTimingManager.setShouldUse();
+                                window.usableTimingManager.startTimer();
+                            }
+                        } else if (window.usableTimingManager) {
+                            window.usableTimingManager.shouldBeUsed = false;
+                            window.usableTimingManager.stopTimer(false);
+                        }
                     }
 
                     // Function to run user code
@@ -178,6 +225,8 @@ async function webExportHTMLContentGenerator(userCode: String) {
                         document.getElementById('bpmValue').textContent = value;
                         document.getElementById('bpmSlider').value = value;
                         document.getElementById('bpmInput').value = value;
+                        const timingObjectToggle = document.getElementById('timing-object-toggle');
+                        if (timingObjectToggle.checked) window.usableTimingManager.updateVelocity(value);
                     }
                 </script>
 

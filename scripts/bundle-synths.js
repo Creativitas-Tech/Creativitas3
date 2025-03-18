@@ -1,3 +1,4 @@
+// WARNING: THIS SCRIPT IS NOT BEING USED, BUT CAN BE A FALLBACK
 const fs = require('fs');
 const fsp = require('fs').promises;
 const path = require('path');
@@ -7,24 +8,29 @@ const walk = require('acorn-walk');
 async function bundleSynthDependencies() {
     const processedFiles = new Set();
     const dependencies = new Map();
+
     // Paths to ignore (i.e any duplicate declarations, experimental stuff that should not be included)
     const ignorePaths = [
         "synths/Sequencer.js",
     ]
+
     const coreFiles = [
         'AsciiKeyboard.js',
         'CollabHub.js',
-        'TheoryModule.js',
-        'p5Library.js',
-        'p5Elements.js',
-        'p5Themes.js',
         'Midi.js',
+        'p5Elements.js',
+        'p5Library.js',
+        'p5Themes.js',
+        'TheoryModule.js',
+        'TimingManager.js'
     ]
+
     const srcDir = path.join(__dirname, '..', 'src');
     const ignoreFullPaths = ignorePaths.map(p => path.join(srcDir, p));
     const synthsDir = path.join(srcDir, 'synths');
     const visualizersDir = path.join(srcDir, 'visualizers');
     const webExportsDir = path.join(srcDir, 'WebExports');
+
     // any paths that should be ignored just marked as processed
     ignoreFullPaths.forEach(p => processedFiles.add(p));
 
