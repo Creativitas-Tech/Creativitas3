@@ -228,6 +228,23 @@ async function webExportHTMLContentGenerator(userCode: String) {
                         const timingObjectToggle = document.getElementById('timing-object-toggle');
                         if (timingObjectToggle.checked) window.usableTimingManager.updateVelocity(value);
                     }
+
+                    // Sync BPM UI with actual Tone.Transport BPM value
+                    function syncBPMFromToneTransport() {
+                        const currentBPM = Math.round(Tone.Transport.bpm.value);
+                        const displayedBPM = parseInt(document.getElementById('bpmValue').textContent);
+                        
+                        // Only update if the values differ
+                        if (currentBPM !== displayedBPM) {
+                            // Update UI without triggering the main updateBPM function
+                            document.getElementById('bpmValue').textContent = currentBPM;
+                            document.getElementById('bpmSlider').value = currentBPM;
+                            document.getElementById('bpmInput').value = currentBPM;
+                        }
+                    }
+
+                    // Check BPM periodically to keep UI in sync
+                    setInterval(syncBPMFromToneTransport, 1000); // Check every 1000ms
                 </script>
 
                 <!-- User Code -->
