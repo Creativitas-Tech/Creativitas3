@@ -343,10 +343,18 @@ export class MonophonicTemplate {
         let output = 'Parameters:\n';
         for (let key in this.param) {
             const param = this.param[key];
-            output += `${param.name}: ${param._value}\n`;
+            let value = param._value
+            console.log(value)
+            if( typeof value === 'number') {
+                if(value > 100) value = value.toFixed()
+                else if( value > 1) value = value.toFixed(1)
+                else value = value.toFixed(3)
+            }
+            output += `${param.name}: ${value}\n`;
         }
         console.log(output);
     }
+    print(){ this.get()}
 
     /**
      * Set the ADSR values for the envelope
