@@ -22,6 +22,7 @@ import Canvas from "./Canvas.js";
 import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction } from './visualizers/index.js';
 import * as waveshapers from './synths/waveshapers.js'
 import {stepper, expr} from  './Utilities.js'
+import {EnvelopeLoop} from './synths/EnvelopeLoop.js'
 
 import WebSocketClient from './collabSocket';
 import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
@@ -171,7 +172,7 @@ function Editor(props) {
     window.Drummer = Drummer;
     window.DrumSynth = DrumSynth;
     window.Twinkle = Twinkle;
-    // window.Feedback = Feedback;
+    window.EnvelopeLoop = EnvelopeLoop;
     // window.Feedback = Feedback;
 
     window.create_sequencer_gui = create_sequencer_gui;
@@ -418,6 +419,7 @@ function Editor(props) {
         };
 
         window.audioContext = Tone.context.rawContext;
+        window.setTimeout2 = Tone.context.rawContext.setTimeout;
  
         return () => {
 
