@@ -19,7 +19,7 @@ export class Polyphony extends MonophonicTemplate{
 		//audio
 		this.voice = []
 		for(let i=0;i<this.numVoices;i++) this.voice.push(new voice)
-		this.output = new Tone.Multiply(1/(this.numVoices/4))
+		this.output = new Tone.Multiply(1/(this.numVoices/2))
 		this.hpf = new Tone.Filter({type:'highpass', rolloff:-12, Q:0, cutoff:50})
 		for(let i=0;i<this.numVoices;i++) this.voice[i].output.connect( this.hpf)
 		this.hpf.connect(this.output)
@@ -297,13 +297,13 @@ export class Polyphony extends MonophonicTemplate{
 	            const isGroupA = groupLayout.groupA.includes(paramName);
 	            const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
 	            const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
-	            console.log(paramName)
+	            //console.log(paramName)
 	            // Get actual param value for initialization, NOT the proxy
 				const paramValue = param.get ? param.get() : param._value; // or this.voice[0].param[paramName].get()
 				const values = Array.isArray(paramValue) ? paramValue : [paramValue];
 
 	            values.forEach((value, i) => {
-	            	console.log(value,i)
+	            	//console.log(value,i)
 	                let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
 	                let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
 
@@ -505,4 +505,14 @@ export class Polyphony extends MonophonicTemplate{
 		}
 	}
 
+	get() {
+        let output = 'Parameters:\n';
+        const params = {};
+	    Object.keys(this.voice[0].param).forEach(paramName => {
+	        params[paramName] = this.voice[0].param[paramName].get();
+	    });
+	    console.log(params);
+	}
+
+    print(){ this.get()}
 }

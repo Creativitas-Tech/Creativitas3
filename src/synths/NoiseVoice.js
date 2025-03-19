@@ -9,31 +9,25 @@ basic noise oscillator with:
 * direct output level
 * gui
 
-methods:
-- gui(x=2,y=2,ccolor=[200,200,0])
-- setCutoff(freq, 'both', time) sets freq of both filters based on bandwidth
-- setResonance(val, 'both', time) sets Q of both filters of 'hpf' 'lpf'
-- setbandwidth(factor, 'both', time) sets a factor to scale the cutoff
-- setADSR()
-- triggerAttack(val, time=null) val sets cutoff
-- triggerRelease (time=null)
-- triggerAttackRelease (val, dur=0.01, time=null)
-
-properties:
-- env_depth.factor.value (env controls vca)
-- hpf.frequency, Q
-- lpf.frequency, Q
-- gain.factor (into waveshaper)
-- env ADSR
-
 */
 
 import p5 from 'p5';
+import { sketch } from '../p5Library.js'
 import * as Tone from 'tone';
+import NoiseVoicePresets from './synthPresets/NoiseVoicePresets.json';
+import { MonophonicTemplate } from './MonophonicTemplate';
+import {Parameter} from './ParameterModule.js'
+import basicLayout from './layouts/basicLayout.json';
+import paramDefinitions from './params/noiseVoiceParams.js';
 
-export class NoiseVoice{
-	constructor(gui = null){
-      this.gui = gui
+
+export class NoiseVoice extends MonophonicTemplate {
+  constructor (gui = null) {
+    super()
+    this.gui = gui
+    this.presets = NoiseVoicePresets
+    this.isGlide = false
+    this.name = "NoiseVoice"
 
       this.source = new Tone.Noise().start() 
       this.gain = new Tone.Multiply(0.5)
@@ -48,11 +42,12 @@ export class NoiseVoice{
       this.hpf =  new Tone.Filter({frequency: 200, type:'highpass', Q: 0})
       this.lpf = new Tone.Filter({frequency: 1000, type:'lowpass', Q: 0})
       this.vca= new Tone.Multiply(0)
+      this.output= new Tone.Multiply(1)
       //control
       this.env = new Tone.Envelope({
         attack:0.01, decay:.1, sustain:0,release:.1
       })
-      this.velocity = new Tone.Signal(1)
+      this.velocitySig = new Tone.Signal(1)
       this.velocity_depth = new Tone.Multiply(1)
       this.env_depth = new Tone.Multiply(1)
       this.direct = new Tone.Signal(1)
@@ -68,8 +63,9 @@ export class NoiseVoice{
       this.waveshaper.connect(this.hpf)
       this.hpf.connect(this.lpf)
       this.lpf.connect(this.vca)
+      this.vca.connect(this.output)
       this.env.connect(this.velocity_depth)
-      this.velocity.connect(this.velocity_depth.factor)
+      this.velocitySig.connect(this.velocity_depth.factor)
       this.velocity_depth.connect(this.env_depth)
       this.env_depth.connect( this.vca.factor)
       this.direct.connect(this.vca.factor)
@@ -86,6 +82,16 @@ export class NoiseVoice{
       this.env.connect(this.lpf_env_depth)
       this.hpf_env_depth.connect( this.hpf.frequency)
       this.lpf_env_depth.connect( this.lpf.frequency)
+
+      // Bind parameters with this instance
+    // this.paramDefinitions = paramDefinitions(this)
+    // this.param = this.generateParameters(this.paramDefinitions)
+    // this.createAccessors(this, this.param);
+
+    // //for autocomplete
+    // this.autocompleteList = this.paramDefinitions.map(def => def.name);;
+    // //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
+    // setTimeout(()=>{this.loadPreset('default')}, 500);
     }
   setCutoff (val,time=null){
     if(time)this.cutoffSignal.setValueAtTime(val, time)
@@ -114,10 +120,10 @@ export class NoiseVoice{
   triggerAttack (val, vel=100, time=null){
     if(time){
       this.env.triggerAttack(time)
-      this.setCutoff(val, time)
+      this.setCutoff(Tone.Midi(val).toFrequency(), time)
     } else{
       this.env.triggerAttack()
-      this.setCutoff(val)
+      this.setCutoff(Tone.Midi(val).toFrequency())
       console.log('att', val)
     }
   }
@@ -128,67 +134,10 @@ export class NoiseVoice{
   triggerAttackRelease (val, vel=100, dur=0.01, time=null){
     if(time){
       this.env.triggerAttackRelease(dur, time)
-      this.setCutoff(val, time)
+      this.setCutoff(Tone.Midi(val).toFrequency(), time)
     } else{
       this.env.triggerAttackRelease(dur)
-      this.setCutoff(val)
+      this.setCutoff(Tone.Midi(val).toFrequency())
     }
   }//attackRelease
-  //GUI
-  initGui (x=2,y=2,ccolor=[200,200,0], gui = null){
-    if(gui) this.gui = gui
-    this.x = x
-    this.y = y
-    this.cutoff_knob = this.gui.Knob({
-      label:'cutoff', mapto: this.baseCutoff,
-      min:10, max:15000, curve:2,
-      x:0+this.x, y:0+this.y, size:.25, accentColor: ccolor
-    })
-    this.resonance_knob = this.gui.Knob({
-      label:'Q', callback: (x)=> this.setResonance(x),
-      min:0, max:30, curve:1.5,
-      x:0+this.x, y:15+this.y, size:.25, accentColor: ccolor
-    })
-    this.bandwidth_knob = this.gui.Knob({
-      label:'width', callback: (x)=>this.setBandwidth(x),
-      min:-10, max:10, curve:2,
-      x:0+this.x, y:30+this.y, size:.25, accentColor: ccolor
-    })
-    this.hpf_env_knob = this.gui.Knob({
-      label:'hpf env', mapto: this.hpf_env_depth.factor,
-      min:0, max:5000, curve:2,
-      x:0+this.x, y:45+this.y, size:.2, accentColor: ccolor
-    })
-    this.lpf_env_knob = this.gui.Knob({
-      label:'lpf env', mapto: this.lpf_env_depth.factor,
-      min:0, max:5000, curve:2,
-      x:0+this.x, y:60+this.y, size:.2, accentColor: ccolor
-    })
-  }
-  setADSR(a,d,s,r){
-    this.env.attack = a>0.001 ? a : 0.001
-    this.env.decay = d>0.01 ? d : 0.01
-    this.env.sustain = Math.abs(s)<1 ? s : 1
-    this.env.release = r>0.01 ? r : 0.01
-  }
-  position(x, y) {
-    // Update the positions of GUI elements
-    this.cutoff_knob.x = 0 + x;
-    this.cutoff_knob.y = 0 + y;
-
-    this.resonance_knob.x = 0 + x;
-    this.resonance_knob.y = 15 + y;
-
-    this.bandwidth_knob.x = 0 + x;
-    this.bandwidth_knob.y = 30 + y;
-
-    this.hpf_env_knob.x = 0 + x;
-    this.hpf_env_knob.y = 45 + y;
-
-    this.lpf_env_knob.x = 0 + x;
-    this.lpf_env_knob.y = 60 + y;
-  }
-  connect(destination) {
-    this.vca.connect(destination);
-  }
 }
