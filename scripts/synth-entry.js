@@ -3,11 +3,12 @@
 // Core modules
 export * from '../src/AsciiKeyboard.js';
 export * from '../src/CollabHub.js';
-export * from '../src/Midi.js';
+export * from '../src/midi/Midi.js';
 export * from '../src/p5Elements.js';
 export * from '../src/p5Library.js';
 export * from '../src/TheoryModule.js';
-export * from '../src/TimingManager.js';
+export * from '../src/timing/TimingStrategyManager.js';
+export * from '../src/timing/TimingModalDialog.js'; // Added for web export timing UI
 export * from '../src/MultiVCO.js';
 export * from '../src/Ornament.js';
 export * from '../src/Seq.js';

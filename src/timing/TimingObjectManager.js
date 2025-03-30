@@ -2,7 +2,7 @@ import { TimingObject } from 'timing-object';
 import { TimingProvider } from 'timing-provider';
 import * as Tone from 'tone';
 
-class TimingManager {
+class TimingObjectManager {
     constructor() {
         this.timingObject = null;
         this.intervalId = null;
@@ -31,7 +31,7 @@ class TimingManager {
 
     setShouldUse() {
         this.shouldBeUsed = true;
-        
+
         // Set up event listeners only when we decide to use the timing manager
         if (this.timingObject && this.timingObject.readyState === 'open') {
             this.setupEventListeners();
@@ -72,7 +72,7 @@ class TimingManager {
 
     updateTransport() {
         if (!this.shouldBeUsed) return;
-        
+
         const { position, velocity } = this.translateVector(this.timingObject.query());
 
         if (velocity !== 0) {
@@ -83,7 +83,7 @@ class TimingManager {
 
     startTimer() {
         if (!this.shouldBeUsed) return;
-        
+
         if (Tone.getTransport().state === 'stopped') {
             Tone.getTransport().start();
         }
@@ -94,7 +94,7 @@ class TimingManager {
 
     stopTimer(stopTransport = true) {
         if (!this.shouldBeUsed) return;
-        
+
         if (this.intervalId !== null) {
             clearInterval(this.intervalId);
             this.intervalId = null;
@@ -106,14 +106,14 @@ class TimingManager {
 
     restartTimer() {
         if (!this.shouldBeUsed) return;
-        
+
         this.stopTimer();
         this.startTimer();
     }
 
     updateVelocity(bpm) {
         if (!this.shouldBeUsed) return Promise.resolve();
-        
+
         return this.timingObject.update({
             velocity: this.convertBpmToVelocity(bpm)
         });
@@ -125,5 +125,5 @@ class TimingManager {
     }
 }
 
-export const timingManager = new TimingManager();
-export default TimingManager;
+export const timingObjectManager = new TimingObjectManager();
+export default TimingObjectManager;

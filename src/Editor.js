@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { timingManager } from './TimingManager.js';
+import { timingStrategyManager } from './timing/TimingStrategyManager.js';
+import { handleTimingInitialization } from './timing/TimingModalDialog.js';
 //codemirror
 import CodeMirror from '@uiw/react-codemirror';
 import { historyField } from '@codemirror/commands';
@@ -28,11 +29,11 @@ import { stepper, expr } from './Utilities.js'
 import WebSocketClient from './collabSocket';
 import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
 
-import MidiKeyboard from './MidiKeyboard.js';
+import MidiKeyboard from './midi/MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
-import webExportHTMLContentGenerator from './WebExportGenerator.ts';
+import webExportHTMLContentGenerator from './webExport/WebExportGenerator.ts';
 
-const midi = require('./Midi.js');
+const midi = require('./midi/Midi.js');
 const LZString = require('lz-string');
 
 
@@ -110,13 +111,49 @@ function Editor(props) {
     window.p5 = p5;
     window.Tone = Tone;
     window.Theory = TheoryModule.Theory;
-    
-    // // Initialize timing manager
-    // useEffect(() => {
-    //     timingManager.initialize().then(() => {
-    //         window.timing = timingManager;
-    //     });
-    // }, []);
+
+    // Initialize timing strategy manager with default Tone.js transport
+    useEffect(() => {
+        // Make the timing strategy manager available globally
+        window.timing = timingStrategyManager;
+
+        // Add helper functions for easy timing strategy switching
+        window.useToneJsTiming = () => {
+            console.log('Switching to Tone.js timing strategy');
+            return timingStrategyManager.setStrategy(timingStrategyManager.STRATEGIES.TONE_JS);
+        };
+
+        window.useTimingObjectTiming = async () => {
+            console.log('Switching to Timing Object timing strategy');
+
+            // Use the handleTimingInitialization helper from TimingModalDialog.js
+            const result = await handleTimingInitialization(
+                // Simple initialization function
+                async () => {
+                    return timingStrategyManager.setStrategy(timingStrategyManager.STRATEGIES.TIMING_OBJECT);
+                },
+
+                // Success callback
+                () => console.log('Successfully switched to Timing Object strategy'),
+
+                // Error callback
+                (error) => {
+                    console.error('Error initializing Timing Object:', error);
+                },
+
+                'Timing Object'
+            );
+        };
+
+        window.useMidiClockTiming = () => {
+            console.log('Switching to MIDI Clock timing strategy');
+            return timingStrategyManager.setStrategy(timingStrategyManager.STRATEGIES.MIDI_CLOCK);
+        };
+
+        window.getCurrentTimingStrategy = () => {
+            return timingStrategyManager.getActiveStrategy();
+        };
+    }, []);
     window.ws = waveshapers
     //window.ml5 = ml5;
     window.Oscilloscope = Oscilloscope;
@@ -147,6 +184,7 @@ function Editor(props) {
     window.sendCC = midi.midiHandlerInstance.sendCC.bind(midi.midiHandlerInstance);
     window.sendNote = midi.midiHandlerInstance.sendNoteOn.bind(midi.midiHandlerInstance);
     window.sendNoteOff = midi.midiHandlerInstance.sendNoteOff.bind(midi.midiHandlerInstance);
+    window.timingStrategyManager = timingStrategyManager;
 
     //synths
     window.NoiseVoice = NoiseVoice
@@ -1166,6 +1204,49 @@ function Editor(props) {
                             <button className="button-container" onClick={playClicked}>Run</button>
                             <MidiKeyboard />
                             <button className="button-container" onClick={refreshClicked}>Starter Code</button>
+
+                            {/* Timing Controls */}
+                            <div className="timing-controls">
+                                {/* Timing Strategy Selector */}
+                                <select
+                                    className="timing-strategy-selector"
+                                    onChange={async (e) => {
+                                        const strategy = e.target.value;
+                                        if (strategy === 'tone_js') {
+                                            window.useToneJsTiming();
+                                        } else if (strategy === 'timing_object') {
+                                            await window.useTimingObjectTiming();
+                                        } else if (strategy === 'midi_clock') {
+                                            window.useMidiClockTiming();
+                                        }
+                                    }}
+                                    defaultValue={timingStrategyManager.getActiveStrategy()}
+                                >
+                                    <option value="tone_js">Tone.js Timing</option>
+                                    <option value="timing_object">Timing Object</option>
+                                    <option value="midi_clock">MIDI Clock</option>
+                                </select>
+
+                                {/* Start/Stop Buttons */}
+                                <button
+                                    className="button-container timing-button"
+                                    onClick={() => {
+                                        timingStrategyManager.start();
+                                        console.log('Timing manager started');
+                                    }}
+                                >
+                                    Start
+                                </button>
+                                <button
+                                    className="button-container timing-button"
+                                    onClick={() => {
+                                        timingStrategyManager.stop();
+                                        console.log('Timing manager stopped');
+                                    }}
+                                >
+                                    Stop
+                                </button>
+                            </div>
                         </span>
                         <span className="span-container">
 

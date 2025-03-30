@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import keyboard from './Icons/keyboard.png';
+import keyboard from '../Icons/keyboard.png';
 const midi = require('./Midi.js');
 function MidiKeyboard() {
     const [midiOn, setMidiOn] = useState(false);
@@ -28,7 +28,7 @@ function MidiKeyboard() {
         191: { "midi": 76, "pitch": "E" },      // / (or ? depending on keyboard)
 
         //second octave
-        
+
         81: { "midi": 72, "pitch": "C" },     // Q
         50: { "midi": 73, "pitch": "C#/Db" }, // 2
         87: { "midi": 74, "pitch": "D" },     // W
@@ -57,17 +57,17 @@ function MidiKeyboard() {
             document.removeEventListener('keydown', handleKeyDown);
             document.removeEventListener('keyup', handleKeyUp);
         };
-    },[]);
+    }, []);
 
     // Update the mutable reference whenever midiOn changes
     useEffect(() => {
         midiOnRef.current = midiOn;
     }, [midiOn]);
-    
+
 
     function handleKeyDown(event) {
         const midiOn = midiOnRef.current;
-        if( midiOn ){
+        if (midiOn) {
             const keyCode = event.keyCode;
             if (!activeKeys[keyCode]) {
                 activeKeys[keyCode] = true;
@@ -91,7 +91,7 @@ function MidiKeyboard() {
     }
     function handleKeyUp(event) {
         const midiOn = midiOnRef.current;
-        if( midiOn ){
+        if (midiOn) {
             const keyCode = event.keyCode;
             activeKeys[keyCode] = false;
             try {
@@ -117,7 +117,7 @@ function MidiKeyboard() {
         }
     }
     const midiClicked = () => {
-        setMidiOn(midiOn === false ? true : false);          
+        setMidiOn(midiOn === false ? true : false);
     }
     const keyboardCSS = midiOn ? 'icon active' : 'icon inactive';
     return (

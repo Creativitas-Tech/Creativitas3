@@ -74,6 +74,10 @@ class MidiHandler {
             console.log('Default CC Handler:', controller, value);
             console.log(`Define your own CC handler like this:\nsetCCHandler(( cc, value, (optionaL:channel) ) => { <your code here> }) `)
         };
+        this.midiClockHandler = (message) => {
+            // Default handler does nothing - will be replaced by MidiClockManager
+            console.log('MIDI Clock message received', message.data[0]);
+        };
 
         this.midiOutput = null; // Reference to the active MIDI output
     }
@@ -124,6 +128,9 @@ class MidiHandler {
     handleCC(controller, value, channel) {
         this.CCHandler(controller, value, channel);
     }
+    handleMidiClock(message) {
+        this.midiClockHandler(message);
+    }
 
     setNoteOnHandler(func) {
         this.noteOnHandler = func;
@@ -133,6 +140,9 @@ class MidiHandler {
     }
     setCCHandler(func) {
         this.CCHandler = func;
+    }
+    setMidiClockHandler(func) {
+        this.midiClockHandler = func;
     }
 }
 export const midiHandlerInstance = new MidiHandler();
@@ -150,7 +160,7 @@ export function getMidiIO() {
 
     var num = 1;
     for (var output of midi.outputs) {
-        midiOutputs += num + ': ' + output[1].name + '\n'; //+ '\', ID: \'' + output[1].id + '\'\n';
+        midiOutputs += num + ': ' + output[1].name + '\n'; //+ \', ID: \'' + output[1].id + '\'\n';
         outputID = output[1].id;
         midi_output_ids[num] = outputID;
         midi_output_names[num] = output[1].name;
@@ -159,7 +169,7 @@ export function getMidiIO() {
 
     num = 1;
     for (var input of midi.inputs) {
-        midiInputs += num + ': ' + input[1].name + '\n'; // + '\', ID: \'' + input[1].id + '\'\n';
+        midiInputs += num + ': ' + input[1].name + '\n'; // + \', ID: \'' + input[1].id + '\'\n';
         inputID = input[1].id;
         midi_input_ids[num] = inputID;
         midi_input_names[num] = input[1].name;
@@ -169,7 +179,14 @@ export function getMidiIO() {
 }
 
 export function handleMidiInput(message) {
-    //console.log(message)
+    // Check for MIDI clock messages (status byte >= 248)
+    if (message.data[0] >= 248) {
+        // Special case for System Real-Time Messages (clock, start, stop, etc.)
+        midiHandlerInstance.handleMidiClock(message);
+        return;
+    }
+    
+    // Handle normal MIDI messages
     let channel = (message.data[0] & 15) + 1
     
     if (message.data[1] != null) {
