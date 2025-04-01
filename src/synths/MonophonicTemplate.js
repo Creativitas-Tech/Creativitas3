@@ -817,7 +817,7 @@ export class MonophonicTemplate {
         else return val;
     }
 
-    parseNoteString(val, time, index, num) {
+    parseNoteString(val, time, index, num=null) {
         //console.log(val,time,index, num)
         if (val[0] === ".") return;
 

@@ -1,13 +1,13 @@
 const paramDefinitions = (synth) => [
     { 
-        name: 'type', type: 'vco', value: 'square', 
-        radioOptions: ['square', 'saw', 'tri', 'sine'], 
+        name: 'type', type: 'vco', value: 'white', 
+        radioOptions: ['white','pink'], 
         callback: function(x) {
             switch (x) {
-                case 'square': synth.vco.type = 'pulse'; break;
-                case 'saw': synth.vco.type = 'sawtooth'; break;
-                case 'tri': synth.vco.type = 'triangle'; break;
-                case 'sine': synth.vco.type = 'sine'; break;
+                case 'white': synth.source.type = 'white'; break;
+                case 'saw': synth.source.type = 'pink'; break;
+                case 'tri': synth.source.type = 'white'; break;
+                case 'sine': synth.source.type = 'white'; break;
             }
         }
     },

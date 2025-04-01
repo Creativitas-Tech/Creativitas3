@@ -9,6 +9,71 @@ import * as Tone from 'tone';
 import SimplerPresets from './synthPresets/SimplerPresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 
+class ExtendedSampler extends Tone.Sampler{
+    constructor(options){
+        super(options)
+        this.startTime = 0
+    }
+
+    ftomf(freq) {
+        return 69 + 12 * Math.log2(freq / 440);
+    }
+    triggerAttack(notes, time, velocity = 1) {
+        //this.log("triggerAttack", notes, time, velocity);
+
+        if (!Array.isArray(notes)) {
+            notes = [notes];
+        }
+
+        notes.forEach((note) => {
+            const midiFloat = this.ftomf(
+                new Tone.FrequencyClass(this.context, note).toFrequency()
+            );
+            const midi = Math.round(midiFloat);
+            const remainder = midiFloat - midi;
+
+            // find the closest note pitch
+            const difference = this._findClosest(midi);
+            const closestNote = midi - difference;
+
+            const buffer = this._buffers.get(closestNote);
+            const playbackRate = Tone.intervalToFrequencyRatio(difference + remainder);
+
+            // play that note
+            const source = new Tone.ToneBufferSource({
+                url: buffer,
+                context: this.context,
+                curve: this.curve,
+                fadeIn: this.attack,
+                fadeOut: this.release,
+                playbackRate,
+            }).connect(this.output);
+
+            // Updated this line:
+            source.start(time, this.startTime, buffer.duration / playbackRate, velocity);
+
+            // add it to the active sources
+            if (!Array.isArray(this._activeSources.get(midi))) {
+                this._activeSources.set(midi, []);
+            }
+            this._activeSources.get(midi).push(source);
+
+            // remove it when it's done
+            source.onended = () => {
+                if (this._activeSources && this._activeSources.has(midi)) {
+                    const sources = this._activeSources.get(midi);
+                    const index = sources.indexOf(source);
+                    if (index !== -1) {
+                        sources.splice(index, 1);
+                    }
+                }
+            };
+        });
+
+        return this;
+    }   
+}
+
 export class Simpler extends MonophonicTemplate {
     constructor (file) {
         super()
@@ -17,7 +82,7 @@ export class Simpler extends MonophonicTemplate {
         this.name = "Simpler"
         
         //audio objects
-        this.sampler = new Tone.Sampler()
+        this.sampler = new ExtendedSampler()
         this.vcf = new Tone.Filter()
         this.vca = new Tone.Multiply(1)
         this.output = new Tone.Multiply(1)
@@ -86,7 +151,7 @@ export class Simpler extends MonophonicTemplate {
    * Load a specific sample.
    * @param {string} file - The name of the sample to load.
    */
-    load(file = null){this.loadSample(file)}
+    load(file = 'piano'){this.loadSample(file)}
     loadSample(file = null){
         //clear all previously playing notes
         if(this.sampler) {
@@ -119,7 +184,7 @@ export class Simpler extends MonophonicTemplate {
         const url = this.sampleFiles[this.sample][1]
         const note = this.sampleFiles[this.sample][0]
         console.log(note, url)
-        this.sampler = new Tone.Sampler({
+        this.sampler = new ExtendedSampler({
             urls:{
                 [60]: this.baseUrl.concat(url)
             }
@@ -163,7 +228,7 @@ export class Simpler extends MonophonicTemplate {
         this.param.release = this.release 
         freq = Tone.Midi(freq).toFrequency()
         amp = amp/127
-        console.log(freq,amp,dur)
+        //console.log(freq,amp,dur)
         if(time){
             this.sampler.triggerAttackRelease(freq, dur, time, amp)
             this.filterEnv.triggerAttackRelease(dur,time)
@@ -174,13 +239,6 @@ export class Simpler extends MonophonicTemplate {
         }
     }//attackRelease
 
-    connect(destination) {
-        if (destination.input) {
-            this.output.connect(destination.input);
-        } else {
-            this.output.connect(destination);
-        }
-    }
 
     //parameter setters
     setADSR(a,d,s,r){
@@ -207,7 +265,7 @@ export class Simpler extends MonophonicTemplate {
             // Use FileReader to read the file as a Data URL
             const fileReader = new FileReader();
             fileReader.onload = () => {
-                this.sampler = new Tone.Sampler({
+                this.sampler = new ExtendedSampler({
                     urls:{
                         [60]: fileReader.result
                     }

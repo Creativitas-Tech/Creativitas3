@@ -96,9 +96,10 @@ export class Seq {
         // Create a Tone.Loop
         this.loopInstance = new Tone.Loop(time => {
             //console.log('old loop')
-            if (this.enable === 0) return;
+            
 
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+            if (this.enable === 0) return;
 
             let curBeat = this.vals[this.index % this.vals.length];
             if(curBeat == undefined) curBeat = '.'
@@ -238,12 +239,19 @@ export class Seq {
 
     start() {
         this.enable = 1;
-        if (this.loopInstance) this.loopInstance.start();
+        this.phraseLength = 'infinite'
+        //if (this.loopInstance) this.loopInstance.start();
     }
 
     stop() {
         this.enable = 0;
-        if (this.loopInstance) this.loopInstance.stop();
+        //if (this.loopInstance) this.loopInstance.stop();
+    }
+
+    play(num=this.vals.length){
+        this.phraseLength = num
+        this.enable = 1;
+        //if (this.loopInstance) this.loopInstance.start();
     }
 
     expr(func, len = 32, subdivision = '16n') {
