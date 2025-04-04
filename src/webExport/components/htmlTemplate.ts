@@ -120,8 +120,9 @@ function generateWindowInitializers(): string {
 
     // Since this function can be called by the user, just have it defined to be called
     function initCollab(roomName = 'famleLounge') {
-        window.chClient = new CollabHubClient(); // needs to happen once (!)
-        window.chTracker = new CollabHubTracker(window.chClient);
+        // window.chClient = new CollabHubClient(); // needs to happen once (!)
+        // window.chTracker = new CollabHubTracker(window.chClient);
+        window.chClient = new CollabSlobClient();
 
         // collab-hub join a room
         window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name

@@ -28,7 +28,8 @@ import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
 
 import WebSocketClient from './collabSocket';
-import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
+// import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
+import { CollabSlobClient } from './CollabSlob.js';
 
 import MidiKeyboard from './midi/MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
@@ -161,7 +162,7 @@ function Editor(props) {
     window.Spectroscope = Spectroscope;
     window.Spectrogram = Spectrogram;
     window.plotTransferFunction = PlotTransferFunction;
-    window.CollabHub = CollabHubDisplay;
+    // window.CollabHub = CollabHubDisplay;
 
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
     window.disableAsciiInput = asciiCallbackInstance.disable.bind(asciiCallbackInstance);
@@ -399,8 +400,9 @@ function Editor(props) {
      *************************************************/
 
     function initCollab(roomName = 'famleLounge') {
-        window.chClient = new CollabHubClient(); // needs to happen once (!)
-        window.chTracker = new CollabHubTracker(window.chClient);
+        // window.chClient = new CollabHubClient(); // needs to happen once (!)
+        // window.chTracker = new CollabHubTracker(window.chClient);
+        window.chClient = new CollabSlobClient();
 
         // collab-hub join a room
         window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name

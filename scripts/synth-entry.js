@@ -2,7 +2,8 @@
 
 // Core modules
 export * from '../src/AsciiKeyboard.js';
-export * from '../src/CollabHub.js';
+// export * from '../src/CollabHub.js';
+export * from '../src/CollabSlob.js';
 export * from '../src/midi/Midi.js';
 export * from '../src/p5Elements.js';
 export * from '../src/p5Library.js';
