@@ -3,15 +3,19 @@
 // - Four 8-step sequences with knobs & buttons (collabhub on all)
 // - One radioButton to select which sequence triggers the synth
 initCollab()
+window.setp5Theme("dark")
 // Set up audio objects and connections
 const gui = new p5(sketch, Canvas);
+
 const output = new Tone.Multiply(0.1).toDestination();
+
 
 // Create a synth to play the sequences
 const synth = new Twinkle(gui);
 synth.connect(output);
 let bright = gui.Knob({
     size: 0.75,
+    textSize: 1.5,
     x: 75,
     y: 15,
     label: 'brightness',
@@ -29,6 +33,7 @@ bright.callback = x => {
 
 let envelope = gui.Knob({
     size: 0.75,
+    textSize: 1.5,
     x: 85,
     y: 15,
     label: 'env',
@@ -128,9 +133,13 @@ const padding = 10;    // 2% of canvas height
 const seqRadioGroup = gui.RadioButton({
     x: 80,  // 5% from left
     y: 60,  // 5% from top
+    textColor: [255, 255, 255],
+    textSize: 1.5,
+    textFont: "Helvetica",
     radioOptions: ['Seq 1', 'Seq 2', 'Seq 3', 'Seq 4'],
     value: 'Seq 2', // Set initial value to match activeSequence (1)
     linkName: 'activeSequenceRadio',
+    label: ' ',
     callback: (val) => {
         console.log('Radio button callback triggered with value:', val);
         // Handle both string values and numeric values (from CollabHub)
@@ -166,6 +175,7 @@ for (let s = 0; s < 4; s++) {
             x: 10 + (i * 7),  // Start at 10% from left, each 5% apart
             y: yPos,
             size: 0.5,  // 1% of canvas size
+            textSize: 1.5,
             min: 36,  // C2
             max: 84,  // C6
             value: initialNote,
@@ -194,6 +204,3 @@ for (let s = 0; s < 4; s++) {
 // Start the transport
 Tone.Transport.start()
 console.log(activeSequence)
-
-
-
