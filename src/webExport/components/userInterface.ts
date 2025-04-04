@@ -68,8 +68,12 @@ export function generateCodeExecutionCode(): string {
             // Clear all previous canvases
             Canvas.innerHTML = "";
             
+            // Get the user code from the non-executable script tag
+            const userCodeElement = document.getElementById('userCode');
+            const userCode = userCodeElement.textContent || userCodeElement.innerText;
+            
             // Run user code
-            eval(document.getElementById('userCode').textContent);
+            eval(userCode);
 
             updateBPM(Theory.tempo);
         } catch (error) {

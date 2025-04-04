@@ -169,7 +169,7 @@ async function generateBodyScript(): Promise<string> {
 // Takes userCode as parameter
 function generateUserScript(userCode: string): string {
     return `
-<script id="userCode" type="text/javascript">
+<script id="userCode" type="text/plain">
     ${userCode}
 </script>
     `;
