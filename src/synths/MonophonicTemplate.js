@@ -49,6 +49,8 @@ export class MonophonicTemplate {
         this.presets = {};
         this.gui_elements = [];
         this.gui = null;
+        this.guiContainer = null;
+        this.layout = basicLayout
         this.poly_ref = null;
         this.super = null;
         this.frequency = new Tone.Signal();
@@ -172,23 +174,7 @@ export class MonophonicTemplate {
           }
           console.log(output);
         }
-        /*
 
-        if (presetData) {
-            console.log("Preset " + this.curPreset);
-            for (let id in presetData) {
-                try {
-                    for (let element of Object.values(this.gui.elements)) {
-                        if (element.id === id) {
-                            if (element.type !== 'momentary') console.log(id, presetData[id]);
-                        }
-                    }
-                } catch (e) {
-                    console.log(e);
-                }
-            }
-        } 
-  */
         else {
             console.log("No preset of name ", this.curPreset);
         }
@@ -260,13 +246,11 @@ export class MonophonicTemplate {
     generateParameters(paramDefinitions) {
         const params = {};
         paramDefinitions.forEach((def) => {
-            const param = new Parameter(def);
+            const param = new Parameter(this,def);
             params[def.name] = param;
         });
         return params;
     }
-
-
 
     createAccessors(parent, params) {
         Object.keys(params).forEach((key) => {
@@ -279,31 +263,26 @@ export class MonophonicTemplate {
 
             // Proxy handler to intercept method calls
             const proxyHandler = {
-                get(target, prop) {
-                    //console.log(target,prop)
+                get(target, prop,value=null) {
                     if (prop === 'sequence') return (valueArray, subdivision = '16n') => {
-                        if (currentSeq) {
-                            currentSeq.dispose(); // Dispose of existing sequence
-                        }
-                        currentSeq = new Seq(
-                            parent,
-                            valueArray,
-                            subdivision,
-                            'infinite',
-                            0,
-                            (v, time) => param.set(Number(v[0]),null,false, time) // Ensure time is passed
-                        );
+                        param.sequence(valueArray,subdivision)
                     };
                     if (prop === 'stop') return () => {
+                        param.stop()
+                    };
+                    if (prop === 'set') return () => {
+                        //console.log('set',target,prop,value)
+                        const rawValue = (typeof value === 'function') ? value() : value.value;
                         if (currentSeq) {
                             currentSeq.dispose();
                             currentSeq = null;
                         }
+                        //console.log(target,prop,rawValue)
+                        param.set(value,null,false) 
                     };
                     return target.get(); // Return the current value
                 },
                 set(target, _, newValue) {
-                    console.log(target, _, newValue)
                     if (Array.isArray(newValue)) {
                         if (currentSeq) currentSeq.dispose();
                         currentSeq = new Seq(
@@ -328,26 +307,35 @@ export class MonophonicTemplate {
             // Define the parameter with a Proxy
             Object.defineProperty(parent, key, {
                 get: () => new Proxy(param, proxyHandler),
-                set: (newValue) => param.set(newValue),
+                set: (newValue) => {
+                    if (Array.isArray(newValue)) {
+                        param.sequence(newValue)
+                    } else {
+                        param.stop()
+                        param.set(newValue);
+                    }
+                },
             });
         });
     }//accessors
 
-    setParameter(name, value, time = null) {
-        const param = this.param[name];
-        if (!param) throw new Error(`Parameter '${name}' does not exist.`);
-        
-        if (time) {
-            // Handle sequenced parameter updates
-            param.callback(value, time);
-        } else {
-            // Handle immediate parameter updates
-            param.callback(value);
-        }
+    // Method to trigger the sequence in the Proxy
+    startSequence(paramName, valueArray, subdivision = '16n') {
+        const param = this.param[paramName];
 
-        // Update associated GUI elements
-        if (param.guiElement) {
-            param.guiElement.setValue(value);
+        if (param ) {
+            param.sequence(valueArray, subdivision);
+        } else {
+            console.warn(`Param ${paramName} has no sequence method or doesn't exist.`);
+        }
+    }
+
+    stopSequence(paramName) {
+        const param = this.param[paramName];
+        if (param.seq ) {
+            param.stop(); 
+        } else {
+            console.warn(`Param ${paramName} has no stop method or doesn't exist.`);
         }
     }
 
@@ -355,10 +343,18 @@ export class MonophonicTemplate {
         let output = 'Parameters:\n';
         for (let key in this.param) {
             const param = this.param[key];
-            output += `${param.name}: ${param._value}\n`;
+            let value = param._value
+            console.log(value)
+            if( typeof value === 'number') {
+                if(value > 100) value = value.toFixed()
+                else if( value > 1) value = value.toFixed(1)
+                else value = value.toFixed(3)
+            }
+            output += `${param.name}: ${value}\n`;
         }
         console.log(output);
     }
+    print(){ this.get()}
 
     /**
      * Set the ADSR values for the envelope
@@ -403,13 +399,12 @@ export class MonophonicTemplate {
      * const gui = new p5(sketch, 'Canvas1');
      * synth.initGui(gui, 10, 10)
      */
-    initGui(gui=null) {
-        let target = document.getElementById('Canvas');
-            //console.log(this.gui)
-            this.gui = new p5(sketch,target );
-        //console.log('init', this.param)
-        //this.gui = gui
-        const layout = basicLayout.basicLayout;
+    initGui(gui = null) {
+        this.guiContainer = document.getElementById('Canvas');
+        this.gui = new p5(sketch, this.guiContainer);
+
+        const layout = this.layout;
+        //console.log(layout);
 
         // Group parameters by type
         const groupedParams = {};
@@ -423,42 +418,38 @@ export class MonophonicTemplate {
             const groupLayout = layout[groupType];
             if (!groupLayout) return;
             if (groupType === 'hidden') return;
-          
 
+            let indexOffset = 0;
 
-            let indexOffset = 0
             groupedParams[groupType].forEach((param, index) => {
-              const isGroupA = groupLayout.groupA.includes(param.name);
+                const isGroupA = groupLayout.groupA.includes(param.name);
+                const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
+                const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
 
-              // Calculate size and control type
-              const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
-              const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
-              // Calculate offsets
-              let xOffset = 0//groupLayout.offsets.x * (index % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-              let yOffset = 0//groupLayout.offsets.y * Math.floor(index / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-              if( Array.isArray( param._value )){
-                param._value.forEach((_, i) => {
-                  // Calculate offsets
-                 xOffset = groupLayout.offsets.x * ((index+indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-                 yOffset = groupLayout.offsets.y * Math.floor((index+indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-                
-                  // Calculate absolute positions
-                  const x = groupLayout.boundingBox.x + xOffset;
-                  const y = groupLayout.boundingBox.y + yOffset;
-                  this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, i });
-                  indexOffset++
-                })
-              } else{
-                xOffset = groupLayout.offsets.x * ((index+indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-                yOffset = groupLayout.offsets.y * Math.floor((index+indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-              
-                // Calculate absolute positions
-                const x = groupLayout.boundingBox.x + xOffset;
-                const y = groupLayout.boundingBox.y + yOffset;
-                // Create GUI element
-                this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color });    
-              }
+                // **Retrieve the current parameter value**
+                const paramValue = param.get ? param.get() : param._value;
 
+                if (Array.isArray(paramValue)) {
+                    paramValue.forEach((value, i) => {
+                        let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                        let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                        const x = groupLayout.boundingBox.x + xOffset;
+                        const y = groupLayout.boundingBox.y + yOffset;
+
+                        this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, i, value });
+                        indexOffset++;
+                    });
+                } else {
+                    let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                    let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                    const x = groupLayout.boundingBox.x + xOffset;
+                    const y = groupLayout.boundingBox.y + yOffset;
+
+                    // Pass the **retrieved parameter value** to GUI
+                    this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, value: paramValue });
+                }
             });
         });
     }
@@ -468,8 +459,9 @@ export class MonophonicTemplate {
      * @returns {void}
      */
     hideGui() {
-        for (let i = 0; i < this.gui_elements.length; i++) {
-            this.gui_elements[i].hide = true;
+        if (this.gui) {
+            this.gui.remove(); // Properly destroy p5 instance
+            this.gui = null;
         }
     }
 
@@ -478,7 +470,7 @@ export class MonophonicTemplate {
      * @returns {void}
      */
     showGui() {
-        for (let i = 0; i < this.gui_elements.length; i++) this.gui_elements[i].hide = false;
+        this.initGui()
     }
 
     // Create individual GUI element
@@ -502,6 +494,7 @@ export class MonophonicTemplate {
                 label: i ? param.labels[i] : param.name,
                 min: param.min,
                 max: param.max,
+                value: param._value,
                 curve: param.curve,
                 size: size , // Scale size
                 x,
@@ -518,6 +511,7 @@ export class MonophonicTemplate {
             return this.gui.RadioButton({
                 label: i ? param.labels[i] : param.name,
                 radioOptions: param.radioOptions,
+                value: param._value,
                 x:x,
                 y:y+10,
                 accentColor: color,
@@ -823,7 +817,7 @@ export class MonophonicTemplate {
         else return val;
     }
 
-    parseNoteString(val, time, index, num) {
+    parseNoteString(val, time, index, num=null) {
         //console.log(val,time,index, num)
         if (val[0] === ".") return;
 

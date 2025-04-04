@@ -30,6 +30,7 @@ export class DrumSampler extends DrumTemplate{
   constructor(kit = "default", gui=null) {
     super()
     this.gui = gui
+    
     this.presets = DrumSamplerPresets
     this.name = "DrumSampler"
     this.kit = kit

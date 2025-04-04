@@ -43,7 +43,7 @@ export class SympathyString{
 	}
   setFrequency = function(val,time=null){
     if(time){
-      this.delayTime.setValueAtTime(1/val, time)
+      this.delayTime.linearRampToValueAtTime(1/val, time+0.001)
     } else this.delayTime.value = 1/val
   }
   setFeedback = function(val,time=null){
@@ -89,10 +89,17 @@ export class Sympathy{
       }
   }
   setFrequencies = function(vals,time=null){
-    if(vals.length != this.numStrings){
-      console.log("incorrect freq array size, should be ", this.numStrings)
-      return
+    // if(vals.length != this.numStrings){
+    //   console.log("incorrect freq array size, should be ", this.numStrings)
+    //   return
+    // }
+    if(vals.length < this.numStrings){
+      let div = Math.floor(this.numStrings/vals.length)
+      let freqs = vals
+      for(let i=0;i<div;i++) vals = vals.concat(freqs.map(x=>x*(2+i)))
     }
+
+    //console.log(vals)
     if(time){
       for(let i=0;i<this.numStrings;i++) {
         this.frequencies[i] = vals[i] * (1 - (Math.random()-.5)*this.detune)
@@ -100,6 +107,8 @@ export class Sympathy{
       }
     } else {
       for(let i=0;i<this.numStrings;i++) {
+        if(this.frequencies[i] < 5) this.frequencies[i] = 5
+        else if( this.frequencies[i] > 20000) this.frequencies[i] = 20000
         this.frequencies[i] = vals[i] * (1 - (Math.random()-.5)*this.detune)
         this.strings[i].setFrequency(this.frequencies[i])
       }

@@ -2,10 +2,11 @@
 */
 
 import basicLayout from './layouts/basicLayout.json';
+import { Seq } from '../Seq'
 
 export class Parameter {
-  constructor(options, gui = null, layout = basicLayout) {
-
+  constructor(parent,options, gui = null, layout = basicLayout) {
+    this.parent = parent
     this.name = options.name || 'param'
     this.min = options.min || 0;
     this.max = options.max || 1;
@@ -24,6 +25,7 @@ export class Parameter {
     this.radioOptions = options.radioOptions || null; // Store available options for radioBox
     this.guiElements = []; // Store references to GUI elements for array values
     this.labels = options.labels || null;
+    this.seq = null
     this.set(this._value)
   };
 
@@ -33,7 +35,7 @@ export class Parameter {
     }
     return this._value;
   }
-  set(newValue, index = null, calledByGui=false, time = null) {
+  set =  (newValue, index = null, calledByGui=false, time = null) => {
     //console.log('set', this.name, newValue, index, calledByGui,time)
     if (Array.isArray(this._value)) {
         if (Array.isArray(newValue)) {
@@ -66,6 +68,28 @@ export class Parameter {
     }
   }
   
+  //define sequencer controls
+  sequence(valueArray,subdivision){
+    if (this.seq) {
+                this.seq.dispose(); // Dispose of existing sequence
+            }
+            this.seq = new Seq(
+                this,
+                valueArray,
+                subdivision,
+                'infinite',
+                0,
+                (v, time) => this.parent.param[this.name].set(Number(v[0]),null,false, time)// Ensure time is passed
+            );
+    }
+    stop(){
+        if (this.seq) {
+            this.seq.dispose();
+            this.seq = null;
+        }
+    }
+
+
 
   // Attach a GUI control to this parameter
   attachControl(control) {

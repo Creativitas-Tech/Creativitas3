@@ -6,13 +6,14 @@ Single vco monosynth
 
 */
 import p5 from 'p5';
+import { sketch } from '../p5Library.js'
 import * as Tone from 'tone';
 import TwinklePresets from './synthPresets/TwinklePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
 import paramDefinitions from './params/twinkleParams.js';
-import { sketch } from '../p5Library.js'
+
 
 export class Twinkle extends MonophonicTemplate {
   constructor (gui = null) {
@@ -21,7 +22,7 @@ export class Twinkle extends MonophonicTemplate {
     this.presets = TwinklePresets
     this.isGlide = false
     this.name = "Twinkle"
-    console.log(this.name, " loaded, available preset: ", this.presets)
+    //console.log(this.name, " loaded, available preset: ", this.presets)
 
     // Initialize the main frequency control
     this.frequency = new Tone.Signal(200);

@@ -1,6 +1,12 @@
 
 const paramDefinitions = (synth) => [
     {
+        name:'detune',type:'vco',
+        min:0.,max:2,curve:1,
+        isSignal: 'true', connectTo: synth.tuning.factor,
+        callback:(x,time=null)=>synth.tuning.factor.value = x
+        },
+    {
         name:'drive2',type:'vco',
         min:0.,max:2,curve:2,
         isSignal: 'true', connectTo: synth.drive.gain,
@@ -46,7 +52,7 @@ const paramDefinitions = (synth) => [
         name:'toneG',type:'vca',
         min:0.,max:1.5,curve:2,
         isSignal: 'true', connectTo: synth.drive.gain,
-        callback:(x,time=null)=>synth.drive.gain.value = x
+        callback:(x,time=null)=>synth.toneGain.gain.value = x
         },
     {
         name:'vol',type:'vca',
