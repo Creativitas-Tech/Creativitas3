@@ -276,6 +276,13 @@ export class Seq {
 
     perform_transform(curBeat){
         //console.log('trans', curBeat)
+        // TODO: Ask Ian why
+        // Check for note names like C4, D#3, etc.
+        if(typeof curBeat === 'string' && /^[A-Ga-g][#b]?\d/.test(curBeat)) {
+            // For note names, just return them as is - no transformation needed
+            return curBeat;
+        }
+        
         if(!isNaN(Number(curBeat))){ //make sure it's a number
             // console.log("returning", String(this.transform(Number(curBeat))))
             return String((this.transform(Number(curBeat))));

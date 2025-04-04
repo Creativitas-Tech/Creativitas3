@@ -1,5 +1,12 @@
 let _ = -123456
 export function orn (note, pattern=1, scalar=1, length=4){
+    // TODO: Ask Ian why
+    // Check if the note is a string in the format of a note name (e.g., C4, D#3)
+    if (typeof note === 'string' && /^[A-Ga-g][#b]?\d/.test(note)) {
+        // For note names, just return the original note without ornamentation
+        return [note];
+    }
+
 	note = Number(note)
 	const patts = [
 		[0,1,2,3],
