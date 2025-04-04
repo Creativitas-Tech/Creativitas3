@@ -101,6 +101,8 @@ function generateVolumeWarningHTML(): string {
 }
 
 function generateWindowInitializers(): string {
+    // TODO: Replace initCollab function to be a no-op,
+    // create UI to join / leave rooms
     return `
     // Initialize ASCII
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
@@ -115,6 +117,15 @@ function generateWindowInitializers(): string {
     window.sendCC = midiHandlerInstance.sendCC.bind(midiHandlerInstance);
     window.sendNote = midiHandlerInstance.sendNoteOn.bind(midiHandlerInstance);
     window.sendNoteOff = midiHandlerInstance.sendNoteOff.bind(midiHandlerInstance);
+
+    // Since this function can be called by the user, just have it defined to be called
+    function initCollab(roomName = 'famleLounge') {
+        window.chClient = new CollabHubClient(); // needs to happen once (!)
+        window.chTracker = new CollabHubTracker(window.chClient);
+
+        // collab-hub join a room
+        window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name
+    }
     `;
 }
 // Async helper function to generate the main script block in the body

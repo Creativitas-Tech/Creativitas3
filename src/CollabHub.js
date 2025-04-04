@@ -15,39 +15,26 @@ export class CollabHubClient {
         this.socket = io("https://ch-server.herokuapp.com/hub");
         this.controls = {};
         this.handlers = {};
-        this.username = undefined;
+        this.username = "";
         this.roomJoined = undefined;
+        this.clientId = this._generateClientId(); // Unique identifier for this client instance
 
         // Callbacks
-        this.controlsCallback = (incoming) => {};
-        this.eventsCallback = (incoming) => {};
-        this.chatCallback = (incoming) => {};
+        this.controlsCallback = (incoming) => { };
+        this.eventsCallback = (incoming) => { };
+        this.chatCallback = (incoming) => { };
 
         // Setup event listeners
         this.initializeSocketEvents();
     }
 
+    _generateClientId() {
+        return 'client_' + Math.random().toString(36).substring(2, 15);
+    }
+
     initializeSocketEvents() {
 
         // chat and user management
-
-        this.socket.on("connected", () => {
-            // TODO server-side, return the username on connection
-            console.info("Connected to Collab-Hub server (Join a room w/ ch.joinRoom(x)!).");
-            this.socket.emit();
-
-            // TODO HACK sending chat message to receive my user name
-            // TODO fix on server-side, don't send the controls/events back to the user who sent it
-            const outgoing = {
-                chat: "Connected with id: " + this.socket.id,
-                target: "all"
-            };
-            this.socket.emit("chat", outgoing);
-
-            // ALTERNATIVELY, just request username from server
-            // socket.emit("addUsername", { "username": u });
-        });
-
         this.socket.on("serverMessage", (incoming) => {
             // console.info(incoming.message);
         });
@@ -59,7 +46,11 @@ export class CollabHubClient {
                 // console.info("My user name is: " + incoming.id);
             }
             // console.log(`${incoming.id}: "${incoming.chat}"`);
-            this.chatCallback(incoming);
+
+            // Only process chat messages that weren't sent by this client
+            if (incoming.header && incoming.header.clientId !== this.clientId) {
+                this.chatCallback(incoming);
+            }
         });
 
         this.socket.on("otherUsers", (incoming) => {
@@ -72,20 +63,20 @@ export class CollabHubClient {
         });
 
         // controls
-
         this.socket.on("control", (incoming) => {
             if (this.roomJoined) {                      // Kind of HACK, ignore controls before joining a room
-                if (incoming.from !== this.username) {  // TODO HACK ignore controls from self
+                // Check if this control was sent by this client
+                console.log("INCOMING IN COLLABHUB.JS", incoming);
+                if (incoming.header && incoming.header.clientId !== this.clientId) {
+                    console.log("Not us, continuing");
                     let newHeader = incoming.header,
                         newValues = incoming.values;
-                    this.controls[newHeader] = newValues;
-                    if (newHeader in this.handlers) {
-                        this.handlers[newHeader](incoming);
+                    this.controls[newHeader.name] = newValues;
+                    if (newHeader.name in this.handlers) {
+                        this.handlers[newHeader.name](incoming);
                     }
-                    // console.log(incoming);
+                    this.controlsCallback(incoming);
                 }
-
-                this.controlsCallback(incoming);
             }
         });
 
@@ -96,7 +87,7 @@ export class CollabHubClient {
                 delete e.mode;
                 // console.log(e);
             }
-        }); 
+        });
 
         this.socket.on("observedControls", (incoming) => {
             // console.info("Observed controls:");
@@ -120,15 +111,15 @@ export class CollabHubClient {
 
         this.socket.on("event", (incoming) => {
             if (this.roomJoined) {                      // Kind of HACK, ignore events before joining a room
-                if (incoming.from !== this.username) {  // TODO HACK ignore events from self
+                // Check if this event was sent by this client
+                if (incoming.header && incoming.header.clientId !== this.clientId) {
                     let newHeader = incoming.header;
-                    if (newHeader in this.handlers) {
-                        this.handlers[newHeader](incoming);
+                    if (newHeader.name in this.handlers) {
+                        this.handlers[newHeader.name](incoming);
                     }
                     // console.log("Incoming event", incoming);
+                    this.eventsCallback(incoming);
                 }
-
-                this.eventsCallback(incoming);
             }
         });
 
@@ -183,9 +174,15 @@ export class CollabHubClient {
     control(...args) {
         if (this.roomJoined) {
             let mode = args[0] === "publish" || args[0] === "pub" ? "publish" : "push",
-                header = mode === "publish" ? args[1] : args[0],
+                headerName = mode === "publish" ? args[1] : args[0],
                 values = mode === "publish" ? args[2] : args[1],
                 target = mode === "publish" ? args[3] ? args[3] : this.roomJoined : args[2] ? args[2] : this.roomJoined;
+
+            const header = {
+                name: headerName,
+                clientId: this.clientId
+            };
+            
             const outgoing = {
                 mode: mode,
                 header: header,
@@ -201,8 +198,14 @@ export class CollabHubClient {
     event(...args) {
         if (this.roomJoined) {
             let mode = args[0] === "publish" || args[0] === "pub" ? "publish" : "push",
-                header = mode === "publish" ? args[1] : args[0],
+                headerName = mode === "publish" ? args[1] : args[0],
                 target = mode === "publish" ? args[2] ? args[2] : this.roomJoined : args[1] ? args[1] : this.roomJoined;
+            
+            const header = {
+                name: headerName,
+                clientId: this.clientId
+            };
+            
             const outgoing = {
                 mode: mode,
                 header: header,
@@ -216,8 +219,13 @@ export class CollabHubClient {
 
     chat(m, t) {
         if (this.roomJoined) {
+            const header = {
+                clientId: this.clientId
+            };
+            
             const outgoing = {
-                chat: m
+                chat: m,
+                header: header
             };
             t ? outgoing.target = t : outgoing.target = this.roomJoined;
             this.socket.emit("chat", outgoing);
@@ -316,7 +324,7 @@ export class CollabHubClient {
         this.socket.emit("clearEvent", outgoing);
         this.socket.emit("getMyEvents");
     }
-  }  
+}
 
 
 export class CollabHubTracker {
@@ -391,11 +399,11 @@ export class CollabHubTracker {
         });
         // console.log('EVENTS: ', this.recentEvents);
     }
-  }
+}
 
 
-  export class CollabHubDisplay {
-    
+export class CollabHubDisplay {
+
     constructor(_target) {
         this.ch = window.chClient;
 
@@ -416,143 +424,143 @@ export class CollabHubTracker {
             const controlsContainer = document.getElementById('collab-controls');
 
             if (!controlsContainer) return;
-            
+
             // Get the current displayed controls
             const displayedControls = controlsContainer.querySelectorAll('.control');
-        
+
             // Check for new controls to add or existing controls to update
             Object.keys(window.chTracker.recentControls).forEach(key => {
-            let { value, from, time } = window.chTracker.recentControls[key];
-            
-            // if value is a float, round to 2 decimal places
-            if (typeof value === 'number') {
-                value = Math.round(value * 100) / 100;
-            }
-        
-            const controlId = `controls-${key}`;
-            const existingControl = document.getElementById(controlId);
-            
-            if (existingControl) {
-                // Update the value if it has changed
-                const valueElement = existingControl.querySelector('.value');
-                const fromElement = existingControl.querySelector('.from');
-                if (valueElement.innerText != value || fromElement.innerText != `(${from})`) {
-                valueElement.innerText = value;
-                fromElement.innerText = `(${from})`;
-                
-                // Change text weight to bold
-                existingControl.style.fontWeight = 'bold';
-                setTimeout(() => {
-                    existingControl.style.fontWeight = 'normal';
-                }, 2000); // Change back to normal after 2 seconds
+                let { value, from, time } = window.chTracker.recentControls[key];
+
+                // if value is a float, round to 2 decimal places
+                if (typeof value === 'number') {
+                    value = Math.round(value * 100) / 100;
                 }
-            } else {
-                // Add new control
-                const controlElement = document.createElement('div');
-                controlElement.className = 'property control hidden'; // Initially hidden for fade-in effect
-                controlElement.id = controlId;
-                controlElement.innerHTML = `
+
+                const controlId = `controls-${key}`;
+                const existingControl = document.getElementById(controlId);
+
+                if (existingControl) {
+                    // Update the value if it has changed
+                    const valueElement = existingControl.querySelector('.value');
+                    const fromElement = existingControl.querySelector('.from');
+                    if (valueElement.innerText != value || fromElement.innerText != `(${from})`) {
+                        valueElement.innerText = value;
+                        fromElement.innerText = `(${from})`;
+
+                        // Change text weight to bold
+                        existingControl.style.fontWeight = 'bold';
+                        setTimeout(() => {
+                            existingControl.style.fontWeight = 'normal';
+                        }, 2000); // Change back to normal after 2 seconds
+                    }
+                } else {
+                    // Add new control
+                    const controlElement = document.createElement('div');
+                    controlElement.className = 'property control hidden'; // Initially hidden for fade-in effect
+                    controlElement.id = controlId;
+                    controlElement.innerHTML = `
                 <span class="name">${key}:</span>
                 <span class="value">${value}</span>
                 <span class="from">(${from})</span>
                 `;
-                controlsContainer.appendChild(controlElement);
-        
-                // Trigger reflow to enable transition
-            //   controlElement.offsetHeight;
-        
-                // Fade in the element
-                controlElement.classList.remove('hidden');
-        
-                // Change text weight to bold
-                controlElement.style.fontWeight = 'bold';
-                setTimeout(() => {
-                controlElement.style.fontWeight = 'normal';
-                }, 2000); // Change back to normal after 2 seconds
-            }
+                    controlsContainer.appendChild(controlElement);
+
+                    // Trigger reflow to enable transition
+                    //   controlElement.offsetHeight;
+
+                    // Fade in the element
+                    controlElement.classList.remove('hidden');
+
+                    // Change text weight to bold
+                    controlElement.style.fontWeight = 'bold';
+                    setTimeout(() => {
+                        controlElement.style.fontWeight = 'normal';
+                    }, 2000); // Change back to normal after 2 seconds
+                }
             });
-        
+
             // Check for controls to remove
             displayedControls.forEach(control => {
-            const key = control.id.replace('controls-', '');
-            if (!window.chTracker.recentControls[key]) {
-                // Fade out and remove the element
-                control.classList.add('hidden');
-                setTimeout(() => {
-                control.remove();
-                }, 300); // Adjust timing to match your transition duration
-            }
+                const key = control.id.replace('controls-', '');
+                if (!window.chTracker.recentControls[key]) {
+                    // Fade out and remove the element
+                    control.classList.add('hidden');
+                    setTimeout(() => {
+                        control.remove();
+                    }, 300); // Adjust timing to match your transition duration
+                }
             });
         }
-        
-        
+
+
         function updateEvents() {
             const eventsContainer = document.getElementById('collab-events');
 
             if (!eventsContainer) return;
-            
+
             // Get the current displayed events
             const displayedEvents = eventsContainer.querySelectorAll('.event');
-        
+
             // Check for new events to add or existing events to update
             window.chTracker.recentEvents.forEach((event, index) => {
-            let { header, time, from } = event;
-            
-            const eventId = `events-${index}`;
-            const existingEvent = document.getElementById(eventId);
-            
-            if (existingEvent) {
-                // Update the value if it has changed
-                const headerElement = existingEvent.querySelector('.header');
-                const fromElement = existingEvent.querySelector('.from');
-                if (headerElement.innerText != header || fromElement.innerText != `(${from})`) {
-                headerElement.innerText = header;
-                fromElement.innerText = `(${from})`;
-                
-                // Change text weight to bold
-                existingEvent.style.fontWeight = 'bold';
-                setTimeout(() => {
-                    existingEvent.style.fontWeight = 'normal';
-                }, 2000); // Change back to normal after 2 seconds
-                }
-            } else {
-                // Add new event
-                const eventElement = document.createElement('div');
-                eventElement.className = 'property event hidden'; // Initially hidden for fade-in effect
-                eventElement.id = eventId;
-                eventElement.innerHTML = `
+                let { header, time, from } = event;
+
+                const eventId = `events-${index}`;
+                const existingEvent = document.getElementById(eventId);
+
+                if (existingEvent) {
+                    // Update the value if it has changed
+                    const headerElement = existingEvent.querySelector('.header');
+                    const fromElement = existingEvent.querySelector('.from');
+                    if (headerElement.innerText != header || fromElement.innerText != `(${from})`) {
+                        headerElement.innerText = header;
+                        fromElement.innerText = `(${from})`;
+
+                        // Change text weight to bold
+                        existingEvent.style.fontWeight = 'bold';
+                        setTimeout(() => {
+                            existingEvent.style.fontWeight = 'normal';
+                        }, 2000); // Change back to normal after 2 seconds
+                    }
+                } else {
+                    // Add new event
+                    const eventElement = document.createElement('div');
+                    eventElement.className = 'property event hidden'; // Initially hidden for fade-in effect
+                    eventElement.id = eventId;
+                    eventElement.innerHTML = `
                 <span class="header">${header}</span>
                 <span class="from">(${from})</span>
                 `;
-                eventsContainer.appendChild(eventElement);
-        
-                // Trigger reflow to enable transition
-            //   eventElement.offsetHeight;
-        
-                // Fade in the element
-                eventElement.classList.remove('hidden');
-        
-                // Change text weight to bold
-                eventElement.style.fontWeight = 'bold';
-                setTimeout(() => {
-                eventElement.style.fontWeight = 'normal';
-                }, 2000); // Change back to normal after 2 seconds
-            }
+                    eventsContainer.appendChild(eventElement);
+
+                    // Trigger reflow to enable transition
+                    //   eventElement.offsetHeight;
+
+                    // Fade in the element
+                    eventElement.classList.remove('hidden');
+
+                    // Change text weight to bold
+                    eventElement.style.fontWeight = 'bold';
+                    setTimeout(() => {
+                        eventElement.style.fontWeight = 'normal';
+                    }, 2000); // Change back to normal after 2 seconds
+                }
             });
-        
+
             // Check for events to remove
             displayedEvents.forEach(event => {
-            const key = event.id.replace('events-', '');
-            if (!window.chTracker.recentEvents[key]) {
-                // Fade out and remove the element
-                event.classList.add('hidden');
-                setTimeout(() => {
-                event.remove();
-                }, 300); // Adjust timing to match your transition duration
-            }
+                const key = event.id.replace('events-', '');
+                if (!window.chTracker.recentEvents[key]) {
+                    // Fade out and remove the element
+                    event.classList.add('hidden');
+                    setTimeout(() => {
+                        event.remove();
+                    }, 300); // Adjust timing to match your transition duration
+                }
             });
         }
-        
+
         // sample window.chTracker.reventChat:
         // {
         //   "message"
@@ -562,54 +570,54 @@ export class CollabHubTracker {
             const chatContainer = document.getElementById('collab-chat');
 
             if (!chatContainer) return;
-            
+
             // Get the current displayed chat
             const displayedChat = chatContainer.querySelectorAll('.chat');
-        
+
             // Check for new chat to add or existing chat to update
             window.chTracker.recentChat.forEach((chat, index) => {
-            let { message, from } = chat;
-            
-            const chatId = `chat-${index}`;
-            const existingChat = document.getElementById(chatId);
-            
-            if (!existingChat) {
-                // Add new chat
-                const chatElement = document.createElement('div');
-                chatElement.className = 'property chat hidden'; // Initially hidden for fade-in effect
-                chatElement.id = chatId;
-                chatElement.innerHTML = `
+                let { message, from } = chat;
+
+                const chatId = `chat-${index}`;
+                const existingChat = document.getElementById(chatId);
+
+                if (!existingChat) {
+                    // Add new chat
+                    const chatElement = document.createElement('div');
+                    chatElement.className = 'property chat hidden'; // Initially hidden for fade-in effect
+                    chatElement.id = chatId;
+                    chatElement.innerHTML = `
                 <span class="message"><span style="font-weight: bold;">${from}:</span> ${message}</span>
                 `;
-                chatContainer.appendChild(chatElement);
-        
-                // Trigger reflow to enable transition
-            //   chatElement.offsetHeight;
-        
-                // Fade in the element
-                chatElement.classList.remove('hidden');
-            }
+                    chatContainer.appendChild(chatElement);
+
+                    // Trigger reflow to enable transition
+                    //   chatElement.offsetHeight;
+
+                    // Fade in the element
+                    chatElement.classList.remove('hidden');
+                }
             });
-        
+
             // Check for chat to remove
             displayedChat.forEach(chat => {
-            const key = chat.id.replace('chat-', '');
-            if (!window.chTracker.recentChat[key]) {
-                // Fade out and remove the element
-                chat.classList.add('hidden');
-                setTimeout(() => {
-                chat.remove();
-                }, 300); // Adjust timing to match your transition duration
-            }
+                const key = chat.id.replace('chat-', '');
+                if (!window.chTracker.recentChat[key]) {
+                    // Fade out and remove the element
+                    chat.classList.add('hidden');
+                    setTimeout(() => {
+                        chat.remove();
+                    }, 300); // Adjust timing to match your transition duration
+                }
             });
         }
-        
-        
+
+
         // Initial display of controls
         updateControls();
         updateEvents();
         updateChat();
-        
+
         // Example: Simulate update or deletion of properties in a loop
         setInterval(() => {
             // Update controls display
@@ -617,9 +625,9 @@ export class CollabHubTracker {
             updateEvents();
             updateChat();
         }, 100); // Repeat every 0.5 seconds
-        
-        
-                // send message handler
+
+
+        // send message handler
         function sendMessage() {
             let newChatMessageEl = document.getElementById('newChatMessage')
             window.chClient.chat(newChatMessageEl.value)
@@ -704,4 +712,4 @@ export class CollabHubTracker {
     unobserveEvent(header) { this.ch.unobserveEvent(header); }
     observeAllEvents(bool) { this.ch.observeAllEvents(bool); }
     clearEvent(header) { this.ch.clearEvent(header); }
-  }
+}
