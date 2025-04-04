@@ -15,7 +15,6 @@ import { Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, An
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
-import { Sequencer } from './Sequencer.js';
 import { MultiVCO } from './MultiVCO.js'
 import p5 from 'p5';
 import * as Tone from 'tone';
@@ -24,8 +23,8 @@ import * as TheoryModule from './TheoryModule.js';
 import Canvas from "./Canvas.js";
 import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction } from './visualizers/index.js';
 import * as waveshapers from './synths/waveshapers.js'
-import {stepper, expr} from  './Utilities.js'
-import {EnvelopeLoop} from './synths/EnvelopeLoop.js'
+import { stepper, expr } from './Utilities.js'
+import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
 
 import WebSocketClient from './collabSocket';
 import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
@@ -467,7 +466,7 @@ function Editor(props) {
 
         window.audioContext = Tone.context.rawContext;
         window.setTimeout2 = Tone.context.rawContext.setTimeout;
- 
+
         return () => {
 
         };

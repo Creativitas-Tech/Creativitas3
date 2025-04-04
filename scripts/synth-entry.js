@@ -12,7 +12,6 @@ export * from '../src/timing/TimingModalDialog.js'; // Added for web export timi
 export * from '../src/MultiVCO.js';
 export * from '../src/Ornament.js';
 export * from '../src/Seq.js';
-export * from '../src/Sequencer.js';
 export * from '../src/Turing.js';
 export * from '../src/Utilities.js';
 
