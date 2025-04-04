@@ -203,7 +203,6 @@ function Editor(props) {
     window.Diffuseur = Diffuseur
     window.KP = KP
     window.Sympathy = Sympathy
-    window.Sequencer = Sequencer
     window.MultiVCO = MultiVCO
     window.Kick = Kick
     window.Cymbal = Cymbal

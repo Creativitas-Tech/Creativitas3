@@ -1,11 +1,15 @@
 // MonophonicTemplate.js
 
 import * as Tone from 'tone';
+import * as p5 from 'p5';
 import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule';
 import { Seq } from '../Seq'
 import { TuringMachine } from '../Turing'
 import { ArrayVisualizer } from '../visualizers/VisualizeArray';
 import { Parameter } from './ParameterModule.js'
+import { sketch } from '../p5Library.js'
+import basicLayout from './layouts/basicLayout.json';
+
 
 /**
  * Represents a Monophonic Synth
@@ -89,10 +93,10 @@ export class MonophonicTemplate {
      */
     savePreset (name) {
         const _preset = {};
-        for (let element of Object.values(this.gui.elements)) {
-            _preset[element.id] = element.value;
+        for (let element of Object.values(this.param)) {
+            _preset[element.name] = element._value;
         }
-        console.log(this.presets, this.gui)
+        console.log(this.presets)
         // Update the presetsData in memory
         //console.log(this.presets);
         if (!this.presets[name]) {
@@ -126,32 +130,49 @@ export class MonophonicTemplate {
      * @example synth.loadPreset('default')
      */
     loadPreset(name) {
-        setTimeout(()=>{
-            this.curPreset = name;
-            const presetData = this.presets[this.curPreset];
+        this.curPreset = name;
+        const presetData = this.presets[this.curPreset];
 
-            if (presetData) {
-                console.log("Loading preset ", this.curPreset);
-                for (let id in presetData) {
-                    try {
-                        for (let element of Object.values(this.gui.elements)) {
-                            //console.log(element.id, element)
-                            if (element.id === id) {
-                                if (element.type !== 'momentary') element.set(presetData[id]);
-                            }
-                        }
-                    } catch (e) {
-                        console.log(e);
+        if (presetData) {
+            console.log("Loading preset ", this.curPreset);
+            for (let name in presetData) {
+                try {
+                    for (let element of Object.values(this.param)) {
+                        this.param[name].set(presetData[name])
                     }
+                } catch (e) {
+                    console.log(e);
                 }
-            } else {
-                console.log("No preset of name ", name);
             }
-        },50)
+        } else {
+            console.log("No preset of name ", name);
+        }
     }
 
     logPreset() {
         const presetData = this.presets[this.curPreset];
+
+        if (presetData) {
+
+          let output = 'Parameters:\n';
+          for (let key in presetData) {
+              const param = presetData[key];
+              if (Array.isArray(param)) {
+                  const formattedArray = param.map((value) => {
+                      if (typeof value === "number") {
+                          return Number(value.toFixed(2)); // Limit to 2 decimals
+                      }
+                      return value; // Keep non-numbers unchanged
+                  });
+
+                  output += `${key}: [${formattedArray.join(", ")}]\n`; // Add the array to output
+              }
+              else if(typeof param === 'number') output += `${key}: ${param.toFixed(2)}\n`;
+              else output += `${key}: ${param}\n`;
+          }
+          console.log(output);
+        }
+        /*
 
         if (presetData) {
             console.log("Preset " + this.curPreset);
@@ -166,7 +187,9 @@ export class MonophonicTemplate {
                     console.log(e);
                 }
             }
-        } else {
+        } 
+  */
+        else {
             console.log("No preset of name ", this.curPreset);
         }
     }
@@ -243,44 +266,72 @@ export class MonophonicTemplate {
         return params;
     }
 
+
+
     createAccessors(parent, params) {
-    Object.keys(params).forEach((key) => {
-        const param = params[key];
+        Object.keys(params).forEach((key) => {
+            const param = params[key];
+            let currentSeq = null; // Track active sequence
 
-        // Ensure the Parameter object has a `set` method
-        if (typeof param.set !== 'function') {
-            throw new Error(`Parameter '${key}' does not have a set method`);
-        }
+            if (typeof param.set !== 'function' || typeof param.get !== 'function') {
+                throw new Error(`Parameter '${key}' does not have valid get/set methods`);
+            }
 
-        // Proxy to handle array-like access
-        const proxyHandler = {
-            get(target, prop) {
-                if (typeof prop === 'string' && !isNaN(prop)) {
-                    // Access individual array element
-                    return target.get(parseInt(prop));
-                }
-                return target.get();
-            },
-            set(target, prop, value) {
-                console.log(target, prop, value)
-                if (typeof prop === 'string' && !isNaN(prop)) {
-                    // Set individual array element
-                    target.set(value, parseInt(prop));
+            // Proxy handler to intercept method calls
+            const proxyHandler = {
+                get(target, prop) {
+                    //console.log(target,prop)
+                    if (prop === 'sequence') return (valueArray, subdivision = '16n') => {
+                        if (currentSeq) {
+                            currentSeq.dispose(); // Dispose of existing sequence
+                        }
+                        currentSeq = new Seq(
+                            parent,
+                            valueArray,
+                            subdivision,
+                            'infinite',
+                            0,
+                            (v, time) => param.set(Number(v[0]),null,false, time) // Ensure time is passed
+                        );
+                    };
+                    if (prop === 'stop') return () => {
+                        if (currentSeq) {
+                            currentSeq.dispose();
+                            currentSeq = null;
+                        }
+                    };
+                    return target.get(); // Return the current value
+                },
+                set(target, _, newValue) {
+                    console.log(target, _, newValue)
+                    if (Array.isArray(newValue)) {
+                        if (currentSeq) currentSeq.dispose();
+                        currentSeq = new Seq(
+                            parent,
+                            newValue,
+                            param.subdivision || '16n',
+                            'infinite',
+                            0,
+                            (v, time) => param.set(Number(v[0]),null,false, time) // Ensure time is passed
+                        );
+                    } else {
+                        if (currentSeq) {
+                            currentSeq.dispose();
+                            currentSeq = null;
+                        }
+                        param.set(newValue);
+                    }
                     return true;
                 }
-                // Set the entire array or scalar value
-                target.set(value);
-                return true;
-            }
-        };
+            };
 
-        // Define the accessor property on the parent
-        Object.defineProperty(parent, key, {
-            get: () => new Proxy(param, proxyHandler),
-            set: (newValue) => param.set(newValue),
+            // Define the parameter with a Proxy
+            Object.defineProperty(parent, key, {
+                get: () => new Proxy(param, proxyHandler),
+                set: (newValue) => param.set(newValue),
+            });
         });
-    });
-}//createAccessors
+    }//accessors
 
     setParameter(name, value, time = null) {
         const param = this.param[name];
@@ -320,10 +371,10 @@ export class MonophonicTemplate {
      */
     setADSR(a, d, s, r) {
         if (this.env) {
-            this.env.attack = a > 0.001 ? a : 0.001;
-            this.env.decay = d > 0.01 ? d : 0.01;
-            this.env.sustain = Math.abs(s) < 1 ? s : 1;
-            this.env.release = r > 0.01 ? r : 0.01;
+            this.attack = a > 0.001 ? a : 0.001;
+            this.decay = d > 0.01 ? d : 0.01;
+            this.sustain = Math.abs(s) < 1 ? s : 1;
+            this.release = r > 0.01 ? r : 0.01;
         }
     }
 
@@ -347,19 +398,69 @@ export class MonophonicTemplate {
 
     /**
      * Initialize the GUI
-     * @param {object} gui - p5.gui object
-     * @param {number} x - X position of the GUI
-     * @param {number} y - Y position of the GUI
      * @returns {void}
      * @example 
      * const gui = new p5(sketch, 'Canvas1');
      * synth.initGui(gui, 10, 10)
      */
-    initGui(gui, x = 10, y = 10) {
-        this.gui = gui;
-        this.x = x;
-        this.y = y;
-        this.gui_elements = [];
+    initGui(gui=null) {
+        let target = document.getElementById('Canvas');
+            //console.log(this.gui)
+            this.gui = new p5(sketch,target );
+        //console.log('init', this.param)
+        //this.gui = gui
+        const layout = basicLayout.basicLayout;
+
+        // Group parameters by type
+        const groupedParams = {};
+        Object.values(this.param).forEach((param) => {
+            if (!groupedParams[param.type]) groupedParams[param.type] = [];
+            groupedParams[param.type].push(param);
+        });
+
+        // Create GUI for each group
+        Object.keys(groupedParams).forEach((groupType) => {
+            const groupLayout = layout[groupType];
+            if (!groupLayout) return;
+            if (groupType === 'hidden') return;
+          
+
+
+            let indexOffset = 0
+            groupedParams[groupType].forEach((param, index) => {
+              const isGroupA = groupLayout.groupA.includes(param.name);
+
+              // Calculate size and control type
+              const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
+              const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
+              // Calculate offsets
+              let xOffset = 0//groupLayout.offsets.x * (index % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+              let yOffset = 0//groupLayout.offsets.y * Math.floor(index / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+              if( Array.isArray( param._value )){
+                param._value.forEach((_, i) => {
+                  // Calculate offsets
+                 xOffset = groupLayout.offsets.x * ((index+indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                 yOffset = groupLayout.offsets.y * Math.floor((index+indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                
+                  // Calculate absolute positions
+                  const x = groupLayout.boundingBox.x + xOffset;
+                  const y = groupLayout.boundingBox.y + yOffset;
+                  this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, i });
+                  indexOffset++
+                })
+              } else{
+                xOffset = groupLayout.offsets.x * ((index+indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                yOffset = groupLayout.offsets.y * Math.floor((index+indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+              
+                // Calculate absolute positions
+                const x = groupLayout.boundingBox.x + xOffset;
+                const y = groupLayout.boundingBox.y + yOffset;
+                // Create GUI element
+                this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color });    
+              }
+
+            });
+        });
     }
 
     /**
@@ -380,6 +481,51 @@ export class MonophonicTemplate {
         for (let i = 0; i < this.gui_elements.length; i++) this.gui_elements[i].hide = false;
     }
 
+    // Create individual GUI element
+    createGuiElement(param, { x, y, size, controlType, color, i=null }) {
+        //console.log('createG', param, x,y,size,controlType, i)
+        if (controlType === 'knob') {
+            param.guiElements.push(this.gui.Knob({
+                label: i ? param.labels[i] : param.name,
+                min: param.min,
+                max: param.max,
+                value: param._value,
+                size: size , // Scale size
+                curve: param.curve,
+                x,
+                y,
+                accentColor: color,
+                callback: (value) => param.set(value,i,true),
+            }));
+        } else if (controlType === 'fader') {
+            param.guiElements.push(this.gui.Fader({
+                label: i ? param.labels[i] : param.name,
+                min: param.min,
+                max: param.max,
+                curve: param.curve,
+                size: size , // Scale size
+                x,
+                y,
+                accentColor: color,
+                callback: (value) => param.set(value,i,true),
+            }));
+        } else if (controlType === 'radioButton') {
+            if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
+                console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
+                return null;
+            }
+
+            return this.gui.RadioButton({
+                label: i ? param.labels[i] : param.name,
+                radioOptions: param.radioOptions,
+                x:x,
+                y:y+10,
+                accentColor: color,
+                callback: (selectedOption) => param.set(selectedOption),
+            });
+        }
+    }
+
     /**
      * Fast way to create a knob GUI element
      * @param {string} _label - Label for the knob
@@ -396,16 +542,18 @@ export class MonophonicTemplate {
      *    this.setADSR(val, this.gui.get('Decay').value(), this.gui.get('Sustain').value(), this.gui.get('Release').value());
      * });
      */
-    createKnob(_label, _x, _y, _min, _max, _size, _accentColor, callback) {
+
+
+      createKnob(label, x, y, min, max, size, accentColor, callback) {
         return this.gui.Knob({
-            label: _label, min: _min, max: _max, size: _size, accentColor: _accentColor,
-            x: _x + this.x, y: _y + this.y,
-            callback: callback,
-            showLabel: 1, showValue: 1,
-            curve: 2,
-            border: 2
+          label, min, max, size, accentColor,
+          x: x + this.x, y: y + this.y,
+          callback: callback,
+          showLabel: 1, showValue: 0, // Assuming these are common settings
+          curve: 2, // Adjust as needed
+          border: 2 // Adjust as needed
         });
-    }
+      }
 
     /**
      * Connects to Tone.js destination
@@ -488,6 +636,12 @@ export class MonophonicTemplate {
     set velocity(val) {
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].velocity = val
+        }
+    }
+
+    set orn(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].orn = val
         }
     }
 
@@ -685,8 +839,7 @@ export class MonophonicTemplate {
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
         let sustain = this.getSeqParam(this.seq[num].sustain, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
-        //octave = 0
-        //velocity=100
+        let lag = this.getSeqParam(this.seq[num].lag, index);
 
         try {
             //console.log('trig', time, val[1], Tone.Time(this.subdivision))
@@ -694,10 +847,10 @@ export class MonophonicTemplate {
                 note + octave * 12,
                 velocity,
                 sustain,
-                time + val[1] * (Tone.Time(subdivision))
+                time + val[1] * (Tone.Time(subdivision)) + lag
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision));
+            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
         }
     }
 }

@@ -1,12 +1,15 @@
 import * as Tone from 'tone';
 //import SimplerPresets from './synthPresets/SimplerPresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
-
+import {Parameter} from './ParameterModule.js'
+import basicLayout from './layouts/basicLayout.json';
+import paramDefinitions from './params/pannerParams.js';
 
 export class QuadPanner extends MonophonicTemplate{
     constructor() {
         super()
         this.context = window.audioContext;
+        this.name = 'panner'
 
         // Create the ChannelMergerNode with the specified number of channels
         this.channelMerger = this.context.createChannelMerger(4);
@@ -35,6 +38,15 @@ export class QuadPanner extends MonophonicTemplate{
         this._x = 0
         this._y = 0
         this.output = this.channelMerger;
+
+        // Bind parameters with this instance
+        this.paramDefinitions = paramDefinitions(this)
+        this.param = this.generateParameters(this.paramDefinitions)
+        this.createAccessors(this, this.param);
+
+        //for autocomplete
+        this.autocompleteList = this.paramDefinitions.map(def => def.name);;
+        
     }
 
     // Set x-axis (left-right) panning using the LR panner
@@ -49,30 +61,37 @@ export class QuadPanner extends MonophonicTemplate{
         this.pan(this._x,this._y)
     }
 
-    pan(x = 0.5, y = 0.5) {
-    x = Math.max(-1, Math.min(1, x));
-    y = Math.max(-1, Math.min(1, y));
-    let curve = 0.7;
-    let base_amp = -70;
+    pan(x = 0.5, y = 0.5, time=null) {
+        x = Math.max(-1, Math.min(1, x));
+        y = Math.max(-1, Math.min(1, y));
+        let curve = 0.7;
+        let base_amp = -70;
 
-    // Calculate gain values
-    const gainFL = Math.pow((1 - x) * (1 - y), curve); // Front-Left
-    const gainFR = Math.pow((1 + x) * (1 - y), curve); // Front-Right
-    const gainBL = Math.pow((1 - x) * (1 + y), curve); // Back-Left
-    const gainBR = Math.pow((1 + x) * (1 + y), curve); // Back-Right
+        // Calculate gain values
+        const gainFL = Math.pow((1 - x) * (1 - y), curve); // Front-Left
+        const gainFR = Math.pow((1 + x) * (1 - y), curve); // Front-Right
+        const gainBL = Math.pow((1 - x) * (1 + y), curve); // Back-Left
+        const gainBR = Math.pow((1 + x) * (1 + y), curve); // Back-Right
 
-    // Smooth transition over 10 ms
-    const rampTime = 0.01; // 10 ms in seconds
-    this.channel[0].factor.rampTo(gainFL, rampTime);
-    this.channel[1].factor.rampTo(gainFR, rampTime);
-    this.channel[2].factor.rampTo(gainBR, rampTime);
-    this.channel[3].factor.rampTo(gainBL, rampTime);
+        // Smooth transition over 10 ms
+        const rampTime = 0.01; // 10 ms in seconds
+        if(time==null){
+            this.channel[0].factor.rampTo(gainFL, rampTime);
+            this.channel[1].factor.rampTo(gainFR, rampTime);
+            this.channel[2].factor.rampTo(gainBR, rampTime);
+            this.channel[3].factor.rampTo(gainBL, rampTime);
+        } else{
+            this.channel[0].factor.setValueAtTime(gainFL, time);
+            this.channel[1].factor.setValueAtTime(gainFR, time);
+            this.channel[2].factor.setValueAtTime(gainBR, time);
+            this.channel[3].factor.setValueAtTime(gainBL, time);
+        }
 
-    // Optionally log values for debugging
-    // console.log(x, y, gainFL, gainFR, gainBL, gainBR);
-}
+        // Optionally log values for debugging
+        // console.log(x, y, gainFL, gainFR, gainBL, gainBR);
+    }
 
-    circle(angle, depth = 1) {
+    setAngle(angle, depth = 1, time = null) {
         // Convert angle from degrees to radians
         const radians = (angle * Math.PI) / 180;
 
@@ -85,7 +104,7 @@ export class QuadPanner extends MonophonicTemplate{
         this._y = y;
 
         // Call the pan function with the calculated positions
-        this.pan(this._x, this._y);
+        this.pan(this._x, this._y, time);
     }
 
     // Dispose of all nodes

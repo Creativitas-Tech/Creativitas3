@@ -33,26 +33,26 @@ export class Parameter {
     }
     return this._value;
   }
-  set(newValue, index = null, calledByGui=false) {
-    //console.log('set', this.name, newValue, this._value)
+  set(newValue, index = null, calledByGui=false, time = null) {
+    //console.log('set', this.name, newValue, index, calledByGui,time)
     if (Array.isArray(this._value)) {
         if (Array.isArray(newValue)) {
             // Set entire array
             this._value = [...newValue];
-            newValue.forEach((val, i) => this.callback(val, i));
+            newValue.forEach((val, i) => this.callback(val,  time));
         } else if (index !== null) {
             // Set specific index
             this._value[index] = newValue;
-            this.callback(newValue, index);
+            this.callback(newValue, time);
         } else {
             // Fill array with single value
             this._value.fill(newValue);
-            this._value.forEach((val, i) => this.callback(val, i));
+            this._value.forEach((val, i) => this.callback(val, time));
         }
     } else {
         // Scalar value
         this._value = newValue;
-        this.callback(newValue, null);
+        this.callback(newValue, time);
     }
 
     // Update GUI if attached

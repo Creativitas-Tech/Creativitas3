@@ -1,7 +1,10 @@
+import p5 from 'p5';
 import * as Tone from 'tone';
 import {Parameter} from './ParameterModule.js'
 import dlayout from './layouts/drumLayout.json';
 import { DrumTemplate } from './DrumTemplate';
+import paramDefinitions from './params/drumVoiceParams.js';
+import { sketch } from '../p5Library.js'
 
 export class DrumSynth extends DrumTemplate{
     constructor(options = {}) {
@@ -47,7 +50,7 @@ export class DrumSynth extends DrumTemplate{
 
         // Waveshaper and gain for tone
         this.drive = new Tone.Gain(this.params.toneGain);
-        this.waveshaper = new Tone.WaveShaper(x => Math.sin(x * Math.PI));
+        this.waveshaper = new Tone.WaveShaper(value=> Math.tanh(value*4));
         this.vco.connect(this.drive);
         this.drive.connect(this.waveshaper)
 
@@ -111,51 +114,15 @@ export class DrumSynth extends DrumTemplate{
         this.vcfEnvDepth.connect(this.finalFilter.frequency)
         this.env.connect(this.vcfEnvDepth)
 
-        let paramDefinitions = [
-            {name:'type',type:'vco',value:'square',radioOptions:['square','saw','tri','sine'],callback:(x,time=null)=>{
-                  switch(x){
-                  case 'square': this.vco.type = 'square'; break;
-                    case 'saw': this.vco.type = 'sawtooth'; break;
-                      case 'tri': this.vco.type = 'triangle'; break;
-                        case 'sine': this.vco.type = 'sine'; break;
-                  }
-                }
-              },
-            {name:'drive2',type:'vco',min:0.,max:2,curve:2,callback:(x,time=null)=>this.drive.gain.value = x},
-            {name:'fm',type:'vcf',min:0.,max:10,curve:2,callback:(x,time=null)=>this.modIndex.value = x},
-            {name:'am',type:'vcf',min:0.,max:2,curve:2,callback:(x,time=null)=>this.amDepth.gain.value = x},
-            {name:'harm',type:'vcf',min:1.,max:20,curve:1,callback:(x,time=null)=>this.harmonicity.factor.value = (x)},
-            {name:'cutoff',type:'vcf',min:50.,max:10000,curve:2,callback:(x,time=null)=>this.cutoffSig.value = x},
-            {name:'Q',type:'vcf',min:0.,max:20,curve:0.7,callback:(x,time=null)=>this.finalFilter.Q.value = x},
-            {name:'noiseG',type:'vca',min:0.,max:1.5,curve:2,callback:(x,time=null)=>this.noiseGain.gain.value = x},
-            {name:'toneG',type:'vca',min:0.,max:1.5,curve:2,callback:(x,time=null)=>this.drive.gain.value = x},
-            {name:'vol',type:'vca',min:0.,max:2,curve:2,callback:(x,time=null)=>this.output.factor.value = x},
-            {name:'drop',type:'vco',min:0.,max:5000,curve:2,callback:(x,time=null)=>this.pitchEnvDepth.factor.value = x},
-            {name:'decay',type:'env',min:0.,max:5,curve:2,callback:(x,time=null)=>{ this.env.decay = x; this.env.release = x }},
-            {name:'pDecay',type:'env',min:0.,max:1,curve:2,callback:(x,time=null)=>{ this.pitchEnvelope.decay = x; this.pitchEnvelope.release = x }},
-            {name:'nDecay',type:'env',min:0.,max:5,curve:2,callback:(x,time=null)=>{ this.noiseEnv.decay = x; this.noiseEnv.release = x }},
-            {name:'nFreq',type:'vcf',min:100.,max:10000,curve:2,callback:(x,time=null)=>{ this.noiseCutoff.value = x; }},
-            {name:'nEnv',type:'env',min:0.,max:5000,curve:3,callback:(x,time=null)=>this.noiseVcfEnvDepth.factor.value = x},
-            {name:'vcfEnv',type:'vcf',min:0.,max:5000,curve:3,callback:(x,time=null)=>this.vcfEnvDepth.factor.value = x},
-            // {name:'adsr',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
-            //     labels:['attack','decay','sustain','release'],
-            //     callback:(x,i=null)=>{ this.setADSR('env',x, i) }
-            // },
-            // {name:'noise',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
-            //     labels:['attack','decay','sustain','release'],
-            //     callback:(x,i=null)=>{ this.setADSR('noise',x, i) }
-            // },
-            // {name:'pitch',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
-            //     labels:['attack','decay','sustain','release'],
-            //     callback:(x,i=null)=>{ this.setADSR('pitch',x, i) }
-            // },
-        ]
+        
 
-        this.param = this.generateParameters(paramDefinitions)
+        // Bind parameters with this instance
+        this.paramDefinitions = paramDefinitions(this)
+        this.param = this.generateParameters(this.paramDefinitions)
         this.createAccessors(this, this.param);
 
         //for autocomplete
-        this.autocompleteList = paramDefinitions.map(def => def.name);;
+        this.autocompleteList = this.paramDefinitions.map(def => def.name);;
         //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
         setTimeout(()=>{this.loadPreset('default')}, 500);
     }
@@ -185,105 +152,6 @@ export class DrumSynth extends DrumTemplate{
         }
     }
 
-    // // Getters and setters
-    // get toneFrequency() {
-    //     return this.params.toneFrequency;
-    // }
-    // set toneFrequency(value) {
-    //     this.params.toneFrequency = value;
-    //     this.frequency.value = value;
-    //     this.modVco.frequency.value = value * this.params.amRatio;
-    // }
-
-    // get amRatio() {
-    //     return this.params.amRatio;
-    // }
-    // set amRatio(value) {
-    //     this.params.amRatio = value;
-    //     this.modVco.frequency.value = this.params.toneFrequency * value;
-    // }
-
-    // get toneGain2() {
-    //     return this.params.toneGain;
-    // }
-    // set toneGain2(value) {
-    //     this.params.toneGain = value;
-    //     this.toneGain.gain.value = value;
-    // }
-
-    // get noiseShape() {
-    //     return this.params.noiseShape;
-    // }
-    // set noiseShape(value) {
-    //     this.params.noiseShape = value;
-    //     this.noiseFilter.type = value;
-    // }
-
-    // get noiseLevel() {
-    //     return this.params.noiseLevel;
-    // }
-    // set noiseLevel(value) {
-    //     this.params.noiseLevel = value;
-    //     this.noiseGain.gain.value = value;
-    // }
-
-    // get toneLevel() {
-    //     return this.params.toneLevel;
-    // }
-    // set toneLevel(value) {
-    //     this.params.toneLevel = value;
-    //     this.output.factor.value = value;
-    // }
-
-    // get toneDecay() {
-    //     return this.params.toneDecay;
-    // }
-    // set toneDecay(value) {
-    //     this.params.toneDecay = value;
-    //     this.env.decay = value;
-    //     this.pitchEnvelope.decay = value
-    // }
-    // get pitchEnv() {
-    //     return this.params.pitchEnv;
-    // }
-    // set pitchEnv(value) {
-    //     this.params.pitchEnv = value;
-    //     this.pitchEnvDepth.factor.value = value;
-    // }
-
-    // get noiseDecay() {
-    //     return this.params.noiseDecay;
-    // }
-    // set noiseDecay(value) {
-    //     this.params.noiseDecay = value;
-    //     this.noiseEnv.decay = value;
-    // }
-
-    // get cutoff() {
-    //     return this.params.cutoff;
-    // }
-    // set cutoff(value) {
-    //     this.params.cutoff = value;
-    //     this.finalFilter.frequency.value = value;
-    //     this.noiseFilter.frequency.value = value;
-    // }
-
-    // get resonance() {
-    //     return this.params.resonance;
-    // }
-    // set resonance(value) {
-    //     this.params.resonance = value;
-    //     this.finalFilter.Q.value = value;
-    // }
-
-    // get volume() {
-    //     return this.params.volume;
-    // }
-    // set volume(value) {
-    //     this.params.volume = value;
-    //     this.output.factor.factor.value = value;
-    // }
-
     // Trigger a drum hit
     trigger(time = Tone.now()) {
         this.env.triggerAttackRelease(.05, time);
@@ -305,109 +173,4 @@ export class DrumSynth extends DrumTemplate{
             //this.env.triggerAttackRelease(dur);
         }
     }
-
-    //GUI
-  // Initialize GUI
-  initGui(gui=null) {
-    //console.log('init', this.param)
-    this.gui = gui
-    const layout = dlayout.layout;
-
-    // Group parameters by type
-    const groupedParams = {};
-    Object.values(this.param).forEach((param) => {
-        if (!groupedParams[param.type]) groupedParams[param.type] = [];
-        groupedParams[param.type].push(param);
-    });
-
-    // Create GUI for each group
-    Object.keys(groupedParams).forEach((groupType) => {
-        const groupLayout = layout[groupType];
-        if (!groupLayout) return;
-        if (groupType === 'hidden') return;
-      
-
-
-        let indexOffset = 0
-        groupedParams[groupType].forEach((param, index) => {
-          const isGroupA = groupLayout.groupA.includes(param.name);
-
-          // Calculate size and control type
-          const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
-          const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
-          // Calculate offsets
-          let xOffset = 0//groupLayout.offsets.x * (index % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-          let yOffset = 0//groupLayout.offsets.y * Math.floor(index / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-          if( Array.isArray( param._value )){
-            param._value.forEach((_, i) => {
-              // Calculate offsets
-             xOffset = groupLayout.offsets.x * ((index+indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-             yOffset = groupLayout.offsets.y * Math.floor((index+indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-            
-              // Calculate absolute positions
-              const x = groupLayout.boundingBox.x + xOffset;
-              const y = groupLayout.boundingBox.y + yOffset;
-              this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, i });
-              indexOffset++
-            })
-          } else{
-            xOffset = groupLayout.offsets.x * ((index+indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-            yOffset = groupLayout.offsets.y * Math.floor((index+indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-          
-            // Calculate absolute positions
-            const x = groupLayout.boundingBox.x + xOffset;
-            const y = groupLayout.boundingBox.y + yOffset;
-            // Create GUI element
-            this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color });    
-          }
-
-        });
-    });
-}
-
- // Create individual GUI element
-    createGuiElement(param, { x, y, size, controlType, color, i=null }) {
-    //console.log('createG', param, x,y,size,controlType, i)
-    if (controlType === 'knob') {
-        param.guiElements.push(this.gui.Knob({
-            label: i ? param.labels[i] : param.name,
-            min: param.min,
-            max: param.max,
-            value: param._value,
-            size: size , // Scale size
-            curve: param.curve,
-            x,
-            y,
-            accentColor: color,
-            callback: (value) => param.set(value,i,true),
-        }));
-    } else if (controlType === 'fader') {
-        param.guiElements.push(this.gui.Fader({
-            label: i ? param.labels[i] : param.name,
-            min: param.min,
-            max: param.max,
-            curve: param.curve,
-            size: param.size, // Scale size
-            x,
-            y,
-            accentColor: color,
-            callback: (value) => param.set(value,i,true),
-        }));
-    } else if (controlType === 'radioButton') {
-        if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
-            console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
-            return null;
-        }
-
-        return this.gui.RadioButton({
-            label: i ? param.labels[i] : param.name,
-            radioOptions: param.radioOptions,
-            x:x,
-            y:y+10,
-            size:.5,
-            accentColor: color,
-            callback: (selectedOption) => param.set(selectedOption),
-        });
-    }
-}
 }
