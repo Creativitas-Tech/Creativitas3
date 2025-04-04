@@ -21,8 +21,8 @@ export function listThemes() {
     console.log(Object.keys(p5Themes.themes))
 }
 
-export function setTheme(themeName) {
-    if (!p5Themes.themes[themeName]) {
+export function setp5Theme(themeName) {
+    if (!themes.themes[themeName]) {
         console.error(`Theme '${themeName}' not found.`);
         return;
     }

@@ -1,5 +1,5 @@
 import { initialize, divResized, drawElements, drawBackground, GuiColors, 
-    setColor, setFont, setTheme, debug,
+    setColor, setFont, setp5Theme, debug,
     listThemes, setThemeParameters, exportTheme } from './p5Elements';
 
 export const sketch = (p) => {
@@ -10,7 +10,7 @@ export const sketch = (p) => {
     p.debug = debug
 
     //theme functions
-    p.setTheme = setTheme
+    p.setTheme = setp5Theme
     p.listThemes = listThemes
     p.setThemeParameters = setThemeParameters
     p.exportTheme = exportTheme

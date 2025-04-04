@@ -17,7 +17,7 @@ import { Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, An
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
 import p5 from 'p5';
-import { setTheme as setp5Theme } from './p5Elements.js';
+import { setp5Theme } from './p5Elements.js';
 import * as Tone from 'tone';
 import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';
