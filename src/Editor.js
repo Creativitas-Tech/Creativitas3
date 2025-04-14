@@ -516,7 +516,7 @@ function Editor(props) {
             let scopedVars = innerVars.pop();
             let newStr = "";
             for (let val of scopedVars) {
-                newStr += `if(${val}.context || ${val} instanceof AudioContext){innerScopeVars['${val}'].push(${val});} `;
+                newStr += `if(typeof ${val} !== 'undefined' && (${val}.context || ${val} instanceof AudioContext)){innerScopeVars['${val}'].push(${val});} `;
             }
             string = string.substring(0, end - 1) + newStr + string.substring(end - 1);
             incr += newStr.length;
