@@ -9,6 +9,7 @@ class ToneJsMidiSync {
     constructor() {
         this.registeredLoops = new Map();
         this.nextLoopId = 1;
+        this.debug = false;
     }
     /**
      * Register a Tone.Loop with the MIDI clock manager
@@ -23,7 +24,7 @@ class ToneJsMidiSync {
         }
 
         if (!interval) {
-            console.error('No interval provided and could not determine interval from loop instance');
+            this.debug && console.error('No interval provided and could not determine interval from loop instance');
             return null;
         }
 
@@ -37,7 +38,7 @@ class ToneJsMidiSync {
         const callbackFn = this.getCallbackFunction(loopInstance);
 
         if (!callbackFn) {
-            console.error('Could not determine callback function for loop', loopInstance);
+            this.debug && console.error('Could not determine callback function for loop', loopInstance);
             return null;
         }
 
@@ -48,7 +49,7 @@ class ToneJsMidiSync {
                 try {
                     callbackFn(Tone.getTransport().immediate());
                 } catch (err) {
-                    console.error('Error in MIDI clock triggered loop callback:', err);
+                    this.debug && console.error('Error in MIDI clock triggered loop callback:', err);
                 }
             }
         }, { pulses });
@@ -60,7 +61,7 @@ class ToneJsMidiSync {
             pulses
         });
 
-        console.log(`Registered Tone.js loop with MIDI clock: ${id} (${pulses} pulses)`);
+        this.debug && console.log(`Registered Tone.js loop with MIDI clock: ${id} (${pulses} pulses)`);
         return id;
     }
 
@@ -88,7 +89,7 @@ class ToneJsMidiSync {
         if (this.registeredLoops.has(id)) {
             midiClockManager.off(id);
             this.registeredLoops.delete(id);
-            console.log(`Unregistered loop: ${id}`);
+            this.debug && console.log(`Unregistered loop: ${id}`);
         }
     }
 
@@ -172,7 +173,7 @@ class ToneJsMidiSync {
         const loopData = this.registeredLoops.get(id);
         if (loopData) {
             loopData.loop._active = active;
-            console.log(`Loop ${id} active state set to ${active}`);
+            this.debug && console.log(`Loop ${id} active state set to ${active}`);
         }
     }
 

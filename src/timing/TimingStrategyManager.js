@@ -20,6 +20,8 @@ class TimingStrategyManager {
             MIDI_CLOCK: 'midi_clock'      // MidiClockManager with MIDI clock
         };
 
+        this.debug = false;
+
         // Current active strategy
         this.activeStrategy = this.STRATEGIES.TONE_JS;
 
@@ -80,7 +82,7 @@ class TimingStrategyManager {
         // Activate new strategy
         this.activateStrategy();
 
-        console.log(`Timing strategy changed to: ${strategy}`);
+        this.debug && console.log(`Timing strategy changed to: ${strategy}`);
         return Promise.resolve();
     }
 
@@ -177,7 +179,7 @@ class TimingStrategyManager {
                 // For MIDI clock, we don't stop the transport directly
                 // It will be controlled by incoming MIDI clock messages
                 midiClockManager.disable();
-                console.log('Transport is controlled by MIDI clock');
+                this.debug && console.log('Transport is controlled by MIDI clock');
                 break;
 
             case this.STRATEGIES.TONE_JS:
@@ -200,7 +202,7 @@ class TimingStrategyManager {
 
             case this.STRATEGIES.MIDI_CLOCK:
                 // For MIDI clock, BPM is determined by incoming clock messages
-                console.log('BPM is controlled by MIDI clock');
+                this.debug && console.log('BPM is controlled by MIDI clock');
                 break;
 
             case this.STRATEGIES.TONE_JS:

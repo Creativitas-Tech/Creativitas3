@@ -12,7 +12,7 @@ class MidiClockManager {
     constructor() {
         // State tracking
         this.enabled = false;
-        this.debug = true;
+        this.debug = false;
 
         // Clock counters
         this.pulseCount = 0;
