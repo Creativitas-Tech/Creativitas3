@@ -3,6 +3,7 @@
 class AsciiCallback {
     constructor() {
         this.asciiOn = false;
+        this.allowRepeat = false;
         this.handler = (key, upOrDown) => {
             console.log('Ascii', key, upOrDown,
                 '\nadd a new handler like: \nsetAsciiHandler((num,state)=>{\nconsole.log(num, state)})');
@@ -21,7 +22,7 @@ class AsciiCallback {
         let key = keyCode
         if( keyCode == 32 ) key = 'Space'
         else key = event.key;
-        if (!this.activeKeys[key]) {
+        if (!this.activeKeys[key] || this.allowRepeat) {
             this.activeKeys[key] = true;
             this.handler(key, 'down');
         }
