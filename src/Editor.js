@@ -167,6 +167,8 @@ function Editor(props) {
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
     window.disableAsciiInput = asciiCallbackInstance.disable.bind(asciiCallbackInstance);
     window.setAsciiHandler = asciiCallbackInstance.setHandler.bind(asciiCallbackInstance);
+    window.enableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = true;
+    window.disableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = false;
     // window.enableRecording = asciiCallbackInstance.enableLogging.bind(asciiCallbackInstance);
     // window.disableRecording = asciiCallbackInstance.disableLogging.bind(asciiCallbackInstance);
     // window.loadRecording = asciiCallbackInstance.loadLogs.bind(asciiCallbackInstance);
