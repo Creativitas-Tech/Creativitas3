@@ -108,6 +108,8 @@ function generateWindowInitializers(): string {
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
     window.disableAsciiInput = asciiCallbackInstance.disable.bind(asciiCallbackInstance);
     window.setAsciiHandler = asciiCallbackInstance.setHandler.bind(asciiCallbackInstance);
+    window.enableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = true;
+    window.disableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = false;
 
     // Initialize MIDI
     window.midiHandlerInstance = midiHandlerInstance;
