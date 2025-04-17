@@ -75,8 +75,11 @@ class TimingObjectManager {
 
         const { position, velocity } = this.translateVector(this.timingObject.query());
 
-        if (velocity !== 0) {
-            Tone.getTransport().seconds = position / velocity;
+        let currentTransportSeconds = Tone.getTransport().seconds;
+        let expectedTransportSeconds = position / velocity;
+        let absSecondsDifference = Math.abs(expectedTransportSeconds - currentTransportSeconds);
+        if (velocity !== 0 && absSecondsDifference > 0.01) {
+            Tone.getTransport().seconds = expectedTransportSeconds;
             Tone.getTransport().bpm.value = velocity * 60;
         }
     }
@@ -89,7 +92,7 @@ class TimingObjectManager {
         }
 
         this.updateTransport();
-        this.intervalId = setInterval(() => this.updateTransport(), 2000);
+        this.intervalId = setInterval(() => this.updateTransport(), 500);
     }
 
     stopTimer(stopTransport = true) {
