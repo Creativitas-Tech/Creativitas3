@@ -28,11 +28,11 @@ const midiToDegree = (midi) => {
     return (degree + octaveShift * scale.length) / (scale.length);
 };
 
-const noteObjectToString = (noteObj, transpose = 0) => {
+const noteObjectToString = (noteObj, transpose = 0, globalNoteShift = 0) => {
     if (!noteObj.isOn) {
         return '.';  // Return rest if note is off
     }
-    return Tone.Frequency(noteObj.value + transpose, "midi").toNote();
+    return Tone.Frequency(noteObj.value + transpose + globalNoteShift, "midi").toNote();
 };
 
 const clamp = (val, min, max) => Math.min(Math.max(val, min), max);
@@ -130,7 +130,7 @@ function handleKeyboardInput(key, state) {
             transposePosButtons[selectedNote.sequence].set(1) // set to true
             transposePosButtons[selectedNote.sequence].set(0) // set to false
     }
-    
+
     // Convert key to lowercase for consistent mapping
     const lowerKey = typeof key === 'string' ? key.toLowerCase() : key;
 
@@ -213,6 +213,7 @@ const sequenceValues = [
 
 let seqKnobs = [];
 let seqButtons = [];
+let globalNoteShift = 0;
 let transposes = [0, 0, 0, 0];
 let transposeLabels = [];
 let transposeNegButtons = [];
@@ -222,6 +223,7 @@ let selectedNote = {
     sequence: 0,
     step: 0
 };
+let division = "8n";
 
 
 // STATE METHODS ===============================================================
@@ -230,8 +232,8 @@ function activateSequence() {
     for (let s = 0; s < 4; s++) {
         if (s == activeSequence) {
             synth.sequence(sequenceValues[s]
-                .map(noteObj => noteObjectToString(noteObj, transposes[s])),
-                '8n',
+                .map(noteObj => noteObjectToString(noteObj, transposes[s], globalNoteShift)),
+                division,
                 s);
             continue;
         }
@@ -303,10 +305,10 @@ for (let s = 0; s < 4; s++) {
         y: yPos,
         size: 0.4,
         showValue: true,
-        label: "Note -",
+        label: "Octave -",
         callback: (val) => {
             if (!val) return;
-            transposes[s] = clamp(transposes[s] - 1, -36, 36); // Limit 3 oct down/up
+            transposes[s] = clamp(transposes[s] - 12, -36, 36); // Limit 3 oct down/up
             // Update the transpose label
             if (transposeLabels[s]) {
                 transposeLabels[s].label = `${transposes[s] > 0 ? '+' : ''}${transposes[s]}`;
@@ -320,10 +322,10 @@ for (let s = 0; s < 4; s++) {
         y: yPos,
         size: 0.4,
         showValue: true,
-        label: "Note +",
+        label: "Octave +",
         callback: (val) => {
             if (!val) return;
-            transposes[s] = clamp(transposes[s] + 1, -36, 36); // Limit 3 oct down/up
+            transposes[s] = clamp(transposes[s] + 12, -36, 36); // Limit 3 oct down/up
             // Update the transpose label
             if (transposeLabels[s]) {
                 transposeLabels[s].label = `${transposes[s] > 0 ? '+' : ''}${transposes[s]}`;
@@ -359,6 +361,41 @@ for (let s = 0; s < 4; s++) {
         });
     }
 }
+let globalNoteLabel = gui.Text({
+    x: 63.5,
+    y: 10,
+    size: 1.2,
+    label: `${globalNoteShift > 0 ? '+' : ''}${globalNoteShift}`,
+    textColor: [255, 255, 255]
+})
+
+let globalNoteDecrease = gui.Button({
+    x: 60,
+    y: 10,
+    size: 0.4,
+    showValue: true,
+    label: "Note -",
+    callback: (val) => {
+        if (!val) return;
+        globalNoteShift = clamp(globalNoteShift - 1, -11, 11)
+        globalNoteLabel.label = `${globalNoteShift > 0 ? '+' : ''}${globalNoteShift}`;
+        activateSequence();
+    }
+})
+
+let globalNoteIncrease = gui.Button({
+    x: 67,
+    y: 10,
+    size: 0.4,
+    showValue: true,
+    label: "Note +",
+    callback: (val) => {
+        if (!val) return;
+        globalNoteShift = clamp(globalNoteShift + 1, -11, 11)
+        globalNoteLabel.label = `${globalNoteShift > 0 ? '+' : ''}${globalNoteShift}`;
+        activateSequence();
+    }
+})
 
 // EXTRA BUTTONS ===============================================================
 const seqRadioGroup = gui.RadioButton({
@@ -377,6 +414,23 @@ const seqRadioGroup = gui.RadioButton({
     }
 });
 
+
+const divisionRate = gui.RadioButton({
+    x: 92,
+    y: 65,
+    textColor: [255, 255, 255],
+    textSize: 1.5,
+    textFont: "Helvetica",
+    radioOptions: ['1/2', '1/4', '1/8', '1/16', '1/32'],
+    value: '1/8',
+    linkName: 'activeSequenceRadio',
+    label: ' ',
+    callback: (val) => {
+        let divisionDenom = parseInt(val.split("/")[1]);
+        division = divisionDenom + "n";
+        activateSequence();
+    }
+});
 
 let bright = gui.Knob({
     size: 0.75,
@@ -414,3 +468,4 @@ setInterval(() => {
     bright.set(bright.value);
     envelope.set(envelope.value);
 }, 500);
+
