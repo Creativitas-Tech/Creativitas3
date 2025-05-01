@@ -1,5 +1,4 @@
 import * as Tone from 'tone';
-import midiClockManager from '../midi/MidiClockManager.js';
 
 /**
  * ToneJsSync - Simple registry for synchronizing Tone.js loops with MIDI clock
@@ -42,18 +41,6 @@ class ToneJsMidiSync {
             return null;
         }
 
-        // Register with the MIDI clock manager
-        midiClockManager.on(id, () => {
-            // Only call if the loop is active
-            if (loopInstance._active !== false) {
-                try {
-                    callbackFn(Tone.getTransport().immediate());
-                } catch (err) {
-                    this.debug && console.error('Error in MIDI clock triggered loop callback:', err);
-                }
-            }
-        }, { pulses });
-
         // Store reference to the loop
         this.registeredLoops.set(id, {
             loop: loopInstance,
@@ -87,7 +74,6 @@ class ToneJsMidiSync {
      */
     unregisterLoop(id) {
         if (this.registeredLoops.has(id)) {
-            midiClockManager.off(id);
             this.registeredLoops.delete(id);
             this.debug && console.log(`Unregistered loop: ${id}`);
         }
@@ -131,37 +117,8 @@ class ToneJsMidiSync {
      * @returns {number} - Equivalent MIDI clock pulses
      */
     convertIntervalToPulses(interval) {
-        let pulses = 6; // Default: 16th note (6 pulses)
-
-        // Handle different interval formats
-        if (typeof interval === 'number') {
-            // Convert seconds to pulses based on current BPM
-            // 24 pulses per quarter note at current BPM
-            const quarterDuration = 60 / Tone.getTransport().bpm.value;
-            pulses = Math.round((interval / quarterDuration) * 24);
-        } else if (typeof interval === 'string') {
-            // Common note values
-            if (interval === '4n' || interval === '1/4') {
-                pulses = 24; // Quarter note: 24 pulses
-            } else if (interval === '8n' || interval === '1/8') {
-                pulses = 12; // Eighth note: 12 pulses
-            } else if (interval === '16n' || interval === '1/16') {
-                pulses = 6;  // Sixteenth note: 6 pulses
-            } else if (interval === '32n' || interval === '1/32') {
-                pulses = 3;  // Thirty-second note: 3 pulses
-            } else if (interval === '2n' || interval === '1/2') {
-                pulses = 48; // Half note: 48 pulses
-            } else if (interval === '1m' || interval === '1n') {
-                pulses = 96; // Whole note: 96 pulses (assuming 4/4 time)
-            } else if (interval === '8t') {
-                pulses = 8;  // Eighth note triplet: 8 pulses
-            } else if (interval === '16t') {
-                pulses = 4;  // Sixteenth note triplet: 4 pulses
-            }
-            // More interval types could be added as needed
-        }
-
-        return Math.max(1, pulses); // Ensure at least 1 pulse
+        // Tone.js uses 192 PPQ, MIDI uses 24, thus we divide by 8
+        return Tone.Time(interval).toTicks() / 8;
     }
 
     /**
@@ -193,6 +150,27 @@ class ToneJsMidiSync {
         }
 
         return result;
+    }
+
+    /**
+     * Trigger registered callbacks based on the current pulse count
+     * @param {number} pulseCount - The current MIDI clock pulse count
+     */
+    triggerCallbacks(pulseCount) {
+        if (this.registeredLoops.size === 0) return;
+        
+        for (const [id, loopData] of this.registeredLoops) {
+            if (loopData.loop._active !== false && pulseCount % loopData.pulses === 0) {
+                try {
+                    const callbackFn = this.getCallbackFunction(loopData.loop);
+                    if (callbackFn) {
+                        callbackFn(Tone.getTransport().immediate());
+                    }
+                } catch (err) {
+                    this.debug && console.error('Error in MIDI clock triggered ToneJs loop callback:', err);
+                }
+            }
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 import * as Tone from 'tone';
 import { midiHandlerInstance } from './Midi.js';
+import toneJsMidiSync from '../timing/ToneJsSync.js';
 
 /**
  * MidiClockManager - Handles incoming MIDI clock messages and triggers
@@ -17,9 +18,6 @@ class MidiClockManager {
         // Clock counters
         this.pulseCount = 0;
         this.pulsePosition = 0; // Position within a quarter note (0-23)
-
-        // Registered callbacks
-        this.registeredCallbacks = new Map();
     }
 
     /**
@@ -93,8 +91,8 @@ class MidiClockManager {
         // This ensures Tone.js sequences stay perfectly in sync with MIDI clock
         Tone.getTransport().position = this.ticksToTransportPosition();
 
-        // Process all registered callbacks
-        this.triggerCallbacks();
+        // Trigger ToneJsSync callbacks
+        toneJsMidiSync.triggerCallbacks(this.pulseCount);
     }
 
     /**
@@ -129,49 +127,6 @@ class MidiClockManager {
     }
 
     /**
-     * Register a callback to be triggered at specific pulse intervals
-     * 
-     * @param {String} id - Unique identifier for this callback
-     * @param {Function} callback - Function to be called at the specified interval
-     * @param {Object} options - Configuration options
-     * @param {Number} options.pulses - Number of pulses between triggers (default: 6)
-     * @param {Number} options.offset - Pulse offset for first trigger (default: 0)
-     * @returns {MidiClockManager} - This instance for chaining
-     */
-    on(id, callback, options = {}) {
-        if (!id || typeof callback !== 'function') {
-            console.error('Invalid callback registration');
-            return this;
-        }
-
-        const { pulses = 1, offset = 0 } = options;
-
-        this.registeredCallbacks.set(id, {
-            callback,
-            pulses,       // How many pulses between triggers
-            offset,       // Initial offset
-            options
-        });
-
-        if (this.debug) { console.log(`MIDI clock callback registered: ${id} at ${pulses} pulse intervals`); }
-        return this;
-    }
-
-    /**
-     * Unregister a previously registered callback
-     * 
-     * @param {String} id - Identifier of the callback to remove
-     * @returns {MidiClockManager} - This instance for chaining
-     */
-    off(id) {
-        if (this.registeredCallbacks.has(id)) {
-            this.registeredCallbacks.delete(id);
-            if (this.debug) { console.log(`MIDI clock callback unregistered: ${id}`); }
-        }
-        return this;
-    }
-
-    /**
      * Convert MIDI clock ticks to Tone.js transport position string
      * @returns {String} - Transport position in bars:beats:sixteenths format
      */
@@ -189,24 +144,6 @@ class MidiClockManager {
         const sixteenth = Math.floor(sixteenthNote % 4);
 
         return `${bar}:${beat}:${sixteenth}`;
-    }
-
-    /**
-     * Process all registered callbacks and trigger those that are due
-     */
-    triggerCallbacks() {
-        if (this.registeredCallbacks.size === 0) return;
-
-        this.registeredCallbacks.forEach((config, id) => {
-            const { callback, pulses, offset } = config;
-
-            // Simply trigger on exact pulse positions that match the pattern
-            // This ensures proper behavior when stopping and restarting the MIDI clock
-            if (this.pulseCount % pulses === offset) {
-                // trigger the callback
-                callback();
-            }
-        });
     }
 
     /**
