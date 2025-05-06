@@ -61,6 +61,56 @@ export const generateBPMControlCode = `
     `;
 
 /**
+ * The code for collaboration UI functionality
+ */
+export const generateCollabUICode = `
+    // Initialize CollabSlob client
+    window.chClient = new CollabSlobClient();
+    
+    // Initialize CollabSlob UI elements
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get UI elements
+        const usernameInput = document.getElementById('usernameInput');
+        const setUsernameBtn = document.getElementById('setUsernameBtn');
+        const roomInput = document.getElementById('roomInput');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const currentRoomDisplay = document.getElementById('currentRoomDisplay');
+        const currentUsernameDisplay = document.getElementById('currentUsernameDisplay');
+        
+        // Set username button click handler
+        setUsernameBtn.addEventListener('click', function() {
+            const username = usernameInput.value.trim();
+            if (username) {
+                window.chClient.setUsername(username);
+                currentUsernameDisplay.textContent = "Current username: " + username;
+                console.log("Username set to: " + username);
+            } else {
+                console.warn('Please enter a valid username');
+            }
+        });
+        
+        // Join room button click handler
+        joinRoomBtn.addEventListener('click', function() {
+            const roomName = roomInput.value.trim();
+            if (roomName) {
+                window.chClient.joinRoom(roomName);
+                currentRoomDisplay.textContent = "Current room: " + roomName;
+                console.log("Joined room: " + roomName);
+            } else {
+                console.warn('Please enter a valid room name');
+            }
+        });
+    });
+
+    // Function to join a collaboration room
+    function initCollab(roomName = 'famleLounge') {
+        window.chClient.joinRoom(roomName);
+        document.getElementById('roomInput').value = roomName;
+        document.getElementById('currentRoomDisplay').textContent = "Current room: " + roomName;
+    }
+    `;
+
+/**
  * The code for the code execution functions
  */
 export const generateCodeExecutionCode = `

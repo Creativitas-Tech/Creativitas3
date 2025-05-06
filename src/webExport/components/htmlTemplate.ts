@@ -5,7 +5,8 @@ import {
     generateVolumeWarningCode,
     generateBPMControlCode,
     generateCodeExecutionCode,
-    generateVolumeControlCode
+    generateVolumeControlCode,
+    generateCollabUICode
 } from './userInterface.ts';
 import { exportStyles } from '../styles/exportStyles.ts';
 
@@ -95,6 +96,28 @@ const generateControls = `
         
         <button id="refreshMidiBtn" style="padding: 2px 8px; vertical-align: middle;">Refresh MIDI</button>
     </div>
+    <div style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
+        <label for="usernameInput" style="margin-right: 5px;">Username:</label>
+        <input 
+            type="text" 
+            id="usernameInput" 
+            placeholder="Enter username" 
+            style="padding: 2px; vertical-align: middle; margin-right: 5px; width: 150px;"
+        >
+        <button id="setUsernameBtn" style="padding: 2px 8px; vertical-align: middle; margin-right: 10px;">Set Username</button>
+        <span id="currentUsernameDisplay" style="margin-left: 5px; font-style: italic;"></span>
+        
+        <label for="roomInput" style="margin-right: 5px; margin-left: 10px;">Room:</label>
+        <input 
+            type="text" 
+            id="roomInput" 
+            placeholder="Enter room name" 
+            value="famleLounge"
+            style="padding: 2px; vertical-align: middle; margin-right: 5px; width: 150px;"
+        >
+        <button id="joinRoomBtn" style="padding: 2px 8px; vertical-align: middle;">Join Room</button>
+        <span id="currentRoomDisplay" style="margin-left: 5px; font-style: italic;"></span>
+    </div>
 </div>
     `;
 
@@ -126,16 +149,6 @@ const generateWindowInitializers = `
     window.sendCC = midiHandlerInstance.sendCC.bind(midiHandlerInstance);
     window.sendNote = midiHandlerInstance.sendNoteOn.bind(midiHandlerInstance);
     window.sendNoteOff = midiHandlerInstance.sendNoteOff.bind(midiHandlerInstance);
-
-    // Since this function can be called by the user, just have it defined to be called
-    function initCollab(roomName = 'famleLounge') {
-        // window.chClient = new CollabHubClient(); // needs to happen once (!)
-        // window.chTracker = new CollabHubTracker(window.chClient);
-        window.chClient = new CollabSlobClient();
-
-        // collab-hub join a room
-        window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name
-    }
     `;
 
 // Helper function to generate the user code script block
@@ -172,6 +185,7 @@ async function generateBodyScript(): Promise<string> {
     ${generateCodeExecutionCode}
     ${generateBPMControlCode}
     ${generateVolumeControlCode}
+    ${generateCollabUICode}
 </script>
     `;
 }
