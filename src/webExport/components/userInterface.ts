@@ -4,24 +4,37 @@
  */
 
 /**
- * Generates the volume warning acknowledgment function
- * @returns The code for the volume warning acknowledgment function
+ * The code for the volume warning acknowledgment function
  */
-export function generateVolumeWarningCode(): string {
-    return `
+export const generateVolumeWarningCode = `
     function acknowledgeWarning() {
         document.getElementById('volumeWarning').style.display = 'none';
         runCode();
     }
     `;
-}
 
 /**
- * Generates the BPM control functions
- * @returns The code for the BPM control functions
+ * The code for the volume control functions
  */
-export function generateBPMControlCode(): string {
-    return `
+export const generateVolumeControlCode = `
+    function updateVolume(value) {
+        // Convert slider value (0-100) to decibels (-60 to 0)
+        // -60dB is near silence, 0dB is full volume
+        const volumeDb = (value / 100) * 60 - 60;
+        
+        // Update Tone.js master volume
+        Tone.getDestination().volume.value = volumeDb;
+        
+        // Update UI
+        document.getElementById('volumeValue').textContent = value;
+        document.getElementById('volumeSlider').value = value;
+    }
+    `;
+
+/**
+ * The code for the BPM control functions
+ */
+export const generateBPMControlCode = `
     function updateBPM(value) {
         document.getElementById('bpmValue').textContent = value;
         document.getElementById('bpmSlider').value = value;
@@ -46,14 +59,11 @@ export function generateBPMControlCode(): string {
     // Check BPM periodically to keep UI in sync
     setInterval(syncBPMFromToneTransport, 1000); // Check every 1000ms
     `;
-}
 
 /**
- * Generates the code execution functions
- * @returns The code for the code execution functions
+ * The code for the code execution functions
  */
-export function generateCodeExecutionCode(): string {
-    return `
+export const generateCodeExecutionCode = `
     // Function to run user code
     async function runCode() {
         try {
@@ -95,4 +105,3 @@ export function generateCodeExecutionCode(): string {
         if (stopBtn) stopBtn.addEventListener('click', stopTiming);   
     });
     `;
-}

@@ -411,7 +411,7 @@ export class DrumSampler extends DrumTemplate{
     }
 
   triggerDrum = (val, time=Tone.immediate(), index = 0, num=0)=>{
-    //console.log(val,time,index,num)
+    // console.log(val,time,index,num)
     val = val[0]
     let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
@@ -720,7 +720,7 @@ class DrumVoice{
   generateParameters(paramDefinitions) {
         const params = {};
         paramDefinitions.forEach((def) => {
-            const param = new Parameter(def);
+            const param = new Parameter(this, def);
             params[def.name] = param;
         });
         return params;

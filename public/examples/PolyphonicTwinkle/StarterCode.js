@@ -462,8 +462,9 @@ let envelope = gui.Knob({
 })
 
 // HACK ========================================================================
-// I don't know why it doesn't apply unless I offset by 500 ms
-// oh well
+// Make sure brightness and envelope are absolutely set.
+// There might be an interval within the gui elements I am not aware of,
+// so this is necessary
 setInterval(() => {
     bright.set(bright.value);
     envelope.set(envelope.value);

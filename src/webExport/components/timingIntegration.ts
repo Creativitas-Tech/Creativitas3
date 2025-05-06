@@ -4,12 +4,10 @@
  */
 
 /**
- * Generates the code to integrate with the TimingModalDialog.js module
+ * The code to integrate with the TimingModalDialog.js module
  * Assumes TimingModalDialog functions (handleTimingInitialization) are globally available from synth-bundle.
- * @returns The code for handling timing strategy changes.
  */
-export function generateTimingIntegrationCode(): string {
-    return `
+export const generateTimingIntegrationCode = `
     // Function to handle timing strategy changes
     async function handleTimingStrategyChange(strategy) {
         console.log('Changing timing strategy to:', strategy);
@@ -40,14 +38,11 @@ export function generateTimingIntegrationCode(): string {
         }
     });
     `;
-}
 
 /**
- * Generates the JavaScript code for basic timing control functions (start/stop).
- * @returns The JavaScript code as a string.
+ * The JavaScript code for basic timing control functions (start/stop).
  */
-export function generateTimingControlCode(): string {
-    return `
+export const generateTimingControlCode = `
     window.timing = timingStrategyManager;
     // Functions for timing control
     function startTiming() {
@@ -70,4 +65,3 @@ export function generateTimingControlCode(): string {
         }
     }
     `;
-}

@@ -4,7 +4,8 @@ import { generateMidiIntegrationCode } from './midiIntegration.ts';
 import {
     generateVolumeWarningCode,
     generateBPMControlCode,
-    generateCodeExecutionCode
+    generateCodeExecutionCode,
+    generateVolumeControlCode
 } from './userInterface.ts';
 import { exportStyles } from '../styles/exportStyles.ts';
 
@@ -34,9 +35,8 @@ function generateHead(title: string): string {
     `;
 }
 
-// Helper function to generate the controls section (no parameters needed)
-function generateControls(): string {
-    return `
+// The controls section HTML
+const generateControls = `
 <div id="controls">
     <div>
         <button id="startButton" style="padding: 5px 10px; margin-right: 5px;">Start</button>
@@ -63,6 +63,18 @@ function generateControls(): string {
             style="width: 50px; margin-right: 10px; padding: 2px; vertical-align: middle;"
         >
         
+        <label for="volumeSlider" style="margin-right: 5px;">Volume:</label>
+        <span id="volumeValue" style="display: inline-block; min-width: 25px; text-align: right; margin-right: 5px;">100</span>
+        <input 
+            type="range" 
+            id="volumeSlider" 
+            min="0" 
+            max="100" 
+            value="100" 
+            oninput="updateVolume(this.value)" 
+            style="vertical-align: middle; margin-right: 10px;"
+        >
+        
         <label for="timingStrategySelect" style="margin-right: 5px;">Timing:</label>
         <select id="timingStrategySelect" title="Select Timing Strategy" style="padding: 2px; vertical-align: middle;">
             <option value="tone_js">Tone.js</option>
@@ -85,11 +97,9 @@ function generateControls(): string {
     </div>
 </div>
     `;
-}
 
-// Helper function to generate the volume warning overlay HTML (no parameters needed)
-function generateVolumeWarningHTML(): string {
-    return `
+// The volume warning overlay HTML
+const generateVolumeWarningHTML = `
 <div id="volumeWarning">
     <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
         <h2>⚠️ Volume Warning</h2>
@@ -98,12 +108,9 @@ function generateVolumeWarningHTML(): string {
     </div>
 </div>
     `;
-}
 
-function generateWindowInitializers(): string {
-    // TODO: Replace initCollab function to be a no-op,
-    // create UI to join / leave rooms
-    return `
+// Window initializers code
+const generateWindowInitializers = `
     // Initialize ASCII
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
     window.disableAsciiInput = asciiCallbackInstance.disable.bind(asciiCallbackInstance);
@@ -130,43 +137,6 @@ function generateWindowInitializers(): string {
         window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name
     }
     `;
-}
-// Async helper function to generate the main script block in the body
-// Fetches and includes all necessary script components directly
-async function generateBodyScript(): Promise<string> {
-    // Fetch bundled code
-    const timingPackages = await getBundledTimingPackages();
-    const synthCode = await getBundledSynthCode();
-
-    const windowInitializers = generateWindowInitializers();
-
-    // Generate other script components
-    const volumeWarningFunction = generateVolumeWarningCode();
-    const timingControlFunctions = generateTimingControlCode();
-    const codeExecutionFunctions = generateCodeExecutionCode();
-    const bpmControlFunctions = generateBPMControlCode();
-    const timingIntegrationCode = generateTimingIntegrationCode();
-    const midiIntegrationCode = generateMidiIntegrationCode();
-
-    return `
-<script>
-    // --- Bundled Core Dependencies ---
-    ${timingPackages}
-    ${synthCode}
-
-    // --- Important window initializations ---
-    ${windowInitializers}
-
-    // --- UI/Control Functions ---
-    ${volumeWarningFunction}
-    ${timingControlFunctions}
-    ${timingIntegrationCode}
-    ${midiIntegrationCode}
-    ${codeExecutionFunctions}
-    ${bpmControlFunctions}
-</script>
-    `;
-}
 
 // Helper function to generate the user code script block
 // Takes userCode as parameter
@@ -178,6 +148,34 @@ function generateUserScript(userCode: string): string {
     `;
 }
 
+// Async helper function to generate the main script block in the body
+// Fetches and includes all necessary script components directly
+async function generateBodyScript(): Promise<string> {
+    // Fetch bundled code
+    const timingPackages = await getBundledTimingPackages();
+    const synthCode = await getBundledSynthCode();
+
+    return `
+<script>
+    // --- Bundled Core Dependencies ---
+    ${timingPackages}
+    ${synthCode}
+
+    // --- Important window initializations ---
+    ${generateWindowInitializers}
+
+    // --- UI/Control Functions ---
+    ${generateVolumeWarningCode}
+    ${generateTimingControlCode}
+    ${generateTimingIntegrationCode}
+    ${generateMidiIntegrationCode}
+    ${generateCodeExecutionCode}
+    ${generateBPMControlCode}
+    ${generateVolumeControlCode}
+</script>
+    `;
+}
+
 // Async function to generate the complete HTML template.
 // Only requires the userCode.
 async function generateHTMLTemplate(userCode: string): Promise<string> {
@@ -185,8 +183,6 @@ async function generateHTMLTemplate(userCode: string): Promise<string> {
 
     // Generate all parts by calling helper functions
     const headContent = generateHead(title);
-    const controlsContent = generateControls();
-    const volumeWarningContent = generateVolumeWarningHTML(); // HTML part
     const bodyScriptContent = await generateBodyScript(); // Async call for the main script
     const userScriptContent = generateUserScript(userCode);
 
@@ -195,9 +191,9 @@ async function generateHTMLTemplate(userCode: string): Promise<string> {
 <html lang="en">
 ${headContent}
 <body>
-    ${controlsContent}
+    ${generateControls}
     <div class="canvas-container" id="Canvas"></div>
-    ${volumeWarningContent}
+    ${generateVolumeWarningHTML}
     ${bodyScriptContent}
     ${userScriptContent}
 </body>

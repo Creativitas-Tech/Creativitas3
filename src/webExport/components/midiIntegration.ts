@@ -4,11 +4,9 @@
  */
 
 /**
- * Generates the code to integrate with MIDI input and output selection
- * @returns The code for handling MIDI device selection and configuration
+ * The code to integrate with MIDI input and output selection
  */
-export function generateMidiIntegrationCode(): string {
-    return `
+export const generateMidiIntegrationCode = `
     // Function to display available MIDI devices and populate the selectors
     function displayMidiDevices() {
         if (!window.midi_input_ids || !window.midi_output_ids || !window.midi_input_names || !window.midi_output_names) {
@@ -113,4 +111,3 @@ export function generateMidiIntegrationCode(): string {
     window.setMidiInput = setMidiInput;
     window.setMidiOutput = setMidiOutput;
     `;
-}
