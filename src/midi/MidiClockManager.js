@@ -18,6 +18,11 @@ class MidiClockManager {
         // Clock counters
         this.pulseCount = 0;
         this.pulsePosition = 0; // Position within a quarter note (0-23)
+        
+        // BPM tracking
+        this.lastPulseTime = 0;
+        this.pulseTimes = [];
+        this.currentBPM = 120; // Default BPM
     }
 
     /**
@@ -78,6 +83,41 @@ class MidiClockManager {
     }
 
     /**
+     * Calculate the current BPM based on recent MIDI clock pulses
+     * @returns {number} - The calculated BPM value
+     */
+    calculateBPM() {
+        if (this.pulseTimes.length < 2) return this.currentBPM;
+        
+        // Calculate average time between pulses
+        let totalDelta = 0;
+        for (let i = 1; i < this.pulseTimes.length; i++) {
+            totalDelta += this.pulseTimes[i] - this.pulseTimes[i - 1];
+        }
+        
+        const avgDelta = totalDelta / (this.pulseTimes.length - 1);
+        
+        // BPM = 60 seconds / time for one quarter note
+        // Time for one quarter note = 24 * avgDelta
+        const bpm = 60 / (24 * avgDelta);
+        
+        return bpm;
+    }
+
+    /**
+     * Update Tone.js transport BPM based on calculated MIDI clock BPM
+     */
+    updateTransportBPM() {
+        const bpm = this.calculateBPM();
+        this.currentBPM = bpm;
+        Tone.getTransport().bpm.value = bpm;
+        
+        if (this.debug) {
+            console.log(`Updated transport BPM to ${bpm.toFixed(2)}`);
+        }
+    }
+
+    /**
      * Process incoming MIDI clock pulse
      */
     handleClockPulse() {
@@ -86,6 +126,21 @@ class MidiClockManager {
         // Increment pulse counters
         this.pulseCount++;
         this.pulsePosition = this.pulseCount % 24;
+        
+        // Track pulse timing for BPM calculation
+        const now = performance.now() / 1000; // Convert to seconds
+        this.lastPulseTime = now;
+        
+        // Keep a rolling window of pulse times for BPM calculation
+        this.pulseTimes.push(now);
+        if (this.pulseTimes.length > 48) { // Keep 2 quarter notes worth of pulses
+            this.pulseTimes.shift();
+        }
+        
+        // Update BPM every quarter note (24 pulses)
+        if (this.pulsePosition === 0) {
+            this.updateTransportBPM();
+        }
 
         // Update Tone.js transport position based on MIDI clock pulse count
         // This ensures Tone.js sequences stay perfectly in sync with MIDI clock
@@ -104,6 +159,10 @@ class MidiClockManager {
         // Reset counters
         this.pulseCount = 0;
         this.pulsePosition = 0;
+        
+        // Reset BPM tracking
+        this.pulseTimes = [];
+        this.lastPulseTime = performance.now() / 1000;
 
         if (this.debug) { console.log('MIDI clock start received'); }
     }
@@ -158,8 +217,17 @@ class MidiClockManager {
             pulseCount: this.pulseCount,
             pulsePosition: this.pulsePosition,
             quartersElapsed: Math.floor(this.pulseCount / 24),
-            sixteenthsElapsed: Math.floor(this.pulseCount / 6)
+            sixteenthsElapsed: Math.floor(this.pulseCount / 6),
+            currentBPM: this.currentBPM
         };
+    }
+    
+    /**
+     * Get the current estimated BPM
+     * @returns {number} - Current BPM value
+     */
+    getCurrentBPM() {
+        return this.currentBPM;
     }
 }
 
