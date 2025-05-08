@@ -423,7 +423,7 @@ const divisionRate = gui.RadioButton({
     textFont: "Helvetica",
     radioOptions: ['1/2', '1/4', '1/8', '1/16', '1/32'],
     value: '1/8',
-    linkName: 'activeSequenceRadio',
+    linkName: 'divisionRateRadio',
     label: ' ',
     callback: (val) => {
         let divisionDenom = parseInt(val.split("/")[1]);
