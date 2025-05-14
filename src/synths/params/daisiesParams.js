@@ -1,15 +1,11 @@
 export const paramDefinitions = (synth) => [
     {
         name: 'vco_mix', type: 'vco', min: 0, max: 1, curve: 0.75,
-        callback: function(x) {
-            synth.crossfade_constant.value= x
-        } 
+        callback: function(x) { synth.crossfade_constant.value= x } 
     },
     {
         name: 'detune', type: 'vco', min: 1, max: 2, curve: 0.5,
-        callback: function(x) {
-            synth.detune_scalar.factor.value = x
-        } 
+        callback: function(x) { synth.detune_scalar.factor.value = x} 
     },
     {
         name: 'shape1', type: 'vco', min: .1, max: .5,
@@ -45,7 +41,7 @@ export const paramDefinitions = (synth) => [
         //TODO: Should this be hidden?
         name: 'keyTracking', type: 'vcf', min: 0, max: 1, curve: .5,
         callback: function(x) {
-            synth.keyTracking.factor.value = x
+            synth.keyTracker.factor.value = x
         } 
     },
     {
@@ -79,25 +75,25 @@ export const paramDefinitions = (synth) => [
         } 
     },
     {
-        name: 'vcf_attack', type: 'env', min: 0.005, max: 0.5, curve: .5,
+        name: 'vcfAttack', type: 'env', min: 0.005, max: 0.5, curve: .5,
         callback: function(x) {
             synth.vcf_env.attack = x
         } 
     },
     {
-        name: 'vcf_decay', type: 'env', min: 0.01, max: 10, curve: .5,
+        name: 'vcfDecay', type: 'env', min: 0.01, max: 10, curve: .5,
         callback: function(x) {
             synth.vcf_env.decay = x
         } 
     },
     {
-        name: 'vcf_sustain', type: 'env', min: 0, max: 1, curve: .5,
+        name: 'vcfSustain', type: 'env', min: 0, max: 1, curve: .5,
         callback: function(x) {
             synth.vcf_env.sustain = x
         }
     },
     {
-        name: 'vcf_release', type: 'env', min: 0, max: 20, curve: .5,
+        name: 'vcfRelease', type: 'env', min: 0, max: 20, curve: .5,
         callback: function(x) {
             synth.vcf_env.release = x
         } 
@@ -105,7 +101,7 @@ export const paramDefinitions = (synth) => [
     {
         name: 'lfo', type: 'lfo', min: 0, max: 20, curve: 1,
         callback: function(x) {
-            synth.lfo.frequency.value = x
+            synth.lfoModule.frequency.value = x
         } 
     },
     {

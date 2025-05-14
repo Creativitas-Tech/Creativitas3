@@ -339,6 +339,7 @@ export class Polyphony extends MonophonicTemplate{
 	            });
 	        });
 	    });
+	    this.gui.setTheme( 'dark' )
 	}
 
 	createGuiElement(param, { x, y, size, controlType, color, i = null, value, callback }) {

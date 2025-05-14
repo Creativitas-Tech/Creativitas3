@@ -143,7 +143,7 @@ export class MonophonicTemplate {
                         this.param[name].set(presetData[name])
                     }
                 } catch (e) {
-                    console.log(e);
+                    console.log(name,presetData[name],e);
                 }
             }
         } else {
@@ -402,7 +402,6 @@ export class MonophonicTemplate {
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
         this.gui = new p5(sketch, this.guiContainer);
-
         const layout = this.layout;
         //console.log(layout);
 
@@ -452,6 +451,7 @@ export class MonophonicTemplate {
                 }
             });
         });
+        this.gui.setTheme( 'dark' )
     }
 
     /**
