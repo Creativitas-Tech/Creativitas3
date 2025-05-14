@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Editor from './Editor.js';
 import Navbar from './Navbar.js';
+import BlogHome from './Pages/BlogHome.js';
+import BlogPost from './Pages/BlogPost.js';
 import Template from './Pages/Template.js';
 import Sandbox from './Pages/Sandbox.js';
 import TableOfContents from './Pages/TableOfContents.js';
@@ -101,6 +103,8 @@ function App() {
       <Navbar page={page} setPage={setPage} />
       <Routes>
         <Route path="/" element={<Editor page={page} starterCode={homeStarterCode} canvases={["Canvas"]} />} />
+        <Route path="/blog" element={<BlogHome />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/TableOfContents" element={<TableOfContents assignments={assignments} examples={examples} references={references} setPage={setPage} />} />
         {Object.entries(assignments).map(([title, props]) => (
           <Route key={title} path={`/${title}`} element={<Template page={title} title={title} intro={props.intro} starterCode={props.starterCode} description={props.description} canvases={props.canvases} />} />
