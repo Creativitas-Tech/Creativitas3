@@ -1,0 +1,5 @@
+Daisy is a more advanced synthesizer with a couple of neat features:
+* continuous control of the shape of the oscillator
+* two separate oscillators, able to be detuned
+* separate ADSR envelopes for the VCO and VCF
+* a low frequency oscillator (LFO) which can control several things

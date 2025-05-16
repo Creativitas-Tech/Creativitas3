@@ -11,8 +11,8 @@ export class Seq {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         this._subdivision = subdivision; // Local alias
         this._octave = 0;                // Local alias
-        this._sustain = 0.1;             // Local alias
-        this._roll = 0.02;               // Local alias
+        this._sustain = 1;             // Local alias
+        this._roll = 0.0;               // Local alias
         this._velocity = 100;            // Local alias
         this._orn = 0;            // Local alias
         this._lag = 0;            // Local alias
@@ -73,6 +73,7 @@ export class Seq {
         this.phraseLength = phraseLength;
         this.subdivision = subdivision;
 
+
         if (this.loopInstance) {
             this.loopInstance.dispose();
         }
@@ -97,7 +98,6 @@ export class Seq {
         this.loopInstance = new Tone.Loop(time => {
             //console.log('old loop')
             
-
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
             if (this.enable === 0) return;
 
@@ -143,6 +143,7 @@ export class Seq {
     }
 
     applyOrnamentation(event) {
+        if (typeof event === 'string') return event
         let ornIndex;
 
         // Check if _orn is an array, if so, index into it using this.index
@@ -162,6 +163,7 @@ export class Seq {
 
         for (let [pitch, t] of event) {
             if(pitch === '.') ornamentedEvent.push(['.', t]);
+            else if (/[^0-9]/.test(pitch))  ornamentedEvent.push([pitch, t]);
             else{
                 let ornNotes = orn(pitch, pattern, scalar, length);
                 //console.log('ornNotes', ornNotes);

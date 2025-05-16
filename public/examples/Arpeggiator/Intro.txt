@@ -1,0 +1,3 @@
+The arpeggiator uses your laptop keyboard to input notes. Select the playback mode using the GUI.
+
+On line 67 is where the playback orders are created - note they are using standard javascript array methods!

@@ -1,0 +1,8 @@
+## Objects
+Once the object's form is defined, you create a new instance by calling `new Object`
+### Constructor
+Every object has a constructor method, which is called when the object is created. This is a time to pass in important properties of the object in the form of arguments.
+### Methods
+Methods are called using the objectName.method() syntax. Treat them just like functions!
+### The `this` keyword
+Inside of an object, we use `this` to make sure the object knows where to look for properties and methods. Get used to using it *inside object definitions* - see the example for what this looks like. 

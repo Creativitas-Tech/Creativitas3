@@ -20,11 +20,11 @@ function App() {
   const [markdownContent, setMarkdownContent] = useState("");
 
   const exampleFiles = [
-    'DrumSampler', 'Player', 'Rumble', 'Simpler'
+    'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'Arpeggiator'
     //'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
   ];
   const assignmentFiles = [
-    'Assignment 1', 'Twinkle', 'Robin Sensors', 'Robin Examples'
+    'Chord Object', 'Assignment 1',  'Robin Sensors', 'Robin Examples'
     //'Grids1', 'Comp5', 'Comp6',  'SamplePlayer', 'Comp7', 'Algorithms', 'Comp8', 'Comp9'
   ];
   const referenceFiles = [

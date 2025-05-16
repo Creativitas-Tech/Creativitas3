@@ -1,0 +1,7 @@
+This example shows how to create and use a simple object to store chords. The nice thing about objects is you can reuse them easily - for example, to make lots of songs without having to copy and paste functions and variables.
+* 'Properties' are what we call variables in an Object
+* 'Methods' are what we  call functions in an Object
+
+Try adding a method to transform all of the chords in your song.
+
+Try adding a properties to store chords for different sections of a song. How would you recall these sections separately?
