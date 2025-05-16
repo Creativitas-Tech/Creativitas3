@@ -20,11 +20,11 @@ import * as Tone from 'tone';
  * 
  * @class
  */
-export const Oscilloscope = function( _target= 'Canvas', ratio = 4 / 10) {
+export const Oscilloscope = function( ratio = 1, _target= 'Canvas') {
     // Get the target DOM element and set dimensions based on the provided ratio
     this.target = document.getElementById(_target);
     this.width = this.target.offsetWidth;
-    this.height = this.width * ratio;
+    this.height = this.width * ratio * 4/10;
 
     // Create the SVG path for the oscilloscope wave
     this.wave = document.createElementNS("http://www.w3.org/2000/svg", 'path');

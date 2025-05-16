@@ -13,14 +13,14 @@ import * as Tone from 'tone';
  * @class
  */
 
-export const Spectrogram = function (_target, height = 100) {
+export const Spectrogram = function( ratio = 1, _target= 'Canvas') {
     this.target = document.getElementById(_target);
 
     // Canvas setup
     this.canvas = document.createElement('canvas');
     this.context = this.canvas.getContext('2d');
     this.width = this.target.offsetWidth;
-    this.height = height;
+    this.height = ratio * 100;
     this.canvas.width = this.width;
     this.canvas.height = this.height;
     this.target.appendChild(this.canvas);

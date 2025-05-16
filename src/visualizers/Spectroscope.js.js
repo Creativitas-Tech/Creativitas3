@@ -12,7 +12,7 @@ import * as Tone from 'tone';
  * 
  * @class
  */
-export const Spectroscope = function(_target, ratio= 4/10) {
+export const Spectroscope = function( ratio = 1, _target= 'Canvas') {
     //var _drawWave, _bufferLength, _dataArray;
 
     //this.target = document.querySelector(target);
@@ -20,7 +20,7 @@ export const Spectroscope = function(_target, ratio= 4/10) {
 
     // Set the dimensions based on the target container
     this.width = this.target.offsetWidth;
-    this.height = this.target.offsetWidth*ratio;
+    this.height = this.target.offsetWidth*ratio * 4/10;
 
     // Create the oscilloscope wave element
     this.wave = document.createElementNS("http://www.w3.org/2000/svg", 'path');
