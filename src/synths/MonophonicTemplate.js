@@ -344,7 +344,7 @@ export class MonophonicTemplate {
         for (let key in this.param) {
             const param = this.param[key];
             let value = param._value
-            console.log(value)
+            //console.log(value)
             if( typeof value === 'number') {
                 if(value > 100) value = value.toFixed()
                 else if( value > 1) value = value.toFixed(1)
@@ -352,7 +352,7 @@ export class MonophonicTemplate {
             }
             output += `${param.name}: ${value}\n`;
         }
-        console.log(output);
+        //console.log(output);
     }
     print(){ this.get()}
 

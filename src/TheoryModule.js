@@ -206,10 +206,12 @@ class MusicGenerator {
   
       const noteMatch = val.match(noteRegex);
       const numberMatch = val.match(numberRegex);
+      const prevKeyType = this.keyType
   
       if (noteMatch) {
         this._tonic = noteMatch[0].toUpperCase();
         this.keyType = noteMatch[0] === noteMatch[0].toUpperCase() ? 'major' : 'minor';
+        if(this.keyType !== prevKeyType) this.progression = []
       }
   
       if (numberMatch) {
@@ -289,7 +291,7 @@ class MusicGenerator {
 
   getChord(index) {
     let index2 = this.getChordIndex();
-    if (this.progressionChords.length < 1) this.progressionChords.push(new Chord('I'));
+    if (this.progressionChords.length < 1) this.progressionChords.push(this.keyType === 'minor' ? new Chord('i') : new Chord('I'));
     return this.progressionChords[Math.floor(index2 % this.progressionChords.length)];
   }
 
@@ -437,12 +439,8 @@ class MusicGenerator {
 
   getInterval(num,scale){
     let len = scale.length
-    if (typeof num === 'number') {
-      let _octave = Math.floor(num/len)
-      if(num<0) num = len+num%len //check negative numbers
-      num = scale[num%len] + _octave*12
-      return num
-    } else if (typeof num === 'string') {
+    if (typeof num === 'number') num = JSON.stringify(num)
+
       //parse num to look for # and b notes
       const match = num.match(/^([^\d-]+)?(-?\d+)$/);
 
@@ -451,16 +449,14 @@ class MusicGenerator {
       let _octave = Math.floor(num/len)
       if(num<0) num = 7+num%7
       num = scale[num%len] + _octave*12
+      
 
       //apply accidentals
       if(match[1]== '#')num+=1
       else if (match[1] == 'b') num-=1
 
       num += this.tonicNumber
-
       return num
-    }
-    return 0
   }
 
   minimizeMovement(chord, previousChord) {
@@ -657,7 +653,7 @@ export function parsePitchStringSequence(str) {
     
     const firstElement = str.replace(/\[/g, "")[0]
     const usesPitchNames = /^[a-ac-zA-Z?]$/.test(firstElement);
-
+    console.log(str)
 
     // Step 1: Remove all whitespace
     if( usesPitchNames ) str = str.replace(/\s/g, "");
