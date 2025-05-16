@@ -58,12 +58,14 @@ export class Daisy extends MonophonicTemplate{
 		this.lfo_vca = new Tone.Multiply(1)
 		this.lfo_vca_constant = new Tone.Signal(1)
 		this.panner = new Tone.Panner(0)
-		this.output = new Tone.Multiply(.25)
+		this.hpf = new Tone.Filter({type:'highpass', rolloff:-12, Q:0, cutoff:20})
+		this.output = new Tone.Multiply(1)
 		this.vcf.connect(this.lfo_vca)
 		this.lfo_vca.connect(this.vca)
 		this.lfo_vca_constant.connect(this.lfo_vca.factor)
 		this.vca.connect(this.panner)
-		this.panner.connect(this.output)
+		this.panner.connect(this.hpf)
+		this.hpf.connect(this.output)
 
 		//envelopes
 		this.env = new Tone.Envelope()
@@ -169,9 +171,7 @@ export class Daisy extends MonophonicTemplate{
   }
 
   setHighpass(val){
-  	if(this.super !== null){
-  		this.super.hpf.frequency.value = val
-  	}
+  		this.hpf.frequency.value = val
   }
 }
 

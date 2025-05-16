@@ -39,61 +39,61 @@ export const paramDefinitions = (synth) => [
     },
     {
         //TODO: Should this be hidden?
-        name: 'keyTracking', type: 'vcf', min: 0, max: 1, curve: .5,
+        name: 'keyTracking', type: 'vcf', min: 0, max: 1, curve: 1,
         callback: function(x) {
             synth.keyTracker.factor.value = x
         } 
     },
     {
-        name: 'highPass', type: 'vcf', min: 10, max: 3000, curve: .5,
+        name: 'highPass', type: 'vcf', min: 10, max: 3000, curve: 2,
         callback: function(x) {
             synth.setHighpass(x)
         } 
     },
     {
-        name: 'attack', type: 'env', min: 0.005, max: 0.5, curve: .5,
+        name: 'attack', type: 'env', min: 0.005, max: 0.5, curve: 2,
         callback: function(x) {
             synth.env.attack = x
         } 
     },
     {
-        name: 'decay', type: 'env', min: 0.01, max: 10, curve: .5,
+        name: 'decay', type: 'env', min: 0.01, max: 10, curve: 2,
         callback: function(x) {
             synth.env.decay = x
         } 
     },
     {
-        name: 'sustain', type: 'env', min: 0, max: 1, curve: .5,
+        name: 'sustain', type: 'env', min: 0, max: 1, curve: 1,
         callback: function(x) {
             synth.env.sustain = x
         }
     },
     {
-        name: 'release', type: 'env', min: 0, max: 20, curve: .5,
+        name: 'release', type: 'env', min: 0, max: 20, curve: 2,
         callback: function(x) {
             synth.env.release = x
         } 
     },
     {
-        name: 'vcfAttack', type: 'env', min: 0.005, max: 0.5, curve: .5,
+        name: 'vcfAttack', type: 'env', min: 0.005, max: 0.5, curve: 2,
         callback: function(x) {
             synth.vcf_env.attack = x
         } 
     },
     {
-        name: 'vcfDecay', type: 'env', min: 0.01, max: 10, curve: .5,
+        name: 'vcfDecay', type: 'env', min: 0.01, max: 10, curve: 2,
         callback: function(x) {
             synth.vcf_env.decay = x
         } 
     },
     {
-        name: 'vcfSustain', type: 'env', min: 0, max: 1, curve: .5,
+        name: 'vcfSustain', type: 'env', min: 0, max: 1, curve: 2,
         callback: function(x) {
             synth.vcf_env.sustain = x
         }
     },
     {
-        name: 'vcfRelease', type: 'env', min: 0, max: 20, curve: .5,
+        name: 'vcfRelease', type: 'env', min: 0, max: 20, curve: 2,
         callback: function(x) {
             synth.vcf_env.release = x
         } 
