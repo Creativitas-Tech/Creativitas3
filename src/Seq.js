@@ -11,7 +11,7 @@ export class Seq {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         this._subdivision = subdivision; // Local alias
         this._octave = 0;                // Local alias
-        this._sustain = 1;             // Local alias
+        this._sustain = .1;             // Local alias
         this._roll = 0.0;               // Local alias
         this._velocity = 100;            // Local alias
         this._orn = 0;            // Local alias

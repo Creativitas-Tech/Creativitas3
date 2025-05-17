@@ -5,15 +5,13 @@ Single vco monosynth
 * vco->vcf->vca->output
 
 */
-import p5 from 'p5';
-import { sketch } from '../p5Library.js'
+
 import * as Tone from 'tone';
 import TwinklePresets from './synthPresets/TwinklePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
 import paramDefinitions from './params/twinkleParams.js';
-
 
 export class Twinkle extends MonophonicTemplate {
   constructor (gui = null) {
