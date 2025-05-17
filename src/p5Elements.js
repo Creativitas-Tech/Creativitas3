@@ -9,7 +9,6 @@ import themes from './p5Themes.json';
 let activeTheme = themes.themes['default']; // Default theme preset
 
 
-
 export function debug() {
     console.log('esy')
     console.log(activeTheme)
@@ -21,12 +20,14 @@ export function listThemes() {
     console.log(Object.keys(themes.themes))
 }
 
-export function setp5Theme(themeName) {
+export function setp5Theme(p,themeName) {
     if (!themes.themes[themeName]) {
         console.error(`Theme '${themeName}' not found.`);
         return;
     }
     activeTheme = themes.themes[themeName]; // Default theme preset
+    Object.assign(p, activeTheme);
+    return themes.themes[themeName]
 }
 
 // Function to update theme parameters
@@ -48,9 +49,9 @@ export function exportTheme() {
 
 //************** INITIALIZE **************
 
-export function initialize(p, div) {
+export function initialize(p, div, height) {
     p.div = div;
-    p.createCanvas(div.offsetWidth, div.offsetWidth * .4);
+    p.createCanvas(div.offsetWidth, div.offsetWidth * .4 * height);
     p.width = div.offsetWidth;
     p.height = div.offsetWidth * .4;
     p.elements = {};
@@ -58,8 +59,8 @@ export function initialize(p, div) {
     return [p.width, p.height]
 }
 
-p5.prototype.initialize = function (div) {
-    return initialize(this, div);
+p5.prototype.initialize = function (div, height) {
+    return initialize(this, div, height);
 };
 
 function resizeP5(string, scaleWidth, scaleHeight) {
@@ -143,7 +144,7 @@ function drawGrid(p) {
     let spacingX = Math.ceil((p.width - 2 * margin) / 3) - 5;
     let spacingY = Math.ceil((p.height - 2 * margin) / 3) - 5;
     p.textSize(12);
-    let bgColorSum = activeTheme.backgroundColor.reduce((a, b) => a + b)
+    let bgColorSum = p.backgroundColor.reduce((a, b) => a + b)
     //let isBlack = p.red(p.backgroundColor) === 0 && p.green(p.backgroundColor) === 0 && p.blue(p.backgroundColor) === 0;
     p.fill(bgColorSum < 382 ? 255 : 0);
     p.noStroke();
@@ -162,7 +163,9 @@ let updateCanvas = 1;
 export function drawBackground(p) {
     if (updateCanvas > 0) {
         updateCanvas = 1
-        p.background(activeTheme.backgroundColor);
+        let bg = [p.backgroundColor[0],p.backgroundColor[1],p.backgroundColor[2]]
+        //console.log(...bg)
+        p.background(...bg);
     }
 }
 
@@ -233,7 +236,9 @@ p5.prototype.getElementByLabel = function (label) {
 export const setColor = function (name, value) {
     if (name === 'border') activeTheme.borderColor = value
     else if (name === 'accent') activeTheme.accentColor = value
-    else if (name === 'background') activeTheme.backgroundColor = value
+    else if (name === 'background') {
+        activeTheme.backgroundColor = value
+    }
     else if (name === 'text') activeTheme.textColor = value
 
     else if (typeof (name) === 'string' && Array.isArray(value)) {
@@ -245,12 +250,16 @@ export const setColor = function (name, value) {
     else console.error(`incorrect color values: ${name}, ${value} `)
 }
 
-const getColor = function (name) {
+const getColor = function (p,name) {
+    
     if (name === 'border') return activeTheme.borderColor
     if (name === 'accent') return activeTheme.accentColor
-    if (name === 'background') return activeTheme.backgroundColor
+    if (name === 'background') { 
+        let bg = [p.backgroundColor[0],p.backgroundColor[1],p.backgroundColor[2]]
+        return  bg
+    }
     if (name === 'text') return activeTheme.textColor
-
+    console.log(name)
     if (Array.isArray(name)) {
         return name
     } else {
@@ -269,7 +278,7 @@ export const GuiFonts = {
 export const setFont = function (name, value) {
     if (name === 'label') activeTheme.labelFont = value
     else if (name === 'value') activeTheme.valueFont = value
-    else if (name === 'text') activeTheme.textFont = value
+    else if (name === 'text') activeTheme.mainFont = value
     else if (name === 'title') activeTheme.titleFont = value
 
     else if (typeof (name) === 'string' && typeof (value) === 'string') {
@@ -282,7 +291,7 @@ export const setFont = function (name, value) {
 const getFont = function (name) {
     if (name === 'label') return activeTheme.labelFont
     if (name === 'value') return activeTheme.valueFont
-    if (name === 'text') return activeTheme.textFont
+    if (name === 'text') return activeTheme.mainFont
     if (name === 'title') return activeTheme.titleFont
 
     if (typeof (name) === 'string') {
@@ -327,7 +336,7 @@ class Element {
         this.showValue = typeof (options.showValue) === 'undefined' ? true : options.showValue; //|| activeTheme.showValue
         this.labelFont = options.labelFont || 'label'
         this.valueFont = options.valueFont || 'value'
-        this.textFont = options.textFont || 'text'
+        this.mainFont = options.mainFont || 'text'
         this.labelX = options.labelX || 0
         this.labelY = options.labelY || 0
         this.valueX = options.valueX || 0
@@ -437,8 +446,8 @@ class Element {
         this.p.stroke(this.setColor(this.textColor))
         this.p.strokeWeight(0.00001 * this.textSize * 20);
         this.p.textAlign(this.p.CENTER, this.p.CENTER);
-        this.p.fill(getColor(this.textColor));
-        this.p.textFont(getFont(this.textFont))
+        this.p.fill(getColor(this.p,this.textColor));
+        this.p.textFont(getFont(this.mainFont))
         this.p.text(text, x + (this.textX / 100) * this.p.width, y + (this.textY / 100) * this.p.height);
     }
 
@@ -449,7 +458,7 @@ class Element {
 
     setColor(arg) {
         if (typeof (arg) === 'string') {
-            return getColor(arg)
+            return getColor(this.p,arg)
         }
         else if (Array.isArray(arg)) {
             if (arg.length === 3) return arg
@@ -571,10 +580,10 @@ export class Knob extends Element {
         let border = this.getParam('border', this.border)
 
         // clear the previously drawn knob
-        // this.p.fill(getColor('background'));
+        // this.p.fill(p,getColor('background'));
         // let  strokeWeight = this.border;
         // this.p.strokeWeight(strokeWeight);
-        // this.p.stroke(getColor('background'));
+        // this.p.stroke(getColor(p,'background'));
         // this.p.arc(cur_x, cur_y, cur_size*1.2, cur_size*1.2,0,2*this.p.PI);
 
         // Display the label string beneath the knob
@@ -696,12 +705,12 @@ export class Fader extends Element {
         this.p.strokeWeight(border * 1.5);
         if (this.isHorizontal) this.p.rect(x_corner, y_corner, this.cur_size, border * 2);
         else this.p.rect(x_corner, y_corner, border * 2, this.cur_size);
-        // this.p.stroke(getColor(this.accentColor))
+        // this.p.stroke(p,getColor(this.accentColor))
         // if (this.isHorizontal) this.p.rect(this.cur_x, this.cur_y, this.cur_size, border);
         // else this.p.rect(this.cur_x, this.cur_y, rectThickness, this.cur_size);
 
         //Clear beneath Display Indicator
-        this.p.fill(getColor('background'))
+        this.p.fill( getColor(this.p, 'background'))
         this.p.stroke(this.setColor('background'))
         this.pos = this.p.map(this.rawValue, 0, 1, this.isHorizontal ? x_corner : y_corner + this.cur_size - this.thickness, this.isHorizontal ? x_corner + this.cur_size - this.thickness : y_corner);
         let clearSize = border * .25

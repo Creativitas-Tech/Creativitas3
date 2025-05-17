@@ -53,8 +53,6 @@ export class MonophonicTemplate {
         this.layout = basicLayout
         this.poly_ref = null;
         this.super = null;
-        this.frequency = new Tone.Signal();
-        this.env = new Tone.Envelope();
         this.type = 'Synth';
         this.name = "";
         this.presetsData = null;
@@ -451,7 +449,8 @@ export class MonophonicTemplate {
                 }
             });
         });
-        this.gui.setTheme( 'dark' )
+        this.gui.setTheme(this.gui, 'dark' )
+        setTimeout(this.loadPreset('default'),1000)
     }
 
     /**

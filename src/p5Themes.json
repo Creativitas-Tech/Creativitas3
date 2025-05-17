@@ -8,7 +8,7 @@
       "textColor": [0, 0, 0],             
       "labelFont": "Arial",
       "valueFont": "Helvetica",
-      "textFont": "Verdana",
+      "mainFont": "Verdana",
       "titleFont": "Verdana",
       "borderRadius": 5,
       "showValue" :true
@@ -21,7 +21,7 @@
       "textColor": [255, 255, 255],       
       "labelFont": "Helvetica",
       "valueFont": "Arial",
-      "textFont": "Verdana",
+      "mainFont": "Verdana",
       "titleFont": "Verdana",
       "borderRadius": 8
     },
@@ -33,7 +33,7 @@
       "textColor": [0, 0, 0],             
       "labelFont": "Georgia",
       "valueFont": "Courier New",
-      "textFont": "Palatino",
+      "mainFont": "Palatino",
       "titleFont": "Verdana",
       "borderRadius": 10
     }
