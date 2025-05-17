@@ -9,9 +9,10 @@ export class Chorus extends EffectTemplate {
   constructor(gui = null) {
     super();
     this.gui = gui;
-    this.presets = layout;
+    this.presets = ChorusPresets;
     this.name = "Trichorus";
     this.layout = layout;
+    this.backgroundColor = [100,0,100]
 
     this.input = new Tone.Gain();
     this.output = new Tone.Gain();

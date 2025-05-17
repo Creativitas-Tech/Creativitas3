@@ -49,6 +49,7 @@ export class EffectTemplate {
         this.gui = null;
         this.guiColor = 'grey'
         this.guiContainer = null;
+        this.backgroundColor = [100,100,100]
         this.layout = basicLayout
         this.poly_ref = null;
         this.super = null;
@@ -283,7 +284,7 @@ export class EffectTemplate {
      */
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
-        const sketchWithSize = (p) => sketch(p, { height: .2 });
+        const sketchWithSize = (p) => sketch(p, { height: .25 });
         this.gui = new p5(sketchWithSize, this.guiContainer);
         const layout = this.layout;
         //console.log(layout);
@@ -335,7 +336,7 @@ export class EffectTemplate {
             });
         });
         this.gui.setTheme( this.gui, 'dark' )
-        this.gui.setColor('background', [100,100,0])
+        this.gui.backgroundColor = this.backgroundColor
         setTimeout(this.loadPreset('default'),1000)
     }
 
@@ -402,6 +403,19 @@ export class EffectTemplate {
                 accentColor: color,
                 callback: (selectedOption) => param.set(selectedOption),
             });
+        } else if (controlType === 'text') {
+
+            return this.gui.Text({
+                label: param.max,
+                value: param._value,
+                x:x,
+                y:y+10,
+                mainText: 12,
+                accentColor: color,
+                callback: (x) => {},
+            });
+        } else {
+            console.log('no gui creation element for ', controlType)
         }
     }
 

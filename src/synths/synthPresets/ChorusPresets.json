@@ -1,5 +1,74 @@
 {
   "default": {
-
+    "mix": 0.5,
+    "depth": 0.004,
+    "rate": 0.3,
+    "level": 1.0,
+    "spread": 180,
+    "tone": 4000
+  },
+  "subtle_warmth": {
+    "mix": 0.3,
+    "depth": 0.002,
+    "rate": 0.15,
+    "level": 0.8,
+    "spread": 90,
+    "tone": 3000
+  },
+  "wide_modulation": {
+    "mix": 0.7,
+    "depth": 0.006,
+    "rate": 0.25,
+    "level": 1.0,
+    "spread": 270,
+    "tone": 5000
+  },
+  "slow_detune": {
+    "mix": 0.5,
+    "depth": 0.008,
+    "rate": 0.1,
+    "level": 0.9,
+    "spread": 120,
+    "tone": 3500
+  },
+  "shimmer": {
+    "mix": 0.6,
+    "depth": 0.003,
+    "rate": 1.2,
+    "level": 1.0,
+    "spread": 240,
+    "tone": 6500
+  },
+  "thick_ensemble": {
+    "mix": 0.8,
+    "depth": 0.01,
+    "rate": 0.35,
+    "level": 1.0,
+    "spread": 360,
+    "tone": 4500
+  },
+  "vintage_tape": {
+    "mix": 0.4,
+    "depth": 0.005,
+    "rate": 0.2,
+    "level": 0.8,
+    "spread": 180,
+    "tone": 2800
+  },
+  "rotary_vibe": {
+    "mix": 0.6,
+    "depth": 0.007,
+    "rate": 0.75,
+    "level": 1.0,
+    "spread": 300,
+    "tone": 3200
+  },
+  "underwater": {
+    "mix": 0.7,
+    "depth": 0.015,
+    "rate": 0.05,
+    "level": 1.0,
+    "spread": 360,
+    "tone": 2200
   }
 }

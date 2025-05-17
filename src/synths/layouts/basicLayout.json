@@ -34,7 +34,7 @@
     "env": {
       "color": [20, 100, 100],
       "boundingBox": { "x": 10, "y": 60, "width": 50, "height": 50 },
-      "offsets": { "x": 4, "y": 300 },
+      "offsets": { "x": 6, "y": 300 },
       "groupA": [],
       "controlTypeA": "knob",
       "controlTypeB": "fader",
