@@ -10,7 +10,7 @@ plotTransferFunction
  * @param {function} myFunction - The transfer function to plot. Takes a number input and returns a number.
  * @param {string} _target - The ID of the HTML element where the transfer function will be plotted.
  */
-export const PlotTransferFunction = function(myFunction, _target = 'Canvas1', ratio= 4/10) {
+export const PlotTransferFunction = function(myFunction, _target = 'Canvas', ratio= 4/10) {
     const target = document.getElementById(_target);
 
     // Check if an existing SVG is present and remove it if it is

@@ -1,0 +1,90 @@
+{
+  "default": {
+    "drive": 0.5,
+    "lowcut": 80,
+    "lpf": 8000,
+    "hpf": 50,
+    "bias": 0,
+    "shelf": 0.8,
+    "type": "tanh",
+    "feedback": 0,
+    "level": 1
+  },
+  "warm_saturation": {
+    "drive": 0.6,
+    "lowcut": 50,
+    "lpf": 6000,
+    "hpf": 50,
+    "bias": 0.05,
+    "shelf": 0.7,
+    "type": "soft",
+    "feedback": 0,
+    "level": 0.9
+  },
+  "gritty_tape": {
+    "drive": 0.6,
+    "lowcut": 120,
+    "lpf": 7000,
+    "hpf": 150,
+    "bias": 0.1,
+    "shelf": 0.5,
+    "type": "tube",
+    "feedback": 0.1,
+    "level": 0.9
+  },
+  "bit_crush": {
+    "drive": 0.7,
+    "lowcut": 200,
+    "lpf": 4000,
+    "hpf": 300,
+    "bias": 0.2,
+    "shelf": 1,
+    "type": "hard",
+    "feedback": 0.15,
+    "level": 0.8
+  },
+  "vocal_growl": {
+    "drive": 0.8,
+    "lowcut": 180,
+    "lpf": 5000,
+    "hpf": 220,
+    "bias": -0.25,
+    "shelf": 1,
+    "type": "fold",
+    "feedback": 0.25,
+    "level": 0.9
+  },
+  "screamer": {
+    "drive": 0.9,
+    "lowcut": 150,
+    "lpf": 9000,
+    "hpf": 400,
+    "bias": 0.3,
+    "shelf": 1.2,
+    "type": "tanh",
+    "feedback": 0.35,
+    "level": 0.7
+  },
+  "fizz_crunch": {
+    "drive": 0.85,
+    "lowcut": 180,
+    "lpf": 200,
+    "hpf": 10,
+    "bias": 0,
+    "shelf": 1,
+    "type": "hard",
+    "feedback": 0.05,
+    "level": 0.85
+  },
+  "asymmetric_glow": {
+    "drive": 0.7,
+    "lowcut": 90,
+    "lpf": 7000,
+    "hpf": 120,
+    "bias": -0.4,
+    "shelf": 1,
+    "type": "tube",
+    "feedback": 0.1,
+    "level": 1
+  }
+}

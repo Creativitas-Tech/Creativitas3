@@ -36,7 +36,7 @@ export const paramDefinitions = (synth) => [
   },
   {
     name: "tone",
-    type: "output",
+    type: "param",
     min: 200, max: 8000, step: 1,
     default: 4000,
     callback: (value) => {

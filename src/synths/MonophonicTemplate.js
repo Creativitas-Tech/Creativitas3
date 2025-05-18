@@ -350,7 +350,7 @@ export class MonophonicTemplate {
             }
             output += `${param.name}: ${value}\n`;
         }
-        //console.log(output);
+        console.log(output);
     }
     print(){ this.get()}
 

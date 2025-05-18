@@ -271,7 +271,7 @@ export class EffectTemplate {
             }
             output += `${param.name}: ${value}\n`;
         }
-        //console.log(output);
+        console.log(output);
     }
     print(){ this.get()}
 
@@ -398,7 +398,8 @@ export class EffectTemplate {
                 label: i ? param.labels[i] : param.name,
                 radioOptions: param.radioOptions,
                 value: param._value,
-                x:x,
+                orientation: 'horizontal',
+                x:x+10,
                 y:y+10,
                 accentColor: color,
                 callback: (selectedOption) => param.set(selectedOption),

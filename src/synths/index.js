@@ -28,7 +28,7 @@ export { Quadrophonic } from './Quadrophonic.js';
 export { Drummer } from './Drummer.js';
 export { Twinkle } from './Twinkle.js';
 export { Chorus } from './Chorus.js';
-// export { Feedback } from './Feedback.js';
+export { Distortion } from './Distortion.js';
 // export { Feedback } from './Feedback.js';
 // export { Feedback } from './Feedback.js';
 

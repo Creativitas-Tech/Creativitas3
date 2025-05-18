@@ -11,7 +11,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 
 
 //tone
-import { Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
@@ -216,7 +216,7 @@ function Editor(props) {
     //window.ModDelay = ModDelay;
     window.Player = Player;
     window.Chorus = Chorus;
-    // window.Player = Player;
+    window.Distortion = Distortion;
     // window.Player = Player;
     // window.Player = Player;
     // window.Player = Player;
@@ -1075,7 +1075,48 @@ function Editor(props) {
             tryGetSuggestions(objectName.split("(").pop()) ||
             (console.debug("Unable to autocomplete"), null)
         );
+    }//object function completer
+
+    function presetNameCompleter(context) {
+      if (!useAutoComplete) return null;
+
+      // Match objectName.loadPreset("partial OR 'partial OR partial
+      const match = context.matchBefore(/([a-zA-Z0-9_$]+)\.loadPreset\(["']?([\w\-]*)$/);
+      if (!match) return null;
+
+      const [, objectName, typed = ""] = match.text.match(/([a-zA-Z0-9_$]+)\.loadPreset\(["']?([\w\-]*)$/) || [];
+      if (!objectName) return null;
+
+      let presetKeys = [];
+
+      try {
+        const synth = eval(objectName);
+        if (!synth?.presets) return null;
+        presetKeys = Object.keys(synth.presets);
+      } catch (e) {
+        console.warn(`Unable to evaluate object '${objectName}' for preset completion:`, e);
+        return null;
+      }
+
+      const userTypedQuote = /['"]/.test(match.text[match.text.indexOf('loadPreset') + 11] || '');
+
+      return {
+        from: match.from + `${objectName}.loadPreset(`.length,
+        options: presetKeys.map(name => ({
+          label: name,
+          type: 'preset',
+          apply: userTypedQuote ? name : `"${name}"`
+        })),
+        filter: true
+      };
     }
+
+    const combinedCompleter = async (context) => {
+      return (
+        presetNameCompleter(context) ||
+        objectFunctionCompleter(context)
+      );
+    };
 
 
     /************************************************
@@ -1296,7 +1337,7 @@ function Editor(props) {
                                     mode: 'javascript',
                                 }}
                                 theme={themeDef}
-                                extensions={[javascript({ jsx: true }), decorationsField, autocompletion({ override: [objectFunctionCompleter] })]}
+                                extensions={[javascript({ jsx: true }), decorationsField, autocompletion({ override: [combinedCompleter] })]}
                                 onChange={handleCodeChange}
                                 onKeyDown={handleKeyDown}
                                 onStatistics={handleStatistics}

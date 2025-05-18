@@ -1,27 +1,27 @@
 {
     "input": {
       "color": [255, 255, 255],
-      "boundingBox": { "x": 5, "y": 8, "width": 20, "height": 100 },
-      "offsets": { "x": 15, "y": 20 },
+      "boundingBox": { "x": 5, "y": 40, "width": 20, "height": 100 },
+      "offsets": { "x": 10, "y": 20 },
       "groupA": ["name"],
       "controlTypeA": "text",
       "controlTypeB": "knob",
       "sizeA": 1.5,
-      "sizeB": 0.75
+      "sizeB": 0.5
     },
     "param": {
       "color": [200, 100, 150],
-      "boundingBox": { "x": 25, "y": 8, "width": 40, "height": 100 },
+      "boundingBox": { "x": 25, "y": 40, "width": 60, "height": 100 },
       "offsets": { "x": 10, "y": 20 },
-      "groupA": ["cutoff"],
-      "controlTypeA": "knob",
+      "groupA": ["type"],
+      "controlTypeA": "radioButton",
       "controlTypeB": "knob",
-      "sizeA": 0.8,
-      "sizeB": 0.6
+      "sizeA": 0.5,
+      "sizeB": 0.5
     },
     "output": {
       "color": [100, 255, 255],
-      "boundingBox": { "x": 65, "y": 8, "width": 40, "height": 100 },
+      "boundingBox": { "x": 80, "y": 40, "width": 20, "height": 100 },
       "offsets": { "x": 10, "y": 30 },
       "groupA": ["level"],
       "controlTypeA": "knob",

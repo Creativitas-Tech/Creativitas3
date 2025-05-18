@@ -53,7 +53,7 @@ export function initialize(p, div, height) {
     p.div = div;
     p.createCanvas(div.offsetWidth, div.offsetWidth * .4 * height);
     p.width = div.offsetWidth;
-    p.height = div.offsetWidth * .4;
+    p.height = div.offsetWidth * .4 * height;
     p.elements = {};
 
     return [p.width, p.height]
@@ -395,13 +395,14 @@ class Element {
 
     isPressed() {
         if (this.hide === true) return;
-        //console.log('isPressed', this.label, this.p.mouseX,this.cur_x , this.x_box);
+        //console.log('isPressed', this.label, this.p.mouseX,this.cur_x , this.p.mouseY, this.cur_y);
         if (this.p.mouseX < (this.cur_x + this.x_box / 2) &&
             this.p.mouseX > (this.cur_x - this.x_box / 2) &&
             this.p.mouseY > (this.cur_y - this.y_box / 2) &&
             this.p.mouseY < (this.cur_y + this.y_box / 2)) {
             this.active = 1
             //console.log('pressedas', this.label, this.p.mouseX.toFixed(1), this.p.mouseY.toFixed(1), this.cur_x.toFixed(1), this.cur_y.toFixed(1), this.x_box, this.y_box)
+            //console.log(this.p.width, this.p.height)
         }
     }
 
@@ -575,8 +576,8 @@ export class Knob extends Element {
         this.cur_y = (this.y / 100) * this.p.height
         this.cur_size = (this.size / 6) * this.p.width / 2
         this.x_box = this.cur_size
-        this.y_box = this.cur_size
-
+        this.y_box = (this.size / 6) * this.p.height
+        this.y_box = this.y_box >20 ? this.y_box : 20
         let border = this.getParam('border', this.border)
 
         // clear the previously drawn knob

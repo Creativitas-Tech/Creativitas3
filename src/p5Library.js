@@ -31,6 +31,7 @@ export const sketch = (p, config = {}) => {
         p.activeTheme = themes.themes['dark']
         p.width = dim[0]
         p.height = dim[1]
+        //console.log(p.width, p.height)
         p.frame = 0
         p.x = 0
         p.y = 0
