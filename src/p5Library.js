@@ -10,6 +10,7 @@ export const sketch = (p, config = {}) => {
     p.setColor = setColor;
     p.setFont = setFont;
     p.debug = debug
+    p.backgroundColor = [0,0,0]
 
     //theme functions
     p.setTheme = setp5Theme

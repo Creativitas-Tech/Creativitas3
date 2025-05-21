@@ -23,7 +23,7 @@ export class Distortion extends EffectTemplate {
     this.presets = DistortionPresets;
     this.name = "Distortion";
     this.layout = layout;
-    this.backgroundColor = [100,0,100]
+    this.backgroundColor = [100,0,0]
     this.transferFunctions = this.generateDistortionCurves()
     this.outputFactor = 1
 

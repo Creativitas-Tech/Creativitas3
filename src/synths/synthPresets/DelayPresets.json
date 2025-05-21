@@ -1,0 +1,72 @@
+{
+  "default": {
+    "level": 0.2,
+    "hicut": 100,
+    "time": 0.12,
+    "feedback": 0.25,
+    "drive": 1,
+    "damping": 6000,
+    "type": "clean",
+    "width": 0.1
+  },
+  "Slap": {
+    "level": 0.75,
+    "hicut": 100,
+    "time": 0.05,
+    "feedback": 0,
+    "drive": 0.5,
+    "damping": 8000,
+    "type": "clean",
+    "width": 0
+  },
+  "Wide":{
+    "level": 0.5,
+    "hicut": 200,
+    "time": 0.45,
+    "feedback": 0.3,
+    "drive": 0.5,
+    "damping": 1200,
+    "type": "BBD",
+    "width": 1
+  },
+  "Dub":{
+    "level": 0.5,
+    "hicut": 100,
+    "time": 0.6,
+    "feedback": 0.7,
+    "drive": 1,
+    "damping": 800,
+    "type": "tube",
+    "width": 0.5
+  },
+  "LoFi":{
+    "level": 0.4,
+    "hicut": 300,
+    "time": 0.4,
+    "feedback": 0.3,
+    "drive": 1,
+    "damping": 800,
+    "type": "BBD",
+    "width": 0.3
+  },
+  "Ambient Wash":{
+    "level": 0.5,
+    "hicut": 400,
+    "time": 0.9,
+    "feedback": 0.8,
+    "drive": 0.1,
+    "damping": 2000,
+    "type": "tape",
+    "width": 1.0
+  },
+  "Shimmer":{
+    "level": 0.1,
+    "hicut": 1000,
+    "time": 0.9,
+    "feedback": 0.5,
+    "drive": 1,
+    "damping": 3000,
+    "type": "fold",
+    "width": 1.0
+  }
+}

@@ -10,7 +10,7 @@ export class Chorus extends EffectTemplate {
     super();
     this.gui = gui;
     this.presets = ChorusPresets;
-    this.name = "Trichorus";
+    this.name = "Chorus";
     this.layout = layout;
     this.backgroundColor = [100,0,100]
 

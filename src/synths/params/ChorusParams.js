@@ -8,7 +8,7 @@ export const paramDefinitions = (synth) => [
   {
     name: "rate",
     type: "param",
-    min: 0.05, max: 10, step: 0.01,
+    min: 0.05, max: 10, curve:2,
     default: 0.3,
     callback: (value) => {
       synth.lfos.forEach(lfo => lfo.frequency.value = value);
@@ -17,7 +17,7 @@ export const paramDefinitions = (synth) => [
   {
     name: "depth",
     type: "param",
-    min: 0.001, max: 0.02, step: 0.001,
+    min: 0.00001, max: 0.01, curve:2,
     default: 0.004,
     callback: (value) => {
       synth.depths.forEach(gain => gain.gain.value = value);
@@ -26,7 +26,7 @@ export const paramDefinitions = (synth) => [
   {
     name: "spread",
     type: "param",
-    min: 0, max: 360, step: 1,
+    min: 0, max: 360, curve:2,
     default: 180,
     callback: (value) => {
       synth.lfos.forEach((lfo, i) => {
@@ -37,7 +37,7 @@ export const paramDefinitions = (synth) => [
   {
     name: "tone",
     type: "param",
-    min: 200, max: 8000, step: 1,
+    min: 200, max: 8000, curve:2,
     default: 4000,
     callback: (value) => {
       if (synth.toneFilter) synth.toneFilter.frequency.value = value;

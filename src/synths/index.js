@@ -18,7 +18,7 @@ export { Sympathy } from './Sympathy.js';
 export { DrumSampler } from './DrumSampler.js';
 export { Simpler } from './Simpler.js';
 export { AnalogDelay } from './AnalogDelay.js';
-//export { ModDelay } from './Chorus.js';
+export { Reverb } from './Reverb.js';
 //export * from './waveshapers.js';
 export { Snare } from './Snare.js';
 export { Player } from './Player.js';
@@ -29,7 +29,7 @@ export { Drummer } from './Drummer.js';
 export { Twinkle } from './Twinkle.js';
 export { Chorus } from './Chorus.js';
 export { Distortion } from './Distortion.js';
-// export { Feedback } from './Feedback.js';
+export { Delay } from './Delay.js';
 // export { Feedback } from './Feedback.js';
 
 export { MidiOut } from './MidiOut.js';

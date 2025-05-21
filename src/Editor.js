@@ -11,7 +11,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 
 
 //tone
-import { Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
@@ -213,14 +213,13 @@ function Editor(props) {
     window.DrumSampler = DrumSampler
     window.Simpler = Simpler
     window.Snare = Snare;
-    //window.ModDelay = ModDelay;
+    window.Reverb = Reverb;
     window.Player = Player;
     window.Chorus = Chorus;
     window.Distortion = Distortion;
+    window.Delay = Delay;
     // window.Player = Player;
     // window.Player = Player;
-    // window.Player = Player;
-
 
     window.Feedback = Feedback;
     window.MidiOut = MidiOut;
@@ -477,7 +476,8 @@ function Editor(props) {
             //return the previous value of the changed element
             return temp
         };
-
+        //const audioContext = new AudioContext({ latencyHint: 'interactive' });
+        //Tone.setContext(audioContext);
         window.audioContext = Tone.context.rawContext;
         window.setTimeout2 = Tone.context.rawContext.setTimeout;
 

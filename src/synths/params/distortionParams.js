@@ -105,7 +105,7 @@ export const paramDefinitions = (synth) => [
     name: "level",
     type: "output",
     min: 0,
-    max: 1,
+    max: 1.5,
     curve: 2,
     default: 1,
     callback: (value) => {
