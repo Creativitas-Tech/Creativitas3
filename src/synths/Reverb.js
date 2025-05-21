@@ -46,45 +46,53 @@ export class Reverb extends EffectTemplate {
     this.types = {
       "spring": {
         ir: 'spring',
-        hicut: 200,
+        lowcut: 200,
         lfoRate: 3,
         lfoDepth: 0.0025,
-        feedbackScale: 0.4
+        feedbackScale: 1,
+        width:0
       },
       "hall": {
         ir: 'hall',
-        hicut: 100,
+        lowcut: 100,
         lfoRate: 0.1,
         lfoDepth: 0.005,
-        feedbackScale: 0.3
+        feedbackScale: 0.4,
+        width:.05
       },
       "plate": {
         ir: 'plate',
-        hicut: 200,
+        lowcut: 200,
         lfoRate: 0.5,
-        lfoDepth: 0.01,
-        feedbackScale: 0.2
+        lfoDepth: 0.001,
+        feedbackScale: 0.25,
+        width:.75
       },
       "room": {
         ir: 'hall',
-        hicut: 7000,
+        lowcut: 7000,
         lfoRate: .1,
         lfoDepth: 0.008,
-        feedbackScale: 0.3
+        feedbackScale: 0.4,
+        width:0.01
       },
       "space": {
         ir: 'plate',
-        hicut: 5000,
+        lowcut: 5000,
         lfoRate: 0.5,
         lfoDepth: 0.02,
-        feedbackScale: 0.2
+        feedbackScale: 0.25,
+        width:.625
       }
     };
 
     this.sampleFiles = {
-          plate: './audio/plate_reverb.mp3',
-          spring: './audio/spring_reverb.mp3',
-          hall:   './audio/hall_reverb.mp3',
+          // plate: './audio/plate_reverb.mp3',
+          // spring: './audio/spring_reverb.mp3',
+          // hall:   './audio/hall_reverb.mp3',
+          plate: './audio/plateShort.mp3',
+          spring: './audio/springShort.mp3',
+          hall:   './audio/hallShort.mp3',
           ampeg: './audio/ampeg_amp.mp3',
           marshall: './audio/marshall_amp.mp3',
           vox:   './audio/voxAC30_amp.mp3',
@@ -108,23 +116,26 @@ export class Reverb extends EffectTemplate {
     this.highpass = new Tone.Filter({type:'highpass', rolloff:-24,Q:0,frequency:100})
     this.convolver = new Tone.Convolver();
     this.dampingFilter = new Tone.Filter({frequency:1000, type:'lowpass', rolloff:-12});
-    this.delayL = new Tone.Delay({delayTime:0.001, maxDelay:1})
-    this.delayR = new Tone.Delay({delayTime:0.001, maxDelay:1})
+    this.delayL = new Tone.Delay({delayTime:0.001, maxDelay:1.1})
+    this.delayR = new Tone.Delay({delayTime:0.001, maxDelay:1.1})
     this.merge = new Tone.Merge()
+
 
     this.feedbackGain = new Tone.Gain(0);
     this.feedbackScale = new Tone.Gain(0.25)
     this.feedbackShaper = new Tone.WaveShaper(x => x - (1/3) * Math.pow(x, 3), 1024);
-    this.lfo = new Tone.LFO({type:'sine'}).start()
+    this.lfo = new Tone.LFO({type:'sine',min:-.1,max:.1}).start()
     
-    // Buffer
+    // // Buffer
     this.buffer = null;
-    // Audio connections
+    // // Audio connections
     this.input.connect(this.highpass);
     this.highpass.connect( this.convolver);
     this.convolver.connect(this.dampingFilter);
     this.dampingFilter.connect(this.delayL);
     this.dampingFilter.connect(this.delayR)
+    this.dampingFilter.connect(this.output)
+    // this.delayL.connect(this.output)
     this.delayL.connect(this.merge,0,0);
     this.delayR.connect(this.merge,0,1);
     this.merge.connect(this.output)
@@ -320,7 +331,7 @@ export class Reverb extends EffectTemplate {
     }
 
   setType = function(typeName) {
-    console.log('type', typeName)
+    //console.log('type', typeName)
     const typeDef = this.types[typeName];
     if (!typeDef) return;
 
@@ -329,9 +340,9 @@ export class Reverb extends EffectTemplate {
       this.feedbackScale.gain.rampTo(parseFloat(typeDef.feedbackScale))
     }
 
-    // Set highpass (hicut) filter
-    if (typeDef.hicut) {
-      this.locut =parseFloat(typeDef.hicut);
+    // Set highpass (lowcut) filter
+    if (typeDef.lowcut) {
+      this.lowcut =parseFloat(typeDef.lowcut);
     }
 
     // 
@@ -346,6 +357,10 @@ export class Reverb extends EffectTemplate {
     // Set smoothing when changing delay times
     if (typeDef.lfoDepth) {
       this.lfoDepth = typeDef.lfoDepth
+    }
+    // Set smoothing when changing delay times
+    if (typeDef.width) {
+      this.width = typeDef.width
     }
 
     // Optional: store current type

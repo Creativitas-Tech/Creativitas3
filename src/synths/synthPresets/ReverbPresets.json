@@ -7,7 +7,7 @@
     "damping": 6000,
     "level": 0.4,
     "lfoRate": 0.1,
-    "lfoDepth": 0.005,
+    "lfoDepth": 0.05,
     "width": 0.2
   },
   "Small Plate":{
@@ -17,8 +17,8 @@
     "feedback": 0.2,
     "damping": 6000,
     "level": 0.4,
-    "lfoRate": 0.3,
-    "lfoDepth": 0.005,
+    "lfoRate": 0.2,
+    "lfoDepth": 0.1,
     "width": 0.2
   },
   "Cathedral Hall":{
@@ -26,10 +26,10 @@
     "lowcut": 100,
     "delayTime": 0.6,
     "feedback": 0.6,
-    "damping": 3000,
+    "damping": 2000,
     "level": 0.7,
     "lfoRate": 0.1,
-    "lfoDepth": 0.015,
+    "lfoDepth": 0.15,
     "width": 0.8
   },
   "Vintage Spring":{
@@ -40,29 +40,18 @@
     "damping": 4000,
     "level": 0.5,
     "lfoRate": 2.5,
-    "lfoDepth": 0.02,
-    "width": 0.3
-  },
-  "Vintage Spring":{
-    "type": "space",
-    "lowcut": 200,
-    "delayTime": 0.45,
-    "feedback": 0.55,
-    "damping": 2000,
-    "level": 0.6,
-    "lfoRate": 0.2,
-    "lfoDepth": 0.04,
-    "width": 1.0
+    "lfoDepth": 0.01,
+    "width": 0.0
   },
   "Thin Echo":{
     "type": "plate",
     "lowcut": 800,
-    "delayTime": 0.25,
+    "delayTime": 0.09,
     "feedback": 0.35,
     "damping": 8000,
-    "level": 0.3,
-    "lfoRate": 1.0,
-    "lfoDepth": 0.008,
+    "level": 0.7,
+    "lfoRate": 0.01,
+    "lfoDepth": 0.001,
     "width": 0.1
   }
 }

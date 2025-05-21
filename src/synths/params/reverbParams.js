@@ -18,7 +18,7 @@ export const paramDefinitions = (synth) => [
     }
   },
   {
-    name: "delayTime2",
+    name: "delayTime",
     type: "param",
     min: 0,
     max: 1,
@@ -69,7 +69,7 @@ export const paramDefinitions = (synth) => [
     default: 0.5,
     curve: 2,
     callback: (value) => {
-      synth.input.gain.rampTo(value*2, 0.1);
+      synth.input.gain.rampTo(value*4, 0.1);
     }
   },
   {

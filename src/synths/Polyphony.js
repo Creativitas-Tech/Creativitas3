@@ -278,7 +278,7 @@ export class Polyphony extends MonophonicTemplate{
 
 	    const layout = this.voice[0].layout; // Grab layout from first voice
 	    const params = this.voice[0].param; // First voice's params as template
-	    console.log(layout);
+	    //console.log(layout);
 	    // Group parameters by type
 	    const groupedParams = {};
 	    Object.values(params).forEach((param) => {
