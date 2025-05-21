@@ -143,34 +143,39 @@ export class Seq {
     }
 
     applyOrnamentation(event) {
-        if (typeof event === 'string') return event
+        if (typeof event === 'string') return event; // e.g., '.' or 'r'
+        //console.log(event)
         let ornIndex;
-
-        // Check if _orn is an array, if so, index into it using this.index
         if (Array.isArray(this._orn)) {
-            ornIndex = this._orn[this.index % this._orn.length]; // Select dynamically from array
+            ornIndex = this._orn[this.index % this._orn.length];
         } else {
-            ornIndex = this._orn % this.ornaments.length; // Use as a number
+            ornIndex = this._orn;
         }
 
-        let [pattern, scalar, length] = this.ornaments[ornIndex]; // Get ornament parameters
+        // Ensure index is valid
+        const ornament = this.ornaments[ornIndex % this.ornaments.length];
+        if (!ornament) return event;
 
-        let ornamentedEvent = [];
-        //console.log('orn', this._orn, pattern, scalar, length);
+        let [pattern, scalar, length] = ornament;
 
-        let numEvents = event.length; // Total number of notes in the ornamented event
-        let noteSpacing = 1 / length; // Uniformly distribute notes
+        const ornamentedEvent = [];
+
+        // Total number of original notes
+        const numSourceNotes = event.length;
+        const noteSpacing = 1 / length;
 
         for (let [pitch, t] of event) {
-            if(pitch === '.') ornamentedEvent.push(['.', t]);
-            else if (/[^0-9]/.test(pitch))  ornamentedEvent.push([pitch, t]);
-            else{
-                let ornNotes = orn(pitch, pattern, scalar, length);
-                //console.log('ornNotes', ornNotes);
+            if (pitch === '.' || !(typeof pitch === 'number' || /^-?\d+$/.test(pitch))) {
+                ornamentedEvent.push([pitch, t]);
+                //console.log('orn',pitch)
+            } else {
+                // Apply ornament
+                const ornNotes = orn(pitch, pattern, scalar, length);
 
                 ornNotes.forEach((ornPitch, i) => {
-                    if (ornPitch !== '.') { // Skip rests in the ornament pattern
-                        ornamentedEvent.push([ornPitch, t + i * noteSpacing*(1/numEvents)]);
+                    if (ornPitch !== '.') {
+                        const timeOffset = (i * noteSpacing) / numSourceNotes;
+                        ornamentedEvent.push([ornPitch, t + timeOffset]);
                     }
                 });
             }
