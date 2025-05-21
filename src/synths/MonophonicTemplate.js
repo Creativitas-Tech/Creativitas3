@@ -57,6 +57,7 @@ export class MonophonicTemplate {
         this.name = "";
         this.presetsData = null;
         this.curPreset = null;
+        this.backgroundColor = [10,10,10]
 
         // Sequencer related
         this.seq = []; // Array of Seq instances
@@ -134,16 +135,16 @@ export class MonophonicTemplate {
         const presetData = this.presets[this.curPreset];
 
         if (presetData) {
-            console.log("Loading preset ", this.curPreset);
-            for (let name in presetData) {
-                try {
-                    for (let element of Object.values(this.param)) {
-                        this.param[name].set(presetData[name])
-                    }
-                } catch (e) {
-                    console.log(name,presetData[name],e);
-                }
+          console.log("Loading preset", this.curPreset);
+          for (let name in presetData) {
+            try {
+              if (this.param[name]?.set) {
+                this.param[name].set(presetData[name]);
+              }
+            } catch (e) {
+              console.log(name, presetData[name], e);
             }
+          }
         } else {
             console.log("No preset of name ", name);
         }
@@ -333,7 +334,7 @@ export class MonophonicTemplate {
         if (param.seq ) {
             param.stop(); 
         } else {
-            console.warn(`Param ${paramName} has no stop method or doesn't exist.`);
+            //console.warn(`Param ${paramName} has no stop method or doesn't exist.`);
         }
     }
 
@@ -401,7 +402,7 @@ export class MonophonicTemplate {
         this.guiContainer = document.getElementById('Canvas');
         this.gui = new p5(sketch, this.guiContainer);
         const layout = this.layout;
-        //console.log(layout);
+        console.log(layout);
 
         // Group parameters by type
         const groupedParams = {};
@@ -450,6 +451,7 @@ export class MonophonicTemplate {
             });
         });
         this.gui.setTheme(this.gui, 'dark' )
+        this.gui.backgroundColor = this.backgroundColor
         setTimeout(this.loadPreset('default'),1000)
     }
 

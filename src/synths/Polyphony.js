@@ -15,6 +15,7 @@ export class Polyphony extends MonophonicTemplate{
     	this.name = voice.name
 		this.numVoices = num
 		this.slop = .05
+		this.backgroundColor = [0,0,0]
 
 		//audio
 		this.voice = []
@@ -277,7 +278,7 @@ export class Polyphony extends MonophonicTemplate{
 
 	    const layout = this.voice[0].layout; // Grab layout from first voice
 	    const params = this.voice[0].param; // First voice's params as template
-
+	    console.log(layout);
 	    // Group parameters by type
 	    const groupedParams = {};
 	    Object.values(params).forEach((param) => {
@@ -292,6 +293,7 @@ export class Polyphony extends MonophonicTemplate{
 
 	        let indexOffset = 0;
 
+
 	        groupedParams[groupType].forEach((param, index) => {
 	            const paramName = param.name; // Name of the param (e.g., "cutoff")
 	            const isGroupA = groupLayout.groupA.includes(paramName);
@@ -302,13 +304,14 @@ export class Polyphony extends MonophonicTemplate{
 				const paramValue = param.get ? param.get() : param._value; // or this.voice[0].param[paramName].get()
 				const values = Array.isArray(paramValue) ? paramValue : [paramValue];
 
+				const flatIndex = indexOffset;
 	            values.forEach((value, i) => {
 	            	//console.log(value,i)
-	                let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-	                let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+	                let xOffset = groupLayout.offsets.x * (flatIndex % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+					  let yOffset = groupLayout.offsets.y * Math.floor(flatIndex / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
 
-	                const x = groupLayout.boundingBox.x + xOffset;
-	                const y = groupLayout.boundingBox.y + yOffset;
+					  const x = groupLayout.boundingBox.x + xOffset;
+					  const y = groupLayout.boundingBox.y + yOffset;
 
 	                // Callback to update polyphonic param when GUI is used
 	                const callback = (e) => {
@@ -340,7 +343,8 @@ export class Polyphony extends MonophonicTemplate{
 	        });
 	    });
 	    this.gui.setTheme( 'dark' )
-	    setTimeout(this.loadPreset('default'),1000)
+	    this.gui.backgroundColor = this.backgroundColor
+	    setTimeout(this.loadPreset('default'),100)
 	}
 
 	createGuiElement(param, { x, y, size, controlType, color, i = null, value, callback }) {

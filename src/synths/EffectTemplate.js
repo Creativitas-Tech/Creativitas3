@@ -47,12 +47,9 @@ export class EffectTemplate {
         this.presets = {};
         this.gui_elements = [];
         this.gui = null;
-        this.guiColor = 'grey'
         this.guiContainer = null;
         this.backgroundColor = [100,100,100]
         this.layout = basicLayout
-        this.poly_ref = null;
-        this.super = null;
         this.type = 'Effect';
         this.name = "";
         this.presetsData = null;
@@ -109,17 +106,17 @@ export class EffectTemplate {
         const presetData = this.presets[this.curPreset];
 
         if (presetData) {
-            console.log("Loading preset ", this.curPreset);
-            for (let name in presetData) {
-                try {
-                    for (let element of Object.values(this.param)) {
-                        this.param[name].set(presetData[name])
-                    }
-                } catch (e) {
-                    console.log(name,presetData[name],e);
-                }
+          console.log("Loading preset", this.curPreset);
+          for (let name in presetData) {
+            try {
+              if (this.param[name]?.set) {
+                this.param[name].set(presetData[name]);
+              }
+            } catch (e) {
+              console.log(name, presetData[name], e);
             }
-        } else {
+          }
+        }else {
             console.log("No preset of name ", name);
         }
     }
@@ -409,9 +406,10 @@ export class EffectTemplate {
             return this.gui.Text({
                 label: param.max,
                 value: param._value,
-                x:x,
+                x:x+2,
                 y:y+10,
-                mainText: 12,
+                border:0.01,
+                textSize: size,
                 accentColor: color,
                 callback: (x) => {},
             });
