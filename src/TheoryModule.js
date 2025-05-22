@@ -653,7 +653,7 @@ export function parsePitchStringSequence(str) {
     
     const firstElement = str.replace(/\[/g, "")[0]
     const usesPitchNames = /^[a-ac-zA-Z?]$/.test(firstElement);
-    console.log(str)
+    //console.log(str)
 
     // Step 1: Remove all whitespace
     if( usesPitchNames ) str = str.replace(/\s/g, "");
