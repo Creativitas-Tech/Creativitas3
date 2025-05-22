@@ -30,7 +30,7 @@ export { Twinkle } from './Twinkle.js';
 export { Chorus } from './Chorus.js';
 export { Distortion } from './Distortion.js';
 export { Delay } from './Delay.js';
-// export { Feedback } from './Feedback.js';
+export { Vocoder } from './Vocoder.js';
 
 export { MidiOut } from './MidiOut.js';
 

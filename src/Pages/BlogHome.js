@@ -4,7 +4,8 @@ import { marked } from 'marked';
 
 const blogSlugs = [
   'gettingStarted',
-  'ui_layout_blog_post'
+  'ui_layout_blog_post',
+  'GettingStarted_AudioEffect'
 ];
 
 const BlogHome = () => {
@@ -37,7 +38,18 @@ const BlogHome = () => {
   }, []);
 
   return (
-    <div style={{ padding: '2rem' }}>
+  <div style={{
+    backgroundColor: '#fff8f0',
+    minHeight: '100vh',
+    padding: '3rem 1rem',
+  }}>
+    <div style={{
+      maxWidth: '1000px',
+      margin: '0 auto',
+      color: '#2c2c2c',
+      fontFamily: `'Georgia', serif`,
+      lineHeight: '1.6',
+    }}>
       <h1>Blog</h1>
       <div
         className="blog-intro"
@@ -51,7 +63,8 @@ const BlogHome = () => {
         ))}
       </ul>
     </div>
-  );
+  </div>
+);
 };
 
 export default BlogHome;

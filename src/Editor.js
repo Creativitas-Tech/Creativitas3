@@ -11,7 +11,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 
 
 //tone
-import { Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
@@ -116,6 +116,7 @@ function Editor(props) {
 
     // Initialize timing strategy manager with default Tone.js transport
     useEffect(() => {
+
         // Make the timing strategy manager available globally
         window.timing = timingStrategyManager;
 
@@ -218,7 +219,7 @@ function Editor(props) {
     window.Chorus = Chorus;
     window.Distortion = Distortion;
     window.Delay = Delay;
-    // window.Player = Player;
+    window.Vocoder = Vocoder;
     // window.Player = Player;
 
     window.Feedback = Feedback;
@@ -480,6 +481,8 @@ function Editor(props) {
         //Tone.setContext(audioContext);
         window.audioContext = Tone.context.rawContext;
         window.setTimeout2 = Tone.context.rawContext.setTimeout;
+        //console.log("latencyHint:", Tone.context.rawContext.latencyHint);
+        console.log("baseLatency:", Tone.context.rawContext.baseLatency);
 
         return () => {
 

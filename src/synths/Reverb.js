@@ -38,7 +38,7 @@ export class Reverb extends EffectTemplate {
     this.presets = ReverbPresets;
     this.name = "Reverb";
     this.layout = layout;
-    this.backgroundColor = [0,0,50]
+    this.backgroundColor = [200,0,50]
     this.curDelayTime = .1
 
     this.widthValue = 0.01

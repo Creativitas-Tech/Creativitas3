@@ -1,8 +1,35 @@
 # Getting Started with Creativitas
 
-Welcome to Creativitas! This post is for anyone looking to explore sound synthesis and music programming using **Tone.js** and the **Web Audio API** through the Creativitas live coding environment.
+The Creativitas website was created initially as a pedagogical tool for the MIT course 21M.080 introduction to music technology. In particular, 21M.080 uses it to learn about sound synthesis and music programming using **Tone.js** and the **Web Audio API** 
 
-Whether you're here to practice your JavaScript skills or dive into audio programming, Creativitas offers a flexible, responsive environment designed for experimentation, learning, and creative play.
+Over time, the site has developed into a larger playground for exploring:
+* audio programming
+* interface design
+* live coding syntax and practices 
+* MIDI controller explorations
+* collaborative web-based experiences.
+
+Most people using the site will be interacting with it through the code box on the main page, or the code boxes on the example pages. This blog post will give a few tips for getting started that way.
+
+But most of these blog posts will be documenting the process of developing the site itself. My goal is to create a repository of knowledge for other people to learn about my thought processes as I created this site and also to be a knowledge resource for people who are helping continue to develop the site in the future.
+
+A lot of people have helped to contribute to their development of the Creativitas coding environment:
+
+* Kayli Requenez
+* Billal Iqbal
+* Diego Yañez-Laguna
+* Lark Savoldy
+* Yaro Luchko
+* Javier Mulero
+* Artem Laptiev
+* Diego Barros
+* TJ Ptak
+
+For the most part I used ChatGPT as a coding helper - but I know other people have used other AIs when working on the site.
+
+Thanks all for your help!
+
+-ian
 
 ---
 
@@ -16,7 +43,7 @@ The Creativitas code box lets you enter JavaScript code directly into your brows
 - **Multi-line block execution:**  
   Use `Option + Shift + Enter` (macOS) or `Alt + Shift + Enter` (Windows/Linux) to run a selected block of code.
 
-⚠️ **Avoid pressing the “Run” button multiple times.** Doing so may cause unexpected behavior or audio conflicts. If something stops working, the easiest fix is often to **refresh the page**.
+**Avoid pressing the “Run” button multiple times.** Doing so may cause unexpected behavior or audio conflicts. If something stops working, the easiest fix is often to **refresh the page**.
 
 ---
 
@@ -54,5 +81,3 @@ To get inspired or find reference material, head over to the **[Table of Content
   [https://github.com/your-org/creativitas](https://github.com/your-org/creativitas) _(Replace with actual URL if different)_
 
 ---
-
-Now you're ready to start making sound. Try creating a synth, scheduling some notes, or modulating a filter. Happy coding!
