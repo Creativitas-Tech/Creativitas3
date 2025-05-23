@@ -14,6 +14,8 @@
  */
 
 import * as Tone from 'tone';
+import * as p5 from 'p5';
+import { sketch } from '../p5Library.js'
 import { DrumTemplate } from './DrumTemplate';
 import DrumSamplerPresets from './synthPresets/DrumSamplerPresets.json';
 import {parseStringSequence, parseStringBeat} from '../TheoryModule'
@@ -30,6 +32,7 @@ export class DrumSampler extends DrumTemplate{
   constructor(kit = "default", gui=null) {
     super()
     this.gui = gui
+    this.backgroundColor = [200,200,200]
     
     this.presets = DrumSamplerPresets
     this.name = "DrumSampler"
@@ -112,15 +115,10 @@ export class DrumSampler extends DrumTemplate{
     this.p2Velocity = new Array(10).fill(1)
     this.p3Velocity = new Array(10).fill(1)
 
-    if (this.gui !== null) {
-            this.initGui()
-            this.hideGui();
-            setTimeout(this.loadPreset('default'),1000);
-        }
-
-        for(let i=0;i<10;i++) {
-            this.subdivision[i] = '16n'
-        }
+    for(let i=0;i<10;i++) {
+        this.subdivision[i] = '16n'
+    }
+    this.loadKit('default')
 
   }//constructor
 
@@ -548,7 +546,9 @@ export class DrumSampler extends DrumTemplate{
    * @param {object} [gui=this.gui] - The GUI object to use.
    */
   initGui(gui=this.gui, x = 10, y = 10) {
-      if(gui) this.gui = gui
+      this.guiContainer = document.getElementById('Canvas');
+      this.gui = new p5(sketch, this.guiContainer);
+        
       // Set the base positions
       this.x = x;
       this.y = y;
@@ -621,6 +621,8 @@ export class DrumSampler extends DrumTemplate{
         open_decay_knob,
         kit_dropdown
     ];
+
+    this.gui.backgroundColor = this.backgroundColor
   }
 
   createKnob(_label, _x, _y, _min, _max, _size, _accentColor, callback) {
@@ -633,24 +635,7 @@ export class DrumSampler extends DrumTemplate{
         border: 4, // Adjust as needed
         showLabel: 1, showValue: 1
       });
-    }
-
-  // connect(destination) {
-  //   if (destination.input) {
-  //     this.output.connect(destination.input);
-  //   } else {
-  //     this.output.connect(destination);
-  //   }
-  // }
-
-	// disconnect(destination) {
-  //   if (destination.input) {
-  //     this.output.disconnect(destination.input);
-  //   } else {
-
-  //     this.output.disconnect(destination);
-  //   }
-  // }
+    } 
 }
 
 class DrumVoice{
