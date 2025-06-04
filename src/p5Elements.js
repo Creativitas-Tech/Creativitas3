@@ -372,8 +372,8 @@ class Element {
         this.callback = options.callback || null;
         if (this.mapto || this.callback) this.maptoDefined = 'true'
         else this.maptoDefined = 'false'
-        this.rawValue = unScaleOutput(options.value, 0, 1, this.min, this.max, this.curve) || 0.5;
         this.value = options.value != undefined ? options.value : scaleOutput(0.5, 0, 1, this.min, this.max, this.curve);
+        this.rawValue = unScaleOutput(this.value, 0, 1, this.min, this.max, this.curve);
         p.elements[this.id] = this;
 
         //collab-hub sharing values
