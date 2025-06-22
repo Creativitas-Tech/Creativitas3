@@ -56,7 +56,6 @@ export class EffectTemplate {
         this.curPreset = null;
     }
 
-    
     /**
      * Save a preset by name
      * @param {string} name - Name of the preset to save

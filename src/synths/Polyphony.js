@@ -342,7 +342,7 @@ export class Polyphony extends MonophonicTemplate{
 	            });
 	        });
 	    });
-	    this.gui.setTheme( 'dark' )
+	    this.gui.setTheme( this.gui, 'dark' )
 	    this.gui.backgroundColor = this.backgroundColor
 	    setTimeout(this.loadPreset('default'),100)
 	}

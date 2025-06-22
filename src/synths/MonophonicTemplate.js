@@ -9,7 +9,7 @@ import { ArrayVisualizer } from '../visualizers/VisualizeArray';
 import { Parameter } from './ParameterModule.js'
 import { sketch } from '../p5Library.js'
 import basicLayout from './layouts/basicLayout.json';
-
+import Groove from '../Groove.js'
 
 /**
  * Represents a Monophonic Synth
@@ -50,6 +50,7 @@ export class MonophonicTemplate {
         this.gui_elements = [];
         this.gui = null;
         this.guiContainer = null;
+        this.guiHeight = 1
         this.layout = basicLayout
         this.poly_ref = null;
         this.super = null;
@@ -400,7 +401,8 @@ export class MonophonicTemplate {
      */
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
-        this.gui = new p5(sketch, this.guiContainer);
+        const sketchWithSize = (p) => sketch(p, { height: .25 });
+        this.gui = new p5(sketchWithSize, this.guiContainer);
         const layout = this.layout;
         console.log(layout);
 
@@ -836,13 +838,16 @@ export class MonophonicTemplate {
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let lag = this.getSeqParam(this.seq[num].lag, index);
 
+        let groove = Groove.get(subdivision,index)
+        console.log(groove)
+        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timingOffset
         try {
             //console.log('trig', time, val[1], Tone.Time(this.subdivision))
             this.triggerAttackRelease(
                 note + octave * 12,
-                velocity,
+                velocity * groove.velocityMult,
                 sustain,
-                time + val[1] * (Tone.Time(subdivision)) + lag
+                time + timeOffset
             );
         } catch (e) {
             console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);

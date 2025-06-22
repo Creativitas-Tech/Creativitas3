@@ -161,7 +161,11 @@ export class Seq {
         const ornamentedEvent = [];
 
         // Total number of original notes
-        const numSourceNotes = event.length;
+        //const numSourceNotes = event.length;
+        //const noteSpacing = 1 / length;
+
+        const uniqueTimeSteps = [...new Set(event.map(e => e[1]))];
+        const numSourceNotes = uniqueTimeSteps.length;
         const noteSpacing = 1 / length;
 
         for (let [pitch, t] of event) {

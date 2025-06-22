@@ -66,6 +66,7 @@ export class Twinkle extends MonophonicTemplate {
 
     // Bind parameters with this instance
     this.paramDefinitions = paramDefinitions(this)
+    //console.log(this.paramDefinitions)
     this.param = this.generateParameters(this.paramDefinitions)
     this.createAccessors(this, this.param);
 

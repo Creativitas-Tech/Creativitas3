@@ -1,0 +1,32 @@
+{
+    "input": {
+      "color": [255, 255, 255],
+      "boundingBox": { "x": 5, "y": 35, "width": 20, "height": 100 },
+      "offsets": { "x": 10, "y": 20 },
+      "groupA": ["name"],
+      "controlTypeA": "text",
+      "controlTypeB": "knob",
+      "sizeA": 1.5,
+      "sizeB": 0.5
+    },
+    "param": {
+      "color": [200, 100, 150],
+      "boundingBox": { "x": 25, "y": 35, "width": 60, "height": 100 },
+      "offsets": { "x": 10, "y": 20 },
+      "groupA": ["type"],
+      "controlTypeA": "radioButton",
+      "controlTypeB": "knob",
+      "sizeA": 0.5,
+      "sizeB": 0.5
+    },
+    "output": {
+      "color": [100, 255, 255],
+      "boundingBox": { "x": 80, "y": 35, "width": 20, "height": 100 },
+      "offsets": { "x": 10, "y": 30 },
+      "groupA": ["level"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.5,
+      "sizeB": 0.5
+    }
+}    

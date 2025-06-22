@@ -29,7 +29,7 @@ export const sketch = (p, config = {}) => {
         if( config.height === undefined) config.height = 1
         let dim =  p.initialize(div, config.height)
 
-        p.activeTheme = themes.themes['dark']
+        p.activeTheme = themes['dark']
         p.width = dim[0]
         p.height = dim[1]
         //console.log(p.width, p.height)

@@ -1,5 +1,4 @@
 {
-  "themes": {
     "default": {
       "border": 6,
       "backgroundColor": [240, 240, 240], 
@@ -37,5 +36,5 @@
       "titleFont": "Verdana",
       "borderRadius": 10
     }
-  }
+  
 }

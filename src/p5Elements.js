@@ -6,7 +6,7 @@ created by Kayli Requenez F23
 import p5 from 'p5';
 import themes from './p5Themes.json';
 
-let activeTheme = themes.themes['default']; // Default theme preset
+let activeTheme = themes['default']; // Default theme preset
 
 
 export function debug() {
@@ -17,17 +17,18 @@ export function debug() {
 //************** THEME DEFINITIONS *************/
 // Function to list available themes
 export function listThemes() {
-    console.log(Object.keys(themes.themes))
+    console.log(Object.keys(themes))
 }
 
 export function setp5Theme(p,themeName) {
-    if (!themes.themes[themeName]) {
+    //console.log(p, themeName, themes)
+    if (!themes[themeName]) {
         console.error(`Theme '${themeName}' not found.`);
         return;
     }
-    activeTheme = themes.themes[themeName]; // Default theme preset
+    activeTheme = themes[themeName]; // Default theme preset
     Object.assign(p, activeTheme);
-    return themes.themes[themeName]
+    return themes[themeName]
 }
 
 // Function to update theme parameters

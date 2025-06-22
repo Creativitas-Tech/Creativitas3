@@ -17,6 +17,7 @@ import { Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
 import p5 from 'p5';
+import Groove from './Groove.js';
 import { setp5Theme } from './p5Elements.js';
 import * as Tone from 'tone';
 import * as TheoryModule from './TheoryModule.js';
@@ -113,6 +114,7 @@ function Editor(props) {
     window.p5 = p5;
     window.Tone = Tone;
     window.Theory = TheoryModule.Theory;
+    window.groove = Groove
 
     // Initialize timing strategy manager with default Tone.js transport
     useEffect(() => {
