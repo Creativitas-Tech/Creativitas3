@@ -13,6 +13,7 @@ import PlayerPresets from './synthPresets/PlayerPresets.json';
 import {Parameter} from './ParameterModule.js'
 import layout from './layouts/allKnobsLayout.json';
 import paramDefinitions from './params/playerParams.js';
+import Groove from '../Groove.js'
 
 class CustomPlayer extends Tone.Player {
     constructor(options) {
@@ -340,18 +341,30 @@ export class Player extends MonophonicTemplate {
             if( usesPitchNames ) note =  pitchNameToMidi(val[0])
             else note = intervalToMidi(val[0], this.min, this.max)
         }
-        const div = val[1]
         if(note < 0) return
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
         let sustain = this.getSeqParam(this.seq[num].sustain, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
+        let lag = this.getSeqParam(this.seq[num].lag, index);
         note = note+octave
         sustain = sustain * Tone.Time(subdivision)
         //console.log(note, velocity, sustain, time)
-       try{
-            this.triggerAttackRelease(note, velocity, sustain, time + div * Tone.Time(subdivision));
+
+        let groove = Groove.get(subdivision,index)
+        //console.log(groove)
+        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+        velocity = velocity * groove.velocity
+        if( Math.abs(velocity)>2) velocity = 2
+        try {
+            //console.log('trig', time, val[1], Tone.Time(this.subdivision))
+            this.triggerAttackRelease(
+                note,
+                velocity,
+                sustain,
+                time + timeOffset
+            );
         } catch(e){
             console.log('invalid note', note , velocity, sustain)
         }

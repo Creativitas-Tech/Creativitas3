@@ -839,13 +839,15 @@ export class MonophonicTemplate {
         let lag = this.getSeqParam(this.seq[num].lag, index);
 
         let groove = Groove.get(subdivision,index)
-        console.log(groove)
-        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timingOffset
+        //console.log(groove)
+        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+        velocity = velocity * groove.velocity
+        if( Math.abs(velocity)>2) velocity = 2
         try {
             //console.log('trig', time, val[1], Tone.Time(this.subdivision))
             this.triggerAttackRelease(
                 note + octave * 12,
-                velocity * groove.velocityMult,
+                velocity,
                 sustain,
                 time + timeOffset
             );

@@ -22,6 +22,8 @@ import {parseStringSequence, parseStringBeat} from '../TheoryModule'
 import {Parameter} from './ParameterModule.js'
 import { Seq } from '../Seq'
 import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule';
+import Groove from '../Groove.js'
+
 /**
  * DrumSampler class extends DrumTemplate to create a drum sampler with various sound manipulation features.
  * It loads and triggers different drum samples based on the selected kit.
@@ -411,35 +413,43 @@ export class DrumSampler extends DrumTemplate{
   triggerDrum = (val, time=Tone.immediate(), index = 0, num=0)=>{
     // console.log(val,time,index,num)
     val = val[0]
+
     let octave = this.getSeqParam(this.seq[num].octave, index);
-        let velocity = this.getSeqParam(this.seq[num].velocity, index);
-        let sustain = this.getSeqParam(this.seq[num].sustain, index);
-        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
-        let lag = this.getSeqParam(this.seq[num].lag, index);
+    let velocity = this.getSeqParam(this.seq[num].velocity, index);
+    let sustain = this.getSeqParam(this.seq[num].sustain, index);
+    let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
+    let lag = this.getSeqParam(this.seq[num].lag, index);
 
-      let subdivisionTime = Tone.Time(subdivision).toSeconds();
+    let subdivisionTime = Tone.Time(subdivision).toSeconds();
 
+    let groove = Groove.get(subdivision,index)
     // Calculate lag as a percentage of subdivision
     let lagTime = (lag) * subdivisionTime;
     //console.log(lag, subdivisionTime, lagTime)
 
     // Apply lag to time
-    time = time + lagTime;
+    time = time + lagTime + groove.timing
+
+    
+    //console.log(groove)
+    const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+    velocity = (velocity/100) * groove.velocity
+    if( Math.abs(velocity)>2) velocity = 2
 
     switch(val){
       case '.': break;
-      case '0': this.newKick.trigger(1,1,time); break; //just because. . . .
-      case 'O': this.newKick.trigger(1,1,time); break;
+      case '0': this.newKick.trigger(1*velocity,1,time); break; //just because. . . .
+      case 'O': this.newKick.trigger(1*velocity,1,time); break;
       //case 'O': this.triggerVoice(this.kick,this.kickVelocity[num],time); break;
-      case 'o': this.newKick.trigger(.5,1.5,time); break;
-      case 'X': this.triggerVoice(this.snare,1,time); break;
-      case 'x': this.triggerVoice(this.snare,.5,time); break;
+      case 'o': this.newKick.trigger(.5*velocity,1.5,time); break;
+      case 'X': this.triggerVoice(this.snare,1*velocity,time); break;
+      case 'x': this.triggerVoice(this.snare,.5*velocity,time); break;
       // case '*': this.triggerVoice(this.hihat,this.closedVelocity[num],time); break;
-      case '*': this.newHat.triggerChoke(.75,0.1,time); break;
-      case '^': this.newHat.trigger(.75,1,time); break;
-      case '1': this.triggerVoice(this.tom[0],1,time); break;
-      case '2': this.triggerVoice(this.tom[1],1,time); break;
-      case '3': this.triggerVoice(this.tom[2],1,time); break;
+      case '*': this.newHat.triggerChoke(.75*velocity,0.1,time); break;
+      case '^': this.newHat.trigger(.75*velocity,1,time); break;
+      case '1': this.triggerVoice(this.tom[0],1*velocity,time); break;
+      case '2': this.triggerVoice(this.tom[1],1*velocity,time); break;
+      case '3': this.triggerVoice(this.tom[2],1*velocity,time); break;
       default: console.log('triggerDrum(), no matching drum voice ', val, '\n')
     }   
   }
@@ -622,7 +632,7 @@ export class DrumSampler extends DrumTemplate{
         kit_dropdown
     ];
 
-    this.gui.backgroundColor = this.backgroundColor
+    this.gui.setTheme(this.gui, 'dark' )
   }
 
   createKnob(_label, _x, _y, _min, _max, _size, _accentColor, callback) {
@@ -712,8 +722,8 @@ class DrumVoice{
     }
 
     createAccessors(parent, params) {
-      console.log(params)
-    Object.keys(params).forEach((key) => {
+      //console.log(params)
+      Object.keys(params).forEach((key) => {
         const param = params[key];
 
         // Ensure the Parameter object has a `set` method

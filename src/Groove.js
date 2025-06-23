@@ -2,38 +2,41 @@ import * as Tone from 'tone';
 
 class GrooveGenerator {
   constructor(size = 16, baseValue = '16n') {
-    this.size = size;
     this.baseValue = baseValue;
     this.strength = 1.0;
-    this.timing = new Array(size).fill(0);
-    this.velocity = new Array(size).fill(1.0);
+    this.timing = new Array(2).fill(0);
+    this.velocity = new Array(2).fill(1.0);
     this.preset = null;
-    this._humanizer = new EMAHumanizer(0.9); // separate class below
+    this._humanizerV = new EMAHumanizer(0.9); // separate class below
+    this._humanizerT = new EMAHumanizer(0.97); // separate class below
   }
 
   // Humanization via Exponential Moving Average (EMA)
   humanize(amount = 0.01, velocityRange = 0.1) {
-    for (let i = 0; i < this.size; i++) {
-      this.timing[i] = this._humanizer.next() * amount;
-      this.velocity[i] = 1 + this._humanizer.next() * velocityRange;
+    for (let i = 0; i < this.velocity.size; i++) {
+      this.velocity[i] = 1 + this._humanizerV.next() * velocityRange;
+    }
+    for (let i = 0; i < this.timing.size; i++) {
+      this.timing[i] = this._humanizerT.next() * amount;
     }
   }
 
   // Get groove value for a given subdivision and index
   get(subdivision, index) {
   	const quarter = Tone.Time('4n')
-  	if( subdivision=='32n') index = Math.floor(index/2)
-  	else if( subdivision == '16n') index = index
-  	else if( subdivision == '8n') index = index*2
-  	else if( subdivision == '4n') index = index*4
-  	else if( subdivision == '2n') index = index*8
+  	// console.log(subdivision,index)
+  	if( subdivision==='32n') index = Math.floor(index/2)
+  	else if( subdivision === '16n') index = index
+  	else if( subdivision === '8n') index = index*2
+  	else if( subdivision === '4n') index = index*4
+  	else if( subdivision === '2n') index = index*8
   	else index = 0	
-    const baseSteps = this.size;
-    const scaledIndex = Math.floor(index) % baseSteps;
-    const timingOffset = this.timing[scaledIndex] * this.strength * quarter
+  	//console.log(index, this.velocity[index%this.velocity.length])
+    const timingOffset = this.timing[index%this.timing.length] * this.strength * quarter*0.25
+    const velocityScale = this.velocity[index%this.velocity.length] * this.strength
     return { 
-      timingOffset: timingOffset,
-      velocityMult: this.velocity[scaledIndex] * this.strength
+      timing: timingOffset,
+      velocity: velocityScale
     };
   }
 
