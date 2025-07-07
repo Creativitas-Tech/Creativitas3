@@ -11,13 +11,13 @@ export class Seq {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         this._subdivision = subdivision; // Local alias
         this._octave = 0;                // Local alias
-        this._sustain = .1;             // Local alias
+        this._sustain = .25;             // Local alias
         this._roll = 0.0;               // Local alias
         this._velocity = 100;            // Local alias
         this._orn = 0;            // Local alias
         this._lag = 0;            // Local alias
         this._transform = (x) => x;      // Local alias
-        this.phraseLength = phraseLength;
+        this.phraseLength = phraseLength === 'infinite' ? 'infinite' : phraseLength * this.vals.length;
         this.enable = 1;
         this.min = 24;
         this.max = 127;
@@ -70,27 +70,30 @@ export class Seq {
 
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
-        this.phraseLength = phraseLength;
+        if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
+        else this.phraseLength = phraseLength
         this.subdivision = subdivision;
 
+        // if (this.loopInstance) {
+        // //     this.loopInstance.dispose();
+        // }
 
-        if (this.loopInstance) {
-            this.loopInstance.dispose();
-        }
-
-        this.createLoop();
+        // // this.createLoop();
         this.start()   
     }
 
     drumSequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parseStringSequence(arr);
-        this.phraseLength = phraseLength;
+        if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
+        else this.phraseLength = phraseLength
         this.subdivision = subdivision;
 
-        if (this.loopInstance) {
-            this.loopInstance.dispose();
-        }
-        this.createLoop();
+        // if (this.loopInstance) {
+        // //     this.loopInstance.dispose();
+        // }
+
+        // // this.createLoop();
+        this.start()   
     }
 
     createLoop() {
@@ -99,13 +102,15 @@ export class Seq {
             //console.log('old loop')
             
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+            this.index = this.index % this.vals.length
+            //console.log('ind ', this.index)
             if (this.enable === 0) return;
 
-            let curBeat = this.vals[this.index % this.vals.length];
-            if(curBeat == undefined) curBeat = '.'
+            let curBeat = this.vals[this.index ];
+            if (curBeat == undefined) curBeat = '.'
 
             //console.log("before transform", '.'+curBeat+'.')
-            curBeat = this.perform_transform(curBeat);
+            //curBeat = this.perform_transform(curBeat);
             //console.log("after transform", '.'+curBeat+'.')
 
             curBeat = this.checkForRandomElement(curBeat);
@@ -113,6 +118,7 @@ export class Seq {
             let event = parsePitchStringBeat(curBeat, time);
             //console.log('1', event)
             event = this.applyOrnamentation(event)
+            event = event.map(([x, y]) => [this.perform_transform(x), y])
             //console.log(event)
             // Roll chords
             const event_timings = event.map(subarray => subarray[1]);
@@ -131,7 +137,7 @@ export class Seq {
             // for(params in this.synth.param){
             //     if(Array.isArray(params)) this.synth.setValueAtTime
             // }}
-
+            //console.log('len ', this.phraseLength)
             if (this.phraseLength === 'infinite') return;
             this.phraseLength -= 1;
             if (this.phraseLength < 1) this.stop();
@@ -250,8 +256,8 @@ export class Seq {
 
     start() {
         this.enable = 1;
-        this.phraseLength = 'infinite'
-        //if (this.loopInstance) this.loopInstance.start();
+        //this.phraseLength = 'infinite'
+        //if (this.loopInstance) this.loopInstance.start(0);
     }
 
     stop() {

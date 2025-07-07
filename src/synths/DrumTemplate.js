@@ -25,16 +25,4 @@ export class DrumTemplate extends MonophonicTemplate {
       this.env.triggerAttackRelease(0.001);
     }
 
-    // TODO should we actually reimplement triggerAttack, triggerRelease, and triggerAttackRelease?
-    // triggerAttack(val, vel = 100, time = null) {
-    //     this.trigger();
-    // }
-
-    // triggerRelease(val, time = null) {
-    //     // do nothing
-    // }
-
-    // triggerAttackRelease(val, vel = 100, dur = 0.01, time = null) {
-    //   this.trigger();
-    // }
 }

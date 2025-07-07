@@ -13,13 +13,14 @@ class ExtendedSampler extends Tone.Sampler{
     constructor(options){
         super(options)
         this.startTime = 0
+        console.log('begin')
     }
 
     ftomf(freq) {
         return 69 + 12 * Math.log2(freq / 440);
     }
     triggerAttack(notes, time, velocity = 1) {
-        //this.log("triggerAttack", notes, time, velocity);
+        this.log("triggerAttack", notes, time, velocity);
 
         if (!Array.isArray(notes)) {
             notes = [notes];
@@ -204,11 +205,11 @@ export class Simpler extends MonophonicTemplate {
         if(time){
             this.sampler.triggerAttack(freq, time, amp)
             this.filterEnv.triggerAttack(time)
-            this.vca.factor.setValueAtTime(amp, time)
+            //this.vca.factor.setValueAtTime(amp, time)
         } else{
             this.sampler.triggerAttack(freq)
             this.filterEnv.triggerAttack()
-            this.vca.factor.value = amp
+            //this.vca.factor.value = amp
         }
     }
 
@@ -225,14 +226,16 @@ export class Simpler extends MonophonicTemplate {
     }
 
     triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
+        //console.log(freq, amp, dur)
         this.param.release = this.release 
         freq = Tone.Midi(freq).toFrequency()
+        
         amp = amp/127
         //console.log(freq,amp,dur)
         if(time){
             this.sampler.triggerAttackRelease(freq, dur, time, amp)
             this.filterEnv.triggerAttackRelease(dur,time)
-            this.vca.factor.setValueAtTime(amp, time)
+            //this.vca.factor.setValueAtTime(amp, time)
         } else{
             //this.sampler.triggerAttackRelease(freq, dur)
             //this.filterEnv.triggerAttackRelease(dur)

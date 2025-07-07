@@ -401,10 +401,10 @@ export class MonophonicTemplate {
      */
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
-        const sketchWithSize = (p) => sketch(p, { height: .25 });
+        const sketchWithSize = (p) => sketch(p, { height: 1 });
         this.gui = new p5(sketchWithSize, this.guiContainer);
         const layout = this.layout;
-        console.log(layout);
+        //console.log(layout);
 
         // Group parameters by type
         const groupedParams = {};
@@ -617,10 +617,17 @@ export class MonophonicTemplate {
         }
     }
 
-    play(num = 0, length = null) {
-        if (this.seq[num]) {
-            this.seq[num].play(length);
+    play(arr, subdivision = '8n', num = 0, phraseLength = 1) {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].sequence(arr, subdivision, phraseLength);
         }
+        this.start(num);
+
+        // if (this.seq[num]) {
+        //     this.seq[num].play(length);
+        // }
     }
 
     expr(func, len = 32, subdivision = '16n', num = 0) {
@@ -842,9 +849,10 @@ export class MonophonicTemplate {
         //console.log(groove)
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity
-        if( Math.abs(velocity)>2) velocity = 2
+        if( Math.abs(velocity)>256) velocity = 256
+        //console.log('pa', velocity, timeOffset)
         try {
-            //console.log('trig', time, val[1], Tone.Time(this.subdivision))
+            //console.log('trig', note + octave * 12, velocity,sustain,time+timeOffset)
             this.triggerAttackRelease(
                 note + octave * 12,
                 velocity,

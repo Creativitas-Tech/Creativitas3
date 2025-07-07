@@ -6,6 +6,7 @@ import dlayout from './layouts/drumLayout.json';
 import { DrumTemplate } from './DrumTemplate';
 import paramDefinitions from './params/drumVoiceParams.js';
 import { sketch } from '../p5Library.js'
+import Groove from '../Groove.js'
 
 export class DrumSynth extends DrumTemplate{
     constructor(options = {}) {
@@ -25,7 +26,7 @@ export class DrumSynth extends DrumTemplate{
             volume: 0.5,
         };
         this.params = { ...defaults, ...options };
-        this.layout = dlayout
+        //this.layout = dlayout
         this.name = 'DrumSynth'
         this.presets = presets
 
