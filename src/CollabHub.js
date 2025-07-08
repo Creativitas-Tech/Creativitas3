@@ -12,7 +12,7 @@ import { io } from "socket.io-client";
 export class CollabHubClient {
 
     constructor() {
-        this.socket = io("https://ch-server.herokuapp.com/hub");
+        this.socket = io("http://localhost:3001/slob");
         this.controls = {};
         this.handlers = {};
         this.username = "";
@@ -71,6 +71,16 @@ export class CollabHubClient {
                     console.log("Not us, continuing");
                     let newHeader = incoming.header,
                         newValues = incoming.values;
+
+                    //reformat header into string
+                    const characters = [];
+                    for (let i = 0; i < Object.keys(newHeader).length; i++) {
+                        if (newHeader.hasOwnProperty(i) && typeof newHeader[i] === 'string') {
+                            characters.push(newHeader[i]);
+                        }
+                    }
+                    
+                    newHeader = characters.join('');
                     this.controls[newHeader.name] = newValues;
                     if (newHeader.name in this.handlers) {
                         this.handlers[newHeader.name](incoming);
