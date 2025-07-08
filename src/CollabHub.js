@@ -12,13 +12,13 @@ import { io } from "socket.io-client";
 export class CollabHubClient {
 
     constructor() {
-        this.socket = io("http://localhost:3001/slob");
+        this.socket = io("https://collabhub-server-90d79b565c8f.herokuapp.com/slob");
         this.controls = {};
         this.handlers = {};
         this.username = "";
         this.roomJoined = undefined;
         this.clientId = this._generateClientId(); // Unique identifier for this client instance
-
+ 
         // Callbacks
         this.controlsCallback = (incoming) => { };
         this.eventsCallback = (incoming) => { };
@@ -79,7 +79,7 @@ export class CollabHubClient {
                             characters.push(newHeader[i]);
                         }
                     }
-                    
+
                     newHeader = characters.join('');
                     this.controls[newHeader.name] = newValues;
                     if (newHeader.name in this.handlers) {

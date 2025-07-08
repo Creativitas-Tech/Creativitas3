@@ -31,7 +31,7 @@ export class CollabSlobClient {
     constructor(debug = false) {
         this.debug = debug; // Debug flag that can be toggled
         this.logger = createLogger(this.debug);
-        this.socket = io("https://collab-slob-server.onrender.com/slob");
+        this.socket = io("https://collabhub-server-90d79b565c8f.herokuapp.com/slob");
         this.controls = {};
         this.handlers = {};
         this.username = "";
