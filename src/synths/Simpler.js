@@ -6,7 +6,7 @@
 
 import p5 from 'p5';
 import * as Tone from 'tone';
-import SimplerPresets from './synthPresets/SimplerPresets.json';
+// import SimplerPresets from './synthPresets/SimplerPresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 
 class ExtendedSampler extends Tone.Sampler{
@@ -79,7 +79,9 @@ export class Simpler extends MonophonicTemplate {
     constructor (file) {
         super()
         // this.gui = gui
-        this.presets = SimplerPresets
+		this.presets = {}
+		this.synthPresetName = "SimplerPresets"
+		this.accessPreset()
         this.name = "Simpler"
         
         //audio objects

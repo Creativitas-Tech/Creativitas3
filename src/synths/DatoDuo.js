@@ -8,7 +8,7 @@ import p5 from 'p5';
 import * as Tone from 'tone';
 
 import {stepper} from  '../Utilities.js'
-import DatoDuoPresets from './synthPresets/DatoDuoPresets.json';
+// import DatoDuoPresets from './synthPresets/DatoDuoPresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 
 /**
@@ -23,7 +23,9 @@ export class DatoDuo extends MonophonicTemplate {
   constructor (gui = null) {
     super()
     this.gui = gui
-    this.presets = DatoDuoPresets
+    this.presets = {};
+		this.synthPresetName = "DatoDuoPresets"
+		this.accessPreset()
     this.isGlide = false
     this.name = "DatoDuo"
     //console.log(this.name, " loaded, available preset: ", DatoDuoPresets)

@@ -8,14 +8,16 @@ import p5 from 'p5';
 import * as Tone from 'tone';
 import {MultiVCO} from '../MultiVCO.js'
 import {stepper} from  '../Utilities.js'
-import ESPSynthPresets from './synthPresets/ESPSynthPresets.json';
+// import ESPSynthPresets from './synthPresets/ESPSynthPresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 
 export class ESPSynth extends MonophonicTemplate {
     constructor (gui = null, waves = ['triangle', 'sawtooth', 'square', 'square', 'square', 'noise'], pitches = [1, 1, 1, 0.5, 0.25, 1]) {
         super()
         this.gui = gui
-        this.presets = ESPSynthPresets
+    	this.presets = {};
+		this.synthPresetName = "ESPSynthPresets"
+		this.accessPreset()
         this.name = "ESPSynth"
         //console.log(this.name, " loaded, available preset: ", ESPSynthPresets)
 

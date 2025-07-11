@@ -7,7 +7,7 @@ Single vco monosynth
 */
 
 import * as Tone from 'tone';
-import TwinklePresets from './synthPresets/TwinklePresets.json';
+// import TwinklePresets from './synthPresets/TwinklePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
@@ -17,7 +17,9 @@ export class Twinkle extends MonophonicTemplate {
   constructor (gui = null) {
     super()
     this.gui = gui
-    this.presets = TwinklePresets
+		this.presets = {}
+		this.synthPresetName = "TwinklePresets"
+		this.accessPreset()
     this.isGlide = false
     this.name = "Twinkle"
     //console.log(this.name, " loaded, available preset: ", this.presets)

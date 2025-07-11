@@ -9,7 +9,7 @@ import { MonophonicTemplate } from './MonophonicTemplate';
 import {Theory, parsePitchStringSequence, parsePitchStringBeat,getChord, pitchNameToMidi, intervalToMidi} from '../TheoryModule'
 import { Seq } from '../Seq'
 
-import PlayerPresets from './synthPresets/PlayerPresets.json';
+// import PlayerPresets from './synthPresets/PlayerPresets.json';
 import {Parameter} from './ParameterModule.js'
 import layout from './layouts/allKnobsLayout.json';
 import paramDefinitions from './params/playerParams.js';
@@ -35,7 +35,9 @@ export class Player extends MonophonicTemplate {
     constructor (file) {
         super()
          this.layout = layout
-        this.presets = PlayerPresets
+		this.presets = {}
+		this.synthPresetName = "PlayerPresets"
+		this.accessPreset()
         this.name = "Player"
         this.guiHeight = .25
         

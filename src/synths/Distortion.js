@@ -12,7 +12,7 @@ feedbackSend->feedbackDelay->feedbackGain->feedbackReturn
 import * as Tone2 from 'tone';
 import { EffectTemplate } from './EffectTemplate';
 import { Parameter } from './ParameterModule.js';
-import DistortionPresets from './synthPresets/DistortionPresets.json';
+// import DistortionPresets from './synthPresets/DistortionPresets.json';
 import layout from './layouts/EffectLayout.json';
 import {paramDefinitions} from './params/distortionParams.js';
 
@@ -20,7 +20,9 @@ export class Distortion extends EffectTemplate {
   constructor(gui = null) {
     super();
     this.gui = gui;
-    this.presets = DistortionPresets;
+    this.presets = {};
+		this.synthPresetName = "DistortionPresets"
+		this.accessPreset()
     this.name = "Distortion";
     this.layout = layout;
     this.backgroundColor = [100,0,0]

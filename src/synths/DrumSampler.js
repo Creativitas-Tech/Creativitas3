@@ -17,7 +17,7 @@ import * as Tone from 'tone';
 import * as p5 from 'p5';
 import { sketch } from '../p5Library.js'
 import { DrumTemplate } from './DrumTemplate';
-import DrumSamplerPresets from './synthPresets/DrumSamplerPresets.json';
+// import DrumSamplerPresets from './synthPresets/DrumSamplerPresets.json';
 import {parseStringSequence, parseStringBeat} from '../TheoryModule'
 import {Parameter} from './ParameterModule.js'
 import { Seq } from '../Seq'
@@ -36,7 +36,9 @@ export class DrumSampler extends DrumTemplate{
     this.gui = gui
     this.backgroundColor = [200,200,200]
     
-    this.presets = DrumSamplerPresets
+    this.presets = {};
+		this.synthPresetName = "DrumSamplerPresets"
+		this.accessPreset()
     this.name = "DrumSampler"
     this.kit = kit
     this.drumkitList = ["LINN", "Techno", "TheCheebacabra1", "TheCheebacabra2", "acoustic-kit", "breakbeat13", "breakbeat8", "breakbeat9", "4OP-FM", "Bongos", "CR78", "KPR77", "Kit3", "Kit8"]

@@ -35,7 +35,7 @@ gain (into waveShaper)
 */
 import p5 from 'p5';
 import * as Tone from 'tone';
-import RumblePresets from './synthPresets/RumblePresets.json';
+// import RumblePresets from './synthPresets/RumblePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import tightLayout from './layouts/tightLayout.json';
@@ -45,10 +45,11 @@ export class Rumble extends MonophonicTemplate {
   constructor (gui = null) {
     super()
     this.gui = gui
-    this.presets = RumblePresets
+		this.presets = {}
+		this.synthPresetName = "RumblePresets"
+		this.accessPreset()
     this.isGlide = false
     this.name = "Rumble"
-    console.log(this.name, " loaded, available preset: ", RumblePresets)
     this.layout = tightLayout
 
     // Initialize the main frequency control

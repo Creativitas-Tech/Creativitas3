@@ -47,6 +47,7 @@ import Groove from '../Groove.js'
 export class MonophonicTemplate {
     constructor() {
         this.presets = {};
+        this.synthPresetName = ""
         this.gui_elements = [];
         this.gui = null;
         this.guiContainer = null;
@@ -86,6 +87,30 @@ export class MonophonicTemplate {
         }, '16n').start();
     }
 
+    /**
+     * Populate this.presets with presets fetched from the server
+     * Using the name in this.synthPresetName
+     */
+    async accessPreset(){      
+        let presetData = {} 
+        try {
+            let response = await fetch('http://localhost:3001/synth_presets/'+this.synthPresetName+'.json')
+            let jsonString = ""
+                if (!response.ok) {
+                    // Handle HTTP errors (e.g., 404 Not Found, 500 Internal Server Error)
+                    console.warn("Error accessing file");
+                }else{
+                    jsonString = await response.text();
+                }
+                presetData = JSON.parse(jsonString);
+                console.log("jsonString", jsonString);
+                console.log("presetData", presetData);
+        } catch (error) {
+            console.warn("Error parsing JSON:", error);
+        }
+        this.presets = await presetData;
+        this.loadPreset("default");
+    }
     
     /**
      * Save a preset by name
@@ -93,7 +118,7 @@ export class MonophonicTemplate {
      * @returns {void}
      * @example synth.savePreset('default')
      */
-    savePreset (name) {
+    async savePreset (name) {
         const _preset = {};
         for (let element of Object.values(this.param)) {
             _preset[element.name] = element._value;
@@ -106,24 +131,93 @@ export class MonophonicTemplate {
         }
         this.presets[name] = _preset;
 
+         try {
+            const response = await fetch('http://localhost:3001/synth_presets/save', {
+                method: 'POST', // Specify the HTTP method
+                headers: {
+                    'Content-Type': 'application/json' // Tell the server we're sending JSON
+                },
+                body: JSON.stringify({ // Convert your data to a JSON string for the body
+                    name: this.synthPresetName,
+                    data: this.presets
+            })
+            });
+
+            const result = await response.json(); // Parse the server's JSON response
+
+            if (response.ok) {
+                console.log(`Save successful: ${result.message}`);
+                return result.success;
+            } else {
+                console.warn(`Save failed: ${result.message}`);
+                // You might want to throw an error here or handle specific status codes
+                return false;
+            }
+        } catch (error) {
+            console.error(`Error sending save request for '${name}':`, error);
+            return false;
+        }
         console.log(`Preset saved under ${this.name}/${name}`);
     };
 
-    /**
-     * Download the presets data as a JSON file
-     * @returns {void}
-     * @example synth.downloadPresets()
-     */
-    downloadPresets ()  {
-        this.presetsData = this.presets;
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.presetsData, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", `${this.name}Presets.json`);
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
+    async deletePreset (name) {
+        // Update the presetsData in memory
+        //console.log(this.presets);
+        if (this.presets[name]) {
+            delete this.presets[name]
+            try {
+                const response = await fetch('http://localhost:3001/synth_presets/save', {
+                    method: 'POST', // Specify the HTTP method
+                    headers: {
+                        'Content-Type': 'application/json' // Tell the server we're sending JSON
+                    },
+                    body: JSON.stringify({ // Convert your data to a JSON string for the body
+                        name: this.synthPresetName,
+                        data: this.presets
+                })
+                });
+
+                const result = await response.json(); // Parse the server's JSON response
+
+                if (response.ok) {
+                    console.log(`Delete successful: ${result.message}`);
+                    return result.success;
+                } else {
+                    console.warn(`Delete failed: ${result.message}`);
+                    // You might want to throw an error here or handle specific status codes
+                    return false;
+                }
+            } catch (error) {
+                console.error(`Error sending delete request for '${name}':`, error);
+                return false;
+            }
+        }
+
+        console.log(`Preset deleted  under ${this.name}/${name}`);
     };
+
+    async downloadAllPresets() {
+    try {
+        const response = await fetch('http://localhost:3001/download_presets');
+        if (!response.ok) {
+            console.error('Failed to download presets:', response.status, response.statusText);
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'synth_presets.zip'; // The filename the user will see
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url); // Clean up the object URL
+        console.log('Presets folder downloaded successfully.');
+    } catch (error) {
+        console.error('Error downloading presets:', error);
+    }
+}
 
     /**
      * Load a preset by name
@@ -146,6 +240,7 @@ export class MonophonicTemplate {
               console.log(name, presetData[name], e);
             }
           }
+          console.log(this.param.vco_mix)
         } else {
             console.log("No preset of name ", name);
         }

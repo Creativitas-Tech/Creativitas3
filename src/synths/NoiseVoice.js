@@ -14,7 +14,7 @@ basic noise oscillator with:
 import p5 from 'p5';
 import { sketch } from '../p5Library.js'
 import * as Tone from 'tone';
-import NoiseVoicePresets from './synthPresets/NoiseVoicePresets.json';
+// import NoiseVoicePresets from './synthPresets/NoiseVoicePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
@@ -25,7 +25,9 @@ export class NoiseVoice extends MonophonicTemplate {
   constructor (gui = null) {
     super()
     this.gui = gui
-    this.presets = NoiseVoicePresets
+		this.presets = {}
+		this.synthPresetName = "NoiseVoicePresets"
+		this.accessPreset()
     this.isGlide = false
     this.name = "NoiseVoice"
 

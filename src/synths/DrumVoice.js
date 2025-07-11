@@ -1,7 +1,7 @@
 import p5 from 'p5';
 import * as Tone from 'tone';
 import {Parameter} from './ParameterModule.js'
-import presets from './synthPresets/DrumSynthPresets.json';
+// import presets from './synthPresets/DrumSynthPresets.json';
 import dlayout from './layouts/drumLayout.json';
 import { DrumTemplate } from './DrumTemplate';
 import paramDefinitions from './params/drumVoiceParams.js';
@@ -28,7 +28,9 @@ export class DrumSynth extends DrumTemplate{
         this.params = { ...defaults, ...options };
         //this.layout = dlayout
         this.name = 'DrumSynth'
-        this.presets = presets
+        this.presets = {};
+		this.synthPresetName = "DrumSynthPresets"
+		this.accessPreset()
 
 
         // Oscillator and AM stage

@@ -495,7 +495,7 @@ export class Polyphony extends MonophonicTemplate{
 
     // Function to download the updated presets data
 	downloadPresets() {
-		this.voice[0].downloadPresets()
+		this.voice[0].downloadAllPresets()
 	};
 
 	panic = function(){

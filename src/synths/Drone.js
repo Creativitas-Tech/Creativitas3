@@ -9,13 +9,15 @@ Drone
 
 import p5 from 'p5';
 import * as Tone from 'tone';
-import DronePresets from './synthPresets/DronePresets.json';
+// import DronePresets from './synthPresets/DronePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 
 export class Drone extends MonophonicTemplate{
 	constructor(){
 		super()
-		this.presets = DronePresets
+    	this.presets = {};
+		this.synthPresetName = "DronePresets"
+		this.accessPreset()
 		this.name = 'Drone'
 
 		this.frequency = new Tone.Signal(100)

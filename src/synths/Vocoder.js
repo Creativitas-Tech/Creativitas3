@@ -7,7 +7,7 @@ Single vco monosynth
 */
 
 import * as Tone from 'tone';
-import VocoderPresets from './synthPresets/VocoderPresets.json';
+// import VocoderPresets from './synthPresets/VocoderPresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
@@ -17,7 +17,9 @@ export class Vocoder extends MonophonicTemplate {
   constructor (gui = null) {
     super()
     this.gui = gui
-    this.presets = VocoderPresets
+		this.presets = {}
+		this.synthPresetName = "VocoderPresets"
+		this.accessPreset()
     this.isGlide = false
     this.name = "Vocoder"
 

@@ -20,15 +20,17 @@ import p5 from 'p5';
 import * as Tone from 'tone';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
-import DaisiesPresets from './synthPresets/DaisiesPresets.json';
+// import DaisiesPresets from './synthPresets/DaisiesPresets.json';
 import { paramDefinitions } from './params/daisiesParams.js';
 import daisyLayout from './layouts/daisyLayout.json';
 
 export class Daisy extends MonophonicTemplate{
 	constructor(){
 		super()
-		this.presets = DaisiesPresets
-		this.name = 'Daisy'
+		this.presets = {}
+		this.synthPresetName = "DaisiesPresets"
+		this.accessPreset()
+		this.name = "Daisy"
 		this.layout = daisyLayout
 
 		this.frequency = new Tone.Signal(100)
