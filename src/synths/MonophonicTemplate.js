@@ -94,7 +94,7 @@ export class MonophonicTemplate {
     async accessPreset(){      
         let presetData = {} 
         try {
-            let response = await fetch('http://localhost:3001/synth_presets/'+this.synthPresetName+'.json')
+            let response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
             let jsonString = ""
                 if (!response.ok) {
                     // Handle HTTP errors (e.g., 404 Not Found, 500 Internal Server Error)
@@ -132,7 +132,7 @@ export class MonophonicTemplate {
         this.presets[name] = _preset;
 
          try {
-            const response = await fetch('http://localhost:3001/synth_presets/save', {
+            const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/save', {
                 method: 'POST', // Specify the HTTP method
                 headers: {
                     'Content-Type': 'application/json' // Tell the server we're sending JSON
@@ -166,7 +166,7 @@ export class MonophonicTemplate {
         if (this.presets[name]) {
             delete this.presets[name]
             try {
-                const response = await fetch('http://localhost:3001/synth_presets/save', {
+                const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/save', {
                     method: 'POST', // Specify the HTTP method
                     headers: {
                         'Content-Type': 'application/json' // Tell the server we're sending JSON
@@ -198,7 +198,7 @@ export class MonophonicTemplate {
 
     async downloadAllPresets() {
     try {
-        const response = await fetch('http://localhost:3001/download_presets');
+        const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/download_presets');
         if (!response.ok) {
             console.error('Failed to download presets:', response.status, response.statusText);
             return;
