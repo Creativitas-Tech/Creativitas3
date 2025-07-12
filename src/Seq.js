@@ -4,6 +4,8 @@
 import * as Tone from 'tone';
 import { Theory, parseStringSequence, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from './TheoryModule';
 import { orn } from './Ornament';
+import { sketch } from './p5Library.js'
+import * as p5 from 'p5';
 
 export class Seq {
      constructor(synth, arr = [0], subdivision = '8n', phraseLength = 'infinite', num = 0, callback = null) {
@@ -26,6 +28,10 @@ export class Seq {
         this.callback = callback;
         this.parent = null;
         this.index = 0;
+        this.prevVals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr); //for gui tracking
+        this.guiElements = {}
+        this.guiElements["knobs"]=[]
+        this.guiElements["toggles"]=[]
 
         //(note, pattern=1, scalar=1, length=4)
         this.ornaments = [
@@ -70,6 +76,7 @@ export class Seq {
 
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
+        this.prevVals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
         this.subdivision = subdivision;
@@ -80,6 +87,17 @@ export class Seq {
 
         // // this.createLoop();
         this.start()   
+
+        for(let i = 0; i<this.guiElements["knobs"].length; i++){
+            if(i<this.vals.length){
+                if(this.vals[i]=='.'){
+                    this.guiElements["toggles"][i].value = 0
+                }else{
+                    this.guiElements["knobs"][i].value = Number(this.vals[i])
+                    this.guiElements["toggles"][i].value = 1
+                }
+            }
+        }
     }
 
     drumSequence(arr, subdivision = '8n', phraseLength = 'infinite') {
@@ -353,4 +371,96 @@ export class Seq {
         this.sequence = null;
         this.callback = null;
     }
+
+        /**
+         * Initialize the GUI
+         * @returns {void}
+         * @example 
+         * const gui = new p5(sketch, 'Canvas1');
+         * synth.initGui(gui, 10, 10)
+         */
+        seqGui(numSteps=8, numRows = 1, chlink=null) {
+            let guiContainer = document.getElementById('Canvas');
+            const sketchWithSize = (p) => sketch(p, { height: 1 });
+            let gui = new p5(sketchWithSize, guiContainer);
+            this.guiElements["knobs"] = [];
+            this.guiElements["toggles"] = [];
+            
+            for(let i = 0; i < numSteps; i++) {
+                let toggle = gui.Toggle({ //label, mapto, callback, x, y, min, max, curve, value, prev, size, color, showLabel, showValue, bipolar, radioOptions, orientation 
+                    label: i+1,
+                    value: i<this.vals.length ? this.vals[i]!='.' : 1,
+                    x:Math.floor(100/(numSteps+1))*(i+1),
+                    y:Math.floor(100/(numRows*2+1)),
+                    callback: (value) => this.toggleCallback(i, value)
+                });
+                this.guiElements["toggles"].push(toggle);
+
+                //if the sequencer already has a value, populate the knob with that
+                let curval = 0;
+                if(i<this.vals.length){
+                    curval = Number(this.vals[i]);
+                    if(isNaN(curval)){
+                        curval = 0;
+                    }
+                }
+                let knob = gui.Knob({ //label, mapto, callback, x, y, min, max, curve, value, prev, size, color, showLabel, showValue, bipolar, radioOptions, orientation 
+                    label: i+1,
+                    min: -25,
+                    max: 25,
+                    value: curval,
+                    x:Math.floor(100/(numSteps+1))*(i+1),
+                    y:Math.floor(100/(numRows*2+1)*2),
+                    callback: (value) => this.knobCallback(i, value)
+                });
+                this.guiElements["knobs"].push(knob);
+                if(chlink != null){
+                    try{
+                        toggle.linkName = chlink+"toggle"+String(i);
+                        toggle.ch.on(toggle.linkName, (incoming) => {
+                            toggle.forceSet(incoming.values);
+                        })
+                        knob.linkName = chlink+"knob"+String(i);
+                        knob.ch.on(knob.linkName, (incoming) => {
+                            knob.forceSet(incoming.values);
+                        })
+                    }catch{
+                        console.log("CollabHub link failed! Please call initCollab() first.")
+                    }
+                }
+            }
+
+            gui.setTheme(gui, 'dark' )
+        }
+
+    changeGuiLink(newLink){
+        for(let i = 0; i<this.guiElements["knobs"].length; i++){
+            this.guiElements["knobs"][i].linkName = newLink+"knob"+String(i)
+            this.guiElements["knobs"][i].ch.on(this.guiElements["knobs"][i].linkName, (incoming) => {
+                this.guiElements["knobs"][i].forceSet(incoming.values);
+            })
+            
+            this.guiElements["toggles"][i].linkName = newLink+"toggles"+String(i)
+            this.guiElements["toggles"][i].ch.on(this.guiElements["toggles"][i].linkName, (incoming) => {
+                this.guiElements["toggles"][i].forceSet(incoming.values);
+            })
+        }
+    }
+
+    knobCallback(stepNum, val){
+        if(this.vals[stepNum]!='.'){
+            this.vals[stepNum] = Math.floor(val);
+        }
+        this.prevVals[stepNum] = val
+    }
+
+    toggleCallback(stepNum, val){
+        if(val == 0){
+            this.vals[stepNum] = '.'
+        }else{
+            this.vals[stepNum] = this.prevVals[stepNum];
+        }
+    }
+
+    updateSeqGui(){}
 }
