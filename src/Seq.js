@@ -375,19 +375,23 @@ export class Seq {
         /**
          * Initialize the GUI
          * @returns {void}
-         * @example 
-         * const gui = new p5(sketch, 'Canvas1');
-         * synth.initGui(gui, 10, 10)
+         * 
+         * TO USE: mySynth.seq[0].seqGui(3, 1, "linkName")
+         * 
+         * Can update link name with: mySynth.seq[0].changeGuiLink("newLink")
+         * 
+         * TODO: numRows doesn't work
          */
-        seqGui(numSteps=8, numRows = 1, chlink=null) {
+        seqGui(numSteps=8, chlink=null) {
             let guiContainer = document.getElementById('Canvas');
             const sketchWithSize = (p) => sketch(p, { height: 1 });
             let gui = new p5(sketchWithSize, guiContainer);
             this.guiElements["knobs"] = [];
             this.guiElements["toggles"] = [];
+            let numRows = 1;
             
             for(let i = 0; i < numSteps; i++) {
-                let toggle = gui.Toggle({ //label, mapto, callback, x, y, min, max, curve, value, prev, size, color, showLabel, showValue, bipolar, radioOptions, orientation 
+                let toggle = gui.Toggle({ 
                     label: i+1,
                     value: i<this.vals.length ? this.vals[i]!='.' : 1,
                     x:Math.floor(100/(numSteps+1))*(i+1),
@@ -404,7 +408,7 @@ export class Seq {
                         curval = 0;
                     }
                 }
-                let knob = gui.Knob({ //label, mapto, callback, x, y, min, max, curve, value, prev, size, color, showLabel, showValue, bipolar, radioOptions, orientation 
+                let knob = gui.Knob({ 
                     label: i+1,
                     min: -25,
                     max: 25,
