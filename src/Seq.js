@@ -32,6 +32,7 @@ export class Seq {
         this.guiElements = {}
         this.guiElements["knobs"]=[]
         this.guiElements["toggles"]=[]
+        this.userCallback = null
 
         //(note, pattern=1, scalar=1, length=4)
         this.ornaments = [
@@ -88,13 +89,20 @@ export class Seq {
         // // this.createLoop();
         this.start()   
 
+        this.updateGui()
+    }
+
+    updateGui(){
+        this.prevVals = [...this.vals];
         for(let i = 0; i<this.guiElements["knobs"].length; i++){
             if(i<this.vals.length){
                 if(this.vals[i]=='.'){
-                    this.guiElements["toggles"][i].value = 0
+                    this.guiElements["toggles"][i].forceSet(0);
                 }else{
-                    this.guiElements["knobs"][i].value = Number(this.vals[i])
-                    this.guiElements["toggles"][i].value = 1
+                    if(!isNaN(Number(this.vals[i]))){
+                        this.guiElements["knobs"][i].value = Number(this.vals[i])
+                    }
+                    this.guiElements["toggles"][i].forceSet(1);
                 }
             }
         }
@@ -149,6 +157,10 @@ export class Seq {
             //main callback for triggering notes
             //console.log(event, time, this.index, this.num)
             for (const val of event) this.callback(val, time, this.index, this.num);
+
+            if(this.userCallback){
+                this.userCallback();
+            }
 
             //check for sequencing params
             // try{
@@ -297,6 +309,7 @@ export class Seq {
         this.vals = arr.map(element => {
             return typeof element === 'string' ? element : Array.isArray(element) ? JSON.stringify(element) : element;
         });
+        this.updateGui()
 
         this.phraseLength = 'infinite';
         this.sequence(this.vals, subdivision);
@@ -372,6 +385,14 @@ export class Seq {
         this.callback = null;
     }
 
+    pushSeqState(){
+        for(let i = 0; i<this.guiElements["knobs"].length; i++){
+                this.guiElements["knobs"][i].ch.control(this.guiElements["knobs"][i].linkName, this.guiElements["knobs"][i].value)
+                this.guiElements["toggles"][i].ch.control(this.guiElements["toggles"][i].linkName, this.guiElements["toggles"][i].value)
+        }
+    }
+
+
         /**
          * Initialize the GUI
          * @returns {void}
@@ -391,20 +412,14 @@ export class Seq {
             let numRows = 1;
             
             for(let i = 0; i < numSteps; i++) {
-                let toggle = gui.Toggle({ 
-                    label: i+1,
-                    value: i<this.vals.length ? this.vals[i]!='.' : 1,
-                    x:Math.floor(100/(numSteps+1))*(i+1),
-                    y:Math.floor(100/(numRows*2+1)),
-                    callback: (value) => this.toggleCallback(i, value)
-                });
-                this.guiElements["toggles"].push(toggle);
-
                 //if the sequencer already has a value, populate the knob with that
                 let curval = 0;
+                let stringVal = null
+                //set value if it's a number
                 if(i<this.vals.length){
                     curval = Number(this.vals[i]);
                     if(isNaN(curval)){
+                        stringVal = this.vals[i];
                         curval = 0;
                     }
                 }
@@ -418,7 +433,25 @@ export class Seq {
                     callback: (value) => this.knobCallback(i, value)
                 });
                 this.guiElements["knobs"].push(knob);
+
+                //add back correct non-number value to vals (has been changed because of callback)
+                if(i<this.vals.length & stringVal!=null){
+                    this.vals[i] = stringVal;
+                }
+
+                console.log("before toggle", i, this.vals)
+                let toggle = gui.Toggle({ 
+                    label: i+1,
+                    value: i<this.vals.length ? this.vals[i]!='.' : 1,
+                    x:Math.floor(100/(numSteps+1))*(i+1),
+                    y:Math.floor(100/(numRows*2+1)),
+                    callback: (value) => this.toggleCallback(i, value)
+                });
+                console.log("after toggle", i, this.vals)
+                this.guiElements["toggles"].push(toggle);
+
                 if(chlink != null){
+                    console.log("chlink:", chlink)
                     try{
                         toggle.linkName = chlink+"toggle"+String(i);
                         toggle.ch.on(toggle.linkName, (incoming) => {
@@ -444,7 +477,7 @@ export class Seq {
                 this.guiElements["knobs"][i].forceSet(incoming.values);
             })
             
-            this.guiElements["toggles"][i].linkName = newLink+"toggles"+String(i)
+            this.guiElements["toggles"][i].linkName = newLink+"toggle"+String(i)
             this.guiElements["toggles"][i].ch.on(this.guiElements["toggles"][i].linkName, (incoming) => {
                 this.guiElements["toggles"][i].forceSet(incoming.values);
             })
