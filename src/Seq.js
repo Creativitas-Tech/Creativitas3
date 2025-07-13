@@ -392,6 +392,13 @@ export class Seq {
         }
     }
 
+    setMinMax(min, max){
+        for(let i = 0; i<this.guiElements["knobs"].length; i++){
+                this.guiElements["knobs"][i].min = min;
+                this.guiElements["knobs"][i].max = max;
+        }
+    }
+
 
         /**
          * Initialize the GUI
