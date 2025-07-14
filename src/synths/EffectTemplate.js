@@ -64,7 +64,7 @@ export class EffectTemplate {
     async accessPreset(){      
         let presetData = {} 
         try {
-            let response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
+            let response = await fetch('https://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
             let jsonString = ""
                 if (!response.ok) {
                     // Handle HTTP errors (e.g., 404 Not Found, 500 Internal Server Error)
@@ -73,8 +73,8 @@ export class EffectTemplate {
                     jsonString = await response.text();
                 }
                 presetData = JSON.parse(jsonString);
-                console.log("jsonString", jsonString);
-                console.log("presetData", presetData);
+                //console.log("jsonString", jsonString);
+                //console.log("presetData", presetData);
         } catch (error) {
             console.warn("Error parsing JSON:", error);
         }
@@ -200,7 +200,7 @@ export class EffectTemplate {
         const presetData = this.presets[this.curPreset];
 
         if (presetData) {
-          console.log("Loading preset", this.curPreset);
+          //console.log("Loading preset", this.curPreset);
           for (let name in presetData) {
             try {
               if (this.param[name]?.set) {
@@ -210,7 +210,7 @@ export class EffectTemplate {
               console.log(name, presetData[name], e);
             }
           }
-          console.log(this.param.vco_mix)
+          
         } else {
             console.log("No preset of name ", name);
         }

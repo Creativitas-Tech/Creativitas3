@@ -94,7 +94,7 @@ export class MonophonicTemplate {
     async accessPreset(){      
         let presetData = {} 
         try {
-            let response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
+            let response = await fetch('https://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
             let jsonString = ""
                 if (!response.ok) {
                     // Handle HTTP errors (e.g., 404 Not Found, 500 Internal Server Error)
@@ -103,8 +103,8 @@ export class MonophonicTemplate {
                     jsonString = await response.text();
                 }
                 presetData = JSON.parse(jsonString);
-                console.log("jsonString", jsonString);
-                console.log("presetData", presetData);
+                //console.log("jsonString", jsonString);
+                //console.log("presetData", presetData);
         } catch (error) {
             console.warn("Error parsing JSON:", error);
         }
@@ -230,7 +230,7 @@ export class MonophonicTemplate {
         const presetData = this.presets[this.curPreset];
 
         if (presetData) {
-          console.log("Loading preset", this.curPreset);
+          //console.log("Loading preset", this.curPreset, presetData);
           for (let name in presetData) {
             try {
               if (this.param[name]?.set) {
@@ -240,7 +240,7 @@ export class MonophonicTemplate {
               console.log(name, presetData[name], e);
             }
           }
-          console.log(this.param.vco_mix)
+          //console.log(this.param.vco_mix)
         } else {
             console.log("No preset of name ", name);
         }
@@ -945,7 +945,7 @@ export class MonophonicTemplate {
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256
-        //console.log('pa', velocity, timeOffset)
+        //console.log('pa',note, octave, velocity, sustain, time, timeOffset)
         try {
             //console.log('trig', note + octave * 12, velocity,sustain,time+timeOffset)
             this.triggerAttackRelease(

@@ -27,6 +27,8 @@ import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction } from '.
 import * as waveshapers from './synths/waveshapers.js'
 import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
+import { GraphVisualizer } from './visualizers/Grapher.js'
+
 
 import WebSocketClient from './collabSocket';
 // import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
@@ -222,6 +224,9 @@ function Editor(props) {
     window.Distortion = Distortion;
     window.Delay = Delay;
     window.Vocoder = Vocoder;
+    window.Graph = GraphVisualizer;
+    // window.Player = Player;
+    // window.Player = Player;
     // window.Player = Player;
 
     window.Feedback = Feedback;

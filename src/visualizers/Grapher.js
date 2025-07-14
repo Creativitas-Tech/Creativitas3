@@ -1,12 +1,12 @@
 import * as Tone from 'tone';
 
-export class ArrayVisualizer {
-    constructor(parent, array, _target = 'Canvas', ratio = 4 / 10) {
-        this.parent = parent
-        this._array = array;
+export class GraphVisualizer {
+    constructor(size = 64, ratio = 1,  _target = 'Canvas',) {
         this._target = document.getElementById(_target);
-        this._ratio = ratio;
-        this._type = 'horizontal'; // Default type
+        this._array = new Array(size).fill(0);
+        this._index = 0
+        this._ratio = ratio * .4;
+        this._type = 'vertical'; // Default type
         this._color =  [
             '#FF5733',  // Base orange
             '#33A1FF',  // Light blue (complementary)
@@ -21,7 +21,7 @@ export class ArrayVisualizer {
         this._backgroundColor = '#3C3D37'
         this._activeColor = '#ECDFCC'; // Default color
         this._rows = 1; // Default to single row
-        this._columns = array.length; // Default to length of array
+        this._columns = this._array.length; // Default to length of array
         this._width = this._target.offsetWidth;
         this._height = this._width * this._ratio;
         this.elementWidth = this._width / this._columns;
@@ -33,18 +33,19 @@ export class ArrayVisualizer {
         this._minActive = 0
         this._maxActive = 1
         this._seqNum = 0
-        this._displayLength = 8 //x dimension of drawing
-        this._activeLength = 8 //length of longest array of last frame 
-        
+        this._displayLength = this._columns;
+        this._activeLength = this._columns;
         this._subDivision = '16n'
-        this._enabled = false
         this._svg = null
         this.index = 0
 
-        // this.loop = new Tone.Loop(time=>{
-        //     this.index = Math.floor(Tone.Transport.ticks / Tone.Time(this._subDivision).toTicks());
-        //     this.visualize(this.index)
-        // }, '16n')
+        this.enable()
+    }
+
+    enable() {
+        if (this._enabled) return; // Already enabled
+        this._svg = this.createSVG();
+        this._target.appendChild(this._svg);
     }
 
     createSVG() {
@@ -91,30 +92,26 @@ export class ArrayVisualizer {
         this._activeLength = 8
     }
 
-    visualize(arr, index) {
+    visualize(arr) {
+        if (arr.length > this._activeLength) this._activeLength = arr.length;
 
-        const isMultipleArrays = Array.isArray(arr) && arr.every(item => Array.isArray(item));
-        if( arr.length > this._activeLength) this._activeLength = arr.length
+        arr = this.transformArray(arr);
+        this.calculateMinMax(arr);
 
-        arr = this.transformArray(arr)
-        this.calculateMinMax(arr)
-       
-        index = index % arr.length
-        //console.log('drawing', index)
         switch (this._type) {
             case 'horizontal':
-                this.drawHorizontalLines(index, arr);
+                this.drawHorizontalLines(arr);
                 break;
             case 'vertical':
-                this.drawVerticalBars(index, arr);
+                this.drawVerticalBars(arr);
                 break;
             case 'numbers':
-                this.drawNumericValues(index, arr);
+                this.drawNumericValues(arr);
                 break;
             default:
                 console.error('Unknown visualization type');
         }
-        this._seqNum+=1
+        this._seqNum += 1;
     }
 
     calculateMinMax(arr) {
@@ -149,30 +146,6 @@ export class ArrayVisualizer {
         else return arr
     }
 
-    // Enable the visualizer: create the SVG and allow drawing
-    enable(seqs = null) {
-        if(seqs !== null) this.parent.seqToDraw = seqs
-        this.parent.drawingLoop.start()
-        if (this._enabled) return; // Already enabled
-
-        this._enabled = true;
-        this._svg = this.createSVG();
-        this._target.appendChild(this._svg);
-        this.parent.drawingLoop.start()
-    }
-
-    // Disable the visualizer: remove the SVG and prevent drawing
-    disable(seqs = null) {
-        if (!this._enabled) return; // Already disabled
-
-        this._enabled = false;
-        if (this._target && this._svg && this._target.contains(this._svg)) {
-            this._target.removeChild(this._svg); // Remove the SVG
-        }
-        this._svg = null; // Clear reference
-
-
-    }
 
     // Getters and Setters for dynamic properties
 
@@ -200,41 +173,31 @@ export class ArrayVisualizer {
     get columns() {return this._columns;  }
     set columns(value) { this._columns = value; }
 
-    get enabled() { return this._enabled; }
-    set enabled(value) {
-        if (value)  this.enable();
-        else this.disable();
-    }
 
     // Drawing methods
-    drawHorizontalLines(index, arr, elementWidth= this.elementWidth) {
+    drawHorizontalLines(arr) {
         // Normalize array values between 0 and 1
         arr = arr.map(x => (x - this._min) / (this._max - this._min));
 
+        const step = this._width / arr.length;
+
         arr.forEach((value, i) => {
-            if(typeof value === 'number' && !isNaN(value)) {
+            if (typeof value === 'number' && !isNaN(value)) {
                 const line = document.createElementNS("http://www.w3.org/2000/svg", 'line');
 
-                // Calculate the X positions (using a small offset for visual separation)
-                const x1 = i * elementWidth/this._displayLength;
-                const x2 = (i + 1) * elementWidth/this._displayLength-2;
+                const x1 = i * step;
+                const x2 = (i + 1) * step;
+                const y = this._height * (1 - value);
 
-                // Y position is proportional to the normalized value
-                const y = this._height * (1 - value);  // Subtract from height to flip Y axis (0 at bottom)
-                let width = this._height/(this._max-this._min) -2
-                if(width < 2 ) width = 2
-                // Set line coordinates
+                let width = this._height / (this._max - this._min) - 2;
+                if (width < 2) width = 2;
+
                 line.setAttribute('x1', x1);
                 line.setAttribute('x2', x2);
                 line.setAttribute('y1', y);
                 line.setAttribute('y2', y);
-
-                // Set color based on active index
-                if (index === i)  line.setAttribute('stroke', this._activeColor);  // Highlight current index
-                else  line.setAttribute('stroke', this._color[this._seqNum]);
-                
-                // Set line thickness proportional to the available space
-                line.setAttribute('stroke-width', width);  // Slightly smaller than the element width
+                line.setAttribute('stroke', this._color[this._seqNum % this._color.length]);
+                line.setAttribute('stroke-width', width);
 
                 this._svg.appendChild(line);
             }
@@ -242,49 +205,37 @@ export class ArrayVisualizer {
     }
 
 
-    drawVerticalBars(index, arr, elementWidth= this.elementWidth) {
-    // Normalize array values between 0 and 1
-    arr = arr.map(x => (x - this._min) / (this._max - this._min));
+   drawVerticalBars(arr) {
+        // Normalize array values between 0 and 1
+        arr = arr.map(x => (x - this._min) / (this._max - this._min));
 
-    // Clear the SVG before redrawing
-    this.clearSVG();
+        this.clearSVG();
 
-    arr.forEach((value, i) => {
-        if(typeof value === 'number' && !isNaN(value)) {
-            const bar = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
+        const step = this._width / arr.length;
 
-            // Calculate the X position for each bar
-            const x = i * (elementWidth / this._displayLength);
+        arr.forEach((value, i) => {
+            if (typeof value === 'number' && !isNaN(value)) {
+                const bar = document.createElementNS("http://www.w3.org/2000/svg", 'rect');
 
-            // Height of the bar (proportional to the normalized value)
-            const barHeight = value * this._height;
+                const x = i * step;
+                const barWidth = Math.max(step * 0.95, 1); // add spacing between bars
+                const barHeight = value * this._height;
+                const y = this._height - barHeight;
 
-            // Y position: Subtract barHeight from the total height to align the bars at the bottom
-            const y = this._height - barHeight;
-            let barWidth =  elementWidth / this._displayLength*.98
-            barWidth = barWidth>4 ? barWidth-2 : barWidth
+                bar.setAttribute('x', x);
+                bar.setAttribute('y', y);
+                bar.setAttribute('width', barWidth);
+                bar.setAttribute('height', barHeight);
+                bar.setAttribute('fill', this._color[this._seqNum % this._color.length]);
 
-            // Set the bar's attributes
-            bar.setAttribute('x', x);
-            bar.setAttribute('y', y);  // Aligns bars at the bottom
-            bar.setAttribute('width', barWidth);  // Slightly smaller than the element width for spacing
-            bar.setAttribute('height', barHeight);  // Height proportional to normalized value
-
-            // Set the fill color based on the active index
-            if (index === i) {
-                bar.setAttribute('fill', this._activeColor);
-            } else {
-                bar.setAttribute('fill', this._color[this._seqNum]);
+                this._svg.appendChild(bar);
             }
-
-            this._svg.appendChild(bar);
-        }
-    });
-}
+        });
+    }
 
 
     drawNumericValues(index, arr, elementWidth= this.elementWidth, elementHeight= this.elementHeight) {
-        const itemsPerRow = Math.ceil(this.this._displayLength / this._rows);
+        const itemsPerRow = Math.ceil(this._displayLength / this._rows);
 
         arr.forEach((value, i) => {
             const row = Math.floor(index / itemsPerRow);
@@ -324,12 +275,14 @@ export class ArrayVisualizer {
         const normalized = val / 127;
 
         // Push to buffer and trim
-        this._array.push(normalized);
-        if (this._array.length > this._columns) {
-            this._array.shift();
-        }
+        // this._array.push(normalized);
+        // if (this._array.length > this._columns) {
+        //     this._array.shift();
+        // }
+        this._index = (this._index+1)%this._array.length
+        this._array[ this._index] = normalized
 
         this.startVisualFrame();
-        this.visualize(this._array, this.index++);
+        this.visualize(this._array);
     }
 }

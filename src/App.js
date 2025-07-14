@@ -24,7 +24,7 @@ function App() {
     //'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
   ];
   const assignmentFiles = [
-    'Chord Object', 'Assignment 1',  'Robin Sensors', 'Robin Examples'
+    'Chord Object', 'Promenade', 'The Wand', 'The Barre'
     //'Grids1', 'Comp5', 'Comp6',  'SamplePlayer', 'Comp7', 'Algorithms', 'Comp8', 'Comp9'
   ];
   const referenceFiles = [

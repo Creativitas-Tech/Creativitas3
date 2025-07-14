@@ -100,7 +100,8 @@ export class Seq {
                     this.guiElements["toggles"][i].forceSet(0);
                 }else{
                     if(!isNaN(Number(this.vals[i]))){
-                        this.guiElements["knobs"][i].value = Number(this.vals[i])
+                        this.guiElements["knobs"][i].set( Number(this.vals[i]) )
+
                     }
                     this.guiElements["toggles"][i].forceSet(1);
                 }
@@ -446,7 +447,7 @@ export class Seq {
                     this.vals[i] = stringVal;
                 }
 
-                console.log("before toggle", i, this.vals)
+                //console.log("before toggle", i, this.vals)
                 let toggle = gui.Toggle({ 
                     label: i+1,
                     value: i<this.vals.length ? this.vals[i]!='.' : 1,
@@ -454,7 +455,7 @@ export class Seq {
                     y:Math.floor(100/(numRows*2+1)),
                     callback: (value) => this.toggleCallback(i, value)
                 });
-                console.log("after toggle", i, this.vals)
+                //console.log("after toggle", i, this.vals)
                 this.guiElements["toggles"].push(toggle);
 
                 if(chlink != null){

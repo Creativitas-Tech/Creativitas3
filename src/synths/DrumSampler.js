@@ -228,7 +228,7 @@ export class DrumSampler extends DrumTemplate{
     }
 
      if (this.kit in this.drumFolders) {
-      console.log(`Drumsampler loading ${this.kit}`);
+      //console.log(`Drumsampler loading ${this.kit}`);
       this.baseUrl = "https://tonejs.github.io/audio/drum-samples/".concat(this.drumFolders[this.kit]);
     } else if(this.kit === 'default'){
         this.baseUrl = "./audio/drumDefault";
@@ -305,7 +305,7 @@ export class DrumSampler extends DrumTemplate{
 
   sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
         //this.start(num);
-    console.log(arr,num)
+        //console.log(arr,num)
         if (!this.seq[num]) {
             this.seq[num] = new Seq(this, '0', subdivision, phraseLength, num, this.triggerDrum.bind(this));
             this.seq[num].parent = this
@@ -382,7 +382,7 @@ export class DrumSampler extends DrumTemplate{
 
     newCreateLoop (){
         // Create a Tone.Loop
-      console.log('loop made')
+      //console.log('loop made')
             this.loopInstance = new Tone.Loop(time => {
               //console.log(this.num)
                 if(this.enable=== 0) return
@@ -405,7 +405,7 @@ export class DrumSampler extends DrumTemplate{
             this.setSubdivision(this.subdivision);
             // Start the Transport
             Tone.Transport.start();
-            console.log("loop started")
+            //console.log("loop started")
         
         
         this.loopInstance.start()
@@ -531,7 +531,7 @@ export class DrumSampler extends DrumTemplate{
         const presetData = this.presets[this.curPreset];
 
         if (presetData) {
-            console.log("Loading preset ", this.curPreset, presetData);
+            //console.log("Loading preset ", this.curPreset, presetData);
             for (let id in presetData) {
                 try {
                     for (let element of Object.values(this.gui_elements)) {
@@ -546,7 +546,7 @@ export class DrumSampler extends DrumTemplate{
                 }
             }
         } else {
-            console.log("No preset of name ", name);
+            //console.log("No preset of name ", name);
         }
       },1000)
     }
