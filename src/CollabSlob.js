@@ -31,7 +31,13 @@ export class CollabSlobClient {
     constructor(debug = false) {
         this.debug = debug; // Debug flag that can be toggled
         this.logger = createLogger(this.debug);
-        this.socket = io("https://collabhub-server-90d79b565c8f.herokuapp.com/slob");
+        this.socket = io("https://collabhub-server-90d79b565c8f.herokuapp.com/slob", {
+            reconnection: true, // Enable reconnection (default is true, but good to be explicit)
+            reconnectionAttempts: Infinity, // Number of reconnection attempts before giving up
+            reconnectionDelay: 1000, // How long to wait before first reconnection attempt (in ms)
+            reconnectionDelayMax: 5000, // Maximum delay between reconnection attempts (in ms)
+            randomizationFactor: 0.5 // Randomization factor for reconnection delay
+        });
         this.controls = {};
         this.handlers = {};
         this.username = "";
@@ -52,6 +58,15 @@ export class CollabSlobClient {
     }
 
     initializeSocketEvents() {
+
+        this.socket.on("connect", () => {
+            // If we were in a room before the disconnection, rejoin it
+            if (this.roomJoined) {
+                this.logger.debug(`Re-joining room after connection: ${this.roomJoined}`);
+                this.joinRoom(this.roomJoined);
+            }
+    });
+
 
         // chat and user management
         this.socket.on("serverMessage", (incoming) => {
