@@ -1,24 +1,63 @@
 const paramDefinitions = (synth) => [
     {
         name: 'volume',
-        type: 'input',
-        value: -6,
-        min: -36,
-        max: 0,
+        type: 'output',
+        value: 0.5,
+        min: 0,
+        max: 1,
+        curve: 0.5,
+        callback: function(x) {
+          synth.player.volume.value = -36 + x*60;
+        }
+      },
+      {
+        name: 'playbackrate', type: 'input',
+        value: 1, 
+        min: -2,
+        max: 2,
+        curve: 1,
+        callback: function(x, time = null) {
+          if(time){
+            synth._playbackRate = Math.abs(x);
+              synth.player.playbackRate = Math.abs(x);
+          }
+          else{
+              synth._playbackRate = Math.abs(x);
+              synth.player.playbackRate = Math.abs(x);
+          }
+        }
+      },
+      {
+        name: 'startTime', type: 'param',
+        value: 0,
+        min: 0,
+        max: 1000,
         curve: 1,
         callback: function(x) {
-          synth.player.volume.value = x;
+          synth._start = x;
+        }
+      },
+       {
+        name: 'endTime', type: 'param',
+        value: 1,
+        min: 0,
+        max: 2000,
+        curve: 1,
+        callback: function(x) {
+          synth._end = x;
         }
       },
     {
         name: 'cutoff',
         type: 'param',
         value: 20000,
-        min: 100,
+        min: 20,
         max: 10000,
         curve: 2,
-        callback: function(value) {
-          synth.cutoffSig.value = value;
+        callback: function(value, time=null) {
+            //if(time) synth.cutoffSig.linearRampToValueAtTime(value,time+0.002)
+            if(time) synth.cutoffSig.setValueAtTime(value)
+          else synth.cutoffSig.rampTo(value, .1)
         }
       },
     {
@@ -28,11 +67,11 @@ const paramDefinitions = (synth) => [
         max: 10000,
         curve: 2,
         callback: function(value) {
-          synth.hpf.frequency.value = value;
+          synth.hpf.frequency.rampTo(  value, 0.01);
         }
       },
     {
-        name: 'Q', type: 'param',
+        name: 'Q', type: 'hidden',
         value: 0,
         min: 0.0,
         max: 20,
@@ -44,15 +83,12 @@ const paramDefinitions = (synth) => [
      {
         name: 'filterType', type: 'hidden',
         value: 'lowpass',
-        min: 0.0,
-        max: 20,
-        curve: 2,
         callback: function(value) {
           synth.vcf.type = value;
         }
       },
     {
-        name: 'filterEnvDepth', type: 'param',
+        name: 'filterEnvDepth', type: 'hidden',
         value: 0,
         min: 0.0,
         max: 5000,
@@ -62,75 +98,60 @@ const paramDefinitions = (synth) => [
         }
       },
     {
-        name: 'loopStart',type: 'hidden',
+        name: 'loopstart',type: 'hidden',
         value: 0,
         min: 0,
-        max: 10000,
+        max: 1,
         curve: 1,
         callback: function(x) {
           synth.player.loopStart = x;
         }
       },
     {
-        name: 'loopEnd',type: 'hidden',
-        value: 1,
+        name: 'loopend',type: 'hidden',
+        value: 2,
         min: 0,
-        max: 10000,
+        max: 2,
         curve: 1,
         callback: function(x) {
           synth.player.loopEnd = x;
         }
       },
     {
-        name: 'loop ',type: 'hidden',
+        name: 'loop',type: 'hidden',
         value: false,
-        min: 0,
-        max: 1,
-        curve: 1,
         callback: function(x) {
           synth.player.loop = x > 0;
         }
       },
     {
-        name: 'fadeIn', type: 'hidden',
+        name: 'fadein', type: 'hidden',
         value: 0.005,
         min: 0,
-        max: 10,
+        max: 1,
         curve: 3,
         callback: function(x) {
           synth.player.fadeIn = x;
         }
       },
     {
-        name: 'fadeOut', type: 'hidden',
+        name: 'fadeout', type: 'hidden',
         value: 0.1,
         min: 0,
-        max: 10,
+        max: 1,
         curve: 3,
         callback: function(x) {
           synth.player.fadeOut = x;
         }
       },
     {
-        name: 'baseUnit', type: 'hidden',
+        name: 'divisions', type: 'input',
         value: 16,
         min: 0,
-        max: 60000,
+        max: 64,
         curve: 1,
         callback: function(x) {
           synth._baseUnit = x;
-        }
-      },
-    {
-        name: 'playbackRate', type: 'input',
-        value: 1, 
-        min: 0,
-        max: 1000,
-        curve: 1,
-        callback: function(x) {
-          if (x < 0) synth.reverse = 1;
-          synth._playbackRate = Math.abs(x);
-          synth.player.playbackRate = Math.abs(x);
         }
       },
     {
@@ -143,26 +164,6 @@ const paramDefinitions = (synth) => [
           synth.seqControlsPitch = !x;
         }
       },
-       {
-        name: 'startTime', type: 'hidden',
-        value: 0,
-        min: 0,
-        max: 10000,
-        curve: 1,
-        callback: function(x) {
-          synth._start = x;
-        }
-      },
-       {
-        name: 'endTime', type: 'hidden',
-        value: 1,
-        min: 0,
-        max: 10000,
-        curve: 1,
-        callback: function(x) {
-          synth._end = x;
-        }
-      },
      {
         name: 'baseNote', type: 'hidden',
         min: 0,
@@ -173,15 +174,16 @@ const paramDefinitions = (synth) => [
         }
       },
        {
-        name: 'reverse', type: 'hidden',
+        name: 'Reverse', type: 'hidden',
         value: false,
         min: 0,
         max: 1,
         curve: 1,
         callback: function(x) {
-          synth.reverse = x > 0 ? 1 : 0;
+          synth.reverse = x > 0 ? true : false;
         }
       }
+
 ];
 
 export default paramDefinitions;

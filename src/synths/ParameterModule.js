@@ -27,6 +27,7 @@ export class Parameter {
     this.labels = options.labels || null;
     this.seq = null
     this.set(this._value)
+    this.subdivision = '4n'
   };
 
   get(index = null) {
@@ -36,7 +37,7 @@ export class Parameter {
     return this._value;
   }
   set =  (newValue, index = null, calledByGui=false, time = null) => {
-    //console.log('set', this.name, newValue, index, calledByGui,time)
+    //console.log('paramset', this.name, newValue, index, calledByGui,time)
     if (Array.isArray(this._value)) {
         if (Array.isArray(newValue)) {
             // Set entire array
@@ -54,6 +55,7 @@ export class Parameter {
     } else {
         // Scalar value
         this._value = newValue;
+        //console.log(this.callback)
         this.callback(newValue, time);
     }
 
@@ -63,24 +65,25 @@ export class Parameter {
       if (Array.isArray(this._value)) {
           this.guiElements.forEach((gui, i) => gui.forceSet(this._value[i]));
       } else if (this.guiElements.length > 0) {
-          this.guiElements[0].forceSet(this._value);
+          this.guiElements[0].rawValue = this._value;
       }
     }
   }
   
   //define sequencer controls
-  sequence(valueArray,subdivision){
-    if (this.seq) {
-                this.seq.dispose(); // Dispose of existing sequence
-            }
-            this.seq = new Seq(
-                this,
-                valueArray,
-                subdivision,
-                'infinite',
-                0,
-                (v, time) => this.parent.param[this.name].set(Number(v[0]),null,false, time)// Ensure time is passed
-            );
+    sequence(valueArray,subdivision){
+        //console.log('p', subdivision)
+        if (this.seq) {
+            this.seq.dispose(); // Dispose of existing sequence
+        }
+        this.seq = new Seq(
+            this,
+            valueArray,
+            subdivision,
+            'infinite',
+            0,
+            ((v, time) => this.parent.param[this.name].set(Number(v[0]),null,false, time)).bind(this)// Ensure time is passed
+        );
     }
     stop(){
         if (this.seq) {

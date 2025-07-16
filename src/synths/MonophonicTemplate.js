@@ -60,6 +60,7 @@ export class MonophonicTemplate {
         this.presetsData = null;
         this.curPreset = null;
         this.backgroundColor = [10,10,10]
+        this.guiHeight = 1
 
         // Sequencer related
         this.seq = []; // Array of Seq instances
@@ -379,14 +380,15 @@ export class MonophonicTemplate {
                 },
                 set(target, _, newValue) {
                     if (Array.isArray(newValue)) {
+                        //console.log(target.subdivision)
                         if (currentSeq) currentSeq.dispose();
                         currentSeq = new Seq(
                             parent,
                             newValue,
-                            param.subdivision || '16n',
+                             '4n',
                             'infinite',
                             0,
-                            (v, time) => param.set(Number(v[0]),null,false, time) // Ensure time is passed
+                            ((v, time) => param.set(Number(v[0]),null,false, time)) // Ensure time is passed
                         );
                     } else {
                         if (currentSeq) {
@@ -404,7 +406,7 @@ export class MonophonicTemplate {
                 get: () => new Proxy(param, proxyHandler),
                 set: (newValue) => {
                     if (Array.isArray(newValue)) {
-                        param.sequence(newValue)
+                        param.sequence(newValue, this.seq[0].subdivision)
                     } else {
                         param.stop()
                         param.set(newValue);
@@ -435,7 +437,7 @@ export class MonophonicTemplate {
     }
 
     get() {
-        let output = 'Parameters:\n';
+        let output = '\t' + this.name + ' Parameters:\n';
         for (let key in this.param) {
             const param = this.param[key];
             let value = param._value
@@ -496,7 +498,7 @@ export class MonophonicTemplate {
      */
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
-        const sketchWithSize = (p) => sketch(p, { height: 1 });
+        const sketchWithSize = (p) => sketch(p, { height: this.guiHeight });
         this.gui = new p5(sketchWithSize, this.guiContainer);
         const layout = this.layout;
         //console.log(layout);

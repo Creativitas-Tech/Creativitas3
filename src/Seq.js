@@ -126,7 +126,7 @@ export class Seq {
     createLoop() {
         // Create a Tone.Loop
         this.loopInstance = new Tone.Loop(time => {
-            //console.log('old loop')
+            //console.log('loop', time)
             
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
             this.index = this.index % this.vals.length
@@ -158,7 +158,7 @@ export class Seq {
             //main callback for triggering notes
             //console.log(event, time, this.index, this.num)
             for (const val of event) this.callback(val, time, this.index, this.num);
-
+            //console.log('loop', time, event, this.callback)
             if(this.userCallback){
                 this.userCallback();
             }

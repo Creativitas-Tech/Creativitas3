@@ -22,8 +22,8 @@ class CustomPlayer extends Tone.Player {
   }
     set playbackRate(rate) {
         this._playbackRate = rate;
-        const now = this.now();
-
+        let now = this.now();
+        //if(time) now = time
         this._activeSources.forEach((source) => {
             source.playbackRate.setValueAtTime(rate, now);
         });
@@ -200,35 +200,39 @@ export class Player extends MonophonicTemplate {
     triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
         //console.log(freq,amp,dur,time)
         amp = amp/127
-
+        //console.log(time, freq, dur)
         if(time){
             if(!this.seqControlsPitch) {
                 //console.log('noy', freq,dur)
                 if(this._playbackRate!= this.player.playbackRate) this.player.playbackRate = this._playbackRate
-                this.player.start(time,freq,dur)
+                //this.player.start(time,freq,dur)
+                this.player.start(time, freq, freq+dur)
             }
             else {
                 //console.log('pitch',dur.toFixed(2), this._start,time)
                 this.player.playbackRate = this.midiToRate(freq)
-                this.player.start(time, this._start)
+                this.player.start(time, this._start, this._end)
                 this.player.stop(time+dur)
             }
             this.filterEnv.triggerAttackRelease(dur,time)
             this.vca.factor.setValueAtTime(amp, time)
          } 
-        //else{
-        //     if(!this.seqControlsPitch) {
-        //         if(this._playbackRate!= this.player.playbackRate) this.player.playbackRate = this._playbackRate
-        //         this.player.start(Tone.now(),freq, dur)
-        //     }
-        //     else {
-        //         //console.log('pitch',freq,amp,dur,time)
-        //         this.player.playbackRate = this.midiToRate(freq)
-        //         this.player.start(Tone.now(), this._start, dur)
-        //     }
-        //     this.filterEnv.triggerAttackRelease(dur)
-        //     this.vca.factor.setValueAtTime(amp)
-        // }
+        else{
+            time = Tone.now()
+            if(!this.seqControlsPitch) {
+                //console.log('noy', freq,dur)
+                if(this._playbackRate!= this.player.playbackRate) this.player.playbackRate = this._playbackRate
+                this.player.start(time, this._start, this._end)
+            }
+            else {
+                //console.log('pitch',dur.toFixed(2), this._start,time)
+                this.player.playbackRate = this.midiToRate(freq)
+                this.player.start(time, this._start, this._end)
+                this.player.stop(time+dur)
+            }
+            this.filterEnv.triggerAttackRelease(dur,time)
+            this.vca.factor.setValueAtTime(amp, time)
+        }
     }//attackRelease
 
     midiToRate(note){

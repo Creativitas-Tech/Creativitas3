@@ -12,7 +12,7 @@ import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
 import paramDefinitions from './params/twinkleParams.js';
-
+ 
 export class Twinkle extends MonophonicTemplate {
   constructor (gui = null) {
     super()

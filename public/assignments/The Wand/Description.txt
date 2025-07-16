@@ -1,0 +1,36 @@
+# Wand MIDI CC Mapping
+
+## Controls
+| CC  | Description           |
+|-----|------------------------|
+| 0   | Potentiometer 0        |
+| 1   | Potentiometer 1        |
+
+## Motion – IMU Orientation & Magnitude
+| CC   | Description                              |
+|------|------------------------------------------|
+| 2    | Absolute magnitude (acceleration norm)   |
+| 10   | Tilt (pitch-like angle)                  |
+| 11   | Roll                                     |
+| 12   | Yaw (if available from fusion)           |
+
+## Raw Acceleration
+| CC   | Description             |
+|------|-------------------------|
+| 20   | Acceleration X          |
+| 21   | Acceleration Y          |
+| 22   | Acceleration Z          |
+
+## Angular Velocity – Gyroscope
+| CC   | Description             |
+|------|-------------------------|
+| 30   | Angular velocity X      |
+| 31   | Angular velocity Y      |
+| 32   | Angular velocity Z      |
+
+## Computed Angles – Integrated Gyro (with leak)
+| CC   | Description                       |
+|------|-----------------------------------|
+| 40   | Computed Angle X (leaky integrate)|
+| 41   | Computed Angle Y (leaky integrate)|
+| 42   | Computed Angle Z (leaky integrate)|

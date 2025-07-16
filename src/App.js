@@ -24,9 +24,10 @@ function App() {
     //'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
   ];
   const assignmentFiles = [
-    'Chord Object', 'Promenade', 'The Wand', 'The Barre'
+    'Chord Object', 'Promenade', 'Promenade pt. 2', 'The Wand', 'The Barre', 'Sequencing Basics', 'Assignment Jul 15'
     //'Grids1', 'Comp5', 'Comp6',  'SamplePlayer', 'Comp7', 'Algorithms', 'Comp8', 'Comp9'
   ];
+
   const referenceFiles = [
     // 'DrumSampler', 'Rumble', 'Simpler', 
      'Oscilloscope', 'Spectroscope','Theory','Sequencing','Debugging',`Expr`

@@ -4,10 +4,12 @@
  * 
 */
 
-import p5 from 'p5';
 import * as Tone from 'tone';
 // import SimplerPresets from './synthPresets/SimplerPresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
+import {Parameter} from './ParameterModule.js'
+import layout from './layouts/EffectLayout.json';
+import paramDefinitions from './params/simplerParams.js';
 
 class ExtendedSampler extends Tone.Sampler{
     constructor(options){
@@ -81,8 +83,11 @@ export class Simpler extends MonophonicTemplate {
         // this.gui = gui
 		this.presets = {}
 		this.synthPresetName = "SimplerPresets"
-		this.accessPreset()
+		//this.accessPreset()
         this.name = "Simpler"
+        this.layout = layout;
+        this.guiHeight = .3
+        this.backgroundColor = [0,0,50]
         
         //audio objects
         this.sampler = new ExtendedSampler()
@@ -109,28 +114,16 @@ export class Simpler extends MonophonicTemplate {
 
         this.sample = ''
 
-        let paramDefinitions = [
-          {name:'volume',min:-36,max:0,curve:1,callback:x=>{this.sampler.volume.value = Math.pow(10,x/20)}},
-          {name:'attack',min:0.01,max:1,curve:2,callback:x=>{this.sampler.attack=x}},
-          {name:'release',min:.01,max:10,curve:2,callback:x=>{ this.sampler.release=x }},
-          {name:'cutoff',min:100,max:10000,curve:2,callback:value=>this.cutoffSig.value = value},
-          {name:'Q',min:0.0,max:20,curve:2,callback:value=>this.vcf.Q.value = value},
-          {name:'filterEnvDepth',min:0.0,max:5000,curve:2,callback:value=>this.vcfEnvDepth.factor.value = value},
-          ]
+        // Bind parameters with this instance
+        this.paramDefinitions = paramDefinitions(this)
+        ///console.log(this.paramDefinitions)
+        this.param = this.generateParameters(this.paramDefinitions)
+       this.createAccessors(this, this.param);
 
-        let paramGui = [
-          {name:'volume',x:10,y:10,color:'red'},
-          {name:'attack',min:0.01,max:1,curve:2,callback:x=>{this.sampler.attack=x}},
-          {name:'release',min:.01,max:10,curve:2,callback:x=>{ this.sampler.release=x }},
-          {name:'cutoff',min:100,max:10000,curve:2,callback:value=>this.cutoffSig.value = value},
-          {name:'Q',min:0.0,max:20,curve:2,callback:value=>this.vcf.Q.value = value},
-          {name:'filterEnvDepth',min:0.0,max:5000,curve:2,callback:value=>this.vcfEnvDepth.factor.value = value},
-          ]
-
-
-        this.param = this.generateParameters(paramDefinitions)
-        this.createAccessors(this, this.param);
-        //this.attachGuiToParams()
+        //for autocomplete
+        this.autocompleteList = this.paramDefinitions.map(def => def.name);;
+        //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
+        setTimeout(()=>{this.loadPreset('default')}, 500);
 
         this.sampleFiles = {
           bell: ['C4', 'berklee/bell_1.mp3'],
@@ -147,6 +140,13 @@ export class Simpler extends MonophonicTemplate {
           casio:['C4', 'casio/C2.mp3']
         }
 
+        //for autocomplete
+        this.autocompleteList = this.paramDefinitions.map(def => def.name);
+        this.autocompleteList = this.autocompleteList + Object.keys(this.sampleFiles)
+        //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
+        setTimeout(()=>{this.loadPreset('default')}, 500);
+
+        console.log(this.autocompleteList)
         if(file) this.loadSample(file)
     }
 
@@ -175,18 +175,20 @@ export class Simpler extends MonophonicTemplate {
             file = fileKeys[file];
         }
 
+        this.baseUrl = ""
+        let url, note
         if (file in this.sampleFiles) {
           console.log(`Simpler loading ${file}`);
           this.sample = file
+          this.baseUrl = "https://tonejs.github.io/audio/"
+          url = this.sampleFiles[this.sample][1]
+          note = this.sampleFiles[this.sample][0]
         } else {
           console.error(`The sample "${file}" is not available.`);
           return
         }
 
-        this.baseUrl = "https://tonejs.github.io/audio/"
-        const url = this.sampleFiles[this.sample][1]
-        const note = this.sampleFiles[this.sample][0]
-        console.log(note, url)
+        //console.log(note, url)
         this.sampler = new ExtendedSampler({
             urls:{
                 [60]: this.baseUrl.concat(url)

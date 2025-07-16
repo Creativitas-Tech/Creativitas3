@@ -470,9 +470,10 @@ class Element {
     }
 
     mapValue(output, destination) {
+        //console.log(output, destination)
         if (destination) {
             try {
-                destination.value.rampto(output, .1);
+                destination.value.rampTo(output, .1);
             } catch {
                 try {
                     destination.value = output;
@@ -489,6 +490,7 @@ class Element {
     }
 
     runCallBack() {
+        //console.log(this.value, this.callback)
         if (this.callback) {
             let output = this.value
             try {
@@ -509,6 +511,7 @@ class Element {
     }
 
     set(value) {
+        //console.log(value)
         if (typeof (value) === 'string') {
             this.value = value;
         }
