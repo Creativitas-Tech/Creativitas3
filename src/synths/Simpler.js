@@ -18,63 +18,62 @@ class ExtendedSampler extends Tone.Sampler{
         console.log('begin')
     }
 
-    ftomf(freq) {
-        return 69 + 12 * Math.log2(freq / 440);
-    }
-    triggerAttack(notes, time, velocity = 1) {
-        this.log("triggerAttack", notes, time, velocity);
+    // ftomf(freq) {
+    //     return 69 + 12 * Math.log2(freq / 440);
+    // }
+    // triggerAttack(notes, time, velocity = 1) {
+    //     console.log("es.triggerAttack", notes, time, velocity);
 
-        if (!Array.isArray(notes)) {
-            notes = [notes];
-        }
+    //     if (!Array.isArray(notes)) {
+    //         notes = [notes];
+    //     }
 
-        notes.forEach((note) => {
-            const midiFloat = this.ftomf(
-                new Tone.FrequencyClass(this.context, note).toFrequency()
-            );
-            const midi = Math.round(midiFloat);
-            const remainder = midiFloat - midi;
+    //     notes.forEach((note) => {
+    //         const midiFloat = this.ftomf(
+    //             new Tone.FrequencyClass(this.context, note).toFrequency()
+    //         );
+    //         const midi = Math.round(midiFloat);
+    //         const remainder = midiFloat - midi;
 
-            // find the closest note pitch
-            const difference = this._findClosest(midi);
-            const closestNote = midi - difference;
+    //         // find the closest note pitch
+    //         const difference = this._findClosest(midi);
+    //         const closestNote = midi - difference;
 
-            const buffer = this._buffers.get(closestNote);
-            const playbackRate = Tone.intervalToFrequencyRatio(difference + remainder);
+    //         const buffer = this._buffers.get(closestNote);
+    //         const playbackRate = Tone.intervalToFrequencyRatio(difference + remainder);
 
-            // play that note
-            const source = new Tone.ToneBufferSource({
-                url: buffer,
-                context: this.context,
-                curve: this.curve,
-                fadeIn: this.attack,
-                fadeOut: this.release,
-                playbackRate,
-            }).connect(this.output);
+    //         // play that note
+    //         const source = new Tone.ToneBufferSource({
+    //             url: buffer,
+    //             context: this.context,
+    //             curve: this.curve,
+    //             fadeIn: this.attack,
+    //             fadeOut: this.release,
+    //             playbackRate,
+    //         }).connect(this.output);
+    //         // Updated this line:
+    //         source.start(time, this.startTime, buffer.duration / playbackRate, velocity);
 
-            // Updated this line:
-            source.start(time, this.startTime, buffer.duration / playbackRate, velocity);
+    //         // add it to the active sources
+    //         if (!Array.isArray(this._activeSources.get(midi))) {
+    //             this._activeSources.set(midi, []);
+    //         }
+    //         this._activeSources.get(midi).push(source);
 
-            // add it to the active sources
-            if (!Array.isArray(this._activeSources.get(midi))) {
-                this._activeSources.set(midi, []);
-            }
-            this._activeSources.get(midi).push(source);
+    //         // remove it when it's done
+    //         source.onended = () => {
+    //             if (this._activeSources && this._activeSources.has(midi)) {
+    //                 const sources = this._activeSources.get(midi);
+    //                 const index = sources.indexOf(source);
+    //                 if (index !== -1) {
+    //                     sources.splice(index, 1);
+    //                 }
+    //             }
+    //         };
+    //     });
 
-            // remove it when it's done
-            source.onended = () => {
-                if (this._activeSources && this._activeSources.has(midi)) {
-                    const sources = this._activeSources.get(midi);
-                    const index = sources.indexOf(source);
-                    if (index !== -1) {
-                        sources.splice(index, 1);
-                    }
-                }
-            };
-        });
-
-        return this;
-    }   
+    //     return this;
+    // }   
 }
 
 export class Simpler extends MonophonicTemplate {
@@ -118,7 +117,7 @@ export class Simpler extends MonophonicTemplate {
         this.paramDefinitions = paramDefinitions(this)
         ///console.log(this.paramDefinitions)
         this.param = this.generateParameters(this.paramDefinitions)
-       this.createAccessors(this, this.param);
+        this.createAccessors(this, this.param);
 
         //for autocomplete
         this.autocompleteList = this.paramDefinitions.map(def => def.name);;
@@ -142,7 +141,7 @@ export class Simpler extends MonophonicTemplate {
 
         //for autocomplete
         this.autocompleteList = this.paramDefinitions.map(def => def.name);
-        this.autocompleteList = this.autocompleteList + Object.keys(this.sampleFiles)
+        //this.autocompleteList = this.autocompleteList + Object.keys(this.sampleFiles)
         //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
         setTimeout(()=>{this.loadPreset('default')}, 500);
 
@@ -203,7 +202,8 @@ export class Simpler extends MonophonicTemplate {
 
     //envelopes
     triggerAttack (freq, amp=100, time=null){ 
-        this.sampler.release = this.release
+        // console.log(freq, amp, time)
+        this.param.release = this.release
         freq = Tone.Midi(freq).toFrequency()
         amp = amp/127
         if(time){
@@ -211,7 +211,9 @@ export class Simpler extends MonophonicTemplate {
             this.filterEnv.triggerAttack(time)
             //this.vca.factor.setValueAtTime(amp, time)
         } else{
-            this.sampler.triggerAttack(freq)
+        
+            this.sampler.triggerAttack(freq, amp)
+            console.log('s.a',freq, amp, time)
             this.filterEnv.triggerAttack()
             //this.vca.factor.value = amp
         }
@@ -224,13 +226,14 @@ export class Simpler extends MonophonicTemplate {
             this.filterEnv.triggerRelease(time)
         }
         else {
+            console.log('s.r',freq, time)
             this.sampler.triggerRelease(freq)
             this.filterEnv.triggerRelease()
         }
     }
 
     triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
-        //console.log(freq, amp, dur)
+        //console.log('AR', freq, amp, dur, time)
         this.param.release = this.release 
         freq = Tone.Midi(freq).toFrequency()
         
@@ -239,10 +242,11 @@ export class Simpler extends MonophonicTemplate {
         if(time){
             this.sampler.triggerAttackRelease(freq, dur, time, amp)
             this.filterEnv.triggerAttackRelease(dur,time)
-            //this.vca.factor.setValueAtTime(amp, time)
+            this.vca.factor.setValueAtTime(amp, time)
         } else{
-            //this.sampler.triggerAttackRelease(freq, dur)
-            //this.filterEnv.triggerAttackRelease(dur)
+            this.sampler.triggerAttackRelease(freq, dur)
+            this.filterEnv.triggerAttackRelease(dur)
+            this.vca.factor.setValueAtTime(amp)
         }
     }//attackRelease
 

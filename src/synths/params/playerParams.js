@@ -5,9 +5,9 @@ const paramDefinitions = (synth) => [
         value: 0.5,
         min: 0,
         max: 1,
-        curve: 0.5,
+        curve: 0.75,
         callback: function(x) {
-          synth.player.volume.value = -36 + x*60;
+          synth.output.factor.value = x*3;
         }
       },
       {
@@ -17,9 +17,11 @@ const paramDefinitions = (synth) => [
         max: 2,
         curve: 1,
         callback: function(x, time = null) {
+            if(x<0) synth.player.reverse = true
+            else synth.player.reverse = false
           if(time){
             synth._playbackRate = Math.abs(x);
-              synth.player.playbackRate = Math.abs(x);
+            synth.player.playbackRate = Math.abs(x);
           }
           else{
               synth._playbackRate = Math.abs(x);
@@ -28,7 +30,7 @@ const paramDefinitions = (synth) => [
         }
       },
       {
-        name: 'startTime', type: 'param',
+        name: 'startTime', type: 'hidden',
         value: 0,
         min: 0,
         max: 1000,
@@ -38,7 +40,7 @@ const paramDefinitions = (synth) => [
         }
       },
        {
-        name: 'endTime', type: 'param',
+        name: 'endTime', type: 'hidden',
         value: 1,
         min: 0,
         max: 2000,
@@ -58,6 +60,26 @@ const paramDefinitions = (synth) => [
             //if(time) synth.cutoffSig.linearRampToValueAtTime(value,time+0.002)
             if(time) synth.cutoffSig.setValueAtTime(value)
           else synth.cutoffSig.rampTo(value, .1)
+        }
+      },
+      {
+        name: 'fadein', type: 'param',
+        value: 0.005,
+        min: 0,
+        max: 1,
+        curve: 3,
+        callback: function(x) {
+          synth.player.fadeIn = x;
+        }
+      },
+    {
+        name: 'fadeout', type: 'param',
+        value: 0.1,
+        min: 0,
+        max: 1,
+        curve: 3,
+        callback: function(x) {
+          synth.player.fadeOut = x;
         }
       },
     {
@@ -125,33 +147,13 @@ const paramDefinitions = (synth) => [
         }
       },
     {
-        name: 'fadein', type: 'hidden',
-        value: 0.005,
-        min: 0,
-        max: 1,
-        curve: 3,
-        callback: function(x) {
-          synth.player.fadeIn = x;
-        }
-      },
-    {
-        name: 'fadeout', type: 'hidden',
-        value: 0.1,
-        min: 0,
-        max: 1,
-        curve: 3,
-        callback: function(x) {
-          synth.player.fadeOut = x;
-        }
-      },
-    {
         name: 'divisions', type: 'input',
         value: 16,
         min: 0,
         max: 64,
         curve: 1,
         callback: function(x) {
-          synth._baseUnit = x;
+          synth._baseUnit = Math.floor(x);
         }
       },
     {
@@ -180,7 +182,7 @@ const paramDefinitions = (synth) => [
         max: 1,
         curve: 1,
         callback: function(x) {
-          synth.reverse = x > 0 ? true : false;
+          synth.player.reverse = x > 0 ? true : false;
         }
       }
 

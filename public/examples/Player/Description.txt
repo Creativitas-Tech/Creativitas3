@@ -1,19 +1,18 @@
 # Properties
 * volume (0-1)
+* playbackRate (normal=1): the playback speed of the sample as a ratio
+* divisions (seconds): divisor to determine the playback position when sequencing time
+
 * fadeIn (seconds): the fade in time of the sample
 * fadeOut (seconds): the fade out time of the sample
+
 * cutoff (Hz): the cutoff frequency of the built-in filter
 * Q (0-20): the resonance/Q of the built-in filter
 * filterType ('lowpass'/'highpass'): the type of the built-in filter
 * filterEnvDepth (Hz): env modulation of the cutoff
+
 * loopStart (seconds): where in the sample a loop starts
 * loopEnd (seconds): where in the sample a loop ends
 * loop (0/1/true/false): if the sample loops
-* baseUnit (seconds): divisor to determine the playback position when sequencing time
-* playbackRate (normal=1): the playback speed of the sample as a ratio
-* seqControlsPitch (0/1/true/false): determines whether the sequencer controls playback position or playback rate
-* startTime (seconds): default position where a sample starts playing
-* endTime (seconds): default position where a sample stops playing
-* baseNote (MIDI note): pitch played on a sequence value of 0
-* reverse (0/1): reverses sample playback
- 
+
+

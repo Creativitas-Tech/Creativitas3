@@ -199,19 +199,20 @@ export class Player extends MonophonicTemplate {
 
     triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
         //console.log(freq,amp,dur,time)
-        amp = amp/127
+        //amp = amp/127
         //console.log(time, freq, dur)
         if(time){
             if(!this.seqControlsPitch) {
                 //console.log('noy', freq,dur)
                 if(this._playbackRate!= this.player.playbackRate) this.player.playbackRate = this._playbackRate
                 //this.player.start(time,freq,dur)
+                //console.log(freq, freq+dur)
                 this.player.start(time, freq, freq+dur)
             }
             else {
                 //console.log('pitch',dur.toFixed(2), this._start,time)
                 this.player.playbackRate = this.midiToRate(freq)
-                this.player.start(time, this._start, this._end)
+                this.player.start(time, this._start)
                 this.player.stop(time+dur)
             }
             this.filterEnv.triggerAttackRelease(dur,time)
@@ -227,7 +228,7 @@ export class Player extends MonophonicTemplate {
             else {
                 //console.log('pitch',dur.toFixed(2), this._start,time)
                 this.player.playbackRate = this.midiToRate(freq)
-                this.player.start(time, this._start, this._end)
+                this.player.start(time, this._start)
                 this.player.stop(time+dur)
             }
             this.filterEnv.triggerAttackRelease(dur,time)
@@ -340,7 +341,7 @@ export class Player extends MonophonicTemplate {
             } 
             //note = val[0]*this._baseUnit + this._start//intervalToMidi(val[0], this.min, this.max)
             note = val[0]
-            if(note%1 == 0) note = note / this._baseUnit
+            if(note%1 == 0) note = note / Math.floor(this._baseUnit)
             else note = note%1
             note = note*this.sampleDuration
         } else{

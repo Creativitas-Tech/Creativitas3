@@ -24,7 +24,9 @@ function App() {
     //'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
   ];
   const assignmentFiles = [
-    'Chord Object', 'Promenade', 'Promenade pt. 2', 'The Wand', 'The Barre', 'Sequencing Basics', 'Assignment Jul 15'
+
+    'Chord Object', 'Promenade', 'Promenade pt. 2', 'The Wand', 'The Barre', 'Sequencing Basics', 'Assignment Jul 15',
+    'Piano Simpler'
     //'Grids1', 'Comp5', 'Comp6',  'SamplePlayer', 'Comp7', 'Algorithms', 'Comp8', 'Comp9'
   ];
 

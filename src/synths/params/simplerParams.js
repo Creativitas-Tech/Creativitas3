@@ -76,6 +76,28 @@ const paramDefinitions = (synth) => [
       synth.vcfEnvDepth.factor.value = x;
     }
   }
+  // ,
+  // {
+  //   name: 'startTime',
+  //   type: 'hidden',
+  //   value: 0,
+  //   min: 0.0,
+  //   max: 1,
+  //   curve: 1,
+  //   callback: function(x) {
+  //     synth.sampler.startTime = x;
+  //   }
+  // },
+  // {
+  //   name: 'endTime',
+  //   type: 'hidden',
+  //   value: 10,
+  //   min: 0.0,
+  //   max: 10,
+  //   curve: 1,
+  //   callback: function(x) {
+  //     synth.sampler.endTime = x;
+  //   }
 ];
 
 export default paramDefinitions;
