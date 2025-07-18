@@ -6,11 +6,8 @@ s.initGui()
 s.listPresets()
 s.loadPreset('flute')
 s.sustain = .1
-s.seq[0].sustain = .5
 
 s.sequence('-7', '2n')
-
-
 
 s.sequence('0 2 4 6 4 2', '2n')
 s.sustain = .5

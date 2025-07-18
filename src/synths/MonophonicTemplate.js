@@ -119,7 +119,8 @@ export class MonophonicTemplate {
      * @returns {void}
      * @example synth.savePreset('default')
      */
-    async savePreset (name) {
+    //async savePreset (name) {
+    savePreset (name) {
         const _preset = {};
         for (let element of Object.values(this.param)) {
             _preset[element.name] = element._value;
@@ -132,32 +133,36 @@ export class MonophonicTemplate {
         }
         this.presets[name] = _preset;
 
-         try {
-            const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/save', {
-                method: 'POST', // Specify the HTTP method
-                headers: {
-                    'Content-Type': 'application/json' // Tell the server we're sending JSON
-                },
-                body: JSON.stringify({ // Convert your data to a JSON string for the body
-                    name: this.synthPresetName,
-                    data: this.presets
-            })
-            });
+        //  try {
+        //     const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/save', {
+        //         method: 'POST', // Specify the HTTP method
+        //         headers: {
+        //             'Content-Type': 'application/json' // Tell the server we're sending JSON
+        //         },
+        //         body: JSON.stringify({ // Convert your data to a JSON string for the body
+        //             name: this.synthPresetName,
+        //             data: this.presets
+        //     })
+        //     });
 
-            const result = await response.json(); // Parse the server's JSON response
+        //     const result = await response.json(); // Parse the server's JSON response
 
-            if (response.ok) {
-                console.log(`Save successful: ${result.message}`);
-                return result.success;
-            } else {
-                console.warn(`Save failed: ${result.message}`);
-                // You might want to throw an error here or handle specific status codes
-                return false;
-            }
-        } catch (error) {
-            console.error(`Error sending save request for '${name}':`, error);
-            return false;
-        }
+        //     if (response.ok) {
+        //         console.log(`Save successful: ${result.message}`);
+        //         return result.success;
+        //     } else {
+        //         console.warn(`Save failed: ${result.message}`);
+        //         // You might want to throw an error here or handle specific status codes
+        //         return false;
+        //     }
+        // } catch (error) {
+        //     console.error(`Error sending save request for '${name}':`, error);
+        //     return false;
+        // }
+
+        //old preset code below
+        
+        
         console.log(`Preset saved under ${this.name}/${name}`);
     };
 
