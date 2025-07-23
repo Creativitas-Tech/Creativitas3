@@ -1,11 +1,16 @@
 export const paramDefinitions = (synth) => [
     {
         name: 'vco_mix', type: 'vco', min: 0, max: 1, curve: 0.75,
-        callback: function(x) { synth.crossfade_constant.value= x } 
+        callback: function(x,time) { 
+            if(time) synth.crossfade_constant.setValueAtTime(x,time)
+            else synth.crossfade_constant.rampTo( x, .005) 
+        } 
     },
     {
         name: 'detune', type: 'vco', min: 1, max: 2, curve: 0.5,
-        callback: function(x) { synth.detune_scalar.factor.value = x} 
+        callback: function(x,time) { 
+            if(time) synth.detune_scalar.setValueAtTime(x,time)
+            else synth.detune_scalar.rampTo( x, .005)} 
     },
     {
         name: 'shape1', type: 'vco', min: .1, max: .5,
@@ -21,27 +26,31 @@ export const paramDefinitions = (synth) => [
     },
     {
         name: 'cutoff', type: 'vcf', min: 0, max: 10000, curve: 1,
-        callback: function(x) {
-            synth.cutoffSig.value = x
+        callback: function(x,time) {
+            if(time) synth.cutoffSig.setValueAtTime(x,time)
+            else synth.cutoffSig.rampTo( x, .005)
         } 
     },
     {
         name: 'envDepth', type: 'vcf', min: 0, max: 5000, curve: .75,
-        callback: function(x) {
-            synth.vcf_env_depth.factor.value = x
+        callback: function(x,time) {
+            if(time) synth.vcf_env_depth.factor.setValueAtTime(x,time)
+            else synth.vcf_env_depth.factor.rampTo( x, .005)
         } 
     },
     {
         name: 'Q', type: 'vcf', min: 0, max: 20, curve: .5,
-        callback: function(x) {
-            synth.vcf.Q.value = x
+        callback: function(x,time) {
+            if(time) synth.vcf.Q.setValueAtTime(x,time)
+            else synth.vcf.Q.rampTo( x, .005)
         } 
     },
     {
         //TODO: Should this be hidden?
         name: 'keyTracking', type: 'vcf', min: 0, max: 1, curve: 1,
-        callback: function(x) {
-            synth.keyTracker.factor.value = x
+        callback: function(x,time) {
+            if(time) synth.keyTracker.setValueAtTime(x,time)
+            else synth.keyTracker.rampTo( x, .005)
         } 
     },
     {
@@ -100,26 +109,30 @@ export const paramDefinitions = (synth) => [
     },
     {
         name: 'lfo', type: 'lfo', min: 0, max: 20, curve: 1,
-        callback: function(x) {
-            synth.lfoModule.frequency.value = x
+        callback: function(x,time) {
+            if(time) synth.lfoModule.frequency.setValueAtTime(x,time)
+            else synth.lfoModule.frequency.value = x
         } 
     },
     {
         name: 'vibrato', type: 'lfo', min: 0, max: .1, curve: .5,
-        callback: function(x) {
-            synth.pitch_lfo_depth.factor.value = x
+        callback: function(x,time) {
+            if(time) synth.pitch_lfo_depth.factor.setValueAtTime(x,time)
+            else synth.pitch_lfo_depth.factor.rampTo( Math.pow(x,3), .01)
         } 
     },
     {
         name: 'tremolo', type: 'lfo', min: 0, max: 1, curve: .5,
-        callback: function(x) {
-            synth.amp_lfo_depth.factor.value = x
+        callback: function(x,time) {
+            if(time) synth.amp_lfo_depth.factor.setValueAtTime(x,time)
+            else synth.amp_lfo_depth.factor.rampTo( x, .005)
         } 
     },
     {
         name: 'blend', type: 'lfo', min: 0, max: 1, curve: .5,
-        callback: function(x) {
-            synth.crossfade_lfo_depth.factor.value = x
+        callback: function(x,time) {
+            if(time) synth.crossfade_lfo_depth.factor.setValueAtTime(x,time)
+            else synth.crossfade_lfo_depth.factor.rampTo( x, .005)
         } 
     },
     // Fix pan in polyphony template

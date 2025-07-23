@@ -481,8 +481,8 @@ export class Polyphony extends MonophonicTemplate{
 	/**** PRESETS ***/
 
 	loadPreset(name) {
-		//for(let i=0;i<this.numVoices;i++) this.voice[i].loadPreset(name)
-		this.voice[0].loadPreset(name)
+		for(let i=0;i<this.numVoices;i++) this.voice[i].loadPreset(name)
+		//this.voice[0].loadPreset(name)
 	}
 
 	listPresets() {

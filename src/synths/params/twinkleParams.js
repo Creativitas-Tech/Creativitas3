@@ -26,20 +26,32 @@ const paramDefinitions = (synth) => [
     { 
         name: 'Q', type: 'vcf', 
         min: 0, max: 30, curve: 2, 
-        callback: function(x) { synth.vcf.Q.value = x; } 
+        callback: function(x, time = null) {
+            if (time) {
+                synth.vcf.Q.setValueAtTime(x, time);
+            } else  synth.vcf.Q.value = x; } 
     },
     { 
         name: 'keyTrack', type: 'hidden', 
         min: 0, max: 2, curve: 1, 
-        callback: function(x) { synth.keyTracker.factor.value = x; } },
+        callback: function(x, time = null) {
+            if (time) {
+                synth.keyTracker.factor.setValueAtTime(x, time);
+            } else  synth.keyTracker.factor.value = x; } },
     { 
         name: 'envDepth', type: 'vcf', 
         min: -1000, max: 5000, curve: 2, 
-        callback: function(x) { synth.vcf_env_depth.factor.value = x; } },
+        callback: function(x, time = null) {
+            if (time) {
+                synth.vcf_env_depth.factor.setValueAtTime(x, time);
+            } else synth.vcf_env_depth.factor.value = x; } },
     { 
         name: 'level', type: 'vca', 
         min: 0, max: 1, curve: 2, value: 0, 
-        callback: function(x) { synth.vca_lvl.value = x; } },
+        callback: function(x, time = null) {
+            if (time) {
+                synth.vca_lvl.setValueAtTime(x, time);
+            } else  synth.vca_lvl.value = x; } },
     { 
         name: 'attack', type: 'env', 
         min: 0, max: 1, curve: 2, value: 0.01, 

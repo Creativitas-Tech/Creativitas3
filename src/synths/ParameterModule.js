@@ -63,9 +63,9 @@ export class Parameter {
     // Update GUI elements
     if(calledByGui==false){
       if (Array.isArray(this._value)) {
-          this.guiElements.forEach((gui, i) => gui.forceSet(this._value[i]));
+          this.guiElements.forEach((gui, i) => gui.ccSet(this._value[i]));
       } else if (this.guiElements.length > 0) {
-          this.guiElements[0].rawValue = this._value;
+          this.guiElements[0].ccSet (this._value);
       }
     }
   }
@@ -82,7 +82,10 @@ export class Parameter {
             subdivision,
             'infinite',
             0,
-            ((v, time) => this.parent.param[this.name].set(Number(v[0]),null,false, time)).bind(this)// Ensure time is passed
+            ((v, time) => {
+                //console.log(v,time)
+                this.parent.param[this.name].set(Number(v[0]),null,false, time)}).bind(this)
+            // Ensure time is passed
         );
     }
     stop(){
