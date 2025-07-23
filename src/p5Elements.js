@@ -539,11 +539,24 @@ class Element {
         }
         else {
             this.value = value;
-            this.rawValue = unScaleOutput(value, 0, 1, this.min, this.max, this.curve) || 0.5;
+            this.rawValue = unScaleOutput(value, 0, 1, this.min, this.max, this.curve);
             this.mapValue(this.value, this.mapto);
         }
 
         this.runCallBack();
+    }
+    ccSet(value){
+        // sets value without sending data to collab-hub
+        if (typeof (value) === 'string') {
+            this.value = value;
+        }
+        else {
+            this.value = value;
+            this.rawValue = unScaleOutput(value, 0, 1, this.min, this.max, this.curve);
+            //this.mapValue(this.value, this.mapto);
+        }
+
+        //this.runCallBack();
     }
 }
 
@@ -570,6 +583,7 @@ export class Knob extends Element {
     }
 
     draw() {
+        //console.log(this.rawValue)
         if (this.hide === true) return;
         // Calculate the angle based on the knob's value
         this.startAngle = this.p.PI * (4 / 8 + (360 - this.degrees) / 360);
