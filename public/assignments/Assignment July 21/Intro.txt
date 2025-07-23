@@ -1,0 +1,23 @@
+*Due July 22*
+
+[Barre Assembly Instructions](https://www.dropbox.com/scl/fi/ke7ynsxtswm3wimzzzoex/Barre-Instructions-LQ.pdf?rlkey=y7uk5n00qzhfg9eafk37g41yo&dl=0)
+
+[Barre Schematic](https://www.dropbox.com/scl/fi/wc8jrxk97r25j70zqkk8h/Barre_schematic.pdf?rlkey=yitoay23saq3y2vokp5sxayoi&dl=0)
+
+[Barre PCB](https://www.dropbox.com/scl/fi/zn69wit0rkgh9q8saqx6a/Barre_PCB.pdf?rlkey=y7r9513n9ay2mjxxzliiuz2f1&dl=0)
+
+[Class Slides 1](https://www.dropbox.com/scl/fi/y80kzsmsws17um83ppgl6/Creativitas_Summer23_W2_1.pdf?rlkey=8e9b65im3bnluieeeupt0m16t&dl=0)
+
+[Class Slides 2](https://www.dropbox.com/scl/fi/nptdrnprogdvo69qsnp1y/Creativitas_Summer23_W2_2.pdf?rlkey=gm5bpoee27xfmpeg5u4wg6vvp&dl=0)
+
+Open the [Twinkle example file](https://ianhattwick.com/creativitas/Twinkle) and explore the basics of synthesis. Get a feel for:
+* How the cutoff and resonance knob affect the sound
+* How the envelope controls (attack, decay, sustain, and release) affect the sound
+* how envDepth causes the envelope to affect the filter
+
+Open the [Sequencing Basics](https://ianhattwick.com/creativitas/Sequencing%20Basics) file.
+* explore the different options for changing sequences.
+* Be sure to read through the different options described at the bottom of the page!
+* Write a melody using the sequencer, and be prepared to share it in class.
+
+Download your melody using the Export Code dropdown - select 'Text File' to download a text file with the contents of the codebox.

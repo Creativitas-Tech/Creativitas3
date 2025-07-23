@@ -10,10 +10,11 @@ s.octave = 1
 s.sustain  = 1
 let scope = new Oscilloscope()
 
-s.release = 1
+s.release = .1
 s.Q = 0
 s.cutoff = 500
 s.sustain = .6
+verb.level = 0.05
 
 
 setNoteOnHandler( (note, vel) =>{

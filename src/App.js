@@ -18,15 +18,15 @@ function App() {
   const [references, setReferences] = useState({});
   const [sandboxes, setSandboxes] = useState({});
   const [markdownContent, setMarkdownContent] = useState("");
-
+  
   const exampleFiles = [
     'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'Arpeggiator'
     //'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
   ];
-  const assignmentFiles = [
-
-    'Chord Object', 'Promenade', 'Promenade pt. 2', 'The Wand', 'The Barre', 'Sequencing Basics', 'Assignment Jul 15',
-    'Piano Simpler'
+  const assignmentFiles = [ 
+    'Assignment July 21','Assignment July 22', 'Sequencing Basics', 'The Barre', 'The Barre 2', 'Promenade', 'Piano Simpler'
+    //'Chord Object', 'Promenade', 'Promenade pt. 2', 'The Wand', 'The Barre', 'Sequencing Basics', 'Assignment Jul 15',
+    //'Piano Simpler'
     //'Grids1', 'Comp5', 'Comp6',  'SamplePlayer', 'Comp7', 'Algorithms', 'Comp8', 'Comp9'
   ];
 
@@ -45,34 +45,44 @@ function App() {
     const importFiles = async (files, folder) => {
       const fetchedAssignments = {};
 
-      for (const fileName of files) {
-        try {
-          const introRes = await fetch(`${process.env.PUBLIC_URL}/${folder}/${fileName}/Intro.txt`);
-          const starterCodeRes = await fetch(`${process.env.PUBLIC_URL}/${folder}/${fileName}/StarterCode.js`);
-          const descriptionRes = await fetch(`${process.env.PUBLIC_URL}/${folder}/${fileName}/Description.txt`);
+    for (const fileName of files) {
+      try {
+        const introRes = await fetch(`${process.env.PUBLIC_URL}/${folder}/${fileName}/Intro.txt`);
+        if (!introRes.ok) throw new Error('Intro file is required');
 
-          if (!introRes.ok || !starterCodeRes.ok || !descriptionRes.ok) {
-            throw new Error('Fetching files failed');
-          }
+        let [starterCodeRes, descriptionRes] = await Promise.all([
+          fetch(`${process.env.PUBLIC_URL}/${folder}/${fileName}/StarterCode.js`),
+          fetch(`${process.env.PUBLIC_URL}/${folder}/${fileName}/Description.txt`),
+        ]);
 
-          let intro = await introRes.text();
-          intro = marked(intro);
-          const starterCode = await starterCodeRes.text();
-          let description = await descriptionRes.text();
-          description = marked(description);
+        let intro = await introRes.text();
+        intro = marked(intro);
 
-          fetchedAssignments[fileName] = {
-            intro,
-            starterCode,
-            description,
-            canvases: ['Canvas'],
-          };
-        } catch (error) {
-          console.error(`Error importing ${fileName}:`, error);
+        let starterCode;
+        if (starterCodeRes.ok) {
+          const text = await starterCodeRes.text();
+          starterCode = text.trim().startsWith('<') ? undefined : text;
         }
+
+        let description = descriptionRes.ok ? await descriptionRes.text() : undefined;
+        description = description ? marked(description) : undefined;
+
+        //console.log(starterCode)
+        // starterCode = ''
+        fetchedAssignments[fileName] = {
+          intro,
+          starterCode,
+          description,
+          canvases: ['Canvas'],
+        };
+      } catch (error) {
+        console.error(`Error importing ${fileName}:`, error);
       }
-      return fetchedAssignments;
-    };
+    }
+
+    return fetchedAssignments;
+    }
+
 
     const loadSandbox = async (sandboxCount) => {
       const fetchedSandboxes = {};
@@ -126,6 +136,3 @@ function App() {
   );
 }
 export default App;
-
-
-

@@ -15,5 +15,5 @@ s.sequence('0 [1 2] 3 [2 1]')
 
 //inside brackets, commas enable notes play simultaneously
 s.sequence('[0,2,4] . [-1,1,4] .','4n')
-//periods '.' are resets
-//the second argument is the playback rate: 4n=quarter note
+//periods '.' are rests
+//the second argument is the playback rate: '4n'=quarter note

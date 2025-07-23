@@ -1,0 +1,17 @@
+*Due July 23*
+
+For today our goal is to get comfortable programming our Barre controllers to respond to MIDI note and CC messages.
+
+In the code box below is a simple example showing how to do two things:
+* create sequences when a specific MIDI note is played
+* control synth parameters with CC messages
+
+For tomorrow, modify the code below so that every MIDI note triggers a function - the easiest thing to do is to create a new sequence (like the code below does). But you can also stop the sequencer, change octaves, change synth parameters, etc.
+
+In addition, modify the code so that your Barre controls two synth parameters using CC 0 and CC 1. I gave a simple example but you should think about your own idea and try it out. 
+
+A few notes:
+* don't forget to look at your console and see which MIDI input and output your Barre is using. You should see either 'Wifiduino' or 'Tiny USB'. Make sure `setMidiInput()` and `setMidiOutput()`  use the right MIDI port.
+* your pads should trigger a pink flash - if the pink flash is not happening and you are not receiving MIDI notes try executing the line `sendCC(101,1)`. This will send a CC message to the Barre and reset the capacitive touch controller.
+* make sure your console is open (right-click the codebox, select inspect, and then select the console). It helps so much to see when you make typos or other errors pop up.
+* if you get stuck don't worry too much - we will go over everything tomorrow and we will help you figure it out!
