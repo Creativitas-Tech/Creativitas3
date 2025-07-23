@@ -9,10 +9,20 @@ const Template = (props) => {
                 <div className="title">{props.title}</div>
                 <div dangerouslySetInnerHTML={{ __html: props.intro }} />
             </div>
-            <Editor page={props.page} starterCode={props.starterCode} canvases={props.canvases} />
-            <div className="description-container">
-                <div dangerouslySetInnerHTML={{ __html: props.description }} />
-            </div> 
+
+            {props.starterCode?.trim() && (
+                <Editor 
+                    page={props.page} 
+                    starterCode={props.starterCode} 
+                    canvases={props.canvases} 
+                />
+            )}
+
+            {props.description && (
+                <div className="description-container">
+                    <div dangerouslySetInnerHTML={{ __html: props.description }} />
+                </div>
+            )}
         </>
     );
 };
