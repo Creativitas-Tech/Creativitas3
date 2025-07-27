@@ -1,0 +1,9 @@
+To make a break beat you load an audio file into the sample Player, chop the file up into beat-long slices, and then reorder them freely. It's really fun!
+
+Proper breakbeats assume you have a drum loop that is 1, 2, or 4 bars long - but there is nothing stopping you from chopping up any sample and exploring.
+
+Here are some of the parameters you will find helpful:
+* divisions: how many slices to chop the file into
+* playbackrate: the speed the sample plays back. Slowing the speed down changes the pitch and the tempo!
+* fadein / fadeout: mostly used to prevent clicks when a slice begins or ends. You probably want to keep these close to 0.
+* cutoff / highpass: standard lowpass and highpass filter cutoff frequencies.

@@ -1,0 +1,14 @@
+*Due July 24*
+
+As discussed in class, your assignment for tonight is to create a really terrible first draft of a song. Nothing you do for this assignment needs to be used on friday - but make a good attempt and see what you come up with!
+
+A few tips:
+* Don't forget you can make multiple sequences by using a 3rd value in .sequence, e.g. `s.sequence('0','8n',0)` makes sequence number 0
+* You can also stop your sequence `s.stop()` or stop an individual sequence `s.stop(0)`
+* Try adding a DrumSampler to you piece! Just add:
+```
+let d = new DrumSampler()
+d.connect(output)
+d.initGui()
+```
+* You can also add `Distortion()`, `Chorus()`, `Delay()`, or `Reverb()`. Each have their own GUI!

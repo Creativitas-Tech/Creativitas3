@@ -20,11 +20,11 @@ function App() {
   const [markdownContent, setMarkdownContent] = useState("");
   
   const exampleFiles = [
-    'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'Arpeggiator'
+    'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'Arpeggiator', 'Breakbeats!'
     //'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
   ];
   const assignmentFiles = [ 
-    'Assignment July 21','Assignment July 22', 'Sequencing Basics', 'The Barre', 'The Barre 2', 'Promenade', 'Piano Simpler'
+    'Assignment July 21','Assignment July 22', 'Assignments July 23', 'Sequencing Basics', 'The Barre', 'The Barre 2', 'Promenade Finale', 'Piano Simpler'
     //'Chord Object', 'Promenade', 'Promenade pt. 2', 'The Wand', 'The Barre', 'Sequencing Basics', 'Assignment Jul 15',
     //'Piano Simpler'
     //'Grids1', 'Comp5', 'Comp6',  'SamplePlayer', 'Comp7', 'Algorithms', 'Comp8', 'Comp9'
@@ -120,13 +120,13 @@ function App() {
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/TableOfContents" element={<TableOfContents assignments={assignments} examples={examples} references={references} setPage={setPage} />} />
         {Object.entries(assignments).map(([title, props]) => (
-          <Route key={title} path={`/${title}`} element={<Template page={title} title={title} intro={props.intro} starterCode={props.starterCode} description={props.description} canvases={props.canvases} />} />
+          <Route key={title} path={`/${title}`} element={<Template key={title} page={title} title={title} intro={props.intro} starterCode={props.starterCode} description={props.description} canvases={props.canvases} />} />
         ))}
         {Object.entries(examples).map(([title, props]) => (
-          <Route key={title} path={`/${title}`} element={<Template page={title} title={title} intro={props.intro} starterCode={props.starterCode} description={props.description} canvases={props.canvases} />} />
+          <Route key={title} path={`/${title}`} element={<Template key={title} page={title} title={title} intro={props.intro} starterCode={props.starterCode} description={props.description} canvases={props.canvases} />} />
         ))}
         {Object.entries(references).map(([title, props]) => (
-          <Route key={title} path={`/${title}`} element={<Template page={title} title={title} intro={props.intro} starterCode={props.starterCode} description={props.description} canvases={props.canvases} />} />
+          <Route key={title} path={`/${title}`} element={<Template key={title} page={title} title={title} intro={props.intro} starterCode={props.starterCode} description={props.description} canvases={props.canvases} />} />
         ))}
         {Object.entries(sandboxes).map(([title, props]) => (
         <Route key={title} path={`/${title}`} element={<Sandbox page={title} title={title} canvases={props.canvases} />} />
