@@ -10,11 +10,12 @@ import * as Tone from 'tone';
 import TwinklePresets from './synthPresets/TwinklePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
-import basicLayout from './layouts/basicLayout.json';
+import basicLayout from './layouts/halfLayout.json';
 import paramDefinitions from './params/twinkleParams.js';
  
 export class Twinkle extends MonophonicTemplate {
   constructor (gui = null) {
+    console.log('tw')
     super()
     this.gui = gui
 		this.presets = TwinklePresets
@@ -22,6 +23,8 @@ export class Twinkle extends MonophonicTemplate {
 		//this.accessPreset()
     this.isGlide = false
     this.name = "Twinkle"
+    this.guiHeight = 0.5
+    this.layout = basicLayout
     //console.log(this.name, " loaded, available preset: ", this.presets)
 
     // Initialize the main frequency control

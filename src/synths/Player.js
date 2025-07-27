@@ -206,14 +206,15 @@ export class Player extends MonophonicTemplate {
                 //console.log('noy', freq,dur)
                 if(this._playbackRate!= this.player.playbackRate) this.player.playbackRate = this._playbackRate
                 //this.player.start(time,freq,dur)
-                //console.log(freq, freq+dur)
-                this.player.start(time, freq, freq+dur)
+                //console.log(freq, dur)
+                this.player.start(time, freq, dur)
+                //this.player.stop(time+dur)
             }
             else {
                 //console.log('pitch',dur.toFixed(2), this._start,time)
                 this.player.playbackRate = this.midiToRate(freq)
-                this.player.start(time, this._start)
-                this.player.stop(time+dur)
+                this.player.start(time, this._start, dur)
+                //this.player.stop(time+dur)
             }
             this.filterEnv.triggerAttackRelease(dur,time)
             this.vca.factor.setValueAtTime(amp, time)

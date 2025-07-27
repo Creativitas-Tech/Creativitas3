@@ -376,7 +376,7 @@ export class EffectTemplate {
      */
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
-        const sketchWithSize = (p) => sketch(p, { height: .25 });
+        const sketchWithSize = (p) => sketch(p, { height: .3 });
         this.gui = new p5(sketchWithSize, this.guiContainer);
         const layout = this.layout;
         //console.log(layout);

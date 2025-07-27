@@ -273,8 +273,10 @@ export class Polyphony extends MonophonicTemplate{
 	};
 
 	initGui(gui = null) {
+		this.guiHeight = this.voice[0].guiHeight
 	    this.guiContainer = document.getElementById('Canvas');
-	    this.gui = new p5(sketch, this.guiContainer);
+	    const sketchWithSize = (p) => sketch(p, { height: this.guiHeight });
+	    this.gui = new p5(sketchWithSize, this.guiContainer);
 
 	    const layout = this.voice[0].layout; // Grab layout from first voice
 	    const params = this.voice[0].param; // First voice's params as template

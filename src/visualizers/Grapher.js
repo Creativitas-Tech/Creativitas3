@@ -1,7 +1,7 @@
 import * as Tone from 'tone';
 
 export class GraphVisualizer {
-    constructor(size = 64, ratio = 1,  _target = 'Canvas',) {
+    constructor(size = 64, ratio = 1, color = 0,  _target = 'Canvas',) {
         this._target = document.getElementById(_target);
         this._array = new Array(size).fill(0);
         this._index = 0
@@ -19,7 +19,7 @@ export class GraphVisualizer {
         ];
 
         this._backgroundColor = '#3C3D37'
-        this._activeColor = '#ECDFCC'; // Default color
+        this._activeColor = this._color[color]; // Default color
         this._rows = 1; // Default to single row
         this._columns = this._array.length; // Default to length of array
         this._width = this._target.offsetWidth;
@@ -196,7 +196,7 @@ export class GraphVisualizer {
                 line.setAttribute('x2', x2);
                 line.setAttribute('y1', y);
                 line.setAttribute('y2', y);
-                line.setAttribute('stroke', this._color[this._seqNum % this._color.length]);
+                line.setAttribute('stroke', this._activeColor);
                 line.setAttribute('stroke-width', width);
 
                 this._svg.appendChild(line);
@@ -226,7 +226,7 @@ export class GraphVisualizer {
                 bar.setAttribute('y', y);
                 bar.setAttribute('width', barWidth);
                 bar.setAttribute('height', barHeight);
-                bar.setAttribute('fill', this._color[this._seqNum % this._color.length]);
+                bar.setAttribute('fill', this._activeColor);
 
                 this._svg.appendChild(bar);
             }

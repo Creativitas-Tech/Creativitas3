@@ -60,7 +60,6 @@ export class MonophonicTemplate {
         this.presetsData = null;
         this.curPreset = null;
         this.backgroundColor = [10,10,10]
-        this.guiHeight = 1
 
         // Sequencer related
         this.seq = []; // Array of Seq instances
@@ -504,6 +503,7 @@ export class MonophonicTemplate {
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
         const sketchWithSize = (p) => sketch(p, { height: this.guiHeight });
+        //console.log(this.guiHeight)
         this.gui = new p5(sketchWithSize, this.guiContainer);
         const layout = this.layout;
         //console.log(layout);
