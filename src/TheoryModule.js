@@ -713,6 +713,73 @@ export function parseStringBeat(curBeat, time){
 }
 
 //handles pitch sequences
+/* DEEP SEEK
+export function parsePitchStringBeat(curBeat, time, parentStart=0, parentDuration=1){
+  console.log('____', curBeat, parentStart, parentDuration)
+  try{
+    if (typeof curBeat === 'number')  curBeat = curBeat.toString();
+    const firstElement = curBeat.replace(/\[/g, "")[0]
+    const usesPitchNames = /^[a-ac-zA-Z]$/.test(firstElement);
+
+    // Check if the input is a single value (not an array)
+    if (!curBeat.startsWith('[')) {
+      return [[curBeat, 0]];
+    }
+
+    // Remove outer brackets and split into top-level elements
+    const elements = curBeat.slice(1, -1).trim().split(/\s+/);
+    console.log('el', elements)
+    const outArr = [];
+
+    for (let i = 0; i < elements.length; i++) {
+      const element = elements[i];
+
+      // Handle subarrays recursively (e.g., "[3 4]")
+      if (element.startsWith('[')) {
+        // Find the full subarray string (handles nested brackets)
+        let subArrayStr = element;
+        let bracketCount = (element.match(/\[/g) || []).length;
+        let j = i + 1;
+
+        while (bracketCount > 0 && j < elements.length) {
+          subArrayStr += ' ' + elements[j];
+          bracketCount += (elements[j].match(/\[/g) || []).length;
+          bracketCount -= (elements[j].match(/\]/g) || []).length;
+          j++;
+        }
+        subArrayStr += ']'
+
+        // Calculate the subarray's slot in the parent
+        console.log('sub', parentStart, elements.length, elements, (i / (elements.length-1)), parentDuration)
+        const subArraySlotStart = parentStart + (i / (elements.length-1)) * parentDuration;
+        const subArraySlotDuration = parentDuration / (elements.length-1);
+
+        // Parse the subarray internally (timings relative to its own slot)
+        const subArrayElements = subArrayStr.slice(1, -1).trim().split(/\s+/);
+        for (let k = 0; k < subArrayElements.length; k++) {
+          const subElement = subArrayElements[k];
+          const subElementTime = subArraySlotStart + (k / subArrayElements.length) * subArraySlotDuration;
+          outArr.push([subElement, subElementTime]);
+        }
+        i = j - 1; // Skip processed elements
+      }
+      // Handle simple values (e.g., "2")
+      else {
+        const noteTime = parentStart + (i / elements.length) * parentDuration;
+        outArr.push([element, noteTime]);
+      }
+    }
+      console.log(outArr)
+      return  outArr 
+    }
+  catch(e){
+    console.log('error with parsePitchStringBeat')
+    return ['.']
+  }
+}
+
+*/
+
 export function parsePitchStringBeat(curBeat, time){
   //console.log(curBeat)
   try{
