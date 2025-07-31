@@ -86,14 +86,15 @@ export class NoiseVoice extends MonophonicTemplate {
       this.lpf_env_depth.connect( this.lpf.frequency)
 
       // Bind parameters with this instance
-    // this.paramDefinitions = paramDefinitions(this)
-    // this.param = this.generateParameters(this.paramDefinitions)
-    // this.createAccessors(this, this.param);
+      this.paramDefinitions = paramDefinitions(this)
+      //console.log(this.paramDefinitions)
+      this.param = this.generateParameters(this.paramDefinitions)
+      this.createAccessors(this, this.param);
 
-    // //for autocomplete
-    // this.autocompleteList = this.paramDefinitions.map(def => def.name);;
-    // //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
-    // setTimeout(()=>{this.loadPreset('default')}, 500);
+      //for autocomplete
+      this.autocompleteList = this.paramDefinitions.map(def => def.name);;
+      //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
+      setTimeout(()=>{this.loadPreset('default')}, 500);
     }
   setCutoff (val,time=null){
     if(time)this.cutoffSignal.setValueAtTime(val, time)

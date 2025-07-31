@@ -15,7 +15,6 @@ import paramDefinitions from './params/twinkleParams.js';
  
 export class Twinkle extends MonophonicTemplate {
   constructor (gui = null) {
-    console.log('tw')
     super()
     this.gui = gui
 		this.presets = TwinklePresets

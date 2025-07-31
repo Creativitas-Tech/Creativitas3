@@ -208,7 +208,7 @@ export class GraphVisualizer {
    drawVerticalBars(arr) {
         // Normalize array values between 0 and 1
         arr = arr.map(x => (x - this._min) / (this._max - this._min));
-
+        arr = arr.map(x=> x<0 ? 0 : x)
         this.clearSVG();
 
         const step = this._width / arr.length;
@@ -264,6 +264,9 @@ export class GraphVisualizer {
         this._target = null;
         this._svg = null;
     }
+    add(val){
+        this.addCCValue(val)
+    }
     addCCValue(val) {
         // Convert BigInt or other inputs explicitly to Number
         val = Number(val);
@@ -272,7 +275,7 @@ export class GraphVisualizer {
         val = Math.max(0, Math.min(127, val));
 
         // Normalize if needed: 0–127 → 0–1
-        const normalized = val / 127;
+        const normalized = val// / 127 //*2-1;
 
         // Push to buffer and trim
         // this._array.push(normalized);
@@ -281,7 +284,7 @@ export class GraphVisualizer {
         // }
         this._index = (this._index+1)%this._array.length
         this._array[ this._index] = normalized
-
+        //console.log(normalized)
         this.startVisualFrame();
         this.visualize(this._array);
     }

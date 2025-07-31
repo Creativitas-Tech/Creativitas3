@@ -17,29 +17,31 @@ const paramDefinitions = (synth) => [
         isSignal: 'true', connectTo: synth=>synth.cutoffSig, 
         callback: function(x, time = null) {
             if (time) {
-                synth.cutoffSig.setValueAtTime(x, time);
+                synth.cutoffSignal.setValueAtTime(x, time);
             } else {
-                synth.cutoffSig.value = x;
+                synth.cutoffSignal.value = x;
             }
         }
     },
     { 
         name: 'Q', type: 'vcf', 
         min: 0, max: 30, curve: 2, 
-        callback: function(x) { synth.vcf.Q.value = x; } 
+        callback: function(x) { synth.lpf.Q.value = x; } 
     },
+    /*
     { 
         name: 'keyTrack', type: 'hidden', 
         min: 0, max: 2, curve: 1, 
         callback: function(x) { synth.keyTracker.factor.value = x; } },
+        */
     { 
         name: 'envDepth', type: 'vcf', 
         min: -1000, max: 5000, curve: 2, 
-        callback: function(x) { synth.vcf_env_depth.factor.value = x; } },
+        callback: function(x) { synth.lpf_env_depth.factor.value = x; } },
     { 
         name: 'level', type: 'vca', 
         min: 0, max: 1, curve: 2, value: 0, 
-        callback: function(x) { synth.vca_lvl.value = x; } },
+        callback: function(x) { synth.output.factor.rampTo(x, 0.01) } },
     { 
         name: 'attack', type: 'env', 
         min: 0, max: 1, curve: 2, value: 0.01, 
