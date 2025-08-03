@@ -32,15 +32,18 @@ export class KP extends MonophonicTemplate{
       this.synthPresetName = "TwinklePresets"
       //this.accessPreset()
       this.isGlide = false
+      this.backgroundColor = [200,50,50]
       this.name = "Twinkle"
       this.guiHeight = 1
       this.layout = basicLayout
+      this.detuneVal = 0
 
       this.frequency = new Tone.Signal(100)
 
       this.impulse = new Tone.Noise().start()
       this.hpf = new Tone.Filter({frequency: 200, type:'highpass', Q: 0, rolloff:-24})
       this.lpf = new Tone.Filter({frequency: 1000, type:'lowpass', Q: 0, rolloff:-12})
+      this.lpf2 = new Tone.Filter({frequency: 1000, type:'lowpass', Q: 0, rolloff:-12})
       this.dry = new Tone.Signal(0.)
       this.wet = new Tone.Multiply(1)
       this.vca= new Tone.Multiply(1)
@@ -49,7 +52,7 @@ export class KP extends MonophonicTemplate{
       //control
       this.env = new Tone.Envelope()
       this.env_depth = new Tone.Multiply(1)
-      this.velocitySig = new Tone.Multiply(1)
+      this.velocitySig = new Tone.Signal(1)
       this.choke = new Tone.Signal()
       this.resonanceAmount = new Tone.Signal(.9)
       this.velocity_depth = new Tone.Multiply(1)
@@ -59,7 +62,7 @@ export class KP extends MonophonicTemplate{
       this.hpfBandWidthNegate = new Tone.Negate()
       this.hpf_env_depth = new Tone.Multiply()
       this.lpf_env_depth = new Tone.Multiply()
-      this.detuneAmount = new Tone.Multiply(1)
+      this.detuneAmount = new Tone.Signal(0)
       this.output = new Tone.Multiply(1)
       //connections
       this.impulse.connect(this.hpf)
@@ -69,29 +72,33 @@ export class KP extends MonophonicTemplate{
       this.vca.connect(this.wet)
       this.wet.connect(this.delay_1)
       this.wet.connect(this.delay_2)
-      this.delay_1.connect(this.output)
-      this.delay_2.connect(this.output)
+      this.delay_1.connect(this.lpf2)
+      this.delay_2.connect(this.lpf2)
+      this.lpf2.connect(this.output)
 
       this.frequency.connect( this.delay_1.delayTime)
-      this.frequency.connect( this.detuneAmount)
-      this.detuneAmount.connect( this.delay_2.delayTime)
+      //this.frequency.connect( this.detuneAmount)
+      this.frequency.connect( this.delay_2.delayTime)
+      this.detuneAmount.connect(this.delay_2.delayTime)
 
       this.resonanceAmount.connect(this.delay_1.resonance)
       this.resonanceAmount.connect(this.delay_2.resonance)
       this.choke.connect(this.delay_1.resonance)
       this.choke.connect(this.delay_2.resonance)
-      this.env.connect(this.vca.factor)
+      this.env.connect(this.env_depth)
       this.env_depth.connect(this.velocity_depth)
       this.velocity_depth.connect(this.vca.factor)
-      this.velocitySig.connect(this.velocity_depth)
+      this.velocitySig.connect(this.velocity_depth.factor)
       
       //filter cutoffs
       this.highpassCutoffSignal.connect( this.hpf.frequency)
       this.lowpassCutoffSignal.connect( this.lpf.frequency)
-      this.env.connect(this.hpf_env_depth.factor)
-      this.env.connect(this.lpf_env_depth.factor)
+      this.lowpassCutoffSignal.connect( this.lpf2.frequency)
+      this.env.connect(this.hpf_env_depth)
+      this.env.connect(this.lpf_env_depth)
       this.hpf_env_depth.connect( this.hpf.frequency)
       this.lpf_env_depth.connect( this.lpf.frequency)
+      this.lpf_env_depth.connect( this.lpf2.frequency)
       // this.bandwidthSignal.connect( this.lpf.frequency)
       // this.bandwidthSignal.connect(this.hpfBandWidthNegate)
       // this.hpfBandWidthNegate.connect(this.hpf.frequency)
@@ -152,19 +159,37 @@ export class KP extends MonophonicTemplate{
   }
   triggerAttackRelease(val, vel = 100, dur = 0.01, time = null) {
         //console.log('AR ',val,vel,dur,time)
-        vel = vel / 127;
+        let amp = vel/127
         if (time) {
-            this.frequency.setValueAtTime(1 / Tone.Midi(val).toFrequency(), time);
+          this.frequency.setValueAtTime(this.frequency.value,time);
+          this.frequency.exponentialRampToValueAtTime(1 / Tone.Midi(val).toFrequency(), time + 0.02);
+            //this.frequency.linearRampToValueAtTime(1 / Tone.Midi(val).toFrequency(), time);
+            this.velocitySig.setValueAtTime(amp, time); // 0.03s time constant for smoother fade
             this.env.triggerAttackRelease(dur, time);
+            this.updateDetune(1 / Tone.Midi(val).toFrequency(), time)
         } else {
-            this.frequency.value = 1 / Tone.Midi(val).toFrequency();
+            this.frequency.rampTo( 1 / Tone.Midi(val).toFrequency() , .1);
+            this.velocitySig.rampTo(amp, 0.005); // 0.03s time constant for smoother fade
             this.env.triggerAttackRelease(dur);
+            this.updateDetune( 1 / Tone.Midi(val).toFrequency(), time)
         }
     }
 
-    setDetune(val){
-      this.detuneAmount.factor.value = 1 + this.detuneFocusCurve(val)
-      
+    setDetune(val) {
+      let normalizedVal = Math.max(0., Math.min(1, val));
+      if( normalizedVal < 0.01) normalizedVal = 0
+      this.detuneVal = this.detuneFocusCurve(normalizedVal)
+      this.updateDetune(this.frequency.value, null)
+    }
+
+    updateDetune(val, time) {
+    
+      if( time) {
+        this.detuneAmount.setValueAtTime (this.frequency.value * this.detuneVal, time)
+        this.detuneAmount.exponentialRampToValueAtTime(val * this.detuneVal, time + 0.02);
+           
+      }
+      else this.detuneAmount.value =  val * this.detuneVal
     }
 
     detuneFocusCurve(x) {
@@ -173,8 +198,9 @@ export class KP extends MonophonicTemplate{
     const centerVals = [0, 0.5, 1];
     const numDivisions = centerVals.length - 1;
     const divisionSize = 1 / numDivisions;
+    let outputVal = 0
 
-    const sigmoid = (x) => 1 / (1 + Math.exp(-x * 10)); // steeper sigmoid
+    const sigmoid = (x) => 1 / (1 + Math.exp(-x * 8)); // steeper sigmoid
 
       for (let i = 0; i < numDivisions; i++) {
         const start = i * divisionSize;
@@ -184,7 +210,9 @@ export class KP extends MonophonicTemplate{
         if (x >= start && x < end) {
           const normalized = (x - start) / divisionSize; // maps to 0–1
           const curved = sigmoid(normalized * 2 - 1);     // sigmoid centered at 0
-          return start + curved * divisionSize;          // remap to original range
+          let outputVal =  start + curved * divisionSize;          // remap to original range
+          //if(outputVal < 0.00001) outputVal = 0
+          return outputVal
         }
       }
       return x; // fallback

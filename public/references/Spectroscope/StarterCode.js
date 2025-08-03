@@ -4,7 +4,7 @@ mic.connect(output)
 //
 //basic spectroscope setup
 //note the argument to Spectroscope(argument) must be a valid html div
-let spectrum = new Spectroscope('Canvas')
+let spectrum = new Spectroscope()
 spectrum.start()
 //
 mic.open().then(() => {

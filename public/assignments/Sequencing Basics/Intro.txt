@@ -1,5 +1,12 @@
 ### Getting started with synths and sequencers
 
-Daisy is a simple synthesizer. Execute the code in the box below by option-shift-return in each block, then play around with the synth controls to get a feel for how they work.
+Watch [this youtube video](https://youtu.be/sWS7U29qszY) to learn about the basics of sequencing in Creativitas. Be sure to enter the code from the video in the code box below.
 
-Then try modifying the sequence to make a melody. Look at the notes below the codebox if you have questions. 
+Things you will want to know after this assignment:
+* how to use brackets [] to make divisions of a beat
+* how to create rests
+* how to change the speed of the sequence using notation like '4n'
+* how to make chords in a single sequence
+* how to make multiple sequences control the same synthesizer (note the use of the `Polyphony()` object)
+
+Once you have finished the video, create a song with two sections. Think about the elements of a song: melody, bassline, chords - you don't have to use every element but you might want to! Save your song by downloading the code as a text file, and be prepared to share it.

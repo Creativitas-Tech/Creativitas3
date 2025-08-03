@@ -87,6 +87,8 @@ export class Simpler extends MonophonicTemplate {
         this.layout = layout;
         this.guiHeight = .3
         this.backgroundColor = [0,0,50]
+
+        this.pitchOffset = 0
         
         //audio objects
         this.sampler = new ExtendedSampler()
@@ -125,18 +127,18 @@ export class Simpler extends MonophonicTemplate {
         setTimeout(()=>{this.loadPreset('default')}, 500);
 
         this.sampleFiles = {
-          bell: ['C4', 'berklee/bell_1.mp3'],
-          bell1:   ['C4', 'berklee/bell_1a.mp3'],
-          bell2:   ['C4', 'berklee/bell_2a.mp3'],
-          bell3:   ['C4', 'berklee/bell_mallet_2.mp3'],
-          horn:['C4', 'berklee/casiohorn2.mp3'],
-          chotone:  ['C4', 'berklee/chotone_c4_!.mp3'],
-          voice: ['C4', 'berklee/femalevoice_aa_Db4.mp3'],
-          kalimba: ['C4', 'berklee/Kalimba_1.mp3'],
-          dreamyPiano: ['A5', 'salamander/A5.mp3'],
-          softPiano: ['A4', 'salamander/A4.mp3'],
-          piano: [45, 'salamander/A3.mp3'],
-          casio:['C4', 'casio/C2.mp3']
+          bell: [-4, 'berklee/bell_1.mp3'],
+          bell1:   [-1, 'berklee/bell_1a.mp3'],
+          bell2:   [-1, 'berklee/bell_2a.mp3'],
+          bell3:   [-1, 'berklee/bell_mallet_2.mp3'],
+          horn:[2, 'berklee/casiohorn2.mp3'],
+          chotone:  [0, 'berklee/chotone_c4_!.mp3'],
+          voice: [0.8, 'berklee/femalevoice_aa_Db4.mp3'],
+          kalimba: [-1, 'berklee/Kalimba_1.mp3'],
+          dreamyPiano: [-3, 'salamander/A5.mp3'],
+          softPiano: [-3, 'salamander/A4.mp3'],
+          piano: [-3, 'salamander/A3.mp3'],
+          casio:[0, 'casio/C2.mp3']
         }
 
         //for autocomplete
@@ -188,6 +190,7 @@ export class Simpler extends MonophonicTemplate {
         }
 
         //console.log(note, url)
+        this.pitchOffset = note
         this.sampler = new ExtendedSampler({
             urls:{
                 [60]: this.baseUrl.concat(url)
@@ -204,6 +207,7 @@ export class Simpler extends MonophonicTemplate {
     triggerAttack (freq, amp=100, time=null){ 
         // console.log(freq, amp, time)
         this.param.release = this.release
+        freq = freq - this.pitchOffset
         freq = Tone.Midi(freq).toFrequency()
         amp = amp/127
         if(time){
@@ -220,6 +224,7 @@ export class Simpler extends MonophonicTemplate {
     }
 
     triggerRelease (freq, time=null){
+        freq = freq - this.pitchOffset
         freq = Tone.Midi(freq).toFrequency()
         if(time) {
             this.sampler.triggerRelease(freq, time)
@@ -234,7 +239,8 @@ export class Simpler extends MonophonicTemplate {
 
     triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
         //console.log('AR', freq, amp, dur, time)
-        this.param.release = this.release 
+        this.param.release = this.release
+        freq = freq - this.pitchOffset 
         freq = Tone.Midi(freq).toFrequency()
         
         amp = amp/127

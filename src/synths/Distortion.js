@@ -30,6 +30,7 @@ export class Distortion extends EffectTemplate {
     this.outputFactor = 1
 
     this.input = new Tone2.Gain();
+    this.dry = new Tone2.Gain()
     this.outputCut = new Tone2.Signal(0)
     this.outputLevel = new Tone2.Signal(1)
     this.output = new Tone2.Gain();
@@ -55,6 +56,7 @@ export class Distortion extends EffectTemplate {
 
     // Signal chain
     this.input.connect(this.highpassA);
+    this.input.connect(this.dry)
 
     this.highpassA.connect(this.feedbackReturn);
     this.feedbackReturn.connect(this.driveGain);
@@ -70,6 +72,7 @@ export class Distortion extends EffectTemplate {
     this.outputCut.connect(this.output.gain)
     this.outputLevel.connect(this.output.gain)
     this.toneShelf.connect(this.output);
+    this.dry.connect(this.output)
 
     // Feedback loop
     this.toneShelf.connect(this.feedbackSend);

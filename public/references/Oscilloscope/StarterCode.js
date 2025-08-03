@@ -4,7 +4,7 @@ vco.connect( output )
 
 //basic oscilloscope setup
 //note the argument to Oscilloscope(argument) must be a valid html div
-let scope = new Oscilloscope('Canvas')
+let scope = new Oscilloscope()
 vco.connect( scope.input )
 scope.start()
 

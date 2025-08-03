@@ -1,0 +1,10 @@
+Welcome to Creativitas! This first assignment is going to go over the first elements of programming you will want to know, and help you begin making music.
+
+Watch [this youtube video](https://youtu.be/Z2zUCg7gA6c), and as you are watching copy the code from the video into the codebox below. Things you will want to make sure you are able to do:
+* open the javascript console in Chrome (note: Chrome is the best supported website for this)
+* execute a single line of code
+* create sequences for a synthesizer using `s.sequence`
+
+Once you have finished watching the video, create four sequences of you own using four lines of coding using `s.sequence()`. You can think of these sequences as parts of a song (verse, chorus, bridge, etc.), or just as sections of a longer melody. Try switching between sequences by executing each sequence individually.
+
+When you are done, click 'Export Code' and select 'Text File' to download your code. Be prepared to show your melodies to the class!
