@@ -1,5 +1,4 @@
-### Sequencing
-Some key points about creating a sequence:
+Some key points about creating sequences:
 * the sequence must be inside quotes ''
 * brackets [ ] let you put more than one note in a beat
 * if notes are comma separated in brackets they will play at the same time

@@ -1,0 +1,13 @@
+### Getting started with synths and sequencers
+
+We are going to be using lots of subtractice synthesizers - which are synthesizers which use filters and oscillators to create interesting timbres.
+
+Watch [this youtube video](https://youtu.be/pbl8VSWjgLQ) to learn about how the Twinkle synthesizer works, and about subtractive synthesis more generally.
+
+Things you will want to know after this assignment:
+* what different oscillator types sound like
+* how the cutoff frequency of a filter affects the sound
+* how resonance or Q works
+* what an attack, decay, sustain, release envelope is.
+
+Once you have finished the video, play around with twinkle and see what kind of sounds you can make!
