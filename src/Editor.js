@@ -23,7 +23,7 @@ import * as Tone from 'tone';
 import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';
 import Canvas from "./Canvas.js";
-import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction } from './visualizers/index.js';
+import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction, MultiRowSeqGui } from './visualizers/index.js';
 import * as waveshapers from './synths/waveshapers.js'
 import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
@@ -167,6 +167,7 @@ function Editor(props) {
     window.Spectroscope = Spectroscope;
     window.Spectrogram = Spectrogram;
     window.plotTransferFunction = PlotTransferFunction;
+    window.MultiRowSeqGui = MultiRowSeqGui;
     // window.CollabHub = CollabHubDisplay;
 
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);

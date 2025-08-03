@@ -96,14 +96,16 @@ export class Seq {
         this.prevVals = [...this.vals];
         for(let i = 0; i<this.guiElements["knobs"].length; i++){
             if(i<this.vals.length){
-                if(this.vals[i]=='.'){
+                if(this.vals[i]=='.' && this.guiElements["toggles"].length > i){
                     this.guiElements["toggles"][i].forceSet(0);
                 }else{
                     if(!isNaN(Number(this.vals[i]))){
-                        this.guiElements["knobs"][i].set( Number(this.vals[i]) )
-
+                        this.guiElements["knobs"][i].forceSet( Number(this.vals[i]) )
+                        // console.log("setting knob", this.guiElements["knobs"][i], "to", this.vals[i])
                     }
-                    this.guiElements["toggles"][i].forceSet(1);
+                    if(this.guiElements["toggles"].length > i){
+                        this.guiElements["toggles"][i].forceSet(1);
+                    }
                 }
             }
         }
@@ -324,7 +326,11 @@ export class Seq {
     }
 
     perform_transform(curBeat){
-        //console.log('trans', curBeat)
+        // console.log('trans', curBeat)
+        if(curBeat == undefined){
+            // console.log("returning 1")
+            return 1;
+        }
         // TODO: Ask Ian why
         // Check for note names like C4, D#3, etc.
         if(typeof curBeat === 'string' && /^[A-Ga-g][#b]?\d/.test(curBeat)) {
@@ -334,7 +340,7 @@ export class Seq {
         
         if(!isNaN(Number(curBeat))){ //make sure it's a number
             // console.log("returning", String(this.transform(Number(curBeat))))
-            return String((this.transform(Number(curBeat))));
+            return curBeat;//String((this.transform(Number(curBeat))));
         }else if(curBeat[0]==='['){ //it's an array
             //if(curBeat.length <3) return '.'
             for(let i = 0; i < curBeat.length; i++){
