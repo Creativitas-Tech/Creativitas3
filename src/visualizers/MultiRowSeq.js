@@ -73,7 +73,7 @@ export class MultiRowSeqGui {
 
         }
         this.gui.setTheme(this.gui, 'dark')
-    }
+    }//gui
 
     knobCallback(seqNum, stepNum, val) {
         let seq = this.seqs[seqNum]
@@ -102,6 +102,7 @@ export class MultiRowSeqGui {
     }
 
     toggleCallback(seq, stepNum, val) {
+        if(seq == 3) console.log(seq, stepNum,val)
         if(seq != null){
             if (val == 0) {
                 // seq.prevVals[stepNum] = seq.vals[stepNum]
@@ -245,7 +246,8 @@ export class MultiRowSeqGui {
     }
 
     setValues(seqNum, vals, subdivision = null){
-        // vals = Array.isArray(vals) ? vals : parsePitchStringSequence(vals);
+        
+        vals = Array.isArray(vals) ? vals : parsePitchStringSequence(vals);
         if(subdivision == null){
             subdivision = this.seqs[seqNum].subdivision
         }
@@ -274,7 +276,7 @@ export class MultiRowSeqGui {
                     this.enableKnob(this.knobs[seqNum][i]);
                 }
             }
-            console.log(this.seqs[seqNum].vals)
+            //console.log(this.seqs[seqNum].vals)
         }
         this.seqs[seqNum].vals = this.seqs[seqNum].vals.filter(x => x)
         this.seqs[seqNum].prevVals = updatedVals
@@ -286,16 +288,7 @@ export class MultiRowSeqGui {
      * @param {number} rowNum - The row index to clear
      */
     clearRow(rowNum) {
-        if (rowNum < 0 || rowNum >= this.numRows) return;
-        
-        for (let i = 0; i < this.numSteps; i++) {
-            this.knobs[rowNum][i].forceSet(this.minVal);
-            this.disableKnob(this.knobs[rowNum][i]);
-        }
-        
-        if (this.seqs[rowNum]) {
-            this.seqs[rowNum].vals = new Array(this.numSteps).fill('.');
-        }
+        this.setSeqOff(rowNum)
     }
 
     /**
@@ -313,6 +306,17 @@ export class MultiRowSeqGui {
                 knob.forceSet(randomVal);
                 this.enableKnob(knob, rowNum);
             }
+        }
+    }
+
+    randomizeEnables(rowNum, weight = 0.5) {
+        if (rowNum < 0 || rowNum >= this.numRows) return;
+        
+        for (let i = 0; i < this.numSteps; i++) {
+            const knob = this.knobs[rowNum][i];
+            const randomVal = Math.random()
+            if(randomVal > weight) this.disableKnob(knob)
+            else this.enableKnob(knob, rowNum);
         }
     }
 
@@ -451,18 +455,18 @@ export class MultiRowSeqGui {
      */
     setRowValues(rowNum, values) {
         if (rowNum < 0 || rowNum >= this.numRows) return;
-        
+        //console.log(rowNum, values)
         for (let i = 0; i < Math.min(this.numSteps, values.length); i++) {
             const val = values[i];
             const knob = this.knobs[rowNum][i];
-            
+            //console.log(knob, val)
             if (val === '.' || val === null || val === undefined) {
-                knob.forceSet(this.minVal);
+                knob.set(this.minVal);
                 this.disableKnob(knob);
             } else {
                 const numVal = Number(val);
                 if (!isNaN(numVal)) {
-                    knob.forceSet(Math.min(this.maxVal, Math.max(this.minVal, numVal)));
+                    knob.set(Math.min(this.maxVal, Math.max(this.minVal, numVal)));
                     this.enableKnob(knob, rowNum);
                 }
             }
