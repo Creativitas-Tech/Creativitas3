@@ -1,0 +1,5 @@
+This started code won't make any sound by itself, but it will print note on and off messages to the console and graph the accelerometer data.
+
+Accel x, y, z: raw accelerometer data
+Tilt: pitch, roll, yaw
+Magnitude: total acceleration of all 3 axes

@@ -124,24 +124,20 @@ export class Player extends MonophonicTemplate {
             file = fileKeys[file];
         }
 
+        this.baseUrl = "https://tonejs.github.io/audio/"
+        let url = []
+        let note = []
         if (file in this.sampleFiles) {
           console.log(`Player loading ${file}`);
           this.sample = file
+           url = this.sampleFiles[this.sample][1]
+           note = this.sampleFiles[this.sample][0]
         } else {
-            try{
-                this.player.load(file)
-                console.log('file loaded from ', file)
-                this.getSampleDuration()
-                return
-            }catch{}
-          console.error(`The sample "${file}" is not available.`);
-          return
+            this.sample = file + '.mp3'
+            this.baseUrl = "./audio/"; // Relative to your script's location
         }
-
-        this.baseUrl = "https://tonejs.github.io/audio/"
-        const url = this.sampleFiles[this.sample][1]
-        const note = this.sampleFiles[this.sample][0]
-        console.log(note, url)
+        
+        //console.log(note, url)
         this.player.load(this.baseUrl.concat(url), () => {
             const duration = this.player.buffer.length / Tone.context.sampleRate;
             console.log(`Sample duration: ${duration.toFixed(2)} seconds`);

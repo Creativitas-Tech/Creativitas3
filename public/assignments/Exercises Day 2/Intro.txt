@@ -1,0 +1,42 @@
+Exercise 1:
+- make a synthesizer with 3 sequences
+- choose a different pattern for each voice
+- use `seq[0].octave, seq[0].velocity, and seq[0].sustain` to shape each sequence
+- experiment with sequences of different lengths, different contours/rhythms, different density
+
+Exercise 2:
+- make a synthesizer with 3 sequences
+- create a function:  play = (val) => {   }
+- val should be a string, like we use in our sequences, e.g. `‘0 1 2 .’`
+- inside play(), use val to create sequences, e.g.
+		`s.sequence( val , ‘4n’, 0) //just play val as is`
+		`s.sequence( val + ‘0 2 4 2’, ‘4n’, 1) //combine val and another string`
+		`s.sequence( ‘.’ + val + ‘. 0 .’, ‘4n’, 2) //put val between strings`
+
+Exercise 2a:
+- like exercise 2 except val should be a number
+- and we will use arrays in s.sequence()
+- e.g. s.sequence( [ val+2, val+4, 0, -val], ‘8n’, 0)
+
+Exercise 3:
+- make a synthesizer
+- use `setNoteOnHandler(), setNoteOffHandler(), setCCHandler() `
+- in setNoteOnHandler, use note%12 to limit the MIDI notes to 0-11.
+	- we will use the white keys to play scale tones using s.sequence
+	- we will use the black keys to modify our sequence’s octave, velocity, sustain, etc.
+- in setNoteOffHandler, we may choose to use our keys to also change values when we release notes
+
+Exercise 4:
+- start like exercise 2
+- but val should be a number
+- and we will use s.expr() to create sequences
+	- `expr( i=> (math), length of sequence, rhythm, sequence number)`
+- examples:
+	`s.expr(i=> i%val, 16, ‘8n’, 0)`
+	`s.expr(i=> val - i%val%2, 16, ‘8n’, 1)`
+	`s.expr(i=> i%8 < val ? i%4 : ‘.’, 16, ‘8n’, 2)`
+
+Ternary expressions:
+`if (conditional) then (if true) else (if false)`
+`conditional ? (if true) : (if false)`
+		

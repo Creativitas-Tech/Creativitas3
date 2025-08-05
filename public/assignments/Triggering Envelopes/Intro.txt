@@ -1,0 +1,5 @@
+Generally I like to work with sequences, as I find it takes a lot of focus to play notes and rhythms accurately! But in [this video tutorial](https://youtu.be/tWHDkEl4Bt8) I will show you how to trigger synths using MIDI from a keyboard to set the note and velocity of a synthesizer.
+
+After watching this video you should:
+* understand how we use midi note on and off messages to trigger synthesizers
+* understand how the different stages of an ADSR envelope affect the sound
