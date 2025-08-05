@@ -1,0 +1,7 @@
+Audio effects are like guitar pedals, where plugging a synth into an effect changes the sound. We have four kinds of effects:
+* A distortion module, which adds fuzz to the sound
+* A chorus module, which thickens the sound
+* A delay module to create echoes
+* A reverb module to create ambience
+
+Normally, you wouldn't put all of the effects on a single voice, but in this example we do just for demonstration. Try turning down the distortion drive, chorus mix, and reverb & delay level to hear more clearly what each one does. Then go crazy turning the knobs and make some fun sounds!

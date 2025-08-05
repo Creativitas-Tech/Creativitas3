@@ -1,5 +1,8 @@
 This started code won't make any sound by itself, but it will print note on and off messages to the console and graph the accelerometer data.
+- normally you won't graph all of the CC data like this, but it can be helpful to understand the sensor data
 
-Accel x, y, z: raw accelerometer data
-Tilt: pitch, roll, yaw
-Magnitude: total acceleration of all 3 axes
+* Accel x, y, z (orange): raw accelerometer data
+* Tilt (blue): pitch, roll, yaw
+* Magnitude (pink color): total acceleration of all 3 axes
+* Touch Strip (green): capitance when you touch the long strip on robin
+* Potentiometer (purple): changes when you turn the potentiometer

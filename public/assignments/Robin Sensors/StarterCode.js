@@ -1,6 +1,7 @@
 //look in the console for the MIDI port for Wifiduino, and Tiny USB
-setMidiInput(2)
-setMidiOutput(2)
+//it will probably be MIDI input 1, but maybe not!
+setMidiInput(1)
+setMidiOutput(1)
 
 //OPTIONAL: messages to control incoming midi data
 //limit rate of cc messages
