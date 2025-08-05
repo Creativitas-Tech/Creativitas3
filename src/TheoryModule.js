@@ -103,6 +103,7 @@ class MusicGenerator {
       "phrygian": [0,1,3,5,7,8,10], //minor flat-2
       "lydian": [0,2,4,6,7,9,11], //major sharp-4
       "locrian": [0,1,3,5,6,8,10], //half-diminished
+      "chromatic": [0,1,2,3,4,5,6,7,8,9,10,11] 
     };
     this.MajorScaleDegrees = {
       'I': 0, 'bII': 1, 'II': 2, 'bIII': 3,'III': 4, 'IV': 5, '#IV': 6, 
