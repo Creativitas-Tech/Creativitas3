@@ -14,7 +14,7 @@ export const paramDefinitions = (synth) => [
     default: .2,
     callback: (value) => {
       synth.driveGain.gain.rampTo( (value/5)*100, .1);
-      synth.outputCut.value = -Math.sqrt(value)*.8 * synth.outputFactor 
+      synth.outputCut.value = -Math.sqrt(value)*.1 * synth.outputFactor 
       //console.log(-Math.sqrt(value)*.9 * synth.outputFactor )
       synth.dry.gain.rampTo(value>0.2 ? 0 : (0.2-value)/0.2, .1)
     }

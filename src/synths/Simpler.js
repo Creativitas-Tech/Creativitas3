@@ -185,8 +185,14 @@ export class Simpler extends MonophonicTemplate {
           url = this.sampleFiles[this.sample][1]
           note = this.sampleFiles[this.sample][0]
         } else {
-          console.error(`The sample "${file}" is not available.`);
-          return
+
+            try{
+                url = file
+                  note = 0
+            }catch(e){
+              console.error(`The sample "${file}" is not available.`);
+              return
+          }
         }
 
         //console.log(note, url)

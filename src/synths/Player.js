@@ -133,9 +133,10 @@ export class Player extends MonophonicTemplate {
                 console.log('file loaded from ', file)
                 this.getSampleDuration()
                 return
-            }catch{}
+            } catch(e){
           console.error(`The sample "${file}" is not available.`);
           return
+          }
         }
 
         this.baseUrl = "https://tonejs.github.io/audio/"

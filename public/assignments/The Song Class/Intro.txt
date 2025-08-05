@@ -1,0 +1,13 @@
+For the advanced group 
+
+This week we are going to work on creating a javascript song class. Our first task will be defining what the class will be used for:
+* it should contain a lot of information about a song's structure and musical elements (chords, rhythm, possible melody)
+* it should make it easy to define the elements of the song, in a structured way
+* it should make it easy to retrieve these elements, formatted for passing to synthesizers and drum machines
+* we are free to be creative in how we can use this class, but it makes sense to start simple
+
+Remember that a class contains two kinds of elements:
+* properties, that describe some attribute of the class. Examples might be tempo, key, chord progression, rhythms used in the song
+* methods, which are actions we can have the class take. These may be adding chord progressions to different sections, retrieving the bass line of a chord progression, retrieving the chords formatted as arpeggios, etc. 
+
+Make a list of attributes and methods you think it would make sense for the class to have. Don't worry about completeness or accuracy at this point - our goal for now is to conceptualize what kind of information our class will use, and how we will structure this information in our own heads. 
