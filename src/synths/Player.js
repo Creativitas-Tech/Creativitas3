@@ -133,7 +133,8 @@ export class Player extends MonophonicTemplate {
            url = this.sampleFiles[this.sample][1]
            note = this.sampleFiles[this.sample][0]
         } else {
-            this.sample = file + '.mp3'
+            url = file
+            note = 0
             this.baseUrl = "./audio/"; // Relative to your script's location
         }
         
