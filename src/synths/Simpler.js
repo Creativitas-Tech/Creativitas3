@@ -185,15 +185,12 @@ export class Simpler extends MonophonicTemplate {
           url = this.sampleFiles[this.sample][1]
           note = this.sampleFiles[this.sample][0]
         } else {
-
-            try{
-                url = file
-                  note = 0
-            }catch(e){
-              console.error(`The sample "${file}" is not available.`);
-              return
-          }
+            url = file + '.mp3'
+            note = 0
+            this.baseUrl = "./audio/"; // Relative to your script's location
         }
+
+
 
         //console.log(note, url)
         this.pitchOffset = note
@@ -222,8 +219,8 @@ export class Simpler extends MonophonicTemplate {
             //this.vca.factor.setValueAtTime(amp, time)
         } else{
         
-            this.sampler.triggerAttack(freq, amp)
-            console.log('s.a',freq, amp, time)
+            this.sampler.triggerAttack(freq, Tone.now(), amp)
+            //console.log('s.a',freq, amp, time)
             this.filterEnv.triggerAttack()
             //this.vca.factor.value = amp
         }
@@ -237,7 +234,7 @@ export class Simpler extends MonophonicTemplate {
             this.filterEnv.triggerRelease(time)
         }
         else {
-            console.log('s.r',freq, time)
+            //console.log('s.r',freq, time)
             this.sampler.triggerRelease(freq)
             this.filterEnv.triggerRelease()
         }
