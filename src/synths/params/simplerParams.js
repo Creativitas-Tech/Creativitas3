@@ -5,7 +5,7 @@ const paramDefinitions = (synth) => [
     value: 0.5,
     min: 0,
     max: 1,
-    curve: 0.5,
+    curve: 0.75,
     callback: function(x) {
           synth.sampler.volume.value = -36 + (Math.pow(x,0.5)) * 60;
     }

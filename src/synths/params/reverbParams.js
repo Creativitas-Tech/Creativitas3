@@ -66,7 +66,7 @@ export const paramDefinitions = (synth) => [
     type: "output",
     min: 0,
     max: 1,
-    default: 0.5,
+    default: 0.2,
     curve: 2,
     callback: (value) => {
       synth.input.gain.rampTo(value*4, 0.1);
