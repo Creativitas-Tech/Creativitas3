@@ -1,6 +1,7 @@
 let vco = new Tone.Oscillator(440).start()
 let output = new Tone.Multiply(0.05).toDestination()
 vco.connect( output )
+output.factor.value = .01
 
 //basic oscilloscope setup
 //note the argument to Oscilloscope(argument) must be a valid html div
@@ -15,4 +16,3 @@ vco.type = "square"
 //oscilloscope options
 scope.setFftSize( 1024*2 )
 scope.threshold = .5
-scope.stop()

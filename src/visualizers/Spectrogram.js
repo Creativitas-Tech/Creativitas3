@@ -89,7 +89,7 @@ export const Spectrogram = function( ratio = 1, _target= 'Canvas') {
     Object.defineProperty(this, 'timeResolution', {
         get: () => this._timeResolution,
         set: (value) => {
-            this._timeResolution = Math.max(1, value);
+            this._timeResolution =  value;
         },
     });
 
