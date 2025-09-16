@@ -1,0 +1,64 @@
+{
+
+    "toms": {
+      "color": [200, 255, 255],
+      "boundingBox": { "x": 10, "y": 10, "width": 70, "height": 20 },
+      "offsets": { "x": 10, "y": 25 },
+      "groupA": ["type"],
+      "controlTypeA": "radioButton",
+      "controlTypeB": "knob",
+      "sizeA": 0.6,
+      "sizeB": 0.5,
+      "theme": "dark"
+    },
+    "hihat": {
+      "color": [200, 255, 255],
+      "boundingBox": { "x": 10, "y": 35, "width": 50, "height": 20 },
+      "offsets": { "x": 10, "y": 25 },
+      "groupA": ["cutoff"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.6,
+      "sizeB": 0.5
+    },
+    "snare": {
+      "color": [200, 255, 255],
+      "boundingBox": { "x": 10, "y": 60, "width": 50, "height": 20 },
+      "offsets": { "x": 10, "y": 25 },
+      "groupA": ["level"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.6,
+      "sizeB": 0.5
+    },
+    "kick": {
+      "color": [200, 255, 255],
+      "boundingBox": { "x": 10, "y": 85, "width": 50, "height": 20 },
+      "offsets": { "x": 10, "y": 25 },
+      "groupA": [],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.6,
+      "sizeB": 0.6
+    },
+    "output": {
+      "color": [200, 255, 255],
+      "boundingBox": { "x": 90, "y": 10, "width": 10, "height": 100 },
+      "offsets": { "x": 8, "y": 25 },
+      "groupA": ["kit"],
+      "controlTypeA": "dropdown",
+      "controlTypeB": "knob",
+      "sizeA": 0.5,
+      "sizeB": 0.6
+    },
+    "dropdown": {
+      "color": [20, 25, 25],
+      "boundingBox": { "x": 60, "y": 2, "width": 50, "height": 20 },
+      "offsets": { "x": 8, "y": 25 },
+      "groupA": ["kit"],
+      "controlTypeA": "dropdown",
+      "controlTypeB": "knob",
+      "sizeA": 15,
+      "sizeB": 15
+    }
+}
