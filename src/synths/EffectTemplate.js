@@ -55,6 +55,7 @@ export class EffectTemplate {
         this.name = "";
         this.presetsData = null;
         this.curPreset = null;
+        this.snapshots = {}
     }
 
     /**
@@ -541,6 +542,54 @@ export class EffectTemplate {
           border: 2 // Adjust as needed
         });
       }
+
+    link(name){
+        let objectIndex = 0
+        Object.keys(this.param).forEach(key => {
+          let subObject = this.param[key];
+          if( subObject.guiElements[0] ) 
+            subObject.guiElements[0].setLink( name + objectIndex )
+          objectIndex++
+        });
+    }
+
+    pushState(snap = null) {
+      Object.keys(this.param).forEach(key => {
+        const subObject = this.param[key];
+        const value = snap ? snap[key]?.value : subObject._value;
+
+        if (value !== undefined && subObject.guiElements?.[0]) {
+          subObject.guiElements[0].set(value);
+        }
+      });
+    }
+
+    saveSnap(name) {
+      this.snapshots[name] = {};
+
+      Object.keys(this.param).forEach(key => {
+        let subObject = this.param[key];
+        this.snapshots[name][key] = {
+          value: subObject._value // store raw value
+        };
+      });
+
+      console.log(`Snapshot "${name}" saved.`);
+    }
+
+    loadSnap(name) {
+      const snap = this.snapshots[name];
+      if (!snap) {
+        console.warn(`Snapshot "${name}" not found.`);
+        return;
+      }
+      this.pushState(snap);
+      console.log(`Snapshot "${name}" loaded.`);
+    }
+
+    listSnapshots() {
+      console.log( Object.keys(this.snapshots) )
+    }
 
     /**
      * Connects to Tone.js destination

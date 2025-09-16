@@ -392,6 +392,19 @@ class Element {
         this.runCallBack()
     }
 
+    setLink(name){
+        //collab-hub sharing values
+        this.linkName = typeof name === 'string' ? name : null; // share params iff link is defined
+        this.linkFunc = typeof name === 'function' ? name : null;
+        console.log('set element linkName to ', this.linkName)
+        // set listener for updates from collab-hub (for linkName only)
+        if (this.linkName) {
+            this.ch.on(this.linkName, (incoming) => {
+                this.forceSet(incoming.values);
+            })
+        }
+    }
+
     getParam(param, val) { return val === 'theme' ? activeTheme[param] : val }
 
     isPressed() {
@@ -428,19 +441,21 @@ class Element {
     }
 
     drawValue(x, y) {
-        let output = this.value
-        //console.log(this.value,x,y)
-        this.p.stroke(this.setColor(this.textColor))
-        this.p.textSize(this.textSize * 10);
-        this.p.strokeWeight(0.00001 * this.textSize * 20);
-        this.p.textAlign(this.p.CENTER, this.p.CENTER);
-        this.p.fill(this.setColor(this.textColor));
-        this.p.textFont(getFont(this.valueFont))
-        if (Math.abs(output) < 1) output = output.toFixed(4)
-        else if (Math.abs(output) < 5) output = output.toFixed(3)
-        else if (Math.abs(output) < 100) output = output.toFixed(2)
-        else output = output.toFixed(1)
-        this.p.text(output, x + (this.valueX / 100) * this.p.width, y + (this.valueY / 100) * this.p.height);
+        try{
+            let output = this.value
+            //console.log(this.value,x,y)
+            this.p.stroke(this.setColor(this.textColor))
+            this.p.textSize(this.textSize * 10);
+            this.p.strokeWeight(0.00001 * this.textSize * 20);
+            this.p.textAlign(this.p.CENTER, this.p.CENTER);
+            this.p.fill(this.setColor(this.textColor));
+            this.p.textFont(getFont(this.valueFont))
+            if (Math.abs(output) < 1) output = output.toFixed(4)
+            else if (Math.abs(output) < 5) output = output.toFixed(3)
+            else if (Math.abs(output) < 100) output = output.toFixed(2)
+            else output = output.toFixed(1)
+            this.p.text(output, x + (this.valueX / 100) * this.p.width, y + (this.valueY / 100) * this.p.height);
+        } catch(e){}
     }
 
     drawText(text, x, y) {
@@ -645,9 +660,10 @@ export class Knob extends Element {
             this.mapValue(this.value, this.mapto);
 
             this.runCallBack()
-
+            //console.log('knob', this.linkName)
             // send updates to collab-hub
             if (this.linkName) {
+                //console.log('link')
                 this.ch.control(this.linkName, this.value);
             }
             if (this.linkFunc) this.linkFunc();

@@ -60,6 +60,7 @@ export class MonophonicTemplate {
         this.presetsData = null;
         this.curPreset = null;
         this.backgroundColor = [10,10,10]
+        this.snapshots = {}
 
         // Sequencer related
         this.seq = []; // Array of Seq instances
@@ -613,7 +614,7 @@ export class MonophonicTemplate {
                 return null;
             }
 
-            return this.gui.RadioButton({
+            param.guiElements.push(this.gui.RadioButton({
                 label: i ? param.labels[i] : param.name,
                 radioOptions: param.radioOptions,
                 value: param._value,
@@ -621,7 +622,23 @@ export class MonophonicTemplate {
                 y:y+10,
                 accentColor: color,
                 callback: (selectedOption) => param.set(selectedOption),
-            });
+            }));
+        } else if (controlType === 'dropdown') {
+            // if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
+            //     console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
+            //     return null;
+            // }
+
+            param.guiElements.push( this.gui.Dropdown({
+                label: i ? param.labels[i] : param.name, 
+                dropdownOptions: this.drumkitList,
+                value: param._value,
+                x:x,
+                y:y+10,
+                size:15,
+                accentColor: color,
+                callback:(x)=>{this.loadSamples(x)}
+              }))
         }
     }
 
@@ -643,7 +660,7 @@ export class MonophonicTemplate {
      */
 
 
-      createKnob(label, x, y, min, max, size, accentColor, callback) {
+    createKnob(label, x, y, min, max, size, accentColor, callback) {
         return this.gui.Knob({
           label, min, max, size, accentColor,
           x: x + this.x, y: y + this.y,
@@ -652,7 +669,55 @@ export class MonophonicTemplate {
           curve: 2, // Adjust as needed
           border: 2 // Adjust as needed
         });
+    }
+
+    link(name){
+        let objectIndex = 0
+        Object.keys(this.param).forEach(key => {
+          let subObject = this.param[key];
+          if( subObject.guiElements[0] ) 
+            subObject.guiElements[0].setLink( name + objectIndex )
+          objectIndex++
+        });
+    }
+
+    pushState(snap = null) {
+      Object.keys(this.param).forEach(key => {
+        const subObject = this.param[key];
+        const value = snap ? snap[key]?.value : subObject._value;
+
+        if (value !== undefined && subObject.guiElements?.[0]) {
+          subObject.guiElements[0].set(value);
+        }
+      });
+    }
+
+    saveSnap(name) {
+      this.snapshots[name] = {};
+
+      Object.keys(this.param).forEach(key => {
+        let subObject = this.param[key];
+        this.snapshots[name][key] = {
+          value: subObject._value // store raw value
+        };
+      });
+
+      console.log(`Snapshot "${name}" saved.`);
+    }
+
+    loadSnap(name) {
+      const snap = this.snapshots[name];
+      if (!snap) {
+        console.warn(`Snapshot "${name}" not found.`);
+        return;
       }
+      this.pushState(snap);
+      console.log(`Snapshot "${name}" loaded.`);
+    }
+
+    listSnapshots() {
+      console.log( Object.keys(this.snapshots) )
+    }
 
     /**
      * Connects to Tone.js destination

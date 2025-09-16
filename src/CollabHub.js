@@ -199,6 +199,7 @@ export class CollabHubClient {
                 values: values,
                 target: target
             };
+            console.log("control", outgoing)
             this.socket.emit("control", outgoing);
         } else {
             console.info("Join a room to send controls.");

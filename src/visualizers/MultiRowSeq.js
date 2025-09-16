@@ -14,6 +14,7 @@ export class MultiRowSeqGui {
         this.minVal = -25
         this.maxVal = 25
         this.chlink = chlink
+        this.guiSize = 0.5
         this.seqs = new Array(numRows).fill(null);
         this.guiContainer = document.getElementById('Canvas');
         let height = .4*numRows
@@ -75,6 +76,13 @@ export class MultiRowSeqGui {
         this.gui.setTheme(this.gui, 'dark')
     }//gui
 
+    setGuiSize(val){
+        for(let i=0;i<this.knobs.length;i++){
+            for(let j=0; j<this.knobs[i].length;j++)
+            this.knobs[i][j].size = val
+        }
+    }
+
     knobCallback(seqNum, stepNum, val) {
         let seq = this.seqs[seqNum]
         let knob = this.knobs[seqNum][stepNum]
@@ -114,12 +122,14 @@ export class MultiRowSeqGui {
     }
 
     disableKnob(knob){
+        //console.log(this.minVal, knob.accentColor, this.borderColor)
         knob.forceSet(this.minVal)
         knob.accentColor = this.borderColor
         knob.disabled = true
     }
 
     enableKnob(knob, seqNum){
+        //console.log(knob, seqNum, this.colors[seqNum%this.colors.length])
         knob.accentColor = this.colors[seqNum%this.colors.length];
         knob.disabled = false
     }
@@ -205,7 +215,6 @@ export class MultiRowSeqGui {
         this.showCurrentBeat(rowNum)
     }
 
-
     setSeqOff(seqNum){
         let seq = this.seqs[seqNum]
         let knob = this.knobs[seqNum]
@@ -221,8 +230,8 @@ export class MultiRowSeqGui {
     }
 
     pushState(){
-        for(let j = 0; j<this.seqs.length; j++){
-            for(let i = 0; i<this.knobs.length; i++){
+        for(let j = 0; j<this.knobs.length; j++){
+            for(let i = 0; i<this.knobs[j].length; i++){
                 this.knobs[j][i].ch.control(this.knobs[j][i].linkName, this.knobs[j][i].value)
             }
         }
@@ -232,6 +241,7 @@ export class MultiRowSeqGui {
         let seq = this.seqs[seqNum]
         let newCallback = ()=>{
             if(seq.index%seq.vals.length < this.numSteps){
+                //console.log(this.knobs[seqNum][seq.index%seq.vals.length] )
                 this.knobs[seqNum][seq.index%seq.vals.length].accentColor = this.knobs[seqNum][seq.index%seq.vals.length].accentColor.map(element => element * .4);
             }
             let prevInd = (seq.index+seq.vals.length-1)%seq.vals.length
@@ -251,15 +261,17 @@ export class MultiRowSeqGui {
         if(subdivision == null){
             subdivision = this.seqs[seqNum].subdivision
         }
-        let originalVals = this.seqs[seqNum].vals.slice(0)
+        
         this.seqs[seqNum].sequence(vals, subdivision);
         
+        this.numSteps = vals.length
         //update GUI
         let updatedVals = this.seqs[seqNum].vals.slice(0)
+        //console.log(updatedVals, this.seqs[seqNum].vals)
         for(let i = 0; i<this.numSteps; i++){
-            if(this.knobs[seqNum][i].value==0 && i<updatedVals.length){
-                this.seqs[seqNum].vals[i] = '.'
-            }
+            // if(this.knobs[seqNum][i].value==0 && i<updatedVals.length){
+            //     this.seqs[seqNum].vals[i] = '.'
+            // }
             if(this.seqs[seqNum].vals[i] == '.' || i>=updatedVals.length){
                 if(this.knobs[seqNum][i].constructor.name == 'Toggle'){
                     this.knobs[seqNum][i].forceSet(0);
@@ -267,20 +279,19 @@ export class MultiRowSeqGui {
                         this.seqs[seqNum].vals.pop(-1)
                     }
                 }else{
-                    this.disableKnob(this.knobs[seqNum][i]);
+                    this.disableKnob(this.knobs[seqNum][i], seqNum);
                 }
             }else{
                 if(this.knobs[seqNum][i].constructor.name == 'Toggle'){
                     this.knobs[seqNum][i].forceSet(1);
                 }else{
-                    this.enableKnob(this.knobs[seqNum][i]);
+                    this.enableKnob(this.knobs[seqNum][i], seqNum);
                 }
             }
             //console.log(this.seqs[seqNum].vals)
         }
         this.seqs[seqNum].vals = this.seqs[seqNum].vals.filter(x => x)
         this.seqs[seqNum].prevVals = updatedVals
-
     }
 
     /**
