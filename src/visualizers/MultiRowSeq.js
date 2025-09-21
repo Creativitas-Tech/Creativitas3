@@ -110,7 +110,7 @@ export class MultiRowSeqGui {
     }
 
     toggleCallback(seq, stepNum, val) {
-        if(seq == 3) console.log(seq, stepNum,val)
+        if(0) console.log(seq, stepNum,val)
         if(seq != null){
             if (val == 0) {
                 // seq.prevVals[stepNum] = seq.vals[stepNum]
@@ -262,33 +262,42 @@ export class MultiRowSeqGui {
             subdivision = this.seqs[seqNum].subdivision
         }
         
-        this.seqs[seqNum].sequence(vals, subdivision);
+        if(this.knobs[seqNum][0].constructor.name !== 'Toggle'){
+            this.seqs[seqNum].sequence(vals, subdivision);
+        }
         
         this.numSteps = vals.length
         //update GUI
         let updatedVals = this.seqs[seqNum].vals.slice(0)
-        //console.log(updatedVals, this.seqs[seqNum].vals)
+        //console.log(updatedVals)
         for(let i = 0; i<this.numSteps; i++){
             // if(this.knobs[seqNum][i].value==0 && i<updatedVals.length){
             //     this.seqs[seqNum].vals[i] = '.'
             // }
-            if(this.seqs[seqNum].vals[i] == '.' || i>=updatedVals.length){
+            //calculate rests
+            if(vals[i] == '.' || i>=updatedVals.length){
+                //console.log('rest')
                 if(this.knobs[seqNum][i].constructor.name == 'Toggle'){
-                    this.knobs[seqNum][i].forceSet(0);
-                    if(i>=updatedVals.length){
-                        this.seqs[seqNum].vals.pop(-1)
-                    }
+                    this.knobs[seqNum][i].set(0);
+                    // if(i>=updatedVals.length){
+                    //     this.seqs[seqNum].vals.pop(-1)
+                    // }
                 }else{
+                    //this.knobs[seqNum][i].set(0);
                     this.disableKnob(this.knobs[seqNum][i], seqNum);
                 }
-            }else{
+            }
+            //calculate not rests
+            else{
+                //console.log('not rest')
                 if(this.knobs[seqNum][i].constructor.name == 'Toggle'){
-                    this.knobs[seqNum][i].forceSet(1);
+                    this.knobs[seqNum][i].set(1);
+                    //this.toggleCallback(this., i, 1)
+                    //this.knobs[seqNum][i].set(1);
                 }else{
                     this.enableKnob(this.knobs[seqNum][i], seqNum);
                 }
             }
-            //console.log(this.seqs[seqNum].vals)
         }
         this.seqs[seqNum].vals = this.seqs[seqNum].vals.filter(x => x)
         this.seqs[seqNum].prevVals = updatedVals

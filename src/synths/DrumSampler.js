@@ -223,7 +223,7 @@ export class DrumSampler extends DrumTemplate{
   loadKit(kit){ this.loadSamples(kit)}
   listKits(){console.log(this.drumkitList)}
   loadSamples(kit){
-    console.log("kit", kit)
+    //console.log("kit", kit)
     //this.kit = kit
     this.drumFolders = {
       "4OP-FM": "4OP-FM", "FM": "4OP-FM",
@@ -254,7 +254,7 @@ export class DrumSampler extends DrumTemplate{
       return
     }
 
-    console.log("load sample", this.baseUrl)
+    //console.log("load sample", this.baseUrl)
     try{
       this.newSnare.voice.load( this.baseUrl.concat("/snare.mp3") )
       this.newHat.voice.load( this.baseUrl.concat("/hihat.mp3") )

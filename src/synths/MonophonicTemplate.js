@@ -110,7 +110,7 @@ export class MonophonicTemplate {
             console.warn("Error parsing JSON:", error);
         }
         this.presets = await presetData;
-        this.loadPreset("default");
+        //this.loadPreset("default");
     }
     
     /**
@@ -557,7 +557,8 @@ export class MonophonicTemplate {
         });
         this.gui.setTheme(this.gui, 'dark' )
         this.gui.backgroundColor = this.backgroundColor
-        setTimeout(this.loadPreset('default'),1000)
+        //setTimeout(this.loadPreset('default'),1000)
+        //setTimeout(this.gui.setTheme(this.gui, 'dark' ),1000)
     }
 
     /**
@@ -671,7 +672,8 @@ export class MonophonicTemplate {
         });
     }
 
-    link(name){
+    linkGui(name){
+        //console.log(this.param)
         let objectIndex = 0
         Object.keys(this.param).forEach(key => {
           let subObject = this.param[key];

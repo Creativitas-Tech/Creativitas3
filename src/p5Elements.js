@@ -396,7 +396,7 @@ class Element {
         //collab-hub sharing values
         this.linkName = typeof name === 'string' ? name : null; // share params iff link is defined
         this.linkFunc = typeof name === 'function' ? name : null;
-        console.log('set element linkName to ', this.linkName)
+        //console.log('set element linkName to ', this.linkName)
         // set listener for updates from collab-hub (for linkName only)
         if (this.linkName) {
             this.ch.on(this.linkName, (incoming) => {
@@ -450,9 +450,9 @@ class Element {
             this.p.textAlign(this.p.CENTER, this.p.CENTER);
             this.p.fill(this.setColor(this.textColor));
             this.p.textFont(getFont(this.valueFont))
-            if (Math.abs(output) < 1) output = output.toFixed(4)
-            else if (Math.abs(output) < 5) output = output.toFixed(3)
-            else if (Math.abs(output) < 100) output = output.toFixed(2)
+            if (Math.abs(this.max) < 1) output = output.toFixed(3)
+            else if (Math.abs(this.max) < 5) output = output.toFixed(2)
+            else if (Math.abs(this.max) < 100) output = output.toFixed(1)
             else output = output.toFixed(1)
             this.p.text(output, x + (this.valueX / 100) * this.p.width, y + (this.valueY / 100) * this.p.height);
         } catch(e){}

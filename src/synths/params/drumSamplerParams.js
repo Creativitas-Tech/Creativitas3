@@ -1,6 +1,6 @@
 const paramDefinitions = (synth) => [
   {
-    name: 'kick_vca', type: 'kick', min: 0, max: 1, value: 1, curve: 1,
+    name: 'kick_vca', type: 'kick', min: 0, max: 2, value: 1, curve: 1,
     callback: x => synth.newKick.output.factor.value = x
   },
   {
@@ -8,7 +8,7 @@ const paramDefinitions = (synth) => [
     callback: x => synth.newSnare.output.factor.value = x
   },
   {
-    name: 'hat_vca', type: 'hihat', min: 0, max: 1, value: .7, curve: 1,
+    name: 'hat_vca', type: 'hihat', min: 0, max: 1, value: .5, curve: 1,
     callback: x => synth.newHat.output.factor.value = x
   },
   {
@@ -72,7 +72,7 @@ const paramDefinitions = (synth) => [
       synth.p3.decay = x * 1 + 0.01;
     }
   },
-  
+
   {
     name: 'comp_threshold', type: 'output', min: -60, max: -5, value: -5, curve: 1,
     callback: x => synth.comp.threshold.value = x
@@ -92,7 +92,7 @@ const paramDefinitions = (synth) => [
   {
     name: 'kit', type: 'dropdown', value: synth.defaultKit || '', radioOptions: synth.drumkitList,
     callback: x => {
-        console.log("dropdown load", x)
+        //console.log("dropdown load", x)
         synth.loadSamples(x)
     }
   }

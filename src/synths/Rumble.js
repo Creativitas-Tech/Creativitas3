@@ -153,7 +153,7 @@ export class Rumble extends MonophonicTemplate {
     //for autocomplete
     this.autocompleteList = this.paramDefinitions.map(def => def.name);;
     //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
-    setTimeout(()=>{this.loadPreset('default')}, 500);//for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
+    //setTimeout(()=>{this.loadPreset('default')}, 500);//for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
   }//constructor
 
   //envelopes

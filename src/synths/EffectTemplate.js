@@ -10,35 +10,15 @@ import basicLayout from './layouts/basicLayout.json';
 
 
 /**
- * Represents a Monophonic Synth
+ * Effects Template
  * 
- * Base class for synths. Includes:
- * - methods for loading and saving presets
- * - connect/disconnect
- * - setting ADSR values for env and vcf_env objects
- * - show/hide gui, and custom createKnob function
- *
- * ## Working with presets
- * - all synths can load presets saved in the synth/synthPresets folder.
- *
- * To add preset functionality to a synth:
- * - create the preset file `synths/synthPresets/yourSynthPresets.json`
- *     - your preset file needs an open/close brace {} in it
- *
- * - make sure to:
- *     - import your presets and assign to this.presets 
- *     - name your synth correctly in its constructor
- *     - pass the gui into the synth constructor
- *     - add this optional code to the end of the constructor to load
- *         default preset:
- *     if (this.gui !== null) {
- *         this.initGui()
- *         this.hideGui();
- *         setTimeout(()=>{this.loadPreset('default')}, 500);
- *     }
- *
- * When saving presets you will need to manually download and copy
- * the preset file into synth/synthPresets/
+ * contains the following core features:
+ * - constructor
+ * - preset management
+ * - parameter management
+ * - gooey creation
+ * - snapshot creation
+ * - collaboration linking
  *
  * @constructor
  */
@@ -213,7 +193,7 @@ export class EffectTemplate {
           }
           
         } else {
-            console.log("No preset of name ", name);
+            //console.log("No preset of name ", name);
         }
     }
 
@@ -543,7 +523,8 @@ export class EffectTemplate {
         });
       }
 
-    link(name){
+    linkGui(name){
+        //console.log(this.param)
         let objectIndex = 0
         Object.keys(this.param).forEach(key => {
           let subObject = this.param[key];

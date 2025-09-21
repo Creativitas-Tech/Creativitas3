@@ -33,6 +33,7 @@ import { GraphVisualizer } from './visualizers/Grapher.js'
 import WebSocketClient from './collabSocket';
 // import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
 import { CollabSlobClient } from './CollabSlob.js';
+import {makeCollaborativeObject, ctx} from './CollabLink.js'
 
 import MidiKeyboard from './midi/MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
@@ -195,6 +196,7 @@ function Editor(props) {
     window.sendNote = midi.midiHandlerInstance.sendNoteOn.bind(midi.midiHandlerInstance);
     window.sendNoteOff = midi.midiHandlerInstance.sendNoteOff.bind(midi.midiHandlerInstance);
     window.timingStrategyManager = timingStrategyManager;
+    window.link = makeCollaborativeObject
 
     //synths
     window.NoiseVoice = NoiseVoice
@@ -415,10 +417,11 @@ function Editor(props) {
      * 
      *************************************************/
 
-    function initCollab(roomName = 'famleLounge') {
+    function initCollab(roomName = 'famleLounge', debug = 'false') {
         // window.chClient = new CollabHubClient(); // needs to happen once (!)
         // window.chTracker = new CollabHubTracker(window.chClient);
-        window.chClient = new CollabSlobClient();
+        window.chClient = new CollabSlobClient(debug === 'debug' || debug === true || debug === 'true');
+        window.ctx = ctx
 
         // collab-hub join a room
         window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name

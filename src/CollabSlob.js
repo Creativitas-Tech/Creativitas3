@@ -70,10 +70,12 @@ export class CollabSlobClient {
 
         // chat and user management
         this.socket.on("serverMessage", (incoming) => {
+            this.logger.debug(`server message received: ${JSON.stringify(incoming)}`);
             // console.info(incoming.message);
         });
 
         this.socket.on("chat", (incoming) => {
+            this.logger.debug(`chat received: ${JSON.stringify(incoming)}`);
             // TODO HACK checking messages to receive my user name
             if (incoming.chat === "Connected with id: " + this.socket.id) {
                 this.username = incoming.id;
@@ -162,6 +164,7 @@ export class CollabSlobClient {
         // events
 
         this.socket.on("event", (incoming) => {
+            this.logger.debug(`Event received: ${JSON.stringify(incoming)}`);
             if (this.roomJoined) {                      // Kind of HACK, ignore events before joining a room
                 // Check if this event was sent by this client
                 if (incoming.header && incoming.header.clientId !== this.clientId) {
@@ -260,6 +263,7 @@ export class CollabSlobClient {
     }
 
     event(...args) {
+        this.logger.debug("event() called with args:", args);
         if (this.roomJoined) {
             let mode = args[0] === "publish" || args[0] === "pub" ? "publish" : "push",
                 headerName = mode === "publish" ? args[1] : args[0],
@@ -282,6 +286,7 @@ export class CollabSlobClient {
     }
 
     chat(m, t) {
+        this.logger.debug("chat() called with args:", [m,t]);
         if (this.roomJoined) {
             const header = {
                 clientId: this.clientId
@@ -293,12 +298,14 @@ export class CollabSlobClient {
             };
             t ? outgoing.target = t : outgoing.target = this.roomJoined;
             this.socket.emit("chat", outgoing);
+            console.log('chat', outgoing)
         } else {
             console.info("Join a room to chat.");
         }
     }
 
     setUsername(u) {
+        this.logger.debug("setUsername() called with args:", u);
         this.socket.emit("addUsername", { username: u });
         this.username = u;
     }
@@ -397,5 +404,3 @@ export class CollabSlobClient {
         this.socket.emit("getMyEvents");
     }
 }
-
-

@@ -346,55 +346,90 @@ export class Polyphony extends MonophonicTemplate{
 	    });
 	    this.gui.setTheme( this.gui, 'dark' )
 	    this.gui.backgroundColor = this.backgroundColor
-	    setTimeout(this.loadPreset('default'),100)
+	    //setTimeout(this.loadPreset('default'),100)
 	}
 
 	createGuiElement(param, { x, y, size, controlType, color, i = null, value, callback }) {
-    //console.log(x, y, size, controlType, color,i, value, callback)
-    //return
-    if (controlType === 'knob') {
-        param.guiElements.push(this.gui.Knob({
-            label: i !== 0 ? param.labels[i] : param.name,
-            min: param.min,
-            max: param.max,
-            value: value, // Use provided value, not param._value
-            size: size, // Scale size
-            curve: param.curve,
-            x,
-            y,
-            accentColor: color,
-            callback: callback // ✅ Correct callback for Polyphony
-        }));
-    } else if (controlType === 'fader') {
-        param.guiElements.push(this.gui.Fader({
-            label: i !== 0 ? param.labels[i] : param.name,
-            min: param.min,
-            max: param.max,
-            value: value, // Use provided value
-            curve: param.curve,
-            size: size,
-            x,
-            y,
-            accentColor: color,
-            callback: callback // ✅ Correct callback for Polyphony
-        }));
-    } else if (controlType === 'radioButton') {
-        if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
-            console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
-            return null;
-        }
+	    //console.log(x, y, size, controlType, color,i, value, callback)
+	    //return
+	    if (controlType === 'knob') {
+	        param.guiElements.push(this.gui.Knob({
+	            label: i !== 0 ? param.labels[i] : param.name,
+	            min: param.min,
+	            max: param.max,
+	            value: value, // Use provided value, not param._value
+	            size: size, // Scale size
+	            curve: param.curve,
+	            x,
+	            y,
+	            accentColor: color,
+	            callback: callback // ✅ Correct callback for Polyphony
+	        }));
+	    } else if (controlType === 'fader') {
+	        param.guiElements.push(this.gui.Fader({
+	            label: i !== 0 ? param.labels[i] : param.name,
+	            min: param.min,
+	            max: param.max,
+	            value: value, // Use provided value
+	            curve: param.curve,
+	            size: size,
+	            x,
+	            y,
+	            accentColor: color,
+	            callback: callback // ✅ Correct callback for Polyphony
+	        }));
+	    } else if (controlType === 'radioButton') {
+	        if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
+	            console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
+	            return null;
+	        }
 
-        return this.gui.RadioButton({
-            label: i !== 0 ? param.labels[i] : param.name,
-            radioOptions: param.radioOptions,
-            value: value, // Use provided value
-            x: x,
-            y: y + 10,
-            accentColor: color,
-            callback: callback // ✅ Correct callback for Polyphony
+	        return this.gui.RadioButton({
+	            label: i !== 0 ? param.labels[i] : param.name,
+	            radioOptions: param.radioOptions,
+	            value: value, // Use provided value
+	            x: x,
+	            y: y + 10,
+	            accentColor: color,
+	            callback: callback // ✅ Correct callback for Polyphony
+	        });
+	    }
+	}
+
+	linkGui(name){
+        //console.log(this.voice[0].param)
+        let objectIndex = 0
+        Object.keys(this.voice[0].param).forEach(key => {
+          let subObject = this.voice[0].param[key];
+          if( subObject.guiElements[0] ) 
+            subObject.guiElements[0].setLink( name + objectIndex )
+          objectIndex++
         });
     }
-}
+
+    pushState(snap = null) {
+      Object.keys(this.voice[0].param).forEach(key => {
+        const subObject = this.voice[0].param[key];
+        const value = snap ? snap[key]?.value : subObject._value;
+
+        if (value !== undefined && subObject.guiElements?.[0]) {
+          subObject.guiElements[0].set(value);
+        }
+      });
+    }
+
+    saveSnap(name) {
+      this.snapshots[name] = {};
+
+      Object.keys(this.voice[0].param).forEach(key => {
+        let subObject = this.voice[0].param[key];
+        this.snapshots[name][key] = {
+          value: subObject._value // store raw value
+        };
+      });
+
+      console.log(`Snapshot "${name}" saved.`);
+    }
 
 	/**
      * Hide the GUI
