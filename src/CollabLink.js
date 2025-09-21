@@ -17,7 +17,7 @@ export function makeCollaborativeObject(rootID, obj, collabHub, path = '', conte
     return 'null';
   }
 
-  const EXCLUDES = ['autocomplete', 'autocompleteList', 
+  const EXCLUDES = ['autocomplete', 'autocompleteList', 'autocompleteList.filter', 'filter', 
     'connect', 'disconnect', 'link', 'linkGui',
     'initGui', 'get'];
   function shouldSend(path) {

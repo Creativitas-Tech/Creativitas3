@@ -396,7 +396,7 @@ class Element {
         //collab-hub sharing values
         this.linkName = typeof name === 'string' ? name : null; // share params iff link is defined
         this.linkFunc = typeof name === 'function' ? name : null;
-        //console.log('set element linkName to ', this.linkName)
+        console.log('set element linkName to ', this.linkName)
         // set listener for updates from collab-hub (for linkName only)
         if (this.linkName) {
             this.ch.on(this.linkName, (incoming) => {
@@ -1227,6 +1227,7 @@ export class RadioButton extends Button {
 
             // Run the callback to trigger any associated actions
             this.runCallBack();
+            console.log('rb', this.value, this.linkName)
 
             // Send the update to collab-hub if needed
             if (this.linkName) {

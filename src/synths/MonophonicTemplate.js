@@ -622,7 +622,7 @@ export class MonophonicTemplate {
                 x:x,
                 y:y+10,
                 accentColor: color,
-                callback: (selectedOption) => param.set(selectedOption),
+                callback: (selectedOption) => param.set(selectedOption,i,true),
             }));
         } else if (controlType === 'dropdown') {
             // if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
@@ -640,6 +640,19 @@ export class MonophonicTemplate {
                 accentColor: color,
                 callback:(x)=>{this.loadSamples(x)}
               }))
+        } else if (controlType === 'text') {
+            param.guiElements.push( this.gui.Text({
+                label: param.max,
+                value: param._value,
+                x:x+2,
+                y:y+10,
+                border:0.01,
+                textSize: size,
+                accentColor: color,
+                callback: (x) => {},
+            }) );
+        } else {
+            console.log('no gui creation element for ', controlType)
         }
     }
 

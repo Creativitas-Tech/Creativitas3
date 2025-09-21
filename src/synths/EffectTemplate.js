@@ -462,24 +462,39 @@ export class EffectTemplate {
                 callback: (value) => param.set(value,i,true),
             }));
         } else if (controlType === 'radioButton') {
-            if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
-                console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
-                return null;
-            }
+            // if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
+            //     console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
+            //     return null;
+            // }
 
-            return this.gui.RadioButton({
-                label: i ? param.labels[i] : param.name,
+            param.guiElements.push( this.gui.RadioButton({
+                label: i  ? param.labels[i] : param.name,
                 radioOptions: param.radioOptions,
-                value: param._value,
-                orientation: 'horizontal',
-                x:x+10,
-                y:y+10,
+                value: param._value, // Use provided value
+                x: x+10,
+                y,
                 accentColor: color,
-                callback: (selectedOption) => param.set(selectedOption),
-            });
-        } else if (controlType === 'text') {
+                orientation: 'horizontal',
+                callback: (value) => param.set(value,i,true), // ✅ Correct callback for Polyphony
+            }));
+        } else if (controlType === 'dropdown') {
+            // if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
+            //     console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
+            //     return null;
+            // }
 
-            return this.gui.Text({
+            param.guiElements.push( this.gui.Dropdown({
+                label: i ? param.labels[i] : param.name, 
+                dropdownOptions: this.drumkitList,
+                value: param._value,
+                x:x,
+                y:y+10,
+                size:15,
+                accentColor: color,
+                callback:(x)=>{this.loadSamples(x)}
+              }))
+        } else if (controlType === 'text') {
+            param.guiElements.push( this.gui.Text({
                 label: param.max,
                 value: param._value,
                 x:x+2,
@@ -488,7 +503,7 @@ export class EffectTemplate {
                 textSize: size,
                 accentColor: color,
                 callback: (x) => {},
-            });
+            }) );
         } else {
             console.log('no gui creation element for ', controlType)
         }

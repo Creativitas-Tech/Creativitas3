@@ -12,6 +12,7 @@ export const paramDefinitions = (synth) => [
     max: 1,
     curve: 2,
     default: .2,
+    value: 0.1,
     callback: (value) => {
       synth.driveGain.gain.rampTo( (value/5)*100, .1);
       synth.outputCut.value = -Math.sqrt(value)*.1 * synth.outputFactor 
@@ -26,6 +27,7 @@ export const paramDefinitions = (synth) => [
     max: 1000,
     curve: 2,
     default: 80,
+      value: 100,
     callback: (value) => {
       synth.highpassA.frequency.value = value;
     }
@@ -37,6 +39,7 @@ export const paramDefinitions = (synth) => [
     max: 16000,
     curve: 2,
     default: 8000,
+    value: 8000,
     callback: (value) => {
       synth.lowpassFilter.frequency.value = value;
     }
@@ -48,6 +51,7 @@ export const paramDefinitions = (synth) => [
     max: 2000,
     curve: 2,
     default: 150,
+    value: 150,
     callback: (value) => {
       synth.highpassB.frequency.value = value;
     }
@@ -59,6 +63,7 @@ export const paramDefinitions = (synth) => [
     max: 1,
     curve: 1,
     default: 0,
+    value: 0,
     callback: (value) => {
       synth.biasSignal.value = value;
     }
@@ -69,6 +74,7 @@ export const paramDefinitions = (synth) => [
     min: 0,
     max: 1,
     curve: 1,
+    value: 1000,
     callback: (value) => {
       //console.log('shelf', value) 
       if (typeof value !== 'number' || isNaN(value)) {
@@ -85,6 +91,7 @@ export const paramDefinitions = (synth) => [
     type: "param",
     radioOptions: ["soft", "tanh", "hard", "fold", "tube"],
     default: "tanh",
+    value: "tanh",
     callback: (value) => {
       if (value == 0.5) { return }
       synth.shaper1.curve = synth.transferFunctions[value];
@@ -98,6 +105,7 @@ export const paramDefinitions = (synth) => [
     max: 1,
     default: 0,
     curve: 3,
+    value: 0,
     callback: (value) => {
       synth.feedbackGain.gain.value = value;
     }
@@ -109,6 +117,7 @@ export const paramDefinitions = (synth) => [
     max: 1.5,
     curve: 2,
     default: 1,
+      value: 1,
     callback: (value) => {
       synth.outputLevel.value = value;
       synth.outputFactor = value
