@@ -52,7 +52,7 @@ export function exportTheme() {
 
 export function initialize(p, div, height) {
     p.div = div;
-    p.createCanvas(div.offsetWidth, div.offsetWidth * .4 * height);
+    p.createCanvas(div.offsetWidth, div.offsetWidth * .4 * height).parent(div).style('position', 'relative');
     p.width = div.offsetWidth;
     p.height = div.offsetWidth * .4 * height;
     p.elements = {};

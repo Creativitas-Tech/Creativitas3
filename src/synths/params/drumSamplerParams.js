@@ -90,7 +90,7 @@ const paramDefinitions = (synth) => [
     callback: x => synth.output.factor.value = x
   },
   {
-    name: 'kit', type: 'dropdown', value: synth.defaultKit || '', radioOptions: synth.drumkitList,
+    name: 'drumkit', type: 'dropdown', value: synth.defaultKit || '', radioOptions: synth.drumkitList,
     callback: x => {
         //console.log("dropdown load", x)
         synth.loadSamples(x)

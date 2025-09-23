@@ -6,7 +6,7 @@ import CodeMirror from '@uiw/react-codemirror';
 import { historyField } from '@codemirror/commands';
 import { javascript } from '@codemirror/lang-javascript';
 import { Decoration, ViewPlugin, EditorView } from "@codemirror/view";
-import { StateEffect, StateField } from "@codemirror/state";
+import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 
 
@@ -425,6 +425,145 @@ function Editor(props) {
 
         // collab-hub join a room
         window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name
+    
+        window.chClient.on("sharedCode", (incoming) => {
+          const { senderID, content, lineNumber } = incoming.values;
+          const color = checkForRemoteUser(senderID);
+          ensureUserBackgroundCSS(senderID, color);
+
+          // Update user edit map
+          if (!remoteEdits.current.has(senderID)) {
+            remoteEdits.current.set(senderID, {
+              lineNumber: remoteEdits.current.size,
+              content,
+              color
+            });
+
+            // Insert new line if needed
+            viewRef.current.dispatch({
+              changes: { from: viewRef.current.state.doc.length, insert: "\n" }
+            });
+          } else {
+            const userInfo = remoteEdits.current.get(senderID);
+            userInfo.content = content;
+          }
+
+          // Actually update the doc line
+          const userInfo = remoteEdits.current.get(senderID);
+          const line = viewRef.current.state.doc.line(userInfo.lineNumber + 1);
+          viewRef.current.dispatch({
+            changes: {
+              from: line.from,
+              to: line.to,
+              insert: userInfo.content
+            }
+          });
+        });
+
+    }
+
+
+    const userColorRef = useRef({});
+    const colorPalette = [
+      "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
+      "#911eb4", "#46f0f0", "#f032e6", "#bcf60c", "#fabebe",
+      "#008080", "#e6beff", "#9a6324", "#fffac8", "#800000",
+      "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"
+    ];
+
+    function getNextColor(index) {
+      return colorPalette[index % colorPalette.length];
+    }
+
+    function getNextColorFromID(userID) {
+      let hash = 0;
+      for (let i = 0; i < userID.length; i++) {
+        hash = userID.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const hue = Math.abs(hash) % 360;
+      return `hsl(${hue}, 70%, 60%)`;
+    }
+
+    function assignColor(userID) {
+      if (userColorRef.current[userID]) return;
+
+      const color = getNextColorFromID(Object.keys(userColorRef.current).length);
+      userColorRef.current[userID] = color;
+
+      setUserColors({ ...userColorRef.current });
+    }
+
+    const checkForRemoteUser = (userID) => {
+      assignColor(userID);
+      return userColorRef.current[userID];
+    };
+
+    const editorRef = useRef();
+    const viewRef = useRef();
+    const remoteUserMapRef = useRef(new Map());
+
+    useEffect(() => {
+      const doc = ''; // Start with empty or placeholder doc
+      const state = EditorState.create({
+        doc,
+        extensions: [
+          EditorView.editable.of(false),
+          EditorView.lineWrapping,
+          colorLinePlugin(remoteUserMapRef.current),
+        ],
+      });
+
+      viewRef.current = new EditorView({
+        state,
+        parent: document.getElementById("remoteCodeDisplay"),
+      });
+    }, []);
+
+    function ensureUserBackgroundCSS(userID, color) {
+  const className = `bg-${userID}`;
+  if (document.getElementById(className)) return; // already exists
+
+  const style = document.createElement('style');
+  style.id = className;
+  style.innerHTML = `
+    .cm-line.${className} {
+      background-color: ${color}33;  /* low-opacity background */
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+    function colorLinePlugin(userMap) {
+      return ViewPlugin.fromClass(class {
+        decorations;
+
+        constructor(view) {
+          this.decorations = this.buildDecorations(view);
+        }
+
+        update(update) {
+          if (update.docChanged || update.viewportChanged) {
+            this.decorations = this.buildDecorations(update.view);
+          }
+        }
+
+        buildDecorations(view) {
+          const decos = [];
+
+          for (const [userID, { lineNumber }] of userMap.entries()) {
+            const line = view.state.doc.line(lineNumber + 1);
+            decos.push(
+              Decoration.line({
+                attributes: { class: `bg-${userID}` }
+              }).range(line.from)
+            );
+          }
+
+          return Decoration.set(decos);
+        }
+      }, {
+        decorations: v => v.decorations
+      });
     }
 
     //const value = 'let CHANNEL = 3'
@@ -441,6 +580,10 @@ function Editor(props) {
     const [codeMinimized, setCodeMinimized] = useState(false);
     const [p5Minimized, setP5Minimized] = useState(false);
     const [maximized, setMaximized] = useState('');
+
+    //remote users
+    const [userColors, setUserColors] = useState({});
+    const remoteEdits = useRef(new Map()); // key: userID → { lineNumber, content, color }
 
     // Ensure editorView is set properly when the editor is created
     const onCreateEditor = (view) => {
@@ -897,34 +1040,43 @@ function Editor(props) {
         const state = viewUpdate.state.toJSON(stateFields);
         localStorage.setItem(`${props.page}EditorState`, JSON.stringify(state));
 
-        // Check if changes are present and extract the edited line
         if (viewUpdate.changes) {
-            try {
-                const lineChanges = [];
-                viewUpdate.changes.iterChanges((from, to, inserted) => {
-                    const doc = viewUpdate.state.doc;
+          try {
+            const lineChanges = [];
+            viewUpdate.changes.iterChanges((from, to, inserted) => {
+              const doc = viewUpdate.state.doc;
 
-                    // Get the start and end line numbers for the change
-                    const startLine = doc.lineAt(from).number - 1; // 0-based index
-                    const endLine = doc.lineAt(to).number - 2;
+              const startLine = doc.lineAt(from).number - 1; // 0-based
+              const endLine = doc.lineAt(to).number - 1;
 
-                    // Get the full line content for each line in the change
-                    for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
-                        const lineContent = doc.line(lineNumber + 1).text;
-                        lineChanges.push({ lineNumber, content: lineContent });
-                    }
+              for (let lineNumber = startLine; lineNumber <= endLine; lineNumber++) {
+                const lineContent = doc.line(lineNumber + 1).text;
+                lineChanges.push({ lineNumber, content: lineContent });
+              }
+            });
+
+            // ✅ Send the changes over the network
+            if( window.chClient) {
+                lineChanges.forEach((edit) => {
+                  const message = {
+                    senderID: window.chClient.username, // optional
+                    lineNumber: edit.lineNumber,
+                    content: edit.content,
+                  }
+
+                  
+                window.chClient.control("sharedCode", message);
+                console.log('sent', message)
                 });
-
-                // Send each edited line to the WebSocket server
-                lineChanges.forEach((lineChange) => {
-                    const edit = {
-                        lineNumber: lineChange.lineNumber,
-                        content: lineChange.content,
-                    };
-                });
-            } catch (e) { }
+                
+            };
+          } catch (e) {
+            console.error("Change iteration failed:", e);
+          }
         }
     };
+
+
 
     //Handle Live Mode Key Funcs
     const handleKeyDown = (event) => {
@@ -1362,9 +1514,11 @@ function Editor(props) {
                     </div>
                 </div>
             }
-            {!p5Minimized &&
-                <div id="canvases" className="flex-child">
 
+          
+          {!p5Minimized &&
+                <div id="canvases" className="flex-child">
+                <div id="remoteCodeDisplay"></div>
                     <span className="span-container">
                         {codeMinimized &&
                             <button className="button-container" onClick={codeMinClicked}>{"=>"}</button>
@@ -1376,6 +1530,7 @@ function Editor(props) {
                 </div>
             }
 
+          
         </div>
 
     );
