@@ -413,56 +413,13 @@ function Editor(props) {
 
     /************************************************
      * 
-     * Main useEffect and code parsing
+     * Creating a link
      * 
      *************************************************/
 
-    function initCollab(roomName = 'famleLounge', debug = 'false') {
-        // window.chClient = new CollabHubClient(); // needs to happen once (!)
-        // window.chTracker = new CollabHubTracker(window.chClient);
-        window.chClient = new CollabSlobClient(debug === 'debug' || debug === true || debug === 'true');
-        window.ctx = ctx
-
-        // collab-hub join a room
-        window.chClient.joinRoom(roomName); // TODO change this to the patch-specific room name
-    
-        window.chClient.on("sharedCode", (incoming) => {
-          const { senderID, content, lineNumber } = incoming.values;
-          const color = checkForRemoteUser(senderID);
-          ensureUserBackgroundCSS(senderID, color);
-
-          // Update user edit map
-          if (!remoteEdits.current.has(senderID)) {
-            remoteEdits.current.set(senderID, {
-              lineNumber: remoteEdits.current.size,
-              content,
-              color
-            });
-
-            // Insert new line if needed
-            viewRef.current.dispatch({
-              changes: { from: viewRef.current.state.doc.length, insert: "\n" }
-            });
-          } else {
-            const userInfo = remoteEdits.current.get(senderID);
-            userInfo.content = content;
-          }
-
-          // Actually update the doc line
-          const userInfo = remoteEdits.current.get(senderID);
-          const line = viewRef.current.state.doc.line(userInfo.lineNumber + 1);
-          viewRef.current.dispatch({
-            changes: {
-              from: line.from,
-              to: line.to,
-              insert: userInfo.content
-            }
-          });
-        });
-
-    }
-
-
+    const editorRef = useRef();
+    const viewRef = useRef();
+    const remoteUserMapRef = useRef(new Map());
     const userColorRef = useRef({});
     const colorPalette = [
       "#e6194b", "#3cb44b", "#ffe119", "#4363d8", "#f58231",
@@ -471,8 +428,67 @@ function Editor(props) {
       "#aaffc3", "#808000", "#ffd8b1", "#000075", "#808080"
     ];
 
-    function getNextColor(index) {
-      return colorPalette[index % colorPalette.length];
+
+    function initCollab(roomName = "changeit", debug = false) {
+      window.chClient = new CollabSlobClient(debug === 'debug' || debug === true || debug === 'true');
+      window.ctx = ctx;
+
+      if (roomName === "changeit") roomName = 'room' + Math.floor(Math.random() * 100);
+      window.chClient.joinRoom(roomName);
+      //window.chClient.setUsername('user' + Math.floor(Math.random() * 100));
+
+      window.chClient.on("sharedCode", (incoming) => {
+        const { senderID, content, lineNumber } = incoming.values;
+        if (senderID === "server") return;
+
+        // Sanitize userID for use in class names
+        const safeID = senderID.replace(/[^a-zA-Z0-9_-]/g, "_");
+
+        const color = checkForRemoteUser(safeID);
+
+        ensureUserBackgroundCSS(safeID, color);
+
+        if (!remoteUserMapRef.current.has(safeID)) {
+          remoteUserMapRef.current.set(safeID, {
+            lineNumber: remoteUserMapRef.current.size,
+            content,
+            color
+          });
+
+          // Add blank line if needed
+          viewRef.current.dispatch({
+            changes: { from: viewRef.current.state.doc.length, insert: "\n" }
+          });
+        } else {
+          const userInfo = remoteUserMapRef.current.get(safeID);
+          userInfo.content = content;
+        }
+
+        const userInfo = remoteUserMapRef.current.get(safeID);
+        const line = viewRef.current.state.doc.line(userInfo.lineNumber + 1);
+        viewRef.current.dispatch({
+          changes: {
+            from: line.from,
+            to: line.to,
+            insert: userInfo.content
+          }
+        });
+      });
+    }
+
+    function checkForRemoteUser(userID) {
+      assignColor(userID);
+      return userColorRef.current[userID];
+    }
+
+    function assignColor(userID) {
+      if (userColorRef.current[userID]) return;
+
+      const { h, s, l } = getNextColorFromID(userID);
+      const colorString = `hsla(${h}, ${s}%, ${l}%, 0.3)`;
+      userColorRef.current[userID] = getNextColorFromID(userID);
+
+      setUserColors({ ...userColorRef.current });
     }
 
     function getNextColorFromID(userID) {
@@ -480,59 +496,28 @@ function Editor(props) {
       for (let i = 0; i < userID.length; i++) {
         hash = userID.charCodeAt(i) + ((hash << 5) - hash);
       }
-      const hue = Math.abs(hash) % 360;
-      return `hsl(${hue}, 70%, 60%)`;
+      const hue = Math.abs(hash) % colorPalette.length;
+      console.log('hue', hue)
+      //const hue = Math.floor(Math.random()*100)
+      return colorPalette[hue]+"80"
+      //return { h: hue, s: 70, l: 60 };
     }
-
-    function assignColor(userID) {
-      if (userColorRef.current[userID]) return;
-
-      const color = getNextColorFromID(Object.keys(userColorRef.current).length);
-      userColorRef.current[userID] = color;
-
-      setUserColors({ ...userColorRef.current });
-    }
-
-    const checkForRemoteUser = (userID) => {
-      assignColor(userID);
-      return userColorRef.current[userID];
-    };
-
-    const editorRef = useRef();
-    const viewRef = useRef();
-    const remoteUserMapRef = useRef(new Map());
-
-    useEffect(() => {
-      const doc = ''; // Start with empty or placeholder doc
-      const state = EditorState.create({
-        doc,
-        extensions: [
-          EditorView.editable.of(false),
-          EditorView.lineWrapping,
-          colorLinePlugin(remoteUserMapRef.current),
-        ],
-      });
-
-      viewRef.current = new EditorView({
-        state,
-        parent: document.getElementById("remoteCodeDisplay"),
-      });
-    }, []);
 
     function ensureUserBackgroundCSS(userID, color) {
-  const className = `bg-${userID}`;
-  if (document.getElementById(className)) return; // already exists
+      const className = `bg-${userID}`;
+      if (document.getElementById(className)) return;
 
-  const style = document.createElement('style');
-  style.id = className;
-  style.innerHTML = `
-    .cm-line.${className} {
-      background-color: ${color}33;  /* low-opacity background */
+      const style = document.createElement("style");
+      style.id = className;
+      style.innerHTML = `
+        .cm-line.${className} {
+          background-color: ${color}
+        }
+      `;
+      document.head.appendChild(style);
     }
-  `;
-  document.head.appendChild(style);
-}
 
+    // Plugin to highlight lines
     function colorLinePlugin(userMap) {
       return ViewPlugin.fromClass(class {
         decorations;
@@ -549,7 +534,7 @@ function Editor(props) {
 
         buildDecorations(view) {
           const decos = [];
-
+          console.log(userMap)
           for (const [userID, { lineNumber }] of userMap.entries()) {
             const line = view.state.doc.line(lineNumber + 1);
             decos.push(
@@ -557,14 +542,37 @@ function Editor(props) {
                 attributes: { class: `bg-${userID}` }
               }).range(line.from)
             );
+            //console.log(userID, `bg-${userID}`)
           }
-
           return Decoration.set(decos);
         }
       }, {
         decorations: v => v.decorations
       });
     }
+
+    // Init empty CodeMirror editor
+    useEffect(() => {
+      const state = EditorState.create({
+        doc: '',
+        extensions: [
+          EditorView.editable.of(false),
+          EditorView.lineWrapping,
+          colorLinePlugin(remoteUserMapRef.current),
+        ]
+      });
+
+      viewRef.current = new EditorView({
+        state,
+        parent: document.getElementById("remoteCodeDisplay"),
+      });
+    }, []);
+
+    /************************************************
+     * 
+     * Main useEffect and code parsing
+     * 
+     *************************************************/
 
     //const value = 'let CHANNEL = 3'
     const [height, setHeight] = useState(false);
@@ -1057,6 +1065,7 @@ function Editor(props) {
 
             // ✅ Send the changes over the network
             if( window.chClient) {
+                console.log(window.chClient.username)
                 lineChanges.forEach((edit) => {
                   const message = {
                     senderID: window.chClient.username, // optional

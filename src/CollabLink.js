@@ -19,7 +19,7 @@ export function makeCollaborativeObject(rootID, obj, collabHub, path = '', conte
 
   const EXCLUDES = ['autocomplete', 'autocompleteList', 'autocompleteList.filter', 'filter', 
     'connect', 'disconnect', 'link', 'linkGui',
-    'initGui', 'get'];
+    'initGui', 'get', 'username', 'setUserName','setUsername'];
   function shouldSend(path) {
     const parts = path.split(/\.|\[|\]/).filter(Boolean);
     const lastPart = parts[parts.length - 1];
@@ -66,7 +66,7 @@ export function makeCollaborativeObject(rootID, obj, collabHub, path = '', conte
         target[last](...message.value);
       }
     } catch (err) {
-      console.error('Failed to apply remote change:', message, err);
+      console.error('Failed to apply remote change:', root, message, err);
     } finally {
       context.suppress = false;
     }
