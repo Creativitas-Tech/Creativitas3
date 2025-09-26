@@ -497,7 +497,7 @@ function Editor(props) {
         hash = userID.charCodeAt(i) + ((hash << 5) - hash);
       }
       const hue = Math.abs(hash) % colorPalette.length;
-      console.log('hue', hue)
+
       //const hue = Math.floor(Math.random()*100)
       return colorPalette[hue]+"80"
       //return { h: hue, s: 70, l: 60 };
@@ -534,15 +534,18 @@ function Editor(props) {
 
         buildDecorations(view) {
           const decos = [];
-          console.log(userMap)
           for (const [userID, { lineNumber }] of userMap.entries()) {
-            const line = view.state.doc.line(lineNumber + 1);
-            decos.push(
-              Decoration.line({
-                attributes: { class: `bg-${userID}` }
-              }).range(line.from)
-            );
-            //console.log(userID, `bg-${userID}`)
+            if (lineNumber + 1 <= view.state.doc.lines) {
+              const line = view.state.doc.line(lineNumber + 1);
+
+
+                decos.push(
+                  Decoration.line({
+                    attributes: { class: `bg-${userID}` }
+                  }).range(line.from)
+                );
+                //console.log(userID, `bg-${userID}`)
+            }
           }
           return Decoration.set(decos);
         }
@@ -550,6 +553,34 @@ function Editor(props) {
         decorations: v => v.decorations
       });
     }
+
+    const broadcastCursorLinePlugin = ViewPlugin.fromClass(class {
+      constructor(view) {
+        this.prevLine = this.getCurrentLine(view);
+      }
+
+      update(update) {
+        if (!update.selectionSet) return;
+
+        const currentLine = this.getCurrentLine(update.view);
+        if (currentLine !== this.prevLine) {
+          this.prevLine = currentLine;
+
+          const lineText = update.state.doc.line(currentLine + 1).text;
+
+          const message = {
+            senderID: window.chClient.username || "unknown",
+            lineNumber: currentLine,
+            content: lineText
+          };
+          window.chClient.control("sharedCode", message);
+        }
+      }
+
+      getCurrentLine(view) {
+        return view.state.doc.lineAt(view.state.selection.main.head).number - 1;
+      }
+    });
 
     // Init empty CodeMirror editor
     useEffect(() => {
@@ -1065,7 +1096,7 @@ function Editor(props) {
 
             // ✅ Send the changes over the network
             if( window.chClient) {
-                console.log(window.chClient.username)
+                //console.log(window.chClient.username)
                 lineChanges.forEach((edit) => {
                   const message = {
                     senderID: window.chClient.username, // optional
@@ -1075,7 +1106,7 @@ function Editor(props) {
 
                   
                 window.chClient.control("sharedCode", message);
-                console.log('sent', message)
+                //console.log('sent', message)
                 });
                 
             };
@@ -1512,7 +1543,7 @@ function Editor(props) {
                                     mode: 'javascript',
                                 }}
                                 theme={themeDef}
-                                extensions={[javascript({ jsx: true }), decorationsField, autocompletion({ override: [combinedCompleter] })]}
+                                extensions={[javascript({ jsx: true }), decorationsField, autocompletion({ override: [combinedCompleter] }), broadcastCursorLinePlugin]}
                                 onChange={handleCodeChange}
                                 onKeyDown={handleKeyDown}
                                 onStatistics={handleStatistics}
