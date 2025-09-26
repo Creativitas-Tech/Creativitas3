@@ -89,7 +89,6 @@ function Canvas(props) {
     return (
         <span className={css}>
             <span className="span-container" >
-                <div style={{ marginLeft: "5px" }}>{props.id}</div>
                 {props.canvasLength > 1 &&
                     <span id="controls">
                         <button className="button-container" onClick={maxClicked}>
