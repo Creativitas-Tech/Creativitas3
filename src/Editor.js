@@ -38,7 +38,8 @@ import {makeCollaborativeObject, ctx} from './CollabLink.js'
 import MidiKeyboard from './midi/MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
 import webExportHTMLContentGenerator from './webExport/WebExportGenerator.ts';
-
+import {MidiDevice} from './midi/MidiDevice.js';
+import {ControlSource} from './midi/ControlSource.js';
 const midi = require('./midi/Midi.js');
 const LZString = require('lz-string');
 
@@ -187,6 +188,8 @@ function Editor(props) {
     //asciiCallbackInstance.fileInput.addEventListener('change', asciiCallbackInstance.handleFileChange);
 
     //midi    
+    window.MidiDevice = MidiDevice;
+    window.ControlSource = ControlSource;
     window.setMidiInput = midi.setMidiInput;
     window.setMidiOutput = midi.setMidiOutput;
     window.setNoteOnHandler = midi.midiHandlerInstance.setNoteOnHandler.bind(midi.midiHandlerInstance);
@@ -228,7 +231,7 @@ function Editor(props) {
     window.Delay = Delay;
     window.Vocoder = Vocoder;
     window.Graph = GraphVisualizer;
-    // window.Player = Player;
+    // window.ControlSource = ControlSource;
     // window.Player = Player;
     // window.Player = Player;
 
@@ -568,6 +571,7 @@ function Editor(props) {
 
           const lineText = update.state.doc.line(currentLine + 1).text;
 
+          if(!window.chClient)  return 
           const message = {
             senderID: window.chClient.username || "unknown",
             lineNumber: currentLine,
