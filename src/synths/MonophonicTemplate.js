@@ -1017,6 +1017,7 @@ export class MonophonicTemplate {
     parseNoteString(val, time, index, num=null) {
         //console.log(val,time,index, num)
         if (val[0] === ".") return;
+        if (!val || val.length === 0 || isNaN(Number(val[0]))) return '.';
 
         const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
 
