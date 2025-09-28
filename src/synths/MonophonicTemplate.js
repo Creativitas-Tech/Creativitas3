@@ -381,6 +381,11 @@ export class MonophonicTemplate {
                         //console.log(target,prop,rawValue)
                         param.set(value,null,false) 
                     };
+                    if (prop === 'from') {
+                      return (source, options = {}) => {
+                        param.from(source, options);
+                      };
+                    }
                     return target.get(); // Return the current value
                 },
                 set(target, _, newValue) {

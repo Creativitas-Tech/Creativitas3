@@ -28,6 +28,9 @@ export class Parameter {
     this.seq = null
     this.set(this._value)
     this.subdivision = '4n'
+    //mapping
+    this.sourceContributions = new Map();  // source → value
+    this.sources = [];  // [{ source, handler }]
   };
 
   get(index = null) {
@@ -95,8 +98,6 @@ export class Parameter {
         }
     }
 
-
-
   // Attach a GUI control to this parameter
   attachControl(control) {
     this.control = control;
@@ -122,6 +123,46 @@ export class Parameter {
 
         // Sync initial value
         this.control.setValue(this.get());
+    }
+
+    //parameter mapping function
+    from(source, {
+      transform = null,
+      smoothing = 0,
+      index = null,
+      priority = 0,
+    } = {}) {
+      let prev = null;
+
+      // Resolve transform only once
+      if (!transform) {
+        transform = (val) => this.scaleValue(val, 0, 127, this.min, this.max, this.curve);
+      }
+      this.transform = transform
+
+      const handler = (val) => {
+          const v = (val) 
+          if (smoothing > 0) {
+            v = prev == null ? v : prev + smoothing * (v - prev);
+            prev = v;
+          }
+
+          this.sourceContributions.set(source, v);
+          this.updateFromSources(index);
+        };
+
+      source.connect(handler);
+      this.sources.push({ source, handler });
+    }
+
+    updateFromSources(index = null) {
+      const sum = Array.from(this.sourceContributions.values())
+        .reduce((a, b) => a + b, 0);
+
+        const val = this.transform(sum)
+      // Clamp to parameter's min/max
+      //const clamped = Math.max(this.min, Math.min(this.max, sum));
+      this.set(val, index, false);
     }
 
     getGroupColor(group) {
@@ -177,8 +218,13 @@ export class Parameter {
    * @returns {number} - The scaled real-world value.
    */
   scaleValue(value, min, max, realMin, realMax, curve) {
-    return realMin + (Math.pow(value, curve) * (realMax - realMin));
-  }
+      // Normalize value to 0–1 using min/max
+      const norm = (value - min) / (max - min);
+      // Clamp to 0–1 so out-of-range input doesn't explode
+      //const clamped = Math.max(0, Math.min(1, norm));
+      // Apply curve and scale to realMin–realMax
+      return realMin + Math.pow(norm, curve) * (realMax - realMin);
+    }
 
   /**
    * Convert a real-world value back into a normalized value (0-1) based on min, max, and curve.
