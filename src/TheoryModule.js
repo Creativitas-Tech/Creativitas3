@@ -63,6 +63,10 @@ class MusicGenerator {
     this.harmonicRhythm = 8;
     this.progressionChords = [];
     this._progression = [];
+
+    this.scaleRatios = Array.from({ length: 12 }, (_, i) => Math.pow(2, i / 12));
+  this.A4 = 440;
+  this.A4_MIDI = 69;
     
     this.voicings = {
       "closed": [0, 2, 4, 6],
@@ -478,6 +482,32 @@ class MusicGenerator {
     }
 
     return chord.sort((a, b) => a - b);
+  }
+
+
+
+    mtof(midiNote) {
+  const stepsPerOctave = this.scaleRatios.length;
+
+  // Offset from C4 instead of A4
+  const semitoneOffset = midiNote - 60;
+  const octaveOffset = Math.floor(semitoneOffset / stepsPerOctave);
+  const degree = ((semitoneOffset % stepsPerOctave) + stepsPerOctave) % stepsPerOctave;
+
+  // Frequency of C4 (the 1:1 ratio point)
+  const c4Freq = 440 * Math.pow(2, (60 - 69) / 12);
+
+  const freq = c4Freq * Math.pow(2, octaveOffset) * this.scaleRatios[degree];
+  //console.log(this.scaleRatios[degree])
+  return freq;
+}
+
+    setTemperament(ratios) {
+    this.scaleRatios = ratios;
+  }
+
+    setA4(freq) {
+    this.A4 = freq;
   }
 }
 
