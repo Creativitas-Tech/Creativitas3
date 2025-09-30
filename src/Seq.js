@@ -136,7 +136,7 @@ export class Seq {
             curBeat = this.checkForRandomElement(curBeat);
 
             let event = parsePitchStringBeat(curBeat, time);
-            console.log('1', event)
+            //console.log('1', event)
             event = this.applyOrnamentation(event)
             event = event.map(([x, y]) => [this.perform_transform(x), y])
             //console.log(event)

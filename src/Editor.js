@@ -1115,7 +1115,7 @@ function Editor(props) {
                 
             };
           } catch (e) {
-            console.error("Change iteration failed:", e);
+            //console.error("Change iteration failed:", e);
           }
         }
     };
