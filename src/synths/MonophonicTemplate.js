@@ -381,6 +381,11 @@ export class MonophonicTemplate {
                         //console.log(target,prop,rawValue)
                         param.set(value,null,false) 
                     };
+                    if (prop === 'from') {
+                      return (source, options = {}) => {
+                        param.from(source, options);
+                      };
+                    }
                     return target.get(); // Return the current value
                 },
                 set(target, _, newValue) {
@@ -1012,6 +1017,7 @@ export class MonophonicTemplate {
     parseNoteString(val, time, index, num=null) {
         //console.log(val,time,index, num)
         if (val[0] === ".") return;
+        if (!val || val.length === 0 || isNaN(Number(val[0]))) return '.';
 
         const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
 

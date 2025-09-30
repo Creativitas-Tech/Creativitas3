@@ -40,7 +40,7 @@ export class CollabSlobClient {
         });
         this.controls = {};
         this.handlers = {};
-        this.username = "";
+        this.username = null;
         this.roomJoined = undefined;
         this.clientId = this._generateClientId(); // Unique identifier for this client instance
 
@@ -65,7 +65,7 @@ export class CollabSlobClient {
                 this.logger.debug(`Re-joining room after connection: ${this.roomJoined}`);
                 this.joinRoom(this.roomJoined);
             }
-    });
+        });
 
 
         // chat and user management
@@ -95,7 +95,7 @@ export class CollabSlobClient {
             for (let u of incoming.users) {
                 userList += --iterations ? `${u}, ` : u;
             }
-            // console.info(`Connected users: ${userList}`);
+            //console.info(`Connected users: ${userList}`);
         });
 
         // controls
@@ -305,9 +305,12 @@ export class CollabSlobClient {
     }
 
     setUsername(u) {
-        this.logger.debug("setUsername() called with args:", u);
-        this.socket.emit("addUsername", { username: u });
+      this.logger.debug("setUsername() called with args:", u);
+       setTimeout(() => {
+         this.socket.emit("addUsername", { username: u });
         this.username = u;
+        console.log('set username to', this.username)
+       }, 1000);
     }
 
     // requesting/using data
@@ -329,6 +332,7 @@ export class CollabSlobClient {
 
     joinRoom(roomName) {
         this.logger.debug(`joinRoom() called with roomName: ${roomName}`);
+
 
         if (this.roomJoined) {
             this.logger.debug(`Already in room: ${this.roomJoined}, leaving it first`);

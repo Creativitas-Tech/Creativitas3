@@ -28,6 +28,7 @@ export class Seq {
         this.callback = callback;
         this.parent = null;
         this.index = 0;
+        this.nextBeat = '.'
         this.prevVals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr); //for gui tracking
         this.guiElements = {}
         this.guiElements["knobs"]=[]
@@ -82,13 +83,8 @@ export class Seq {
         else this.phraseLength = phraseLength
         this.subdivision = subdivision;
 
-        // if (this.loopInstance) {
-        // //     this.loopInstance.dispose();
-        // }
-
-        // // this.createLoop();
-        this.start()   
-
+        this.createLoop();
+        //this.start()
         this.updateGui()
     }
 
@@ -117,16 +113,15 @@ export class Seq {
         else this.phraseLength = phraseLength
         this.subdivision = subdivision;
 
-        // if (this.loopInstance) {
-        // //     this.loopInstance.dispose();
-        // }
-
-        // // this.createLoop();
         this.start()   
     }
 
     createLoop() {
         // Create a Tone.Loop
+        if (this.loopInstance) {
+            //this.loopInstance.stop();
+            this.loopInstance.dispose();  // or .cancel() + .dispose()
+        }    
         this.loopInstance = new Tone.Loop(time => {
             //console.log('loop', time)
             
@@ -137,10 +132,6 @@ export class Seq {
 
             let curBeat = this.vals[this.index ];
             if (curBeat == undefined) curBeat = '.'
-
-            //console.log("before transform", '.'+curBeat+'.')
-            //curBeat = this.perform_transform(curBeat);
-            //console.log("after transform", '.'+curBeat+'.')
 
             curBeat = this.checkForRandomElement(curBeat);
 
@@ -198,10 +189,6 @@ export class Seq {
         let [pattern, scalar, length] = ornament;
 
         const ornamentedEvent = [];
-
-        // Total number of original notes
-        //const numSourceNotes = event.length;
-        //const noteSpacing = 1 / length;
 
         const uniqueTimeSteps = [...new Set(event.map(e => e[1]))];
         const numSourceNotes = uniqueTimeSteps.length;
@@ -305,6 +292,8 @@ export class Seq {
     }
 
     expr(func, len = 32, subdivision = '16n') {
+        this.createExpr(func, len, subdivision)
+        return
         const arr = Array.from({ length: len }, (_, i) => {
             return func(i);
         });
@@ -318,6 +307,72 @@ export class Seq {
         this.sequence(this.vals, subdivision);
     }
 
+    createExpr(func, len=32, subdivision = '16n') {
+        // Create a Tone.Loop
+        const log = false
+        this.calcNextBeat(func, log)
+        this.subdivision = subdivision
+        if (this.loopInstance) {
+            //this.loopInstance.stop();
+            this.loopInstance.dispose();  // or .cancel() + .dispose()
+        }        
+        this.loopInstance = new Tone.Loop(time => {
+            //console.log('loop', time)
+            this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+            this.index = this.index % len
+            //console.log('ind ', this.index)
+            if (this.enable === 0) return;
+            
+            let event = parsePitchStringBeat(this.nextBeat, time);
+            //console.log('1', event)
+            event = this.applyOrnamentation(event)
+            event = event.map(([x, y]) => [this.perform_transform(x), y])
+            //console.log(event)
+            // Roll chords
+            const event_timings = event.map(subarray => subarray[1]);
+            let roll = this.getNoteParam(this.roll, this.index);
+            roll = roll * Tone.Time(this.subdivision)
+            for (let i = 1; i < event.length; i++) {
+                if (event_timings[i] === event_timings[i - 1]) event[i][1] = event[i - 1][1] + roll;
+            }
+
+            //main callback for triggering notes
+            //console.log(event, time, this.index, this.num)
+            for (const val of event) this.callback(val, time, this.index, this.num);
+            //console.log('loop', time, event, this.callback)
+            if(this.userCallback){
+                this.userCallback();
+            }
+
+            //check for sequencing params
+            // try{
+            // for(params in this.synth.param){
+            //     if(Array.isArray(params)) this.synth.setValueAtTime
+            // }}
+            //console.log('len ', this.phraseLength)
+            this.calcNextBeat(func, log)
+            
+            if (this.phraseLength === 'infinite') return;
+            this.phraseLength -= 1;
+            if (this.phraseLength < 1) this.stop();
+        }, this.subdivision).start(0);
+
+        this.setSubdivision(this.subdivision);
+
+        Tone.Transport.start();
+    }
+    calcNextBeat(func, log){
+        let i = this.index+1
+            let curBeat = func(i)
+            //console.log(curBeat, i, func)
+            //let curBeat = this.vals[this.index ];
+            if (curBeat == undefined) curBeat = '.'
+
+            curBeat = this.checkForRandomElement(curBeat);
+            this.nextBeat = curBeat
+            if(log) console.log(this.nextBeat)
+    }
+
     setSubdivision(sub = '8n') {
         this._subdivision = sub;
         if (this.loopInstance) {
@@ -325,58 +380,54 @@ export class Seq {
         }
     }
 
-    perform_transform(curBeat){
-        // console.log('trans', curBeat)
-        if(curBeat == undefined){
-            // console.log("returning 1")
-            return 1;
-        }
-        // TODO: Ask Ian why
-        // Check for note names like C4, D#3, etc.
-        if(typeof curBeat === 'string' && /^[A-Ga-g][#b]?\d/.test(curBeat)) {
-            // For note names, just return them as is - no transformation needed
-            return curBeat;
-        }
+    perform_transform(input) {
+
+        if(typeof input === 'string') return this.transformString(input)
         
-        if(!isNaN(Number(curBeat))){ //make sure it's a number
-            // console.log("returning", String(this.transform(Number(curBeat))))
-            return curBeat;//String((this.transform(Number(curBeat))));
-        }else if(curBeat[0]==='['){ //it's an array
-            //if(curBeat.length <3) return '.'
-            for(let i = 0; i < curBeat.length; i++){
-                if(!isNaN(Number(curBeat[i])) && curBeat[i].trim() !== ""){
-                    let curNum = curBeat[i];
-                    let lastInd = i;
-                    while(true){ //check for multiple digit numbers
-                        if(lastInd<curBeat.length-1){
-                            if(!isNaN(Number(curBeat[lastInd+1])) && curBeat[lastInd+1].trim() !== ""){
-                                // console.log("It says this is a number", curBeat[lastInd+1]);
-                                curNum += curBeat[lastInd+1]
-                                lastInd += 1;
-                            }else{
-                                break;
-                            }
-                        }else{
-                            break;
-                        }
-                    }
-                    // console.log("after while", curNum);
-                    // console.log("returning", curBeat.slice(0, i) + String(this.transform(Number(curNum))) + curBeat.slice(lastInd + 1))
-                    let transformedNum = String((this.transform(Number(curNum))));
-                    curBeat = curBeat.slice(0, i) + transformedNum + curBeat.slice(lastInd + 1);
-                    lastInd += transformedNum.length - curNum.length;
-                    i = lastInd;
+         // If it's a number or numeric string
+        if (!isNaN(Number(input))) {
+            return this.transform(Number(input));
+        }
+    }
+
+    transformString(inputStr){
+        if (typeof inputStr !== 'string') return '.';
+
+        const isNote = str => /^[A-Ga-g][#b]?\d/.test(str);
+        const isNumeric = str => !isNaN(Number(str));
+        const isRest = str => str === '.' || str === 'x';
+        
+        // Recursive parser
+        const parseTokens = (tokens) => {
+            let result = [];
+            while (tokens.length > 0) {
+                const token = tokens.shift();
+
+                if (token === '[') {
+                    const nested = parseTokens(tokens);
+                    result.push('[' + nested.join(' ') + ']');
+                } else if (token === ']') {
+                    break;
+                } else if (isNote(token) || isRest(token)) {
+                    result.push(token);
+                } else if (isNumeric(token)) {
+                    const val = this.transform(Number(token));
+                    result.push(String(val));
+                } else {
+                    // fallback, unhandled token
+                    result.push(token);
                 }
             }
-            return curBeat;
-        }else if(curBeat === '[]') {
-            this.transform('.')
-            return '.'
-        }else{
-            // console.log("returning", curBeat);
-            this.transform('.')
-            return curBeat;
-        }
+
+            return result;
+        };
+
+        // Tokenize by splitting on spaces while preserving brackets
+        const tokens = inputStr.match(/\[|\]|\S+/g); // grabs [ ] or any non-space group
+        if (!tokens) return inputStr;
+
+        const transformedTokens = parseTokens(tokens);
+        return transformedTokens.join(' ');
     }
 
     setTransform(func){

@@ -23,6 +23,7 @@ import {Parameter} from './ParameterModule.js'
 import DaisiesPresets from './synthPresets/DaisiesPresets.json';
 import { paramDefinitions } from './params/daisiesParams.js';
 import daisyLayout from './layouts/daisyLayout.json';
+import {Theory} from '../TheoryModule.js'
 
 export class Daisy extends MonophonicTemplate{
 	constructor(){
@@ -143,7 +144,9 @@ export class Daisy extends MonophonicTemplate{
     }
   }
   triggerAttackRelease = function(val, vel=100, dur=0.01, time=null){
-    val = Tone.Midi(val).toFrequency()
+    //val = Tone.Midi(val).toFrequency()
+    val = Theory.mtof(val)
+    
     vel = vel/127
     if(time){
       this.frequency.setValueAtTime(val,time)

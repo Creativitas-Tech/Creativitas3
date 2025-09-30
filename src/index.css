@@ -220,7 +220,6 @@ code {
 #remoteCodeDisplay {
   max-height: 200px;
   overflow-y: auto;
-  background: #1a1a1a;
   font-family: monospace;
   font-size: 0.85rem;
 }

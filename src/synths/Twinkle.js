@@ -12,6 +12,7 @@ import { MonophonicTemplate } from './MonophonicTemplate';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/halfLayout.json';
 import paramDefinitions from './params/twinkleParams.js';
+import {Theory} from '../TheoryModule.js'
  
 export class Twinkle extends MonophonicTemplate {
   constructor (gui = null) {
@@ -104,7 +105,9 @@ export class Twinkle extends MonophonicTemplate {
   }
   triggerAttackRelease (freq, amp, dur=0.01, time=null){
     //console.log('AR ',freq,amp,dur,time)
-    freq = Tone.Midi(freq).toFrequency()
+    //freq = Tone.Midi(freq).toFrequency()
+    freq = Theory.mtof(freq)
+    
     amp = amp/127
     if(time){
       this.env.triggerAttackRelease(dur, time)
