@@ -307,10 +307,11 @@ export class Seq {
         this.sequence(this.vals, subdivision);
     }
 
+    //createExpr calculates the expression one beat at a time
     createExpr(func, len=32, subdivision = '16n') {
         // Create a Tone.Loop
         const log = false
-        this.calcNextBeat(func, log)
+        this.calcNextBeat(func, len, log)
         this.subdivision = subdivision
         if (this.loopInstance) {
             //this.loopInstance.stop();
@@ -350,7 +351,7 @@ export class Seq {
             //     if(Array.isArray(params)) this.synth.setValueAtTime
             // }}
             //console.log('len ', this.phraseLength)
-            this.calcNextBeat(func, log)
+            this.calcNextBeat(func, len, log)
             
             if (this.phraseLength === 'infinite') return;
             this.phraseLength -= 1;
@@ -361,9 +362,10 @@ export class Seq {
 
         Tone.Transport.start();
     }
-    calcNextBeat(func, log){
-        let i = this.index+1
+    calcNextBeat(func, length, log){
+        let i = (this.index + 1) % length
             let curBeat = func(i)
+
             //console.log(curBeat, i, func)
             //let curBeat = this.vals[this.index ];
             if (curBeat == undefined) curBeat = '.'
@@ -371,6 +373,7 @@ export class Seq {
             curBeat = this.checkForRandomElement(curBeat);
             this.nextBeat = curBeat
             if(log) console.log(this.nextBeat)
+
     }
 
     setSubdivision(sub = '8n') {
