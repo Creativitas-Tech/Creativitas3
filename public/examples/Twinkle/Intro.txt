@@ -2,8 +2,8 @@ The Twinkle synthesizer is a simple subtractive synth. These have the signal flo
 
 1. Oscillator (VCO): you can select the waveform
 2. Filter (VCF): you can change the cutoff, resonance, and env depth
-3. Amplifier (VCA): the amplitude is normally controlled by the envelope. However, you can also manually turn the amplitude up using the 'level' knob, which will add to the envelope output.
-4. Envelope (ADSR): The envelope is an attack-decay-sustain-release envelope, and controls both the VCA amplitude and the VCF cutoff. 
+3. Amplifier (VCA): the amplitude is normally controlled by the envelope. 
+4. Envelope (ADSR): The envelope is an attack-decay-sustain-release envelope, and controls both the VCA amplitude and the VCF cutoff.
 
 There are also a few sequencer controls in this example, found below the s.sequence() line.
 * s.octave sets the octave of the synth
