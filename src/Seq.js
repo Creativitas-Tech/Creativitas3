@@ -307,6 +307,32 @@ export class Seq {
         this.sequence(this.vals, subdivision);
     }
 
+    euclid(hits, beats, rotate){
+        //console.log('euclid', hits, beats, rotate)
+        let pattern = [];
+        let bucket = 0;
+
+      for (let i = 0; i < beats; i++) {
+        bucket += hits;
+        if (bucket >= beats) {
+          bucket -= beats;
+          pattern.push(1); // play a hit
+        } else {
+          pattern.push(0); // rest
+        }
+      }
+      const valLength = this.vals.length
+      for(let i = valLength; i<pattern.length;i++){
+        this.vals.push(this.vals[i%valLength])
+      }
+      
+      pattern = pattern.rotate(-1+rotate)
+      //console.log(pattern, this.vals)
+      for(let i=0;i<this.vals.length;i++){
+        if(pattern[i%pattern.length] == 0)this.vals[i] = '.'
+      }
+    }
+
     //createExpr calculates the expression one beat at a time
     createExpr(func, len=32, subdivision = '16n') {
         // Create a Tone.Loop
