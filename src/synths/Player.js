@@ -138,11 +138,16 @@ export class Player extends MonophonicTemplate {
             this.baseUrl = "./audio/"; // Relative to your script's location
         }
         
-        //console.log(note, url)
-        this.player.load(this.baseUrl.concat(url), () => {
+        //console.log(note, this.baseUrl.concat(url))
+        this.player.load(this.baseUrl.concat(url))
+        .then(() => {
             const duration = this.player.buffer.length / Tone.context.sampleRate;
             console.log(`Sample duration: ${duration.toFixed(2)} seconds`);
+        })
+        .catch((err) => {
+            console.error("Failed to load sample:", err);
         });
+
     }
 
     listSamples(){

@@ -1,6 +1,6 @@
 ### Getting started with synths and sequencers
 
-We are going to be using lots of subtractice synthesizers - which are synthesizers which use filters and oscillators to create interesting timbres.
+We are going to be using lots of subtractive synthesizers - which are synthesizers which use filters and oscillators to create interesting timbres.
 
 Watch [this youtube video](https://youtu.be/pbl8VSWjgLQ) to learn about how the Twinkle synthesizer works, and about subtractive synthesis more generally.
 

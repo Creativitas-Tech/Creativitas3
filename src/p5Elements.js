@@ -1236,7 +1236,7 @@ export class RadioButton extends Button {
 
             // Run the callback to trigger any associated actions
             this.runCallBack();
-            console.log('rb', this.value, this.linkName)
+            //console.log('rb', this.value, this.linkName)
 
             // Send the update to collab-hub if needed
             if (this.linkName) {

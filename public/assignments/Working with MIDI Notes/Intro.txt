@@ -4,5 +4,3 @@ We will define a function to handle incoming MIDI note messages. Follow along wi
 * implement `setNoteOnHandler()` and a `setNoteOffHandler()`
 * use if() statements in order to take an action in response to a specific MIDI note being pressed and released
 * enable your laptop keyboard to function as a MIDI controller
-
-Your deliverable for this assignment is to create separate sequences which will be triggered for each key in the `z` row, up until the comma key, `,`.

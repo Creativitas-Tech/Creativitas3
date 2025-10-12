@@ -24,6 +24,7 @@ function App() {
     'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
   ];
   const assignmentFiles = [ 
+    'Sequencing Basics', 'Subtractive Synthesis', 'Grids1' //,'Working with MIDI Notes', 'Triggering Envelopes',
     //'Finale', 'Intro to Creativitas', 'Sequencing Basics', 'Subtractive Synthesis', 'Working with MIDI Notes', 'Triggering Envelopes', 'Exercises Day 2', 'Robin Sensors', 'The Barre'
     //'Assignment July 21','Assignment July 22', 'Assignments July 23', 'Sequencing Basics', 'The Barre', 'The Barre 2', 'Promenade Finale', 'Piano Simpler'
     //'Chord Object', 'Promenade', 'Promenade pt. 2', 'The Wand', 'The Barre', 'Sequencing Basics', 'Assignment Jul 15',
