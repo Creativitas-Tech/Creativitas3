@@ -345,11 +345,15 @@ export class MonophonicTemplate {
     }
 
     generateParameters(paramDefinitions) {
+        // console.log(paramDefinitions)
         const params = {};
         paramDefinitions.forEach((def) => {
+            //console.log(def)
             const param = new Parameter(this,def);
+            //console.log(param)
             params[def.name] = param;
         });
+        //console.log(params)
         return params;
     }
 
@@ -390,7 +394,7 @@ export class MonophonicTemplate {
                 },
                 set(target, _, newValue) {
                     if (Array.isArray(newValue)) {
-                        //console.log(target.subdivision)
+                        // console.log(target, newValue)
                         if (currentSeq) currentSeq.dispose();
                         currentSeq = new Seq(
                             parent,
@@ -822,6 +826,17 @@ export class MonophonicTemplate {
             this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
         }
         this.seq[num].expr(func, len, subdivision);
+        this.start(num);
+    }
+
+    euclid(seq, hits=4, beats=8, rotate=0, subdivision = '8n', num = 0){
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, seq, subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].sequence(seq, subdivision, 'infinite');
+        }
+        this.seq[num].euclid(hits, beats,rotate);
+        this.start(num);
     }
 
     set velocity(val) {
@@ -1038,9 +1053,9 @@ export class MonophonicTemplate {
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256
-        //console.log('pa',note, octave, velocity, sustain, time, timeOffset)
+        //console.log('pa', note, octave, velocity, sustain, time, timeOffset)
         try {
-            //console.log('trig', note + octave * 12, velocity,sustain,time+timeOffset)
+            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
             this.triggerAttackRelease(
                 note + octave * 12,
                 velocity,

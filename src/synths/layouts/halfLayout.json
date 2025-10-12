@@ -33,17 +33,17 @@
     },
     "env": {
       "color": [20, 100, 100],
-      "boundingBox": { "x": 10, "y": 60, "width": 50, "height": 100 },
-      "offsets": { "x": 6, "y": 300 },
+      "boundingBox": { "x": 50, "y": 15, "width": 100, "height": 0 },
+      "offsets": { "x": 6, "y": 0 },
       "groupA": [],
       "controlTypeA": "knob",
       "controlTypeB": "fader",
       "sizeA": 0.8,
-      "sizeB": 1.2
+      "sizeB": 1
     },
     "lfo": {
       "color": [20, 0, 100],
-      "boundingBox": { "x": 50, "y": 70, "width": 50, "height": 100 },
+      "boundingBox": { "x": 50, "y": 70, "width": 50, "height": 0 },
       "offsets": { "x": 12, "y": 30 },
       "groupA": ["rate"],
       "controlTypeA": "knob",

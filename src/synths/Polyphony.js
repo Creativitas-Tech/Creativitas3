@@ -12,7 +12,7 @@ import { sketch } from '../p5Library.js'
 export class Polyphony extends MonophonicTemplate{
 	constructor(voice,num=8){
 		super()
-    	this.name = voice.name
+    this.name = voice.name
 		this.numVoices = num
 		this.slop = .05
 		this.backgroundColor = [0,0,0]
@@ -144,8 +144,10 @@ export class Polyphony extends MonophonicTemplate{
 	}
 
 	triggerAttackRelease = function(val, vel=100, dur=0.01, time=null){
+		// console.log('poly trigAR', val)
 		this.v = this.getNewVoice(val)
 		//val = val + Math.random()*this.slop - this.slop/2
+		//console.log(this.voice[this.v], val, vel, dur, time)
 		if(time){
 			this.voice[this.v].triggerAttackRelease(val, vel, dur, time)
 		} else{
@@ -174,7 +176,11 @@ export class Polyphony extends MonophonicTemplate{
 
 		for (let i = 0; i < this.numVoices/2; i++) {
 			const curElement = this.noteOrder[i];
+			//console.log('voice1', i, this.voice[curElement])
 			const curEnv = this.voice[curElement].env.value;
+			//console.log('voice2', i, this.voice[curElement])
+			
+
 			if (curEnv < weakestEnvValue && leastRecent.includes(curElement)) {
 			  weakestEnvValue = curEnv;
 			  weakestVoice = curElement;
