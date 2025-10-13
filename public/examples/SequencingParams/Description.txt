@@ -1,0 +1,8 @@
+This example demonstrates several key parameters:
+
+* **s.octave**: Transposes the entire sequence by octaves
+* **s.sustain**: Sets the duration of each note in the sequence
+* **s.velocity**: Controls the amplitude/loudness of notes
+* **s.subdivision**: Sets the rhythmic division for the sequence
+* **s.orn**: Adds ornamental neighbor tones to notes
+* **s.lag**: Delays the start of notes, creating a "lazy" or "laid back" feel

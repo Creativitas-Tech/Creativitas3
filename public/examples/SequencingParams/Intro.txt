@@ -1,0 +1,3 @@
+Sequencer parameters allow you to modify how sequences are played without changing the note sequence itself.
+
+Experiment bettter by running individual blocks!
