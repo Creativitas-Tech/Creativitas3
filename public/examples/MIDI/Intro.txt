@@ -1,0 +1,6 @@
+You can play MIDI notes either using your laptop's built-in keyboard, or using an external MIDI controller using WebMIDI.
+
+* To use your laptop keyboard, toggle the keyboard icon at the top of the code box and use the 'z' row for the white keys and the row above for the black keys.
+  * You can use the left and right arrows to change octaves.
+* To use a MIDI keyboard, connect it to your computer and look for it to show up in the console when you refresh the webpage. You should see the MIDI inputs show up, each preceded with a midiInputNumber.
+  * setMidiInput(1) will enable MIDI input for the first input device in the list.
