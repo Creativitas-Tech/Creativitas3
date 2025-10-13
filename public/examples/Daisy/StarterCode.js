@@ -1,4 +1,4 @@
-let s = new Polyphony(Daisy)
+let s = new Daisy
 let output = new Tone.Multiply(.1).toDestination()
 s.connect( output )
 
