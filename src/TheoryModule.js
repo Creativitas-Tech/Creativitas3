@@ -927,12 +927,12 @@ export function intervalToMidi(interval, min=12, max = 127) {
    }
    else degree = interval
 
-    //console.log(degree, min, max, Theory.getChord())
+    //console.log(degree,accidental Theory.getChord())
 
     try{  midiNote = Theory.getChord().interval(degree,min,max)}
     catch(e){ console.log('bad interval: ', degree)}
 
-    //console.log(midiNote)
+    //console.log('th', midiNote, accidental)
     if (accidental !== null) {
       if (Array.isArray(accidental)) {
         for (const sign of accidental) {

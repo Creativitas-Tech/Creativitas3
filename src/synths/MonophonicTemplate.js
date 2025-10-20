@@ -1030,18 +1030,21 @@ export class MonophonicTemplate {
     }
 
     parseNoteString(val, time, index, num=null) {
-        //console.log(val,time,index, num)
+        //console.log(val,time,index, num, isNaN(Number(val[0])))
         if (val[0] === ".") return;
-        if (!val || val.length === 0 || isNaN(Number(val[0]))) return '.';
+        if (!val || val.length === 0 ) return '.';
 
         const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
-
+        //console.log(usesPitchNames, val[0])
         let note = '';
         if (usesPitchNames) note = pitchNameToMidi(val[0]);
         else note = intervalToMidi(val[0], this.min, this.max);
 
-        //console.log(note)
         if (note < 0) return;
+        if (note >127) {
+            console.log("MIDI note ", note, "ignored")
+            return;
+        }
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
