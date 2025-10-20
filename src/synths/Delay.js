@@ -139,9 +139,6 @@ export class Delay extends EffectTemplate {
     this.createAccessors(this, this.param);
     this.autocompleteList = this.paramDefinitions.map(def => def.name);
     this.presetList = Object.keys(this.presets)
-    setTimeout(() => {
-      this.loadPreset('default');
-    }, 500);
   }
 
   generateCurves(resolution = 1024) {

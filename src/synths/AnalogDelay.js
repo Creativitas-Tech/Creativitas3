@@ -16,10 +16,10 @@ import { DelayOp } from './DelayOp.js';
 import {Parameter} from './ParameterModule.js'
 import './userInterface.css';
 import { paramDefinitions } from './params/analogDelayParams.js';
-import { MonophonicTemplate } from './MonophonicTemplate';
-import basicLayout from './layouts/basicLayout.json';
+import { EffectTemplate } from './EffectTemplate';
+import layout from './layouts/EffectLayout.json';
 
-export class AnalogDelay extends MonophonicTemplate {
+export class AnalogDelay extends EffectTemplate {
   /**
    * Creates an instance of AnalogDelay.
    * @constructor
@@ -29,11 +29,12 @@ export class AnalogDelay extends MonophonicTemplate {
   constructor(initialTime = 1, initialFB = 0) {
     super()
     this.name = 'analogDelay'
+    this.layout= layout
 
     this.input = new Tone.Multiply(1);
     this.highpass = new Tone.Filter({ type: 'highpass', frequency: 20, Q: 0 });
     this.ws_input = new Tone.Multiply(0.125);
-    this.waveShaper = new Tone.WaveShaper((x) => { return Math.tanh(x) });
+    this.waveShaper = new Tone.WaveShaper((x) => { return Math.tanh(x*10) });
     this.vcf = new Tone.Filter({ type: 'lowpass', frequency: 5000, Q: 0, slope: '-12' });
     this.vcfR = new Tone.Filter({ type: 'lowpass', frequency: 5000, Q: 0, slope: '-12' });
     this.delay = new Tone.Delay(initialTime, initialTime);
@@ -57,8 +58,8 @@ export class AnalogDelay extends MonophonicTemplate {
     this.vcfR.connect(this.delayR);
     this.delay.connect(this.feedbackMult);
     this.delayR.connect(this.feedbackMultR);
-    this.feedbackMult.connect(this.vcf);
-    this.feedbackMultR.connect(this.vcfR);
+    this.feedbackMult.connect(this.waveShaper);
+    this.feedbackMultR.connect(this.waveShaper);
     this.delay.connect(this.merge,0,0);
     this.delayR.connect(this.merge,0,1);
     this.merge.connect(this.wetSig);
@@ -66,6 +67,7 @@ export class AnalogDelay extends MonophonicTemplate {
     this.drySig.connect(this.output);
 
     this.lfo = new Tone.Oscillator(2).start()
+    this.lfo.type = "triangle"
     this.lfoDepth = new Tone.Multiply()
     this.lfo.connect(this.lfoDepth)
     this.lfoDepth.connect(this.delay.delayTime)
@@ -75,5 +77,18 @@ export class AnalogDelay extends MonophonicTemplate {
     this.paramDefinitions = paramDefinitions(this)
     this.param = this.generateParameters(this.paramDefinitions)
     this.createAccessors(this, this.param);
+
+    setTimeout( ()=> this.time = .1, .1)
+  }
+
+  setTime(seconds, time = null) {
+    if(0){
+      this.delay.delayTime.linearRampToValueAtTime(seconds, time)
+      this.delayR.delayTime.linearRampToValueAtTime(seconds*this._delayRatio, time)
+    } else{
+      this.delay.delayTime.rampTo(seconds, .2)
+      this.delayR.delayTime.rampTo(seconds*this._delayRatio, .2)
+      
+    }
   }
 }
