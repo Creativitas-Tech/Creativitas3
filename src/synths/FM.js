@@ -137,9 +137,19 @@ export class FMOperator {
     this.indexEnvDepthScalar.connect(this.modVca.factor);
     this.carrier.connect(this.modVca);
 
+    // === Feedback ===
+    this.feedback = new Tone.Gain()
+    this.feedbackDelay = new Tone.Delay(0,0.001)
+    this.feedbackMult = new Tone.Multiply()
+    this.vca.connect(this.feedbackDelay)
+    this.feedbackDelay.connect(this.feedback)
+    this.feedback.connect(this.feedbackMult)
+    this.frequency.connect(this.feedbackMult.factor)
+    this.feedbackMult.connect(this.carrier.frequency)
+
     // === Public outputs ===
     this.output = this.vca;      // audio out
-    this.modOut = this.vca;      // modulation out (same as audio)
+    this.modOut = this.modVca;      // modulation out (same as audio)
   }
 
   connect(destination) {

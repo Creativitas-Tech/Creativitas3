@@ -13,7 +13,7 @@ const paramDefinitions = (synth) => [
     {
         name: 'harmonicity', type: 'vco', min: 1, max: 10, curve: 2,
         isSignal: 'true', connectTo: synth=>synth.harmonicityRatio, 
-        value: 2,
+        value: 1.5,
         callback: function(x,time) {
             x = Math.floor(x)
             if(time) synth.harmonicityRatio.setValueAtTime(x,time)
@@ -23,7 +23,7 @@ const paramDefinitions = (synth) => [
     },
     {
         name: 'modIndex', type: 'vco', min: 0, max: 10, curve: 3,
-        value: .3,
+        value: 1.2,
         callback: function(x,time) {
             if(time) synth.indexOfModulation.setValueAtTime(x,time)
             else synth.indexOfModulation.rampTo( x, .005)
@@ -85,14 +85,14 @@ const paramDefinitions = (synth) => [
     },
     {
         name: 'sustain', type: 'env', min: 0, max: 1, curve: 1,
-        value: 0.3,
+        value: 0.43,
         callback: function(x) {
             synth.env.sustain = x
         }
     },
     {
         name: 'release', type: 'env', min: 0.01, max: 20, curve: 2,
-        value: 0.5,
+        value: 12,
         callback: function(x) {
             synth.env.release = x
             synth.updateMacroMapping()
