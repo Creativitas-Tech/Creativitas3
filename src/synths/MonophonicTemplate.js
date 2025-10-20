@@ -1040,6 +1040,7 @@ export class MonophonicTemplate {
         if (usesPitchNames) note = pitchNameToMidi(val[0]);
         else note = intervalToMidi(val[0], this.min, this.max);
 
+        //console.log(note)
         if (note < 0) return;
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
@@ -1057,7 +1058,7 @@ export class MonophonicTemplate {
         try {
             //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
             this.triggerAttackRelease(
-                note + octave * 12,
+                note + octave * Theory.scaleRatios.length,
                 velocity,
                 sustain,
                 time + timeOffset
