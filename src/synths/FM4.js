@@ -398,4 +398,46 @@ export class FM4 extends MonophonicTemplate {
       this.velocitySig.rampTo(amp, 0.03);
     }
   }
+  triggerRawAttack(freq, amp=1, time = null) {
+    if(amp > 1) amp = 1
+    const ops = [this.mod1, this.mod2, this.mod3];
+    if (time) {
+      this.env.triggerAttack(time);
+      ops.forEach(op => op.env.triggerAttack(time));
+      this.frequency.setValueAtTime(freq, time);
+      this.velocitySig.setTargetAtTime(amp, time, 0.005);
+    } else {
+      this.env.triggerAttack();
+      ops.forEach(op => op.env.triggerAttack());
+      this.frequency.value = freq;
+      this.velocitySig.rampTo(amp, 0.03);
+    }
+  }
+
+  triggerRawRelease(time = null) {
+    const ops = [this.mod1, this.mod2, this.mod3];
+    if (time) {
+      this.env.triggerRelease(time);
+      ops.forEach(op => op.env.triggerRelease(time));
+    } else {
+      this.env.triggerRelease();
+      ops.forEach(op => op.env.triggerRelease());
+    }
+  }
+
+  triggerRawAttackRelease(freq, amp=1, dur = 0.01, time = null) {
+    const ops = [this.mod1, this.mod2, this.mod3];
+    if(amp > 1) amp = 1
+    if (time) {
+      this.env.triggerAttackRelease(dur, time);
+      ops.forEach(op => op.env.triggerAttackRelease(dur, time));
+      this.frequency.setValueAtTime(freq, time);
+      this.velocitySig.setTargetAtTime(amp, time, 0.005);
+    } else {
+      this.env.triggerAttackRelease(dur);
+      ops.forEach(op => op.env.triggerAttackRelease(dur));
+      this.frequency.value = freq;
+      this.velocitySig.rampTo(amp, 0.03);
+    }
+  }
 }

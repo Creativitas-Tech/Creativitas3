@@ -83,7 +83,7 @@ export class Twinkle extends MonophonicTemplate {
 
   //envelopes
   triggerAttack (freq, amp, time=null){
-    freq = Tone.Midi(freq).toFrequency()
+    freq = Theory.mtof(freq)
     amp = amp/127
     if(time){
       this.env.triggerAttack(time)
@@ -104,9 +104,6 @@ export class Twinkle extends MonophonicTemplate {
     }
   }
   triggerAttackRelease (freq, amp, dur=0.01, time=null){
-    //console.log('AR ',freq,amp,dur,time)
-    //freq = Tone.Midi(freq).toFrequency()
-    //console.log('m', freq)
     freq = Theory.mtof(freq)
     //console.log('f', freq)
     amp = amp/127
@@ -124,8 +121,7 @@ export class Twinkle extends MonophonicTemplate {
   }//attackRelease
 
   triggerRawAttack (freq, amp=1, time=null){
-    //freq = Tone.Midi(freq).toFrequency()
-    //amp = amp/127
+    if(amp > 1) amp = 1
     if(time){
       this.env.triggerAttack(time)
       this.frequency.setValueAtTime(freq, time)
@@ -145,12 +141,7 @@ export class Twinkle extends MonophonicTemplate {
     }
   }
   triggerRawAttackRelease (freq, amp=1, dur=0.01, time=null){
-    //console.log('AR ',freq,amp,dur,time)
-    //freq = Tone.Midi(freq).toFrequency()
-    //console.log('m', freq)
-    //freq = Theory.mtof(freq)
-    //console.log('f', freq)
-    //amp = amp/127
+    if(amp > 1) amp = 1
     if(time){
       this.env.triggerAttackRelease(dur, time)
       this.frequency.setValueAtTime(freq, time)
