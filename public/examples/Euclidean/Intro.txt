@@ -1,0 +1,8 @@
+Euclidean rhythms distribute hits evenly across beats.
+
+The algorithm works by spreading a number of hits across a total number of beats as evenly as possible. For example:
+* `euclid(3, 8)` distributes 3 hits across 8 beats: `[1,0,0,1,0,0,1,0]` (Cuban tresillo)
+* `euclid(5, 8)` creates: `[1,0,1,1,0,1,1,0]` (common in West African music)
+* `euclid(5, 12)` creates: `[1,0,0,1,0,1,0,0,1,0,1,0]` (found in Indian classical music)
+
+The examples below show Euclidean rhythms with both drums and melodic patterns.

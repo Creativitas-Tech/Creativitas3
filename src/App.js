@@ -18,12 +18,12 @@ function App() {
   const [references, setReferences] = useState({});
   const [sandboxes, setSandboxes] = useState({});
   const [markdownContent, setMarkdownContent] = useState("");
-  
+
   const exampleFiles = [
     'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'Arpeggiator', 'Breakbeats!', 'Effects',
-    'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain'
+    'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain', 'Euclidean'
   ];
-  const assignmentFiles = [ 
+  const assignmentFiles = [
     'Sequencing Basics', 'Subtractive Synthesis', 'Grids1' //,'Working with MIDI Notes', 'Triggering Envelopes',
     //'Finale', 'Intro to Creativitas', 'Sequencing Basics', 'Subtractive Synthesis', 'Working with MIDI Notes', 'Triggering Envelopes', 'Exercises Day 2', 'Robin Sensors', 'The Barre'
     //'Assignment July 21','Assignment July 22', 'Assignments July 23', 'Sequencing Basics', 'The Barre', 'The Barre 2', 'Promenade Finale', 'Piano Simpler'
@@ -33,7 +33,7 @@ function App() {
   ];
 
   const referenceFiles = [
-    // 'DrumSampler', 'Rumble', 'Simpler', 
+    // 'DrumSampler', 'Rumble', 'Simpler',
      'Oscilloscope', 'Spectroscope','Spectrogram','Theory','Sequencing','Debugging',`Expr`
   ];
 
