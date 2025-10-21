@@ -64,7 +64,7 @@ const paramDefinitions = (synth) => [
       },
       {
         name: 'fadein', type: 'param',
-        value: 0.005,
+        value: 0,
         min: 0,
         max: 1,
         curve: 3,

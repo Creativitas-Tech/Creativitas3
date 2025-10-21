@@ -8,12 +8,11 @@ player.initGui()
 player.playbackrate = 1 //negative is reverse!
 player.fadein = 0
 player.fadeout = 0.01
-player.sustain = 1
 player.divisions = 8 //divisor for time sequencing
 player.sequence('0 1 2 3 4 5 6 7', '8n')
+player.sustain = 1
 player.volume = 1
 
-//try updating the audioURL, and then loading it into the player
 // audioURL = "kalimba.mp3"
 // audioURL = "vocal.mp3"
 // player.load( audioURL)

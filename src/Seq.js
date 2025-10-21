@@ -18,6 +18,8 @@ export class Seq {
         this._velocity = 100;            // Local alias
         this._orn = 0;            // Local alias
         this._lag = 0;            // Local alias
+        this._rotate = 0;   //actual permanent rotate amount, about the thoery.tick
+        this._offset = null;   //internal variable for calculating rotation specifically for play
         this._transform = (x) => x;      // Local alias
         this.phraseLength = phraseLength === 'infinite' ? 'infinite' : phraseLength * this.vals.length;
         this.enable = 1;
@@ -67,6 +69,10 @@ export class Seq {
     set orn(val) {  this._orn = val; }
     get lag() { return this._lag; }
     set lag(val) {  this._lag = val; }
+    get rotate() { return this._rotate; }
+    set rotate(val) {  this._rotate = val; }
+    get offset() { return this._offset;}
+    set offset(val) {this._offset = val}
     get transform() {  return this._transform;}
     set transform(val) {
         if (typeof val !== 'function') {
@@ -78,6 +84,7 @@ export class Seq {
 
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
+        // console.log('vals', this.vals)
         this.prevVals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
@@ -126,11 +133,16 @@ export class Seq {
             //console.log('loop', time)
             
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
-            this.index = this.index % this.vals.length
-            //console.log('ind ', this.index)
+            this.index = (this.index + this._rotate) % this.vals.length//ask ian if he wants offset to only be implemented for play with limited amount of loops, or as an infinite variable
+            // console.log('ind ', this.index)
+            if(this._offset !== null){//this makes offset an inperminent variable exceptfor infinite case
+                console.log(this._offset)
+                this.index = this._offset % this.vals.length                 
+                this._offset += 1
+                if (this.phraseLength !== 'infinite' && this.offset == this.vals.length*this.phraseLength){this._offset = null}
+            }
             if (this.enable === 0) return;
-
-            let curBeat = this.vals[this.index ];
+            let curBeat = this.vals[this.index];
             if (curBeat == undefined) curBeat = '.'
 
             curBeat = this.checkForRandomElement(curBeat);
@@ -285,7 +297,7 @@ export class Seq {
         //if (this.loopInstance) this.loopInstance.stop();
     }
 
-    play(num=this.vals.length){
+    play(num=this.vals.length){// is this being used?
         this.phraseLength = num
         this.enable = 1;
         //if (this.loopInstance) this.loopInstance.start();

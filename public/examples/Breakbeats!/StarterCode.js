@@ -1,8 +1,8 @@
-let audioURL = "audio/pintoDrums.wav"
+let audioURL = "PintoDrums.wav"
 let output = new Tone.Multiply(0.05).toDestination()
 const player = new Player(audioURL)
-const player2 = new Player("audio/pintoBass.wav")
-player.connect( output )
+const player2 = new Player("PintoBass.wav")
+player.connect(output)
 player2.connect(output)
 Theory.tempo = 90
 output.factor.value = 1

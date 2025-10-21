@@ -806,8 +806,11 @@ export class MonophonicTemplate {
 
     play(arr, subdivision = '8n', num = 0, phraseLength = 1) {
         if (!this.seq[num]) {
+            // this.seq[num]._offset = 0//make sure the new one starts at the beginning as well
             this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+            this.seq[num]._offset = 0
         } else {
+            this.seq[num]._offset = 0//there is a time delay between this and where the index is, but i can set it such as this so that I know that is started
             this.seq[num].sequence(arr, subdivision, phraseLength);
         }
         this.start(num);
@@ -842,7 +845,7 @@ export class MonophonicTemplate {
         }
     }
 
-    set sustain(val) {
+    set sustain(val) {//turn into duration
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].sustain = val
         }
@@ -863,13 +866,24 @@ export class MonophonicTemplate {
             if(this.seq[i])this.seq[i].transform = val
         }
     }
-
+//roll already exists in seq
     set roll(val) {
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].roll = val
         }
     }
 
+    set rotate(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].rotate = val
+        }
+    }
+
+    set offset(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].offset = val
+        }
+    }
 
     /**
      * Sets the transformation for the loop.
@@ -885,7 +899,7 @@ export class MonophonicTemplate {
             if (this.seq[num]) this.seq[num].setTransform(transform);
         }
     }
-
+    //possible implementation of rotate
     get sustain() {
         const self = this;
         return new Proxy([], {
@@ -954,6 +968,21 @@ export class MonophonicTemplate {
                 if (!isNaN(index)) {
                     if (self.seq[index]) {
                         self.seq[index].setRoll(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get rotate() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setRotate(value);
                     }
                 }
                 return true;
@@ -1032,8 +1061,10 @@ export class MonophonicTemplate {
         let sustain = this.getSeqParam(this.seq[num].sustain, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let lag = this.getSeqParam(this.seq[num].lag, index);
+        let rotate = this.getSeqParam(this.seq[num].rotate, index);
+        let offset = this.getSeqParam(this.seq[num].offset, index);
 
-        let groove = Groove.get(subdivision,index)
+        let groove = Groove.get(subdivision,index);
         //console.log(groove)
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity

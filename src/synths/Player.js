@@ -37,7 +37,7 @@ export class Player extends MonophonicTemplate {
          this.layout = layout
 		this.presets = {}
 		this.synthPresetName = "PlayerPresets"
-		this.accessPreset()
+		// this.accessPreset()
         this.name = "Player"
         this.guiHeight = .25
         
