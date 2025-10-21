@@ -120,7 +120,7 @@ export class Daisy extends MonophonicTemplate{
 
   //TRIGGER METHODS
   triggerAttack = function(val, vel=100, time=null){
-  	let freq = Tone.Midi(val).toFrequency()
+  	let freq = Theory.mtof(val)
   	vel = vel/127
     if(time){
       this.frequency.setValueAtTime(freq,time)
@@ -148,6 +148,44 @@ export class Daisy extends MonophonicTemplate{
     val = Theory.mtof(val)
     
     vel = vel/127
+    if(time){
+      this.frequency.setValueAtTime(val,time)
+      this.env.triggerAttackRelease(dur,time)
+      this.vcf_env.triggerAttackRelease(dur,time)
+      this.velocitySig.setValueAtTime(Math.pow(vel,2),time)
+    } else{
+      this.frequency.value = val
+      this.env.triggerAttackRelease(dur)
+      this.vcf_env.triggerAttackRelease(dur)
+      this.velocitySig.value =Math.pow(vel,2) 
+    }
+  }//attackRelease
+
+  triggerRawAttack (val, vel=1, time=null){
+  	if(vel > 1) vel = 1
+    if(time){
+      this.frequency.setValueAtTime(freq,time)
+      this.env.triggerAttack(time)
+      this.vcf_env.triggerAttack(time)
+      this.velocitySig.setValueAtTime(Math.pow(vel,2),time)
+    } else{
+      this.frequency.value = freq
+      this.env.triggerAttack()
+      this.vcf_env.triggerAttack()
+      this.velocitySig.value =Math.pow(vel,2) 
+    }
+  }
+  triggerRawRelease (time=null){
+    if(time){
+      this.env.triggerRelease(time)
+      this.vcf_env.triggerRelease(time)
+    } else{
+      this.env.triggerRelease()
+      this.vcf_env.triggerRelease()
+    }
+  }
+  triggerRawAttackRelease (val, vel=1, dur=0.01, time=null){
+    if(vel > 1) vel = 1
     if(time){
       this.frequency.setValueAtTime(val,time)
       this.env.triggerAttackRelease(dur,time)

@@ -345,11 +345,15 @@ export class MonophonicTemplate {
     }
 
     generateParameters(paramDefinitions) {
+        // console.log(paramDefinitions)
         const params = {};
         paramDefinitions.forEach((def) => {
+            //console.log(def)
             const param = new Parameter(this,def);
+            //console.log(param)
             params[def.name] = param;
         });
+        //console.log(params)
         return params;
     }
 
@@ -390,7 +394,7 @@ export class MonophonicTemplate {
                 },
                 set(target, _, newValue) {
                     if (Array.isArray(newValue)) {
-                        //console.log(target.subdivision)
+                        // console.log(target, newValue)
                         if (currentSeq) currentSeq.dispose();
                         currentSeq = new Seq(
                             parent,
@@ -825,6 +829,17 @@ export class MonophonicTemplate {
             this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
         }
         this.seq[num].expr(func, len, subdivision);
+        this.start(num);
+    }
+
+    euclid(seq, hits=4, beats=8, rotate=0, subdivision = '8n', num = 0){
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, seq, subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].sequence(seq, subdivision, 'infinite');
+        }
+        this.seq[num].euclid(hits, beats,rotate);
+        this.start(num);
     }
 
     set velocity(val) {
@@ -1044,17 +1059,21 @@ export class MonophonicTemplate {
     }
 
     parseNoteString(val, time, index, num=null) {
-        //console.log(val,time,index, num)
+        //console.log(val,time,index, num, isNaN(Number(val[0])))
         if (val[0] === ".") return;
-        if (!val || val.length === 0 || isNaN(Number(val[0]))) return '.';
+        if (!val || val.length === 0 ) return '.';
 
         const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
-
+        //console.log(usesPitchNames, val[0])
         let note = '';
         if (usesPitchNames) note = pitchNameToMidi(val[0]);
         else note = intervalToMidi(val[0], this.min, this.max);
 
         if (note < 0) return;
+        if (note >127) {
+            console.log("MIDI note ", note, "ignored")
+            return;
+        }
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
@@ -1069,11 +1088,11 @@ export class MonophonicTemplate {
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256
-        //console.log('pa',note, octave, velocity, sustain, time, timeOffset)
+        //console.log('pa', note, octave, velocity, sustain, time, timeOffset)
         try {
-            //console.log('trig', note + octave * 12, velocity,sustain,time+timeOffset)
+            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
             this.triggerAttackRelease(
-                note + octave * 12,
+                note + octave * Theory.scaleRatios.length,
                 velocity,
                 sustain,
                 time + timeOffset

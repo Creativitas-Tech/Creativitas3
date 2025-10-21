@@ -319,10 +319,37 @@ export class Seq {
         this.sequence(this.vals, subdivision);
     }
 
+    euclid(hits, beats, rotate){
+        //console.log('euclid', hits, beats, rotate)
+        let pattern = [];
+        let bucket = 0;
+
+      for (let i = 0; i < beats; i++) {
+        bucket += hits;
+        if (bucket >= beats) {
+          bucket -= beats;
+          pattern.push(1); // play a hit
+        } else {
+          pattern.push(0); // rest
+        }
+      }
+      const valLength = this.vals.length
+      for(let i = valLength; i<pattern.length;i++){
+        this.vals.push(this.vals[i%valLength])
+      }
+      
+      pattern = pattern.rotate(-1+rotate)
+      //console.log(pattern, this.vals)
+      for(let i=0;i<this.vals.length;i++){
+        if(pattern[i%pattern.length] == 0)this.vals[i] = '.'
+      }
+    }
+
+    //createExpr calculates the expression one beat at a time
     createExpr(func, len=32, subdivision = '16n') {
         // Create a Tone.Loop
         const log = false
-        this.calcNextBeat(func, log)
+        this.calcNextBeat(func, len, log)
         this.subdivision = subdivision
         if (this.loopInstance) {
             //this.loopInstance.stop();
@@ -362,7 +389,7 @@ export class Seq {
             //     if(Array.isArray(params)) this.synth.setValueAtTime
             // }}
             //console.log('len ', this.phraseLength)
-            this.calcNextBeat(func, log)
+            this.calcNextBeat(func, len, log)
             
             if (this.phraseLength === 'infinite') return;
             this.phraseLength -= 1;
@@ -373,9 +400,10 @@ export class Seq {
 
         Tone.Transport.start();
     }
-    calcNextBeat(func, log){
-        let i = this.index+1
+    calcNextBeat(func, length, log){
+        let i = (this.index + 1) % length
             let curBeat = func(i)
+
             //console.log(curBeat, i, func)
             //let curBeat = this.vals[this.index ];
             if (curBeat == undefined) curBeat = '.'
@@ -383,6 +411,7 @@ export class Seq {
             curBeat = this.checkForRandomElement(curBeat);
             this.nextBeat = curBeat
             if(log) console.log(this.nextBeat)
+
     }
 
     setSubdivision(sub = '8n') {

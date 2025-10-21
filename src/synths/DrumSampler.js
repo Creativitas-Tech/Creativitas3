@@ -303,6 +303,16 @@ export class DrumSampler extends DrumTemplate{
         }
     }
 
+    euclid(seq, hits=4, beats=8, rotate=0, subdivision = '8n', num = 0){
+        if (!this.seq[num]) {
+            this.sequence(seq, subdivision='8n', num, 'infinite');
+        } else {
+            this.seq[num].drumSequence(seq, subdivision, 'infinite');
+        }
+        this.seq[num].euclid(hits, beats,rotate);
+        this.start(num);
+    }
+
 
   /**
      * plays the provided sequence array initializes a Tone.Loop with the given subdivision.

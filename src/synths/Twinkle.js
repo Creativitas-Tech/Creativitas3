@@ -83,7 +83,7 @@ export class Twinkle extends MonophonicTemplate {
 
   //envelopes
   triggerAttack (freq, amp, time=null){
-    freq = Tone.Midi(freq).toFrequency()
+    freq = Theory.mtof(freq)
     amp = amp/127
     if(time){
       this.env.triggerAttack(time)
@@ -104,11 +104,44 @@ export class Twinkle extends MonophonicTemplate {
     }
   }
   triggerAttackRelease (freq, amp, dur=0.01, time=null){
-    //console.log('AR ',freq,amp,dur,time)
-    //freq = Tone.Midi(freq).toFrequency()
     freq = Theory.mtof(freq)
-    
+    //console.log('f', freq)
     amp = amp/127
+    if(time){
+      this.env.triggerAttackRelease(dur, time)
+      this.frequency.setValueAtTime(freq, time)
+      //this.velocitySig.cancelScheduledValues(time);
+      this.velocitySig.setTargetAtTime(amp, time, 0.005); // 0.03s time constant for smoother fade
+      //this.velocitySig.linearRampToValueAtTime(amp, time + 0.005);
+    } else{
+      this.env.triggerAttackRelease(dur)
+      this.frequency.value = freq
+      this.velocitySig.rampTo(amp,.03)
+    }
+  }//attackRelease
+
+  triggerRawAttack (freq, amp=1, time=null){
+    if(amp > 1) amp = 1
+    if(time){
+      this.env.triggerAttack(time)
+      this.frequency.setValueAtTime(freq, time)
+      this.velocitySig.linearRampToValueAtTime(amp, time + 0.01);
+    } else {
+      this.env.triggerAttack()
+      this.frequency.value = freq
+      this.velocitySig.rampTo(amp,.03)
+    }
+  }
+  triggerRawRelease (time=null){
+    if(time) {
+      this.env.triggerRelease(time)
+    }
+    else {
+      this.env.triggerRelease()
+    }
+  }
+  triggerRawAttackRelease (freq, amp=1, dur=0.01, time=null){
+    if(amp > 1) amp = 1
     if(time){
       this.env.triggerAttackRelease(dur, time)
       this.frequency.setValueAtTime(freq, time)

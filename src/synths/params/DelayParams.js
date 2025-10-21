@@ -6,17 +6,6 @@ export const paramDefinitions = (synth) => [
     max: 'Delay', default: 'Delay'
   },
   {
-    name: "level",
-    type: "input",
-    min: 0,
-    max: 1,
-    default: .2,
-    curve: 2,
-    callback: (value) => {
-      synth.shaperGain.gain.rampTo(value*1.5, .1);
-    }
-  },
-  {
     name: "hicut",
     type: "none",
     min: 20,
@@ -49,7 +38,7 @@ export const paramDefinitions = (synth) => [
       value = value/3
       synth.feedbackAmount = value
       if(synth.feedbackPath === 'pre') synth.feedbackGainPre.gain.rampTo( value,.1);
-      if(synth.feedbackPath === 'post') synth.feedbackGainPost.gain.rampTo( value,.1);       
+      if(synth.feedbackPath === 'post') synth.feedbackGainPost.gain.rampTo( value,.1);
     }
   },
   {
@@ -65,7 +54,7 @@ export const paramDefinitions = (synth) => [
   },
   {
     name: "damping",
-    type: "output",
+    type: "param",
     min: 100,
     max: 8000,
     default: 1000,
@@ -102,5 +91,16 @@ export const paramDefinitions = (synth) => [
     callback: (value) => {
       synth.setWidth(value/2); // function adjusts L/R delay spread
     }
+  },
+  {
+  name: "level",
+  type: "output",
+  min: 0,
+  max: 1,
+  default: .2,
+  curve: 2,
+  callback: (value) => {
+    synth.shaperGain.gain.rampTo(value*1.5, .1);
   }
+}
 ]

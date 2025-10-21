@@ -1,0 +1,14 @@
+Examples of simple algorithms for generating musical patterns.
+* also see the markov chain example
+
+function euc(numHits, numBeats, rotation)
+* distributes numHits across numBeats as evenly as possible
+* and rotates the resulting sequence
+* e.g euc(3,8,0) gives [1,0,0,1,0,0,1,0]
+
+Using waveforms to generate melodies
+* sin(), tri(), random()
+* or i%n/n for a sawtooth!
+* try combining waves, or doing internal modulation
+* e.g. sin(i*PI*x) + sin(i*PI*y)
+* e.g. sin(i*PI*x + sin(i*PI*y)*a) //frequency modulation

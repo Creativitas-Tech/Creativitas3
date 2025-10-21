@@ -1,0 +1,10 @@
+This starting point uses the following signal flow:
+```
+samplePlayer -------------------------------> output
+samplePlayer ---> delay ----------------------> output
+		  delay -> verb				
+		  delay ----------> feedback 
+samplePlayer ----------> verb  -------------> output 
+			 verb  -> feedback
+samplePlayer -------------------> feedback -> delay
+```

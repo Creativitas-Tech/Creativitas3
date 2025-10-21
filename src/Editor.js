@@ -11,7 +11,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 
 
 //tone
-import { Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { FM4, FM2Op, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
@@ -37,6 +37,7 @@ import {makeCollaborativeObject, ctx} from './CollabLink.js'
 
 import MidiKeyboard from './midi/MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
+import { AsciiGrid } from './AsciiGrid.js';
 import webExportHTMLContentGenerator from './webExport/WebExportGenerator.ts';
 import {MidiDevice} from './midi/MidiDevice.js';
 import {ControlSource} from './midi/ControlSource.js';
@@ -175,6 +176,10 @@ function Editor(props) {
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
     window.disableAsciiInput = asciiCallbackInstance.disable.bind(asciiCallbackInstance);
     window.setAsciiHandler = asciiCallbackInstance.setHandler.bind(asciiCallbackInstance);
+    window.AsciiGrid = AsciiGrid
+    //window.disableAsciiGrid = asciiGridInstance.disable.bind(asciiGridInstance);
+    //window.setAsciiGridHandler = asciiGridInstance.setHandler.bind(asciiGridInstance);
+    
     window.enableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = true;
     window.disableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = false;
     // window.enableRecording = asciiCallbackInstance.enableLogging.bind(asciiCallbackInstance);
@@ -231,8 +236,9 @@ function Editor(props) {
     window.Delay = Delay;
     window.Vocoder = Vocoder;
     window.Graph = GraphVisualizer;
-    // window.ControlSource = ControlSource;
-    // window.Player = Player;
+    window.FMOperator = FMOperator;
+    window.FM2Op = FM2Op;
+    window.FM4 = FM4;
     // window.Player = Player;
 
     window.Feedback = Feedback;

@@ -260,7 +260,7 @@ const getColor = function (p,name) {
         return  bg
     }
     if (name === 'text') return activeTheme.textColor
-    console.log(name)
+    //console.log(name)
     if (Array.isArray(name)) {
         return name
     } else {
@@ -809,10 +809,8 @@ export class Pad extends Element {
     constructor(p, options) {
         super(p, options);
         this.incr = options.incr || 0.01;
-        this.valueX = this.valueX || 0.5
-        this.valueY = this.valueY || 0.5
-        this.rawValueX = this.valueX
-        this.rawValueY = this.valueY
+        this.value = this.value || [0.,0]
+        this.rawValue = this.value
         this.dragging = false;
         this.sizeX = options.sizeX || options.size || 5
         this.sizeY = options.sizeY || options.size || 5
@@ -885,30 +883,41 @@ export class Pad extends Element {
     isDragged() {
         if (this.hide === true) return;
         if (this.active) {
+            if( !Array.isArray(this.value)) this.value = [0,0]
+            
             if (this.p.movedX !== 0) {
-                if (this.p.keyIsDown(this.p.ALT)) this.rawValueX += this.p.movedX * this.incr / 10;
-                else this.rawValueX += this.p.movedX * this.incr / this.sizeX;
+                if (this.p.keyIsDown(this.p.ALT)) this.rawValue[0] += this.p.movedX * this.incr / 10;
+                else this.rawValue[0] += this.p.movedX * this.incr / this.sizeX;
             }
 
             if (this.p.movedY !== 0) {
-                if (this.p.keyIsDown(this.p.ALT)) this.rawValueY += this.p.movedY * this.incr / 10;
-                else this.rawValueY += this.p.movedY * this.incr / this.sizeY;
+                if (this.p.keyIsDown(this.p.ALT)) this.rawValue[1] += this.p.movedY * this.incr / 10;
+                else this.rawValue[1] += this.p.movedY * this.incr / this.sizeY;
             }
 
-            if (this.rawValueX > 1) this.rawValueX = 1
-            if (this.rawValueX < 0) this.rawValueX = 0
-            this.valueX = scaleOutput(this.rawValueX, 0, 1, this.min, this.max, this.curve)
-            this.mapValue(this.valueX, this.maptoX);
+            if (this.rawValue[0] > 1) this.rawValue[0] = 1
+            if (this.rawValue[0] < 0) this.rawValue[0] = 0
+            
+            this.value[0] = scaleOutput(this.rawValue[0], 0, 1, this.min, this.max, this.curve)
+            
+            this.mapValue(this.value[0], this.maptoX);
 
-            if (this.rawValueY > 1) this.rawValueY = 1
-            if (this.rawValueY < 0) this.rawValueY = 0
-            this.valueY = scaleOutput(this.rawValueY, 0, 1, this.min, this.max, this.curve)
-            this.mapValue(this.valueY, this.maptoY);
+            if (this.rawValue[1] > 1) this.rawValue[1] = 1
+            if (this.rawValue[1] < 0) this.rawValue[1] = 0
+            this.value[1] = scaleOutput(this.rawValue[1], 0, 1, this.min, this.max, this.curve)
+            this.mapValue(this.value[1], this.maptoY);
+            
             this.runCallBack()
 
-            //collab-hub....
+            // send updates to collab-hub
+            if (this.linkName) {
+                this.ch.control(this.linkName, this.value);
+            }
+            if (this.linkFunc) this.linkFunc();
         }
     }
+
+
 }
 
 p5.prototype.Pad = function (options = {}) {
@@ -1227,7 +1236,7 @@ export class RadioButton extends Button {
 
             // Run the callback to trigger any associated actions
             this.runCallBack();
-            console.log('rb', this.value, this.linkName)
+            //console.log('rb', this.value, this.linkName)
 
             // Send the update to collab-hub if needed
             if (this.linkName) {

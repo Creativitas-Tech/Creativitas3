@@ -1,0 +1,15 @@
+### How Euclidean Rhythms Work
+
+Euclidean rhythms solve a simple problem: how do you distribute X hits evenly across Y beats? The algorithm uses what's called the "bucket method" - imagine you have Y buckets and you pour X units of water into them as evenly as possible. When a bucket overflows, you place a hit at that position.
+
+### Using the Built-in Method
+
+The syntax is: `synth.euclid(sequence, hits, beats, rotation, subdivision, sequenceNumber)`
+
+**Parameters:**
+- `sequence` - The note/drum pattern to play (e.g., `'*'` for drums, `'0 2 4'` for melody)
+- `hits` - Number of hits to distribute
+- `beats` - Total number of beats
+- `rotation` - How many steps to rotate the pattern (0 = no rotation)
+- `subdivision` - Rhythmic subdivision ('16n', '8n', '4n')
+- `sequenceNumber` - Which sequencer slot to use (0-9)

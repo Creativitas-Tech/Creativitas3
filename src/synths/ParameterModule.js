@@ -6,12 +6,14 @@ import { Seq } from '../Seq'
 
 export class Parameter {
   constructor(parent,options, gui = null, layout = basicLayout) {
+    //console.log(options)
     this.parent = parent
     this.name = options.name || 'param'
     this.min = options.min || 0;
     this.max = options.max || 1;
     this.curve = options.curve || 1; // Curve for value scaling
-    this.rawValue = this.unScaleValue(options.value || 0.5, 0, 1, this.min, this.max, this.curve); // Normalized to real
+    this.rawValue = Array.isArray(options.value) ? options.value 
+        : this.unScaleValue(options.value || 0.5, 0, 1, this.min, this.max, this.curve); // Normalized to real
     this.normalizedValue = 0
     this.group = options.group || 'default'; // Group assignment
     this._value = Array.isArray(options.value) ? options.value
@@ -40,12 +42,13 @@ export class Parameter {
     return this._value;
   }
   set =  (newValue, index = null, calledByGui=false, time = null) => {
-    //console.log('paramset', this.name, newValue, index, calledByGui,time)
+    //console.log('paramset', this._value, this.name, newValue, index, calledByGui,time)
     if (Array.isArray(this._value)) {
         if (Array.isArray(newValue)) {
             // Set entire array
             this._value = [...newValue];
-            newValue.forEach((val, i) => this.callback(val,  time));
+            //this.callback(newValue, time);
+            //newValue.forEach((val, i) => this.callback(val,  time));
         } else if (index !== null) {
             // Set specific index
             this._value[index] = newValue;
@@ -64,7 +67,7 @@ export class Parameter {
 
     // Update GUI if attached
     // Update GUI elements
-    if(calledByGui==false){
+    if(calledByGui==false && this.type !== 'hidden'){
       if (Array.isArray(this._value)) {
           this.guiElements.forEach((gui, i) => gui.ccSet(this._value[i]));
       } else if (this.guiElements.length > 0) {

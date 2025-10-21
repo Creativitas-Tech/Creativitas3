@@ -1,0 +1,11 @@
+Markov chains use probability tables to predict the next element based on prior elements. For melody generation, we generally want to look at what notes we just played to predict what the next note should be.
+
+A first-order markov chain considers just the previous note, e.g. for the melody CDCEC, the probabilities for generating the next note would be:
+
+C: [D:50%, E:50%]
+D: [C: 100%]
+E: [C: 100%]
+
+For a 2nd order markov chain we would consider the previous two elements, so [CD] would have a 100% probability of being followed by C. Obviously, higher orders need much more data to be useful.
+
+[CD] in this context is called an ngram (or N-gram, where N==order). An ngram is the collection of data used to look for the next element.
