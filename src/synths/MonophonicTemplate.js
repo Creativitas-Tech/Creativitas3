@@ -1059,7 +1059,7 @@ export class MonophonicTemplate {
     }
 
     parseNoteString(val, time, index, num=null) {
-        //console.log(val,time,index, num, isNaN(Number(val[0])))
+       // console.log(val,time,index, num, isNaN(Number(val[0])))
         if (val[0] === ".") return;
         if (!val || val.length === 0 ) return '.';
 
@@ -1080,11 +1080,12 @@ export class MonophonicTemplate {
         let sustain = this.getSeqParam(this.seq[num].sustain, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let lag = this.getSeqParam(this.seq[num].lag, index);
-        let rotate = this.getSeqParam(this.seq[num].rotate, index);
-        let offset = this.getSeqParam(this.seq[num].offset, index);
+        //handle in the Seq class
+        //let rotate = this.getSeqParam(this.seq[num].rotate, index);
+        //let offset = this.getSeqParam(this.seq[num].offset, index);
 
         let groove = Groove.get(subdivision,index);
-        //console.log(groove)
+        
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256

@@ -139,7 +139,8 @@ export class Seq {
                 console.log(this._offset)
                 this.index = this._offset % this.vals.length                 
                 this._offset += 1
-                if (this.phraseLength !== 'infinite' && this.offset == this.vals.length*this.phraseLength){this._offset = null}
+                if (this.phraseLength !== 'infinite' && this.offset >= this.vals.length*this.phraseLength)
+                    {this._offset = null}
             }
             if (this.enable === 0) return;
             let curBeat = this.vals[this.index];

@@ -447,12 +447,15 @@ function Editor(props) {
       //window.chClient.setUsername('user' + Math.floor(Math.random() * 100));
 
       window.chClient.on("sharedCode", (incoming) => {
+        //console.log('incoming')
         const { senderID, content, lineNumber } = incoming.values;
         if (senderID === "server") return;
 
         // Sanitize userID for use in class names
-        const safeID = senderID.replace(/[^a-zA-Z0-9_-]/g, "_");
-
+        const safeID = senderID
+        try{
+            safeID = safeID.replace(/[^a-zA-Z0-9_-]/g, "_");
+        } catch(e){console.log(e)}
         const color = checkForRemoteUser(safeID);
 
         ensureUserBackgroundCSS(safeID, color);
@@ -576,7 +579,7 @@ function Editor(props) {
           this.prevLine = currentLine;
 
           const lineText = update.state.doc.line(currentLine + 1).text;
-
+          //console.log(lineText)
           if(!window.chClient)  return 
           const message = {
             senderID: window.chClient.username || "unknown",
@@ -584,6 +587,7 @@ function Editor(props) {
             content: lineText
           };
           window.chClient.control("sharedCode", message);
+          console.log("sharedCode", message.content)
         }
       }
 
@@ -682,8 +686,18 @@ function Editor(props) {
         };
         //const audioContext = new AudioContext({ latencyHint: 'interactive' });
         //Tone.setContext(audioContext);
-        window.audioContext = Tone.context.rawContext;
-        window.setTimeout2 = Tone.context.rawContext.setTimeout;
+        // Close the old context (optional, but recommended)
+//Tone.getContext().rawContext.close();
+
+// Create a new one with the desired latency behavior
+const ctx = new (window.AudioContext || window.webkitAudioContext)({
+  latencyHint: 'balanced',   // or 'balanced', 'playback', or a numeric seconds value
+  sampleRate: 48000             // optional — can specify here too
+});
+
+// Tell Tone.js to use this new context
+//Tone.setContext(new Tone.Context(ctx));
+        window.audioContext = ctx//Tone.context.rawContext;
         //console.log("latencyHint:", Tone.context.rawContext.latencyHint);
         console.log("baseLatency:", Tone.context.rawContext.baseLatency);
 

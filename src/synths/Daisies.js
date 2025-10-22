@@ -161,7 +161,7 @@ export class Daisy extends MonophonicTemplate{
     }
   }//attackRelease
 
-  triggerRawAttack (val, vel=1, time=null){
+  triggerRawAttack (freq, vel=1, time=null){
   	if(vel > 1) vel = 1
     if(time){
       this.frequency.setValueAtTime(freq,time)
