@@ -4,7 +4,7 @@ Euclidean rhythms solve a simple problem: how do you distribute X hits evenly ac
 
 ### Using the Built-in Method
 
-The syntax is: `synth.euclid(sequence, hits, beats, rotation, subdivision, sequenceNumber)`
+The syntax is: `synth.euclid (sequence, hits, beats, rotation, subdivision, sequenceNumber)`
 
 **Parameters:**
 - `sequence` - The note/drum pattern to play (e.g., `'*'` for drums, `'0 2 4'` for melody)

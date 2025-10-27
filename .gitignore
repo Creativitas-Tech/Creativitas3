@@ -9,3 +9,6 @@ build/assignments/.DS_Store
 src/generated/*
 public/*bundle.min.js
 package-lock.json
+
+# Test example for local testing only
+public/examples/TestExample/
