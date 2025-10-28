@@ -57,6 +57,32 @@ export function initialize(p, div, height) {
     p.height = div.offsetWidth * .4 * height;
     p.elements = {};
 
+    if (div && div.id) {
+        const registerOnView = (view) => {
+            if (!view) {
+                return;
+            }
+            if (!view.__creativitasCanvasRegistry) {
+                Object.defineProperty(view, '__creativitasCanvasRegistry', {
+                    value: {},
+                    configurable: true,
+                    enumerable: false,
+                    writable: true,
+                });
+            }
+            view.__creativitasCanvasRegistry[div.id] = p;
+        };
+
+        if (typeof window !== 'undefined') {
+            registerOnView(window);
+        }
+
+        const hostView = div.ownerDocument?.defaultView;
+        if (hostView && hostView !== window) {
+            registerOnView(hostView);
+        }
+    }
+
     return [p.width, p.height]
 }
 
@@ -98,32 +124,46 @@ function resizeP5(string, scaleWidth, scaleHeight) {
 export function divResized(p, maxClicked, canvasLength) {
     let prevWidth = p.width;
     let prevHeight = p.height;
+    const doc = (p && p.canvas && p.canvas.ownerDocument) || document;
     p.resizeCanvas(0, 0);
-    let canvasesCont = document.getElementById("canvases");
-    let controlsCont = document.getElementById("controls");
-    let flexCont = document.getElementById('flex');
+
+    const canvasesCont = doc.getElementById("canvases") || p.div;
+    const controlsCont = doc.getElementById("controls");
+    const flexCont = doc.getElementById('flex') || (canvasesCont && canvasesCont.parentElement) || (p.div && p.div.parentElement);
+
+    const controlsHeight = controlsCont ? controlsCont.offsetHeight : 0;
+    const canvasesHeight = canvasesCont ? canvasesCont.offsetHeight : (p.div ? p.div.offsetHeight : prevHeight);
+    const flexWidth = flexCont ? flexCont.offsetWidth : (p.div ? p.div.offsetWidth : prevWidth);
+    const divWidth = p.div ? p.div.offsetWidth : prevWidth;
+    const divHeight = p.div ? p.div.offsetHeight : prevHeight;
+
     if (maxClicked === '+h') {
-        p.height = canvasesCont.offsetHeight - controlsCont.offsetHeight;
-        p.width = p.div.offsetWidth;
+        p.height = canvasesHeight - controlsHeight;
+        p.width = divWidth;
     }
     else if (maxClicked === '-h') {
-        p.height = canvasesCont.offsetHeight / canvasLength - controlsCont.offsetHeight;
+        const safeLength = canvasLength && canvasLength > 0 ? canvasLength : 1;
+        p.height = canvasesHeight / safeLength - controlsHeight;
         p.width = prevWidth;
     }
     else if (maxClicked === '+w') {
-        p.width = flexCont.offsetWidth;
-        p.height = p.div.offsetHeight;
+        p.width = flexWidth;
+        p.height = divHeight;
     }
     else if (maxClicked === '-w') {
-        p.width = flexCont.offsetWidth / 2;
+        p.width = flexWidth / 2;
         p.height = prevHeight;
     }
     else {
-        p.width = p.div.offsetWidth;
-        p.height = p.div.offsetHeight;
+        p.width = divWidth;
+        p.height = divHeight;
     }
-    let scaleWidth = p.width / prevWidth;
-    let scaleHeight = p.height / prevHeight;
+
+    p.width = Math.max(p.width, 1);
+    p.height = Math.max(p.height, 1);
+
+    let scaleWidth = prevWidth ? p.width / prevWidth : 1;
+    let scaleHeight = prevHeight ? p.height / prevHeight : 1;
     p.resizeCanvas(p.width, p.height);
     for (let [key, element] of Object.entries(p.elements)) {
         if (typeof (element) === "string") {
@@ -426,8 +466,8 @@ class Element {
     }
 
     resize(scaleWidth, scaleHeight) {
-        this.x *= scaleWidth;
-        this.y *= scaleHeight;
+        // Keep element positions as percentages; cur_x/cur_y are derived during draw.
+        // Base resize intentionally does nothing so subclasses can scale visual size only.
     }
 
     drawLabel(x, y) {
@@ -945,7 +985,8 @@ export class Button extends Element {
 
     resize(scaleWidth, scaleHeight) {
         super.resize(scaleWidth, scaleHeight)
-        this.size *= this.horizontal !== false ? scaleWidth : scaleHeight;
+        const useWidth = Math.abs(1 - scaleWidth) >= Math.abs(1 - scaleHeight);
+        this.size *= useWidth ? scaleWidth : scaleHeight;
     }
 
     draw() {
@@ -1397,7 +1438,8 @@ export class Line extends Element {
 
     resize(scaleWidth, scaleHeight) {
         super.resize(scaleWidth, scaleHeight)
-        this.size *= this.horizontal !== false ? scaleWidth : scaleHeight;
+        const useWidth = Math.abs(1 - scaleWidth) >= Math.abs(1 - scaleHeight);
+        this.size *= useWidth ? scaleWidth : scaleHeight;
     }
 
     draw() {
@@ -1433,7 +1475,9 @@ export class Text extends Element {
 
     resize(scaleWidth, scaleHeight) {
         super.resize(scaleWidth, scaleHeight)
-        this.size *= this.horizontal !== false ? scaleWidth : scaleHeight;
+        const useWidth = Math.abs(1 - scaleWidth) >= Math.abs(1 - scaleHeight);
+        // For Text, scale the font size, not the widget size box
+        this.textSize *= useWidth ? scaleWidth : scaleHeight;
     }
 
     draw() {

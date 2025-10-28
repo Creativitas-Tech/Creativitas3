@@ -13,7 +13,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 //tone
 import { FM4, FM2Op, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
-
+import {ControlSource} from './midi/ControlSource.js';
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
 import p5 from 'p5';
@@ -40,7 +40,6 @@ import { asciiCallbackInstance } from './AsciiKeyboard.js';
 import { AsciiGrid } from './AsciiGrid.js';
 import webExportHTMLContentGenerator from './webExport/WebExportGenerator.ts';
 import {MidiDevice} from './midi/MidiDevice.js';
-import {ControlSource} from './midi/ControlSource.js';
 
 const SPLIT_PREFERENCE_KEY = 'creativitas-editor-split-percentage';
 const CANVAS_VERTICAL_PREFERENCE_KEY = 'creativitas-canvas-height-percentage';
@@ -455,15 +454,12 @@ function Editor(props) {
       //window.chClient.setUsername('user' + Math.floor(Math.random() * 100));
 
       window.chClient.on("sharedCode", (incoming) => {
-        //console.log('incoming')
         const { senderID, content, lineNumber } = incoming.values;
         if (senderID === "server") return;
 
         // Sanitize userID for use in class names
-        const safeID = senderID
-        try{
-            safeID = safeID.replace(/[^a-zA-Z0-9_-]/g, "_");
-        } catch(e){console.log(e)}
+        const safeID = senderID.replace(/[^a-zA-Z0-9_-]/g, "_");
+
         const color = checkForRemoteUser(safeID);
 
         ensureUserBackgroundCSS(safeID, color);
@@ -587,7 +583,7 @@ function Editor(props) {
           this.prevLine = currentLine;
 
           const lineText = update.state.doc.line(currentLine + 1).text;
-          //console.log(lineText)
+
           if(!window.chClient)  return 
           const message = {
             senderID: window.chClient.username || "unknown",
@@ -595,7 +591,6 @@ function Editor(props) {
             content: lineText
           };
           window.chClient.control("sharedCode", message);
-          console.log("sharedCode", message.content)
         }
       }
 
@@ -704,8 +699,8 @@ function Editor(props) {
             return;
         }
 
-        const ownerView = splitContainerRef.current?.ownerDocument?.defaultView || window;
-        const requestFrame = ownerView?.requestAnimationFrame?.bind(ownerView) || window.requestAnimationFrame?.bind(window);
+    const ownerView = splitContainerRef.current?.ownerDocument?.defaultView || window;
+    const requestFrame = ownerView?.requestAnimationFrame?.bind(ownerView) || window.requestAnimationFrame?.bind(window);
 
         const triggerResizeNow = () => {
             for (const id of canvases) {
@@ -857,15 +852,12 @@ function Editor(props) {
             //return the previous value of the changed element
             return temp
         };
-                // Create a new AudioContext with desired latency/sample rate
-                const ctx = new (window.AudioContext || window.webkitAudioContext)({
-                    latencyHint: 'balanced',
-                    sampleRate: 48000
-                });
-                // If you want Tone to adopt this context later, you can call:
-                // Tone.setContext(new Tone.Context(ctx));
-                window.audioContext = ctx;
-                console.log("baseLatency:", ctx.baseLatency);
+        //const audioContext = new AudioContext({ latencyHint: 'interactive' });
+        //Tone.setContext(audioContext);
+        window.audioContext = Tone.context.rawContext;
+        window.setTimeout2 = Tone.context.rawContext.setTimeout;
+        //console.log("latencyHint:", Tone.context.rawContext.latencyHint);
+        console.log("baseLatency:", Tone.context.rawContext.baseLatency);
 
         return () => {
 
@@ -2129,11 +2121,6 @@ function Editor(props) {
         }
     }, [codeMinimized, p5Minimized]);
 
-    /************************************************
-     * 
-     * HTML
-     * 
-     *************************************************/
     const showSplitHandle = !codeMinimized && !p5Minimized && canvases.length > 0;
     const codePaneStyle = !codeMinimized
         ? (p5Minimized
@@ -2167,7 +2154,7 @@ function Editor(props) {
     const canvasHandleValue = Math.round(clampedCanvasPercentage);
     let canvasStackWrapperStyle;
     if (showCanvasSplitHandle && availableCanvasHeight > CANVAS_SPLIT_HANDLE_HEIGHT) {
-        const desiredHeight = (clampedCanvasPercentage / 100) * availableCanvasHeight;
+    const desiredHeight = (clampedCanvasPercentage / 100) * availableCanvasHeight;
         const adjustedHeight = Math.min(availableCanvasHeight, Math.max(minWrapperHeightPx, desiredHeight));
         canvasStackWrapperStyle = {
             flex: '0 0 auto',
@@ -2178,6 +2165,11 @@ function Editor(props) {
         canvasStackWrapperStyle = { flex: '1 1 auto' };
     }
 
+    /************************************************
+     * 
+     * HTML
+     * 
+     *************************************************/
     return (
         <div id="flex" className="flex-container" ref={splitContainerRef}>
             {!codeMinimized && (
