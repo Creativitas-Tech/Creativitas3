@@ -857,16 +857,25 @@ function Editor(props) {
             //return the previous value of the changed element
             return temp
         };
-                // Create a new AudioContext with desired latency/sample rate
-                const ctx = new (window.AudioContext || window.webkitAudioContext)({
-                    latencyHint: 'balanced',
-                    sampleRate: 48000
-                });
-                // If you want Tone to adopt this context later, you can call:
-                // Tone.setContext(new Tone.Context(ctx));
-                window.audioContext = ctx;
-                console.log("baseLatency:", ctx.baseLatency);
+        const setLatency = (v)=>{
+            let l = 'interactive'
+            if(typeof v === 'string'){
+                l = 'interactive'
+                if(v === 'high' || v === 'playback') l = 'playback'
+                else if(v === 'med' || v === 'balanced') l = 'balanced'
+            } else if (typeof v === 'number') l=v
+            const audioContext = new AudioContext({ latencyHint: l });
+            Tone.setContext(audioContext);
+            window.audioContext = audioContext
 
+            setTimeout(() => console.log("base latency: ", window.audioContext.baseLatency.toFixed(3), "\noutput latency: ", window.audioContext.outputLatency.toFixed(3)), 200);
+        }
+        window.setLatency = setLatency
+
+        const audioContext = new AudioContext({ latencyHint: 'playback' });
+        Tone.setContext(audioContext);
+        
+        window.audioContext = audioContext  
         return () => {
 
         };
