@@ -21,7 +21,7 @@ function App() {
 
   const exampleFiles = [
     'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'Arpeggiator', 'Breakbeats!', 'Effects',
-    'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain', 'Euclidean'
+    'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain', 'Euclid', 'CollabEuclid'
   ];
   const assignmentFiles = [
     'Sequencing Basics', 'Subtractive Synthesis', 'Grids1' //,'Working with MIDI Notes', 'Triggering Envelopes',

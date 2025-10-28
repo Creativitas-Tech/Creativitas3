@@ -1,11 +1,9 @@
-# Euclidean
-
 Euclidean rhythms distribute hits evenly across beats.
 
 The algorithm works by spreading a number of hits across a total number of beats as evenly as possible. For example:
 
-* `synth.euclid('*', 3, 8, 0, '8n', 0)` distributes 3 hits across 8 beats: `[1,0,0,1,0,0,1,0]` (Cuban tresillo)
-* `synth.euclid('o', 5, 8, 0, '8n', 1)` creates: `[1,0,1,1,0,1,1,0]` (common in West African music)
-* `synth.euclid('x', 5, 12, 0, '8n', 2)` creates: `[1,0,0,1,0,1,0,0,1,0,1,0]` (found in Indian classical music)
+* `d.euclid('*', 3, 8, 0, '8n', 0)` distributes 3 hits across 8 beats: `[1,0,0,1,0,0,1,0]` (Cuban tresillo)
+* `d.euclid('o', 5, 8, 0, '8n', 1)` creates: `[1,0,1,1,0,1,1,0]` (common in West African music)
+* `d.euclid('x', 5, 12, 0, '8n', 2)` creates: `[1,0,0,1,0,1,0,0,1,0,1,0]` (found in Indian classical music)
 
 The examples below show Euclidean rhythms with both drums and melodic patterns.
