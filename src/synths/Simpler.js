@@ -147,7 +147,7 @@ export class Simpler extends MonophonicTemplate {
         //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
         setTimeout(()=>{this.loadPreset('default')}, 500);
 
-        console.log(this.autocompleteList)
+        //console.log(this.autocompleteList)
         if(file) this.loadSample(file)
     }
 

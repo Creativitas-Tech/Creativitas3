@@ -11,7 +11,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 
 
 //tone
-import { FM4, FM2Op, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 
 import { drumPatterns } from './lib/drumPatterns.js';
@@ -20,6 +20,8 @@ import p5 from 'p5';
 import Groove from './Groove.js';
 import { setp5Theme } from './p5Elements.js';
 import * as Tone from 'tone';
+import { useToneContextSwitcher } from './initTone.js';
+//import { Tone, actx } from './initTone.js';
 import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';
 import Canvas from "./Canvas.js";
@@ -124,15 +126,33 @@ const decorationsField = StateField.define({
 const wsUrl = 'ws://localhost:8080';
 
 function Editor(props) {
+
+    // const [Tone, setTone] = useState(null);
+
+    //   useEffect(() => {
+    //     const ctx = new (window.AudioContext || window.webkitAudioContext)({
+    //       latencyHint: 'balanced',
+    //       sampleRate: 24000,
+    //     });
+
+    //     // Dynamically import Tone after setting context
+    //     import('tone').then((Tone) => {
+    //       Tone.setContext(ctx);
+    //       setTone(Tone); // Now safe to use Tone.Transport etc.
+    //     window.audioContext = Tone.getContext()
+    //     console.log('trans ', Tone.Transport.context === ctx); // should be true
+    //     });
+    //     window.Tone = Tone;
+    //     //window.audioContext = Tone.getContext()
+    //   }, []);
+
     window.p5 = p5;
-    window.Tone = Tone;
     window.Theory = TheoryModule.Theory;
     window.groove = Groove
+    window.Tone = Tone
 
     // Initialize timing strategy manager with default Tone.js transport
     useEffect(() => {
-
-        // Make the timing strategy manager available globally
         window.timing = timingStrategyManager;
 
         // Add helper functions for easy timing strategy switching
@@ -245,7 +265,7 @@ function Editor(props) {
     window.Vocoder = Vocoder;
     window.Graph = GraphVisualizer;
     window.FMOperator = FMOperator;
-    window.FM2Op = FM2Op;
+    window.FM = FM;
     window.FM4 = FM4;
     // window.Player = Player;
 
@@ -857,25 +877,32 @@ function Editor(props) {
             //return the previous value of the changed element
             return temp
         };
-        const setLatency = (v)=>{
-            let l = 'interactive'
-            if(typeof v === 'string'){
-                l = 'interactive'
-                if(v === 'high' || v === 'playback') l = 'playback'
-                else if(v === 'med' || v === 'balanced') l = 'balanced'
-            } else if (typeof v === 'number') l=v
-            const audioContext = new AudioContext({ latencyHint: l });
-            Tone.setContext(audioContext);
-            window.audioContext = audioContext
+         const setLatency = (v)=>{
 
-            setTimeout(() => console.log("base latency: ", window.audioContext.baseLatency.toFixed(3), "\noutput latency: ", window.audioContext.outputLatency.toFixed(3)), 200);
-        }
-        window.setLatency = setLatency
+// Now use Tone.Transport again
 
-        const audioContext = new AudioContext({ latencyHint: 'playback' });
-        Tone.setContext(audioContext);
-        
-        window.audioContext = audioContext  
+
+            Tone.context.lookAhead = v;
+            Tone.context.updateInterval = v/3; //
+
+           // setTimeout(() => console.log("base latency: ", window.audioContext.baseLatency.toFixed(3), "\noutput latency: ", window.audioContext.outputLatency.toFixed(3)), 200);
+         }
+         window.setLatency = setLatency
+
+        // const ctx = new (window.AudioContext || window.webkitAudioContext)({
+        //             latencyHint: 'balanced',
+        //             sampleRate: 24000
+        //         });
+        // Tone.Transport.stop();
+        // Tone.Transport.cancel(); // clears scheduled events
+        // Tone.getContext().rawContext.close();
+
+        // const toneCtx = new Tone.Context(ctx);
+        // Tone.setContext(toneCtx);
+        // // Tone.setContext(ctx)
+         window.audioContext = Tone.getContext();
+        // console.log("baseLatency:", toneCtx.baseLatency);
+
         return () => {
 
         };

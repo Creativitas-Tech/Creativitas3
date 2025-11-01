@@ -138,7 +138,7 @@ export class FMOperator {
     this.carrier.connect(this.modVca);
 
     // === Feedback ===
-    this.feedback = new Tone.Gain()
+    this.feedback = new Tone.Multiply()
     this.feedbackDelay = new Tone.Delay(0,0.001)
     this.feedbackMult = new Tone.Multiply()
     this.vca.connect(this.feedbackDelay)
@@ -178,7 +178,7 @@ export class FMOperator {
     }
 }
 
-export class FM2Op extends MonophonicTemplate {
+export class FM extends MonophonicTemplate {
   constructor (gui = null) {
     super()
     this.gui = gui
@@ -186,7 +186,7 @@ export class FM2Op extends MonophonicTemplate {
 		this.synthPresetName = "TwinklePresets"
 		//this.accessPreset()
     this.isGlide = false
-    this.name = "FM2Op"
+    this.name = "FM"
     this.guiHeight = 0.5
     this.layout = basicLayout
     //console.log(this.name, " loaded, available preset: ", this.presets)

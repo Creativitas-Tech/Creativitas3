@@ -129,6 +129,7 @@ export class Seq {
             //this.loopInstance.stop();
             this.loopInstance.dispose();  // or .cancel() + .dispose()
         }    
+        //console.log('createLoop', this.subdivision)
         this.loopInstance = new Tone.Loop(time => {
             //console.log('loop', time)
             

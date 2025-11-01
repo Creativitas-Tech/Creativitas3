@@ -22,7 +22,7 @@ export class Distortion extends EffectTemplate {
     this.gui = gui;
     this.presets = {};
 		this.synthPresetName = "DistortionPresets"
-		this.accessPreset()
+		//this.accessPreset()
     this.name = "Distortion";
     this.layout = layout;
     this.backgroundColor = [100,0,0]
@@ -86,9 +86,9 @@ export class Distortion extends EffectTemplate {
     this.createAccessors(this, this.param);
     this.autocompleteList = this.paramDefinitions.map(def => def.name);
     this.presetList = Object.keys(this.presets)
-    setTimeout(() => {
-      this.loadPreset('default');
-    }, 500);
+    // setTimeout(() => {
+    //   this.loadPreset('default');
+    // }, 500);
   }
 
 

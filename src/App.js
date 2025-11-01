@@ -20,8 +20,7 @@ function App() {
   const [markdownContent, setMarkdownContent] = useState("");
 
   const exampleFiles = [
-    'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'Arpeggiator', 'Breakbeats!', 'Effects',
-    'SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain', 'Euclid'
+    'Theory','Sequencing','Debugging','Arpeggiator', 'Breakbeats!', 'Effects','SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain', 'Euclid','Expr'
   ];
   const assignmentFiles = [
     'Sequencing Basics', 'Subtractive Synthesis', 'Grids1' //,'Working with MIDI Notes', 'Triggering Envelopes',
@@ -34,7 +33,7 @@ function App() {
 
   const referenceFiles = [
     // 'DrumSampler', 'Rumble', 'Simpler',
-     'Oscilloscope', 'Spectroscope','Spectrogram','Theory','Sequencing','Debugging',`Expr`
+     'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'FM','Oscilloscope', 'Spectroscope','Spectrogram'
   ];
 
   const homeStarterCode = `/*

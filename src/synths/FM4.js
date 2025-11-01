@@ -100,7 +100,7 @@ export class FM4 extends MonophonicTemplate {
         indexEnvDepths: [1,.6,.5,.4].map(x=>x/3),
         envDecays: [0.1, 0.5, 0.9, 1.2].map(x=>x*4),
         attacks: [0.0, 0.0, 0.0, 0.02],
-        feedbacks: [0.0, 0.3, 0.1, 0.1],
+        feedbacks: [0.0, 0.03, 0.01, 0.01],
         algorithm: "1>2>3>0" // full chain, rich metallic bell
       },
 
@@ -113,7 +113,7 @@ export class FM4 extends MonophonicTemplate {
         indexEnvDepths: [1.2, 1.0, 0.8, 0.5].map(x=>x/2),
         envDecays: [0.15, 0.4, 0.8, 1.1],
         attacks: [0.005, 0.01, 0.02, 0.03],
-        feedbacks: [0.1, 0.0, 0.0, 0.0],
+        feedbacks: [0.01, 0.0, 0.0, 0.0],
         algorithm: "1>2>3,0" // pluck body + transient
       },
 
@@ -126,7 +126,7 @@ export class FM4 extends MonophonicTemplate {
         indexEnvDepths: [1.0, 1.5, 1.0, 0.8],
         envDecays: [0.2, 0.35, 0.8, 1.3],
         attacks: [0.01, 0.005, 0.02, 0.04],
-        feedbacks: [0.015, 0.02, 0.0, 0.01],
+        feedbacks: [0.0015, 0.002, 0.0, 0.001],
         algorithm: "1>2>3>0" // deep cascade for hammer brightness
       },
 
@@ -139,7 +139,7 @@ export class FM4 extends MonophonicTemplate {
         indexEnvDepths: [1.4, 1.2, 0.9, 0.7].map(x=>x/2),
         envDecays: [0.1, 0.25, 0.6, 1.0],
         attacks: [0.001, 0.001, 0.01, 0.03],
-        feedbacks: [0.0, 1.0, 0,0],
+        feedbacks: [0.0, .10, 0,0],
         algorithm: "1>3>2,0" // plucked clarity
       },
 
@@ -152,7 +152,7 @@ export class FM4 extends MonophonicTemplate {
         indexEnvDepths: [1.2, 1.1, 0.9, 0.7],
         envDecays: [0.15, 0.3, 0.8, 1.0].map(x=>x*4),
         attacks: [0.008, 0.01, 0.02, 0.04],
-        feedbacks: [0.1, .2, 0.0, 0.1],
+        feedbacks: [0.01, .02, 0.0, 0.01],
         algorithm: "1>2>3,0" // 3-op body + clean carrier
       },
 
@@ -165,7 +165,7 @@ export class FM4 extends MonophonicTemplate {
         indexEnvDepths: [1.8, 1.2, 0.9, 0.7],
         envDecays: [0.05, 0.25, 0.6, 1.0],
         attacks: [0.003, 0.005, 0.02, 0.03],
-        feedbacks: [0.0, 0.3, 0.2, 0.1],
+        feedbacks: [0.0, 0.03, 0.02, 0.01],
         algorithm: "3>2,1>0" // dual 2-op bass stack
       },
 
@@ -191,7 +191,7 @@ export class FM4 extends MonophonicTemplate {
         indexEnvDepths: [1.5, 1.2, 1.0, 0.8],
         envDecays: [0.1, 0.25, 0.7, 1.1],
         attacks: [0.006, 0.008, 0.02, 0.03],
-        feedbacks: [0.2, 0.2, 0.1, 0.2],
+        feedbacks: [0.02, 0.02, 0.01, 0.02],
         algorithm: "3>2,1>3,0" // fan-out shimmer
       },
 
@@ -204,7 +204,7 @@ export class FM4 extends MonophonicTemplate {
         indexEnvDepths: [0.8, 0.9, 0.7, 0.6],
         envDecays: [0.4, 0.8, 1.2, 1.6].map(x=>x*8),
         attacks: [0.2, 0.2, 0.5, 1].map(x=>x*2),
-        feedbacks: [0.1, 0.02, 0.0, 0.0],
+        feedbacks: [0.01, 0.002, 0.0, 0.0],
         algorithm: "3>2,1>0" // wide gentle spectrum
       }
     ];
@@ -284,10 +284,10 @@ export class FM4 extends MonophonicTemplate {
     this.mod3.env.attack = attacks[3] * 2
     //console.log('attack', this.mod1.env.attack,this.mod2.env.attack,this.mod3.env.attack)
 
-    this.carrier.feedback.gain.value = feedbacks[0]
-    this.mod1.feedback.gain.value = feedbacks[1]
-    this.mod2.feedback.gain.value = feedbacks[2]
-    this.mod3.feedback.gain.value = feedbacks[3]
+    this.carrier.feedback.factor.value = feedbacks[0]
+    this.mod1.feedback.factor.value = feedbacks[1]
+    this.mod2.feedback.factor.value = feedbacks[2]
+    this.mod3.feedback.factor.value = feedbacks[3]
   }
 
   setOperatorSet(index) {
