@@ -25,7 +25,7 @@ import { useToneContextSwitcher } from './initTone.js';
 import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';
 import Canvas from "./Canvas.js";
-import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction, MultiRowSeqGui } from './visualizers/index.js';
+import { TextField, Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction, MultiRowSeqGui } from './visualizers/index.js';
 import * as waveshapers from './synths/waveshapers.js'
 import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
@@ -199,6 +199,7 @@ function Editor(props) {
     window.Spectrogram = Spectrogram;
     window.plotTransferFunction = PlotTransferFunction;
     window.MultiRowSeqGui = MultiRowSeqGui;
+    window.TextField = TextField
     // window.CollabHub = CollabHubDisplay;
 
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
@@ -879,15 +880,20 @@ function Editor(props) {
         };
          const setLatency = (v)=>{
 
-// Now use Tone.Transport again
+            // Now use Tone.Transport again
 
+            if( typeof v == 'number'){
+                window.audioContext.lookAhead = v;
+                window.audioContext.updateInterval = v/3; //
+            }
 
-            Tone.context.lookAhead = v;
-            Tone.context.updateInterval = v/3; //
-
-           // setTimeout(() => console.log("base latency: ", window.audioContext.baseLatency.toFixed(3), "\noutput latency: ", window.audioContext.outputLatency.toFixed(3)), 200);
-         }
-         window.setLatency = setLatency
+            setTimeout(() => {
+                console.log("base latency: ", Tone.context._context._baseLatency.toFixed(3), "\noutput latency: ", Tone.context._context._nativeContext.outputLatency.toFixed(3),
+                    "lookahead: ", Tone.context.lookAhead, "\nupdateInterval: ", Tone.context.updateInterval)
+            }, 200);
+            
+        }
+        window.setLatency = setLatency
 
         // const ctx = new (window.AudioContext || window.webkitAudioContext)({
         //             latencyHint: 'balanced',

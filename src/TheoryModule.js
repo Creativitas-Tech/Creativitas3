@@ -683,7 +683,7 @@ export function parseStringSequence(str){
 }
 
 export function parsePitchStringSequence(str) {
-    
+    //if( !Array.isArray(str)) str = [str]
     const firstElement = str.replace(/\[/g, "")[0]
     const usesPitchNames = /^[a-ac-zA-Z?]$/.test(firstElement);
     //console.log(str)

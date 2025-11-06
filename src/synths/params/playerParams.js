@@ -41,7 +41,7 @@ const paramDefinitions = (synth) => [
       },
        {
         name: 'endTime', type: 'hidden',
-        value: 1,
+        value: 10,
         min: 0,
         max: 2000,
         curve: 1,
@@ -64,7 +64,7 @@ const paramDefinitions = (synth) => [
       },
       {
         name: 'fadein', type: 'param',
-        value: 0,
+        value: 0.001,
         min: 0,
         max: 1,
         curve: 3,
@@ -74,7 +74,7 @@ const paramDefinitions = (synth) => [
       },
     {
         name: 'fadeout', type: 'param',
-        value: 0.1,
+        value: 0.001,
         min: 0,
         max: 1,
         curve: 3,
