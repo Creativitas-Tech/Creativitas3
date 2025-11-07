@@ -12,6 +12,7 @@ import { io } from "socket.io-client";
 export class CollabHubClient {
 
     constructor() {
+        console.log('ch')
         this.socket = io("https://collabhub-server-90d79b565c8f.herokuapp.com/slob");
         this.controls = {};
         this.handlers = {};
