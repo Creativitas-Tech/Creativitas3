@@ -23,7 +23,7 @@ import * as Tone from 'tone';
 import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';
 import Canvas from "./Canvas.js";
-import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction, MultiRowSeqGui } from './visualizers/index.js';
+import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction, MultiRowSeqGui, CircularVisualizer } from './visualizers/index.js';
 import * as waveshapers from './synths/waveshapers.js'
 import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
@@ -167,6 +167,7 @@ function Editor(props) {
     window.ws = waveshapers
     //window.ml5 = ml5;
     window.Oscilloscope = Oscilloscope;
+    window.CircularVisualizer = CircularVisualizer;
     window.Spectroscope = Spectroscope;
     window.Spectrogram = Spectrogram;
     window.plotTransferFunction = PlotTransferFunction;
@@ -179,7 +180,7 @@ function Editor(props) {
     window.AsciiGrid = AsciiGrid
     //window.disableAsciiGrid = asciiGridInstance.disable.bind(asciiGridInstance);
     //window.setAsciiGridHandler = asciiGridInstance.setHandler.bind(asciiGridInstance);
-    
+
     window.enableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = true;
     window.disableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = false;
     // window.enableRecording = asciiCallbackInstance.enableLogging.bind(asciiCallbackInstance);
@@ -192,7 +193,7 @@ function Editor(props) {
     //asciiCallbackInstance.fileInput = fileInputRef.current;
     //asciiCallbackInstance.fileInput.addEventListener('change', asciiCallbackInstance.handleFileChange);
 
-    //midi    
+    //midi
     window.MidiDevice = MidiDevice;
     window.ControlSource = ControlSource;
     window.setMidiInput = midi.setMidiInput;
@@ -296,9 +297,9 @@ function Editor(props) {
     } = Math;
 
     /************************************************
-     * 
+     *
      * Code caching and URL decoding
-     * 
+     *
      *************************************************/
     // Save history in browser
     const serializedState = localStorage.getItem(`${props.page}EditorState`);
@@ -402,9 +403,9 @@ function Editor(props) {
     }
 
     /************************************************
-     * 
+     *
      * Handle Themes
-     * 
+     *
      *************************************************/
 
     const [themeDef, setThemeDef] = useState(); // Default theme
@@ -421,9 +422,9 @@ function Editor(props) {
 
 
     /************************************************
-     * 
+     *
      * Creating a link
-     * 
+     *
      *************************************************/
 
     const editorRef = useRef();
@@ -580,7 +581,7 @@ function Editor(props) {
 
           const lineText = update.state.doc.line(currentLine + 1).text;
           //console.log(lineText)
-          if(!window.chClient)  return 
+          if(!window.chClient)  return
           const message = {
             senderID: window.chClient.username || "unknown",
             lineNumber: currentLine,
@@ -614,9 +615,9 @@ function Editor(props) {
     }, []);
 
     /************************************************
-     * 
+     *
      * Main useEffect and code parsing
-     * 
+     *
      *************************************************/
 
     //const value = 'let CHANNEL = 3'
@@ -930,7 +931,7 @@ const ctx = new (window.AudioContext || window.webkitAudioContext)({
         }
         //REMINDER: Issue may arise from scheduled sounds
         for (const varName of varNames) {
-            //Add name, val pairs of ONLY audionodes to vars dictionary 
+            //Add name, val pairs of ONLY audionodes to vars dictionary
             let nameOfCurrentVariable = eval(varName)
             if (isAudioNode(nameOfCurrentVariable)) {
                 vars[varName] = nameOfCurrentVariable;
@@ -1128,11 +1129,11 @@ const ctx = new (window.AudioContext || window.webkitAudioContext)({
                     content: edit.content,
                   }
 
-                  
+
                 window.chClient.control("sharedCode", message);
                 //console.log('sent', message)
                 });
-                
+
             };
           } catch (e) {
             //console.error("Change iteration failed:", e);
@@ -1177,9 +1178,9 @@ const ctx = new (window.AudioContext || window.webkitAudioContext)({
     }
 
     /************************************************
-     * 
+     *
      * autocompletion
-     * 
+     *
      *************************************************/
 
     const usefulCompletions = ["frequency", "factor", "Oscillator", "Filter", "Tone", "value"];
@@ -1350,9 +1351,9 @@ const ctx = new (window.AudioContext || window.webkitAudioContext)({
 
 
     /************************************************
-     * 
+     *
      * Code Exporting
-     * 
+     *
      *************************************************/
     function exportCode() {
         const selectedOption = document.getElementById('exportOptions').value;
@@ -1440,9 +1441,9 @@ const ctx = new (window.AudioContext || window.webkitAudioContext)({
     }
 
     /************************************************
-     * 
+     *
      * Resize Canvas
-     * 
+     *
      *************************************************/
     const codeMinClicked = () => {
         setCodeMinimized(!codeMinimized);
@@ -1476,9 +1477,9 @@ const ctx = new (window.AudioContext || window.webkitAudioContext)({
     }
 
     /************************************************
-     * 
+     *
      * HTML
-     * 
+     *
      *************************************************/
     return (
         <div id="flex" className="flex-container" >
@@ -1579,7 +1580,7 @@ const ctx = new (window.AudioContext || window.webkitAudioContext)({
                 </div>
             }
 
-          
+
           {!p5Minimized &&
                 <div id="canvases" className="flex-child">
                 <div id="remoteCodeDisplay"></div>
@@ -1594,7 +1595,7 @@ const ctx = new (window.AudioContext || window.webkitAudioContext)({
                 </div>
             }
 
-          
+
         </div>
 
     );
