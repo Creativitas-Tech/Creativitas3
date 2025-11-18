@@ -1,8 +1,8 @@
-let s = new Daisy
+let s = new Polyphony(Daisy) //polyphonic Daisy so we can play chords
 let output = new Tone.Multiply(.1).toDestination()
 s.connect( output )
 
-s.initGui()
+s.initGui(s)
 s.listPresets()
 s.loadPreset('default')
 

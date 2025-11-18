@@ -663,6 +663,7 @@ export class Chord {
  * - splits the string into an array of strings, one string per beat
  * - preserves characters inside [] inside one beat
  */
+
 export function parseStringSequence(str){
     str = str.replace(/\s/g, ""); // Remove all whitespace
 
@@ -678,12 +679,12 @@ export function parseStringSequence(str){
     const regex = /\[.*?\]|./g;
     str.match(regex);
     str = str.match(regex);
-
+    //console.log('pitch', str)
     return str
 }
 
 export function parsePitchStringSequence(str) {
-    
+    //if( !Array.isArray(str)) str = [str]
     const firstElement = str.replace(/\[/g, "")[0]
     const usesPitchNames = /^[a-ac-zA-Z?]$/.test(firstElement);
     //console.log(str)
@@ -722,22 +723,42 @@ export function parsePitchStringSequence(str) {
 }
 
 //handles rhythm sequences
+function splitBeat(str) {
+    const inside = str.slice(1, -1);   // remove outer brackets
+    const out = [];
+    let i = 0;
+
+    while (i < inside.length) {
+        // preserve inner bracket groups: [ ... ]
+        if (inside[i] === '[') {
+            const start = i;
+            i++; 
+            while (i < inside.length && inside[i] !== ']') i++;
+            //i++; // include the closing bracket
+            out.push(inside.slice(start, i));
+            continue;
+        }
+
+        // otherwise split into single characters
+        out.push(inside[i]);
+        i++;
+    }
+
+    return out;
+}
+
 export function parseStringBeat(curBeat, time){
+  // console.log(curBeat)
   let outArr = []
   //handle when a beat contains more than one element
     const bracketCheck = /^\[.*\]$/;
     if (bracketCheck.test(curBeat)) {
-      //remove brackets and split into arrays by commas
-      curBeat =curBeat.slice(1, -1).split(',');
-      //console.log(curBeat)
-      curBeat.forEach(arr => {
-          const length = arr.length;
-          for (let i = 0; i < length; i++) {
-              const val = arr[i];
-              outArr.push([val,i/length])
-              //console.log('out', outArr)
-            }
-      });
+      curBeat = splitBeat(curBeat)
+
+      for(let i=0;i<curBeat.length;i++){
+        outArr.push([curBeat[i],i/curBeat.length])
+      }
+
     } else { //for beats with only one element
       outArr.push([curBeat, 0])
         //callback(curBeat, time);
@@ -813,12 +834,11 @@ export function parsePitchStringBeat(curBeat, time, parentStart=0, parentDuratio
 */
 
 export function parsePitchStringBeat(curBeat, time){
-  //console.log(curBeat)
+  //console.log('pitch', curBeat)
   try{
     if (typeof curBeat === 'number')  curBeat = curBeat.toString();
     const firstElement = curBeat.replace(/\[/g, "")[0]
     const usesPitchNames = /^[a-ac-zA-Z]$/.test(firstElement);
-
     let outArr = []
     //handle when a beat contains more than one element
       const bracketCheck = /^\[.*\]$/;
@@ -857,10 +877,11 @@ export function parsePitchStringBeat(curBeat, time){
       return  outArr 
     }
   catch(e){
-    console.log('error with parsePitchStringBeat')
+    console.log('error with parsePitchStringBeat', curBeat)
     return ['.']
   }
 }
+
 
 /**
  * Converts a pitch name (e.g., "C4", "g#", "Bb3") to a MIDI note number.

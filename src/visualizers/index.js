@@ -4,3 +4,4 @@ export { Spectrogram } from './Spectrogram.js';
 export { MultiRowSeqGui } from './MultiRowSeq.js';
 export { PlotTransferFunction } from './PlotTransferFunction.js';
 export { CircularVisualizer } from './CircularVisualizer.js';
+export { TextField } from './textField.js';

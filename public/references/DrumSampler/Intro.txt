@@ -3,7 +3,7 @@ The DrumSampler object loads a bank of soundfiles and lets you easily sequence a
 Each bank consists of:
 * Kick Drum (played with 'O'/loud of 'o'/soft)
 * Snare Drum (played with 'X'/loud of 'x'/soft)
-* Closed hihat (played with 'x')
+* Closed hihat (played with '*')
 * Open hihat (played with '^') - actually is the same sample as closed hihat but with a longer envelope
 * Percussion 1 (p1) (played with '1'). Generally a high tom sample
 * Percussion 2 (p2) (played with '2'). Generally a medium tom sample

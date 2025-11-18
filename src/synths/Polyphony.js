@@ -20,7 +20,7 @@ export class Polyphony extends MonophonicTemplate{
 		//audio
 		this.voice = []
 		for(let i=0;i<this.numVoices;i++) this.voice.push(new voice)
-		this.output = new Tone.Multiply(1/(this.numVoices/2))
+		this.output = new Tone.Multiply(1/(this.numVoices/4))
 		this.hpf = new Tone.Filter({type:'highpass', rolloff:-12, Q:0, cutoff:50})
 		for(let i=0;i<this.numVoices;i++) this.voice[i].output.connect( this.hpf)
 		this.hpf.connect(this.output)

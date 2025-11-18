@@ -131,7 +131,7 @@ export function makeCollaborativeObject(rootID, obj, collabHub, path = '', conte
     set(target, prop, value, receiver) {
       const result = Reflect.set(target, prop, value, receiver);
       const fullPath = appendPath(path, prop);
-
+      //console.log('set', target, prop, value, receiver)
       if (!ctx.suppress && shouldSend(fullPath)) {
         collabHub.control(rootID, {
           type: 'set',

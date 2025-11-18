@@ -76,12 +76,11 @@ code {
 .flex-child {
   height: auto;
   min-width: 0;
-  width: 100%;
   border: 5px solid rgb(255, 255, 255);
+  box-sizing: border-box;
   display: flex;
-  flex: 1;
+  flex: 1 1 0%;
   flex-direction: column;
-  flex-shrink: auto;
 }
 
 #container {
@@ -218,8 +217,118 @@ code {
 }
 
 #remoteCodeDisplay {
-  max-height: 200px;
-  overflow-y: auto;
+  /* Keep this compact so the right header doesn't consume excess space */
+  max-height: 28px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-family: monospace;
   font-size: 0.85rem;
+}
+
+.split-handle {
+  flex: 0 0 auto;
+  width: 6px;
+  background: linear-gradient(180deg, #3a3a3a, #4a4a4a);
+  cursor: col-resize;
+  position: relative;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.split-handle::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 24px;
+  border-radius: 1px;
+  background-color: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.split-handle:hover,
+.split-handle:focus-visible,
+.split-handle.split-handle--active {
+  background: linear-gradient(180deg, #4f4f4f, #5f5f5f);
+}
+
+.split-handle:focus-visible {
+  outline: 2px solid #88aaff;
+  outline-offset: -2px;
+}
+
+.canvas-column {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvas-column-header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+}
+
+.canvas-column-header #remoteCodeDisplay {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.canvas-stack-wrapper {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvas-stack {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  gap: 8px;
+  padding: 4px 0;
+}
+
+.canvas-stack .p5-container {
+  flex: 1 1 auto;
+}
+
+.split-handle-horizontal {
+  flex: 0 0 auto;
+  height: 8px;
+  background: linear-gradient(90deg, #3a3a3a, #4a4a4a);
+  cursor: row-resize;
+  position: relative;
+  user-select: none;
+  transition: background-color 0.15s ease;
+}
+
+.split-handle-horizontal::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: rgba(255, 255, 255, 0.4);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.split-handle-horizontal:hover,
+.split-handle-horizontal:focus-visible,
+.split-handle-horizontal.split-handle-horizontal--active {
+  background: linear-gradient(90deg, #4f4f4f, #5f5f5f);
+}
+
+.split-handle-horizontal:focus-visible {
+  outline: 2px solid #88aaff;
+  outline-offset: -2px;
 }

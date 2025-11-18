@@ -1059,7 +1059,7 @@ export class MonophonicTemplate {
     }
 
     parseNoteString(val, time, index, num=null) {
-       // console.log(val,time,index, num, isNaN(Number(val[0])))
+       //console.log(val,time,index, num, isNaN(Number(val[0])))
         if (val[0] === ".") return;
         if (!val || val.length === 0 ) return '.';
 

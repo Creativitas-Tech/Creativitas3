@@ -11,14 +11,14 @@ const paramDefinitions = (synth) => [
         }
     },
     {
-        name: 'harmonicity', type: 'vco', min: 1, max: 10, curve: 2,
-        isSignal: 'true', connectTo: synth=>synth.harmonicityRatio, 
-        value: 1.5,
+        name: 'voicing', type: 'vco', min: 0, max: synth.operatorSets.length-1, curve: 1,
+        value: 0.1,
         callback: function(x,time) {
-            x = Math.floor(x)
-            if(time) synth.harmonicityRatio.setValueAtTime(x,time)
-            else synth.harmonicityRatio.rampTo( x, .005)
-            synth.updateMacroMapping()
+            if( Math.floor(x) != synth.currentSet){
+                synth.currentSet = Math.floor(x)
+                synth.updateMacroMapping()
+                console.log('FM Voicing: ', synth.operatorSets[synth.currentSet].name)
+            }
         }
     },
     {

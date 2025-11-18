@@ -1,0 +1,91 @@
+import * as Tone from 'tone';
+
+export class TextField {
+    constructor(numLines = 10, _target = 'Canvas') {
+    const container = document.getElementById(_target);
+    if (!container) {
+      console.error(`No element found with id "${_target}"`);
+      return;
+    }
+
+    this.numLines = numLines;
+    this.lines = Array(numLines).fill('');
+    
+    // Create the div
+    this.div = document.createElement('div');
+    Object.assign(this.div.style, {
+      //position: 'absolute',
+      //bottom: '0',
+      //left: '0',
+      //width: '100%',
+      background: 'rgba(0,0,0,0.6)',
+      color: '#0f0',
+      fontFamily: 'Courier New, monospace',
+      fontSize: '14px',
+      lineHeight: '18px',
+      whiteSpace: 'pre',
+      overflow: 'hidden',
+      padding: '4px',
+      //boxSizing: 'border-box',
+      pointerEvents: 'none',
+    });
+
+    container.appendChild(this.div);
+
+        this.lineHeight = 20;
+        this.lines = [];
+
+        this._color =  [
+            '#FF5733',  // Base orange
+            '#33A1FF',  // Light blue (complementary)
+            '#FF33B1',  // Magenta (opposite on color wheel)
+            '#33FF57',  // Bright green (vibrant contrast)
+            '#5733FF',  // Purple (contrasting tone)
+            '#FFBD33',  // Warm yellow (vibrant and complementary)
+            '#33FFBD',  // Mint green (cool contrast)
+            '#FF3380'   // Pink (near complementary)
+        ];
+
+        this._backgroundColor = '#3C3D37'
+        this._activeColor = '#ECDFCC'; // Default color
+
+        this.div.style.fontFamily = 'Consolas, monospace';
+        this.div.style.fontSize = '18px';
+        this.div.style.color = '#ffcc00';
+        this.div.style.backgroundColor = '#000';
+    }
+
+    // Write text to a given line index
+    writeLine(lineNum, text) {
+    // Expand the array as needed
+    while (this.lines.length <= lineNum) this.lines.push('');
+    this.lines[lineNum] = text;
+    this.trimTrailingEmptyLines();
+    this.render();
+  }
+
+  clearLine(lineNum) {
+    if (lineNum < 0 || lineNum >= this.lines.length) return;
+    this.lines[lineNum] = '';
+    this.trimTrailingEmptyLines();
+    this.render();
+  }
+
+  clear() {
+    this.lines = [];
+    this.render();
+  }
+
+  trimTrailingEmptyLines() {
+    // Remove undefined or empty lines at the end
+    while (this.lines.length > 0 && !this.lines[this.lines.length - 1]) {
+      this.lines.pop();
+    }
+  }
+
+    // Redraw all lines
+    render() {
+    this.div.textContent = this.lines.join('\n');
+  }
+ 
+}
