@@ -30,7 +30,7 @@ import * as waveshapers from './synths/waveshapers.js'
 import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
 import { GraphVisualizer } from './visualizers/Grapher.js'
-
+import { MarkovChain } from './generators/MarkovChain.js'
 
 import WebSocketClient from './collabSocket';
 // import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
@@ -148,6 +148,7 @@ function Editor(props) {
 
     window.p5 = p5;
     window.Theory = TheoryModule.Theory;
+    window.parseSequence = TheoryModule.parsePitchStringSequence
     window.groove = Groove
     window.Tone = Tone
 
@@ -278,7 +279,7 @@ function Editor(props) {
     window.DrumSynth = DrumSynth;
     window.Twinkle = Twinkle;
     window.EnvelopeLoop = EnvelopeLoop;
-    // window.Feedback = Feedback;
+    window.MarkovChain = MarkovChain;
 
     window.create_sequencer_gui = create_sequencer_gui;
 
