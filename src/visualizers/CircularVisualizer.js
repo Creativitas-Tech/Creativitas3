@@ -6,15 +6,20 @@
  *   let c = new CircularVisualizer(s.seq[0], gui, { synth: s })
  *   // That's it! Automatically sets up callback and enables
  *
- * Custom color for current beat:
+ * Custom position and color:
  *   let c = new CircularVisualizer(s.seq[0], gui, {
  *     synth: s,
+ *     x: 25,  // Percentage from left (0-100), like other GUI elements
+ *     y: 50,  // Percentage from top (0-100)
+ *     diameter: 10,  // Percentage of canvas width (0-100)
  *     currentColor: { r: 0, g: 255, b: 0 }  // Green instead of red
  *   })
  *
+ * - Uses percentage-based coordinates (0-100) like other GUI elements
+ * - Scales automatically with canvas size
  * - Subdivides circle into equal segments
  * - All notes visible in grayscale (darker = lower note, lighter = higher note)
- * - Current beat highlighted in red
+ * - Current beat highlighted in customizable color (default red)
  */
 export class CircularVisualizer {
     constructor(parent, gui, options = {}) {
@@ -23,10 +28,11 @@ export class CircularVisualizer {
         this.synth = options.synth || (parent && parent.parent) || null  // The synth that owns the sequence
         this._enabled = false
 
-        // Position & size
-        this.x = options.x || null  // null = auto center
-        this.y = options.y || null  // null = auto center
-        this.diameter = options.diameter || 100
+        // Position & size (now using percentage like other GUI elements: 0-100)
+        this.x = options.x !== undefined ? options.x : null  // null = auto center, otherwise percentage (0-100)
+        this.y = options.y !== undefined ? options.y : null  // null = auto center, otherwise percentage (0-100)
+        // Diameter as percentage of canvas width (similar to how knob size works)
+        this.diameter = options.diameter !== undefined ? options.diameter : 15  // Default 15% of canvas width 
 
         // Visual style
         this.separatorWeight = options.separatorWeight || 0.5
@@ -113,11 +119,16 @@ export class CircularVisualizer {
         const array = this.parent.vals
         const currentIndex = this.synth ? this.synth.index : 0
 
-        // Calculate position (auto center if not set)
-        const x = this.x !== null ? this.x : (this.gui.width || 800) / 2
-        const y = this.y !== null ? this.y : (this.gui.height || 600) / 2
+        // Calculate position (convert percentage to pixels, like other GUI elements)
+        // If x/y is null, auto center; otherwise treat as percentage (0-100)
+        const canvasWidth = this.gui.width || 800
+        const canvasHeight = this.gui.height || 600
+        const x = this.x !== null ? (this.x / 100) * canvasWidth : canvasWidth / 2
+        const y = this.y !== null ? (this.y / 100) * canvasHeight : canvasHeight / 2
 
-        const outerRadius = this.diameter / 2
+        // Calculate diameter as percentage of canvas width (similar to knob sizing)
+        const diameter = (this.diameter / 100) * canvasWidth
+        const outerRadius = diameter / 2
         const numSegments = array.length
 
         if (numSegments === 0) return
@@ -149,7 +160,7 @@ export class CircularVisualizer {
             // Draw the segment
             this.gui.fill(color.r, color.g, color.b)
             this.gui.noStroke()
-            this.gui.arc(x, y, this.diameter, this.diameter, startAngle, endAngle, this.gui.PIE)
+            this.gui.arc(x, y, diameter, diameter, startAngle, endAngle, this.gui.PIE)
         }
 
         // Draw separator lines from center to edge
@@ -169,7 +180,7 @@ export class CircularVisualizer {
         this.gui.noFill()
         this.gui.stroke(this.separatorColor.r, this.separatorColor.g, this.separatorColor.b)
         this.gui.strokeWeight(1)
-        this.gui.ellipse(x, y, this.diameter, this.diameter)
+        this.gui.ellipse(x, y, diameter, diameter)
     }
 
     /**
