@@ -6,12 +6,12 @@
  *   let c = new CircularVisualizer(s.seq[0], gui, { synth: s })
  *   // That's it! Automatically sets up callback and enables
  *
- * Custom position and color:
+ * Custom position, size, and color:
  *   let c = new CircularVisualizer(s.seq[0], gui, {
  *     synth: s,
  *     x: 25,  // Percentage from left (0-100), like other GUI elements
  *     y: 50,  // Percentage from top (0-100)
- *     diameter: 10,  // Percentage of canvas width (0-100)
+ *     size: 0.5,  // Size parameter (same as knobs) - scales like GUI elements
  *     currentColor: { r: 0, g: 255, b: 0 }  // Green instead of red
  *   })
  *
@@ -31,8 +31,20 @@ export class CircularVisualizer {
         // Position & size (now using percentage like other GUI elements: 0-100)
         this.x = options.x !== undefined ? options.x : null  // null = auto center, otherwise percentage (0-100)
         this.y = options.y !== undefined ? options.y : null  // null = auto center, otherwise percentage (0-100)
-        // Diameter as percentage of canvas width (similar to how knob size works)
-        this.diameter = options.diameter !== undefined ? options.diameter : 15  // Default 15% of canvas width 
+
+        // Size parameter (like knobs) - scales the same way as GUI knobs
+        // If size is provided, use it directly; if diameter is provided, convert it; otherwise use default
+        // Knob formula: diameter = (size / 6) * canvasWidth / 2
+        // To convert diameter (as percentage) to size: size = (diameter / 100) * 12
+        // Default size of 2.5 gives approximately 20.8% of canvas width (bigger default size)
+        if (options.size !== undefined) {
+            this.size = options.size  // Use size parameter directly (e.g., size: 0.5)
+        } else if (options.diameter !== undefined) {
+            // Convert diameter percentage to size parameter for backward compatibility
+            this.size = (options.diameter / 100) * 12
+        } else {
+            this.size = 2.5  // Default size (gives ~20.8% of canvas width - bigger by default)
+        }
 
         // Visual style
         this.separatorWeight = options.separatorWeight || 0.5
@@ -126,8 +138,10 @@ export class CircularVisualizer {
         const x = this.x !== null ? (this.x / 100) * canvasWidth : canvasWidth / 2
         const y = this.y !== null ? (this.y / 100) * canvasHeight : canvasHeight / 2
 
-        // Calculate diameter as percentage of canvas width (similar to knob sizing)
-        const diameter = (this.diameter / 100) * canvasWidth
+        // Calculate diameter using the exact same formula as knobs
+        // Knob formula: cur_size = (size / 6) * width / 2
+        // This makes CircularVisualizer scale proportionally with GUI knobs
+        const diameter = (this.size / 6) * canvasWidth / 2
         const outerRadius = diameter / 2
         const numSegments = array.length
 
