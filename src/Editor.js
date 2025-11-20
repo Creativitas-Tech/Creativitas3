@@ -8,7 +8,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { Decoration, ViewPlugin, EditorView } from "@codemirror/view";
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { autocompletion, completeFromList } from "@codemirror/autocomplete";
-
+import './Editor-Initalizer.js';
 
 //tone
 import { FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
@@ -192,6 +192,29 @@ function Editor(props) {
         window.getCurrentTimingStrategy = () => {
             return timingStrategyManager.getActiveStrategy();
         };
+
+        // ---- Latency control ----
+        const setLatency = (v) => {
+          if (typeof v === 'number') {
+            window.audioContext.lookAhead = v;
+            window.audioContext.updateInterval = v / 3;
+          }
+
+          setTimeout(() => {
+            console.log(
+              "base latency: ", Tone.context._context._baseLatency.toFixed(3),
+              "\noutput latency: ", Tone.context._context._nativeContext.outputLatency.toFixed(3),
+              "lookahead: ", Tone.context.lookAhead,
+              "\nupdateInterval: ", Tone.context.updateInterval
+            );
+          }, 200);
+        };
+
+        window.setLatency = setLatency;
+
+        // ---- Tone context exposure ----
+        window.audioContext = Tone.getContext();
+
     }, []);
     window.ws = waveshapers
     //window.ml5 = ml5;
@@ -852,65 +875,7 @@ function Editor(props) {
             setTheme('okaidia');
         });
 
-        Array.prototype.rotate = function (n) {
-            // Ensure n is an integer, and handle negative rotation
-            n = n % this.length;  // This ensures n stays within array bounds
-            if (n < 0) n += this.length;  // For negative rotation, we add the array length
-
-            // Perform the rotation
-            return this.slice(n).concat(this.slice(0, n));
-        };
-
-        Array.prototype.peek = function (n) {
-            // Ensure n is an integer, and handle negative rotation
-            n = n % this.length;  // This ensures n stays within array bounds
-            if (n < 0) n += this.length;  // For negative rotation, we add the array length
-
-            // return the element at n
-            return this[Math.floor(n)]
-        };
-
-        Array.prototype.poke = function (n, v) {
-            // Ensure n is an integer, and handle negative rotation
-            n = n % this.length;  // This ensures n stays within array bounds
-            if (n < 0) n += this.length;  // For negative rotation, we add the array length
-            let temp = this[n]
-            //modify the array
-            this[Math.floor(n)] = v
-            //return the previous value of the changed element
-            return temp
-        };
-         const setLatency = (v)=>{
-
-            // Now use Tone.Transport again
-
-            if( typeof v == 'number'){
-                window.audioContext.lookAhead = v;
-                window.audioContext.updateInterval = v/3; //
-            }
-
-            setTimeout(() => {
-                console.log("base latency: ", Tone.context._context._baseLatency.toFixed(3), "\noutput latency: ", Tone.context._context._nativeContext.outputLatency.toFixed(3),
-                    "lookahead: ", Tone.context.lookAhead, "\nupdateInterval: ", Tone.context.updateInterval)
-            }, 200);
-            
-        }
-        window.setLatency = setLatency
-
-        // const ctx = new (window.AudioContext || window.webkitAudioContext)({
-        //             latencyHint: 'balanced',
-        //             sampleRate: 24000
-        //         });
-        // Tone.Transport.stop();
-        // Tone.Transport.cancel(); // clears scheduled events
-        // Tone.getContext().rawContext.close();
-
-        // const toneCtx = new Tone.Context(ctx);
-        // Tone.setContext(toneCtx);
-        // // Tone.setContext(ctx)
-         window.audioContext = Tone.getContext();
-        // console.log("baseLatency:", toneCtx.baseLatency);
-
+        
         return () => {
 
         };
