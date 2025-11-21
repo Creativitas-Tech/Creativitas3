@@ -1,10 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import keyboard from '../Icons/keyboard.png';
 const midi = require('./Midi.js');
-function MidiKeyboard() {
-    const [midiOn, setMidiOn] = useState(false);
+function MidiKeyboard({ midiOn, setMidiOn }) {
     const [notesOn, setNotesOn] = useState(new Set());
-    const midiOnRef = useRef(midiOn); // Mutable reference to hold the latest value of midiOn
+    const midiOnRef = useRef(midiOn);
+
+    useEffect(() => {
+        midiOnRef.current = midiOn;
+    }, [midiOn]);
+
+    const midiClicked = () => {
+        setMidiOn(!midiOn);
+    };
 
     let activeKeys = {};
     var octave = 4;
@@ -116,9 +123,7 @@ function MidiKeyboard() {
             octave--;
         }
     }
-    const midiClicked = () => {
-        setMidiOn(midiOn === false ? true : false);
-    }
+
     const keyboardCSS = midiOn ? 'icon active' : 'icon inactive';
     return (
         <div className='span-container'>

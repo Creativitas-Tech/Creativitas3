@@ -231,6 +231,14 @@ function Editor(props) {
     window.disableAsciiInput = asciiCallbackInstance.disable.bind(asciiCallbackInstance);
     window.setAsciiHandler = asciiCallbackInstance.setHandler.bind(asciiCallbackInstance);
     window.AsciiGrid = AsciiGrid
+
+    //MIDI keyboard handler
+    const [midiEnabled, setMidiEnabled] = useState(false);
+      const enableKeyboard = () => setMidiEnabled(true);
+      const disableKeyboard = () => setMidiEnabled(false);
+
+      // You can call enableKeyboard() from anywhere in App
+    window.enableMidiKeyboard = enableKeyboard;
     //window.disableAsciiGrid = asciiGridInstance.disable.bind(asciiGridInstance);
     //window.setAsciiGridHandler = asciiGridInstance.setHandler.bind(asciiGridInstance);
 
@@ -2194,7 +2202,7 @@ function Editor(props) {
                     <span className="span-container">
                         <span className="span-container">
                             <button className="button-container" onClick={playClicked}>Run</button>
-                            <MidiKeyboard />
+                            <MidiKeyboard midiOn={midiEnabled} setMidiOn={setMidiEnabled} />
                             <button className="button-container" onClick={refreshClicked}>Starter Code</button>
 
                             {/* Timing Controls */}
