@@ -405,6 +405,7 @@ class Element {
 
         //parameter values
         this.active = 0;
+        this.isInteger = options.isInteger || false;
         this.min = options.min || 0;
         this.max = options.max || 1;
         this.curve = options.curve || 1;
@@ -414,6 +415,7 @@ class Element {
         if (this.mapto || this.callback) this.maptoDefined = 'true'
         else this.maptoDefined = 'false'
         this.value = options.value != undefined ? options.value : scaleOutput(0.5, 0, 1, this.min, this.max, this.curve);
+        this.prevValue = this.value
         this.rawValue = unScaleOutput(this.value, 0, 1, this.min, this.max, this.curve);
         p.elements[this.id] = this;
 
@@ -490,10 +492,13 @@ class Element {
             this.p.textAlign(this.p.CENTER, this.p.CENTER);
             this.p.fill(this.setColor(this.textColor));
             this.p.textFont(getFont(this.valueFont))
-            if (Math.abs(this.max) < 1) output = output.toFixed(3)
-            else if (Math.abs(this.max) < 5) output = output.toFixed(2)
-            else if (Math.abs(this.max) < 100) output = output.toFixed(1)
-            else output = output.toFixed(1)
+            if(this.isInteger) output = output.toFixed(0)
+            else{
+                if (Math.abs(this.max) < 1) output = output.toFixed(3)
+                else if (Math.abs(this.max) < 5) output = output.toFixed(2)
+                else if (Math.abs(this.max) < 100) output = output.toFixed(1)
+                else output = output.toFixed(1)
+            }
             this.p.text(output, x + (this.valueX / 100) * this.p.width, y + (this.valueY / 100) * this.p.height);
         } catch(e){}
     }
@@ -526,6 +531,7 @@ class Element {
 
     mapValue(output, destination) {
         //console.log(output, destination)
+        if(this.isInteger) output = Math.floor(output)
         if (destination) {
             try {
                 destination.value.rampTo(output, .1);
@@ -548,6 +554,7 @@ class Element {
         //console.log(this.value, this.callback)
         if (this.callback) {
             let output = this.value
+            if(this.isInteger) output = Math.floor(output)
             try {
                 this.callback(output);
             } catch {
@@ -569,7 +576,7 @@ class Element {
         //console.log(value)
         if (typeof (value) === 'string') {
             this.value = value;
-        }
+        } 
         else {
             this.value = value
             this.rawValue = unScaleOutput(value, 0, 1, this.min, this.max, this.curve);
@@ -1029,7 +1036,7 @@ export class Button extends Element {
             // Calculate the value
             let newValue = scaleOutput(1, 0, 1, this.min, this.max, this.curve);
             // Use the set method to update the value and trigger all necessary actions
-            console.log('Button isPressed - calling set() with value:', newValue);
+            //console.log('Button isPressed - calling set() with value:', newValue);
             this.set(newValue);
             if (this.maptoDefined === 'false') postButtonError('Buttons')
 
