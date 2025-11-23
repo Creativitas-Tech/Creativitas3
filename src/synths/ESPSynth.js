@@ -9,7 +9,7 @@ import * as Tone from 'tone';
 import {MultiVCO} from '../MultiVCO.js'
 import {stepper} from  '../Utilities.js'
 // import ESPSynthPresets from './synthPresets/ESPSynthPresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 
 export class ESPSynth extends MonophonicTemplate {
     constructor (gui = null, waves = ['triangle', 'sawtooth', 'square', 'square', 'square', 'noise'], pitches = [1, 1, 1, 0.5, 0.25, 1]) {

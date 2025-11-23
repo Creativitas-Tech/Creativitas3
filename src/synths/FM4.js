@@ -8,7 +8,7 @@ the top level .env of a patch must be the main envelope
 
 import * as Tone from 'tone';
 import TwinklePresets from './synthPresets/TwinklePresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/daisyLayout.json';
 import paramDefinitions from './params/FM4Params.js';

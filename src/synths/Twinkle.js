@@ -8,7 +8,7 @@ Single vco monosynth
 
 import * as Tone from 'tone';
 import TwinklePresets from './synthPresets/TwinklePresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/halfLayout.json';
 import paramDefinitions from './params/twinkleParams.js';

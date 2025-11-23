@@ -5,7 +5,7 @@
 */
 import * as Tone from 'tone';
 //import SimplerPresets from './synthPresets/SimplerPresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Theory, parsePitchStringSequence, parsePitchStringBeat,getChord, pitchNameToMidi, intervalToMidi} from '../TheoryModule'
 import { Seq } from '../Seq'
 

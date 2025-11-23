@@ -18,7 +18,7 @@ Daisies:
 import { sketch } from '../p5Library.js'
 import p5 from 'p5';
 import * as Tone from 'tone';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Parameter} from './ParameterModule.js'
 import DaisiesPresets from './synthPresets/DaisiesPresets.json';
 import { paramDefinitions } from './params/daisiesParams.js';

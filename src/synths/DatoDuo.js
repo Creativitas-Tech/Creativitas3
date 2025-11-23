@@ -9,7 +9,7 @@ import * as Tone from 'tone';
 
 import {stepper} from  '../Utilities.js'
 // import DatoDuoPresets from './synthPresets/DatoDuoPresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 
 /**
  * Class representing the DatoDuo monophonic subtractive synthesizer.
