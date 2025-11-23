@@ -12,7 +12,7 @@ const paramDefinitions = (synth) => [
   },
   {
     name: 'attack',
-    type: 'input',
+    type: 'hidden',
     value: 0.005,
     min: 0.005,
     max: 1,

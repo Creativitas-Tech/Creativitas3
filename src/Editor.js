@@ -8,7 +8,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import { Decoration, ViewPlugin, EditorView } from "@codemirror/view";
 import { EditorState, StateEffect, StateField } from "@codemirror/state";
 import { autocompletion, completeFromList } from "@codemirror/autocomplete";
-
+import './Editor-Initalizer.js';
 
 //tone
 import { FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
@@ -25,12 +25,12 @@ import { useToneContextSwitcher } from './initTone.js';
 import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';
 import Canvas from "./Canvas.js";
-import { Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction, MultiRowSeqGui } from './visualizers/index.js';
+import { TextField, Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction, MultiRowSeqGui, CircularVisualizer } from './visualizers/index.js';
 import * as waveshapers from './synths/waveshapers.js'
 import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
 import { GraphVisualizer } from './visualizers/Grapher.js'
-
+import { MarkovChain } from './generators/MarkovChain.js'
 
 import WebSocketClient from './collabSocket';
 // import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
@@ -148,6 +148,7 @@ function Editor(props) {
 
     window.p5 = p5;
     window.Theory = TheoryModule.Theory;
+    window.parseSequence = TheoryModule.parsePitchStringSequence
     window.groove = Groove
     window.Tone = Tone
 
@@ -191,14 +192,39 @@ function Editor(props) {
         window.getCurrentTimingStrategy = () => {
             return timingStrategyManager.getActiveStrategy();
         };
+
+        // ---- Latency control ----
+        const setLatency = (v) => {
+          if (typeof v === 'number') {
+            window.audioContext.lookAhead = v;
+            window.audioContext.updateInterval = v / 3;
+          }
+
+          setTimeout(() => {
+            console.log(
+              "base latency: ", Tone.context._context._baseLatency.toFixed(3),
+              "\noutput latency: ", Tone.context._context._nativeContext.outputLatency.toFixed(3),
+              "lookahead: ", Tone.context.lookAhead,
+              "\nupdateInterval: ", Tone.context.updateInterval
+            );
+          }, 200);
+        };
+
+        window.setLatency = setLatency;
+
+        // ---- Tone context exposure ----
+        window.audioContext = Tone.getContext();
+
     }, []);
     window.ws = waveshapers
     //window.ml5 = ml5;
     window.Oscilloscope = Oscilloscope;
+    window.CircularVisualizer = CircularVisualizer;
     window.Spectroscope = Spectroscope;
     window.Spectrogram = Spectrogram;
     window.plotTransferFunction = PlotTransferFunction;
     window.MultiRowSeqGui = MultiRowSeqGui;
+    window.TextField = TextField
     // window.CollabHub = CollabHubDisplay;
 
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);
@@ -207,7 +233,7 @@ function Editor(props) {
     window.AsciiGrid = AsciiGrid
     //window.disableAsciiGrid = asciiGridInstance.disable.bind(asciiGridInstance);
     //window.setAsciiGridHandler = asciiGridInstance.setHandler.bind(asciiGridInstance);
-    
+
     window.enableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = true;
     window.disableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = false;
     // window.enableRecording = asciiCallbackInstance.enableLogging.bind(asciiCallbackInstance);
@@ -220,7 +246,7 @@ function Editor(props) {
     //asciiCallbackInstance.fileInput = fileInputRef.current;
     //asciiCallbackInstance.fileInput.addEventListener('change', asciiCallbackInstance.handleFileChange);
 
-    //midi    
+    //midi
     window.MidiDevice = MidiDevice;
     window.ControlSource = ControlSource;
     window.setMidiInput = midi.setMidiInput;
@@ -277,7 +303,7 @@ function Editor(props) {
     window.DrumSynth = DrumSynth;
     window.Twinkle = Twinkle;
     window.EnvelopeLoop = EnvelopeLoop;
-    // window.Feedback = Feedback;
+    window.MarkovChain = MarkovChain;
 
     window.create_sequencer_gui = create_sequencer_gui;
 
@@ -324,9 +350,9 @@ function Editor(props) {
     } = Math;
 
     /************************************************
-     * 
+     *
      * Code caching and URL decoding
-     * 
+     *
      *************************************************/
     // Save history in browser
     const serializedState = localStorage.getItem(`${props.page}EditorState`);
@@ -430,9 +456,9 @@ function Editor(props) {
     }
 
     /************************************************
-     * 
+     *
      * Handle Themes
-     * 
+     *
      *************************************************/
 
     const [themeDef, setThemeDef] = useState(); // Default theme
@@ -449,9 +475,9 @@ function Editor(props) {
 
 
     /************************************************
-     * 
+     *
      * Creating a link
-     * 
+     *
      *************************************************/
 
     const editorRef = useRef();
@@ -608,7 +634,7 @@ function Editor(props) {
 
           const lineText = update.state.doc.line(currentLine + 1).text;
           //console.log(lineText)
-          if(!window.chClient)  return 
+          if(!window.chClient)  return
           const message = {
             senderID: window.chClient.username || "unknown",
             lineNumber: currentLine,
@@ -642,9 +668,9 @@ function Editor(props) {
     }, []);
 
     /************************************************
-     * 
+     *
      * Main useEffect and code parsing
-     * 
+     *
      *************************************************/
 
     //const value = 'let CHANNEL = 3'
@@ -849,60 +875,7 @@ function Editor(props) {
             setTheme('okaidia');
         });
 
-        Array.prototype.rotate = function (n) {
-            // Ensure n is an integer, and handle negative rotation
-            n = n % this.length;  // This ensures n stays within array bounds
-            if (n < 0) n += this.length;  // For negative rotation, we add the array length
-
-            // Perform the rotation
-            return this.slice(n).concat(this.slice(0, n));
-        };
-
-        Array.prototype.peek = function (n) {
-            // Ensure n is an integer, and handle negative rotation
-            n = n % this.length;  // This ensures n stays within array bounds
-            if (n < 0) n += this.length;  // For negative rotation, we add the array length
-
-            // return the element at n
-            return this[Math.floor(n)]
-        };
-
-        Array.prototype.poke = function (n, v) {
-            // Ensure n is an integer, and handle negative rotation
-            n = n % this.length;  // This ensures n stays within array bounds
-            if (n < 0) n += this.length;  // For negative rotation, we add the array length
-            let temp = this[n]
-            //modify the array
-            this[Math.floor(n)] = v
-            //return the previous value of the changed element
-            return temp
-        };
-         const setLatency = (v)=>{
-
-// Now use Tone.Transport again
-
-
-            Tone.context.lookAhead = v;
-            Tone.context.updateInterval = v/3; //
-
-           // setTimeout(() => console.log("base latency: ", window.audioContext.baseLatency.toFixed(3), "\noutput latency: ", window.audioContext.outputLatency.toFixed(3)), 200);
-         }
-         window.setLatency = setLatency
-
-        // const ctx = new (window.AudioContext || window.webkitAudioContext)({
-        //             latencyHint: 'balanced',
-        //             sampleRate: 24000
-        //         });
-        // Tone.Transport.stop();
-        // Tone.Transport.cancel(); // clears scheduled events
-        // Tone.getContext().rawContext.close();
-
-        // const toneCtx = new Tone.Context(ctx);
-        // Tone.setContext(toneCtx);
-        // // Tone.setContext(ctx)
-         window.audioContext = Tone.getContext();
-        // console.log("baseLatency:", toneCtx.baseLatency);
-
+        
         return () => {
 
         };
@@ -1132,7 +1105,7 @@ function Editor(props) {
         }
         //REMINDER: Issue may arise from scheduled sounds
         for (const varName of varNames) {
-            //Add name, val pairs of ONLY audionodes to vars dictionary 
+            //Add name, val pairs of ONLY audionodes to vars dictionary
             let nameOfCurrentVariable = eval(varName)
             if (isAudioNode(nameOfCurrentVariable)) {
                 vars[varName] = nameOfCurrentVariable;
@@ -1330,11 +1303,11 @@ function Editor(props) {
                     content: edit.content,
                   }
 
-                  
+
                 window.chClient.control("sharedCode", message);
                 //console.log('sent', message)
                 });
-                
+
             };
           } catch (e) {
             //console.error("Change iteration failed:", e);
@@ -1381,9 +1354,9 @@ function Editor(props) {
     }
 
     /************************************************
-     * 
+     *
      * autocompletion
-     * 
+     *
      *************************************************/
 
     const usefulCompletions = ["frequency", "factor", "Oscillator", "Filter", "Tone", "value"];
@@ -1554,9 +1527,9 @@ function Editor(props) {
 
 
     /************************************************
-     * 
+     *
      * Code Exporting
-     * 
+     *
      *************************************************/
     function exportCode() {
         const selectedOption = document.getElementById('exportOptions').value;
@@ -1644,9 +1617,9 @@ function Editor(props) {
     }
 
     /************************************************
-     * 
+     *
      * Resize Canvas
-     * 
+     *
      *************************************************/
     const codeMinClicked = () => {
         setCodeMinimized(!codeMinimized);
@@ -2166,9 +2139,9 @@ function Editor(props) {
     }, [codeMinimized, p5Minimized]);
 
     /************************************************
-     * 
+     *
      * HTML
-     * 
+     *
      *************************************************/
     const showSplitHandle = !codeMinimized && !p5Minimized && canvases.length > 0;
     const codePaneStyle = !codeMinimized
@@ -2367,7 +2340,6 @@ function Editor(props) {
                     </div>
                 </div>
             )}
-
         </div>
 
     );

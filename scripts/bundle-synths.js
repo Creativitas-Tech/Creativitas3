@@ -4,10 +4,12 @@ const fsp = require('fs').promises;
 const path = require('path');
 const acorn = require('acorn');
 const walk = require('acorn-walk');
+require('../src/Editor-Initalizer.js');
 
 async function bundleSynthDependencies() {
     const processedFiles = new Set();
     const dependencies = new Map();
+    console.log('bundler ran')
 
     // Paths to ignore (i.e any duplicate declarations, experimental stuff that should not be included)
     const ignorePaths = [

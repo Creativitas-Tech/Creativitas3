@@ -594,8 +594,8 @@ class Element {
         }
         else {
             this.value = value;
-            this.rawValue = unScaleOutput(value, 0, 1, this.min, this.max, this.curve);
-            this.mapValue(this.value, this.mapto);
+            if(!Array.isArray(this.value)) this.rawValue = unScaleOutput(value, 0, 1, this.min, this.max, this.curve);
+            if(!Array.isArray(this.value)) this.mapValue(this.value, this.mapto);
         }
 
         this.runCallBack();
@@ -849,21 +849,23 @@ export class Pad extends Element {
     constructor(p, options) {
         super(p, options);
         this.incr = options.incr || 0.01;
-        this.value = this.value || [0.,0]
-        this.rawValue = this.value
+        this.value = options.value || [0.5,0.5]
+        this.rawValue = options.value || [0.5,0.5]
         this.dragging = false;
         this.sizeX = options.sizeX || options.size || 5
         this.sizeY = options.sizeY || options.size || 5
-        if (typeof (options.maptoX) == 'string') this.maptoX = eval(options.maptoX)
-        else this.maptoX = options.maptoX || null;
-        if (typeof (options.maptoY) == 'string') this.maptoY = eval(options.maptoY)
-        else this.maptoY = options.maptoY || null;
+        // if (typeof (options.mapto) == 'string') this.mapto = eval(options.mapto)
+        // else this.mapto = options.mapto || null;
+        // if (typeof (options.maptoY) == 'string') this.maptoY = eval(options.maptoY)
+        // else this.maptoY = options.maptoY || null;
 
         // send initial val to collab-hub
         if (this.linkName) {
             this.ch.control(this.linkName, this.value);
         }
         if (this.linkFunc) this.linkFunc();
+
+        //console.log('pad', this.value, this.rawValue)
     }
 
     resize(scaleWidth, scaleHeight) {
@@ -937,16 +939,17 @@ export class Pad extends Element {
 
             if (this.rawValue[0] > 1) this.rawValue[0] = 1
             if (this.rawValue[0] < 0) this.rawValue[0] = 0
-            
+            //console.log(this.rawValue, this.value)
             this.value[0] = scaleOutput(this.rawValue[0], 0, 1, this.min, this.max, this.curve)
             
-            this.mapValue(this.value[0], this.maptoX);
+            //this.mapValue(this.value[0], this.maptoX);
 
             if (this.rawValue[1] > 1) this.rawValue[1] = 1
             if (this.rawValue[1] < 0) this.rawValue[1] = 0
             this.value[1] = scaleOutput(this.rawValue[1], 0, 1, this.min, this.max, this.curve)
-            this.mapValue(this.value[1], this.maptoY);
-            
+            //this.mapValue(this.value[1], this.maptoY);
+            //console.log(this.value, this.mapto)
+            this.mapValue(this.value, this.mapto);
             this.runCallBack()
 
             // send updates to collab-hub
@@ -956,6 +959,7 @@ export class Pad extends Element {
             if (this.linkFunc) this.linkFunc();
         }
     }
+
 
 
 }

@@ -1,5 +1,7 @@
 // Export all modules - webpack will handle the global exposure
 
+import '../src/Editor-Initalizer.js';
+
 // Core modules
 export * from '../src/AsciiKeyboard.js';
 // export * from '../src/CollabHub.js';
@@ -62,3 +64,4 @@ export * from '../src/visualizers/Spectroscope.js';
 export * from '../src/visualizers/Spectrogram.js';
 export * from '../src/visualizers/PlotTransferFunction.js';
 export * from '../src/visualizers/VisualizeArray.js';
+export * from '../src/visualizers/CircularVisualizer.js';

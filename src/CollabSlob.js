@@ -7,12 +7,10 @@
 import { io } from "socket.io-client";
 
 // Logger utility for client-side debugging
-const createLogger = (debug = false) => {
+const createLogger = () => {
     return {
         debug: function (message, ...args) {
-            if (debug) {
                 console.log(`[DEBUG] ${message}`, ...args);
-            }
         },
         info: function (message, ...args) {
             console.log(`[INFO] ${message}`, ...args);
@@ -30,7 +28,7 @@ export class CollabSlobClient {
 
     constructor(debug = false) {
         this.debug = debug; // Debug flag that can be toggled
-        this.logger = createLogger(this.debug);
+        this.logger = createLogger();
         this.socket = io("https://collabhub-server-90d79b565c8f.herokuapp.com/slob", {
             reconnection: true, // Enable reconnection (default is true, but good to be explicit)
             reconnectionAttempts: Infinity, // Number of reconnection attempts before giving up
@@ -62,7 +60,7 @@ export class CollabSlobClient {
         this.socket.on("connect", () => {
             // If we were in a room before the disconnection, rejoin it
             if (this.roomJoined) {
-                this.logger.debug(`Re-joining room after connection: ${this.roomJoined}`);
+                if(this.debug) this.logger.debug(`Re-joining room after connection: ${this.roomJoined}`);
                 this.joinRoom(this.roomJoined);
             }
         });
@@ -70,12 +68,12 @@ export class CollabSlobClient {
 
         // chat and user management
         this.socket.on("serverMessage", (incoming) => {
-            this.logger.debug(`server message received: ${JSON.stringify(incoming)}`);
+            if(this.debug) this.logger.debug(`server message received: ${JSON.stringify(incoming)}`);
             // console.info(incoming.message);
         });
 
         this.socket.on("chat", (incoming) => {
-            this.logger.debug(`chat received: ${JSON.stringify(incoming)}`);
+            if(this.debug) this.logger.debug(`chat received: ${JSON.stringify(incoming)}`);
             // TODO HACK checking messages to receive my user name
             if (incoming.chat === "Connected with id: " + this.socket.id) {
                 this.username = incoming.id;
@@ -100,37 +98,37 @@ export class CollabSlobClient {
 
         // controls
         this.socket.on("control", (incoming) => {
-            this.logger.debug(`Control received: ${JSON.stringify(incoming)}`);
-            this.logger.debug(`Current room joined: ${this.roomJoined}`);
-            this.logger.debug(`My client ID: ${this.clientId}`);
-            this.logger.debug(`Incoming header:`, incoming.header);
+            if(this.debug) this.logger.debug(`Control received: ${JSON.stringify(incoming)}`);
+            if(this.debug) this.logger.debug(`Current room joined: ${this.roomJoined}`);
+            if(this.debug) this.logger.debug(`My client ID: ${this.clientId}`);
+            if(this.debug) this.logger.debug(`Incoming header:`, incoming.header);
 
             if (this.roomJoined) {                      // Kind of HACK, ignore controls before joining a room
-                this.logger.debug(`Room is joined, processing control`);
+                //if(this.debug) this.logger.debug(`Room is joined, processing control`);
                 // Check if this control was sent by this client
-                this.logger.debug(`INCOMING IN COLLABHUB.JS`, incoming);
+                if(this.debug) this.logger.debug(`INCOMING IN COLLABHUB.JS`, incoming);
 
                 if (incoming.header && incoming.header.clientId !== this.clientId) {
-                    this.logger.debug("Control is from another client, continuing");
+                    if(this.debug) this.logger.debug("Control is from another client, continuing");
                     let newHeader = incoming.header,
                         newValues = incoming.values;
-                    this.logger.debug("Setting control in local store:", newHeader.name, newValues);
+                    if(this.debug) this.logger.debug("Setting control in local store:", newHeader.name, newValues);
                     this.controls[newHeader.name] = newValues;
 
                     if (newHeader.name in this.handlers) {
-                        this.logger.debug("Handler found for control:", newHeader.name);
+                        if(this.debug) this.logger.debug("Handler found for control:", newHeader.name, this.handlers[newHeader.name],incoming);
                         this.handlers[newHeader.name](incoming);
                     } else {
-                        this.logger.debug("No handler found for control:", newHeader.name);
+                        if(this.debug) this.logger.debug("No handler found for control:", newHeader.name);
                     }
 
-                    this.logger.debug("Calling controlsCallback");
-                    this.controlsCallback(incoming);
+                    if(this.debug) this.logger.debug("Calling controlsCallback", this.controlsCallback, incoming.values);
+                    this.controlsCallback(incoming.values);
                 } else {
-                    this.logger.debug("Control is from this client or has no header, ignoring");
+                    if(this.debug) this.logger.debug("Control is from this client or has no header, ignoring");
                 }
             } else {
-                this.logger.debug("No room joined, ignoring control");
+                if(this.debug) this.logger.debug("No room joined, ignoring control");
             }
         });
 
@@ -164,7 +162,7 @@ export class CollabSlobClient {
         // events
 
         this.socket.on("event", (incoming) => {
-            this.logger.debug(`Event received: ${JSON.stringify(incoming)}`);
+            if(this.debug) this.logger.debug(`Event received: ${JSON.stringify(incoming)}`);
             if (this.roomJoined) {                      // Kind of HACK, ignore events before joining a room
                 // Check if this event was sent by this client
                 if (incoming.header && incoming.header.clientId !== this.clientId) {
@@ -227,24 +225,24 @@ export class CollabSlobClient {
     // sending data
 
     control(...args) {
-        this.logger.debug("control() called with args:", args);
+        if(this.debug) this.logger.debug("control() called with args:", args);
 
         if (this.roomJoined) {
-            this.logger.debug("Room is joined:", this.roomJoined);
+            if(this.debug) this.logger.debug("Room is joined:", this.roomJoined);
 
             let mode = args[0] === "publish" || args[0] === "pub" ? "publish" : "push",
                 headerName = mode === "publish" ? args[1] : args[0],
                 values = mode === "publish" ? args[2] : args[1],
                 target = mode === "publish" ? args[3] ? args[3] : this.roomJoined : args[2] ? args[2] : this.roomJoined;
 
-            this.logger.debug("Parsed arguments - mode:", mode, "headerName:", headerName, "values:", values, "target:", target);
+            if(this.debug) this.logger.debug("Parsed arguments - mode:", mode, "headerName:", headerName, "values:", values, "target:", target);
 
             const header = {
                 name: headerName,
                 clientId: this.clientId
             };
 
-            this.logger.debug("Created header:", header);
+            if(this.debug) this.logger.debug("Created header:", header);
 
             const outgoing = {
                 mode: mode,
@@ -253,17 +251,17 @@ export class CollabSlobClient {
                 target: target
             };
 
-            this.logger.debug("Emitting control message:", JSON.stringify(outgoing));
+            if(this.debug) this.logger.debug("Emitting control message:", JSON.stringify(outgoing));
             this.socket.emit("control", outgoing);
-            this.logger.debug("Control message emitted");
+            if(this.debug) this.logger.debug("Control message emitted");
         } else {
-            this.logger.debug("No room joined, cannot send control");
+            if(this.debug) this.logger.debug("No room joined, cannot send control");
             console.info("Join a room to send controls.");
         }
     }
 
     event(...args) {
-        this.logger.debug("event() called with args:", args);
+        if(this.debug) this.logger.debug("event() called with args:", args);
         if (this.roomJoined) {
             let mode = args[0] === "publish" || args[0] === "pub" ? "publish" : "push",
                 headerName = mode === "publish" ? args[1] : args[0],
@@ -286,7 +284,7 @@ export class CollabSlobClient {
     }
 
     chat(m, t) {
-        this.logger.debug("chat() called with args:", [m,t]);
+        if(this.debug) this.logger.debug("chat() called with args:", [m,t]);
         if (this.roomJoined) {
             const header = {
                 clientId: this.clientId
@@ -305,7 +303,7 @@ export class CollabSlobClient {
     }
 
     setUsername(u) {
-      this.logger.debug("setUsername() called with args:", u);
+      if(this.debug) this.logger.debug("setUsername() called with args:", u);
        setTimeout(() => {
          this.socket.emit("addUsername", { username: u });
         this.username = u;
@@ -331,29 +329,29 @@ export class CollabSlobClient {
     // room management
 
     joinRoom(roomName) {
-        this.logger.debug(`joinRoom() called with roomName: ${roomName}`);
+        if(this.debug) this.logger.debug(`joinRoom() called with roomName: ${roomName}`);
 
 
         if (this.roomJoined) {
-            this.logger.debug(`Already in room: ${this.roomJoined}, leaving it first`);
+            if(this.debug) this.logger.debug(`Already in room: ${this.roomJoined}, leaving it first`);
             this.leaveRoom(this.roomJoined);
         }
 
-        this.logger.debug(`Preparing to join room: ${roomName}`);
+        if(this.debug) this.logger.debug(`Preparing to join room: ${roomName}`);
         // The server expects just the room name string, not an object
-        this.logger.debug(`Emitting joinRoom event with roomName: ${roomName}`);
+        if(this.debug) this.logger.debug(`Emitting joinRoom event with roomName: ${roomName}`);
         this.socket.emit("joinRoom", roomName);
 
         this.roomJoined = roomName;     // room joined, can start receiving controls/events
-        this.logger.debug(`Room joined flag set to: ${this.roomJoined}`);
-        this.logger.debug(`Client ID: ${this.clientId}`);
+        if(this.debug) this.logger.debug(`Room joined flag set to: ${this.roomJoined}`);
+        if(this.debug) this.logger.debug(`Client ID: ${this.clientId}`);
     }
 
     leaveRoom(roomName) {
-        this.logger.debug(`leaveRoom() called with roomName: ${roomName}`);
+        if(this.debug) this.logger.debug(`leaveRoom() called with roomName: ${roomName}`);
         // The server expects just the room name string, not an object
         this.socket.emit("leaveRoom", roomName);
-        this.logger.debug(`Emitted leaveRoom event with roomName: ${roomName}`);
+        if(this.debug) this.logger.debug(`Emitted leaveRoom event with roomName: ${roomName}`);
     }
 
     getRooms() {

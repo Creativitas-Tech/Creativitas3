@@ -21,7 +21,7 @@ import DrumSamplerPresets from './synthPresets/DrumSamplerPresets.json';
 import {parseStringSequence, parseStringBeat} from '../TheoryModule'
 import {Parameter} from './ParameterModule.js'
 import { Seq } from '../Seq'
-import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule';
+import { Theory } from '../TheoryModule';
 import Groove from '../Groove.js'
 import paramDefinitions from './params/drumSamplerParams.js';
 import layout from './layouts/drumSamplerLayout.json';
@@ -126,6 +126,7 @@ export class DrumSampler extends DrumTemplate{
 
     for(let i=0;i<10;i++) {
         this.subdivision[i] = '16n'
+        this.createSequence(i)
     }
     // Bind parameters with this instance
     this.paramDefinitions = paramDefinitions(this)
@@ -273,24 +274,9 @@ export class DrumSampler extends DrumTemplate{
    * @param {string} arr - A string representing the drum pattern.
    * @param {string} subdivision - The rhythmic subdivision to use for the sequence (e.g., '8n', '16n').
    */
-  // sequence(arr, subdivision = '8n', num = 0, iterations = 'Infinity') {
-
-  //   this.seq[num] = parseStringSequence(arr)
-
-  //   this.createLoop(subdivision, num, iterations)
-
-  //   // Initialize arrays for each drum voice
-  //   if (subdivision) this.subdivision[num] = subdivision;
-
-  //   //note: we have changed approaches
-  //   //the sequence is not split up at this point
-  //   //instead, it is parsed in the loop
-  // } 
-
   sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
-        //this.start(num);
-        //console.log(arr,num)
         if (!this.seq[num]) {
+          //console.log(num, this.seq[num])
             this.seq[num] = new Seq(this, '0', subdivision, phraseLength, num, this.triggerDrum.bind(this));
             this.seq[num].parent = this
             this.seq[num].vals = parseStringSequence(arr)
@@ -301,6 +287,21 @@ export class DrumSampler extends DrumTemplate{
             //console.log('update seq')
             this.seq[num].drumSequence(arr, subdivision, phraseLength);
         }
+    }
+    createSequence(num){
+      this.seq[num] = new Seq(this, '0', '16n', 'infinite', num, this.triggerDrum.bind(this));
+      this.seq[num].parent = this
+      this.seq[num].vals = ['.']
+      this.seq[num].loopInstance.stop()
+      this.seq[num].createLoop = this.newCreateLoop
+      this.seq[num].createLoop()
+    }
+    expr(func, len = 32, subdivision = '16n', num = 0) {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        }
+        this.seq[num].expr(func, len, subdivision);
+        this.start(num);
     }
 
     euclid(seq, hits=4, beats=8, rotate=0, subdivision = '8n', num = 0){
@@ -344,9 +345,6 @@ export class DrumSampler extends DrumTemplate{
                 if(this.enable=== 0) return
                 this.index = Math.floor(Tone.Transport.ticks / Tone.Time(this.subdivision).toTicks());
                 let curBeat = this.vals[this.index % this.vals.length];
-                //console.log("before transform", '.'+curBeat+'.')
-                curBeat = this.perform_transform(curBeat);
-                //console.log("after transform", '.'+curBeat+'.')
 
                 curBeat = this.checkForRandomElement(curBeat);
 
