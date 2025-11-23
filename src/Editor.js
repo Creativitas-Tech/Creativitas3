@@ -26,7 +26,7 @@ import p5 from 'p5';
 import Groove from './Groove.js';
 import { setp5Theme } from './p5Elements.js';
 import * as Tone from 'tone';
-import { useToneContextSwitcher } from './initTone.js';
+// import { useToneContextSwitcher } from './initTone.js';
 //import { Tone, actx } from './initTone.js';
 import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';

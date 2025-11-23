@@ -35,7 +35,7 @@ const seq4 = new Player('PintoBass.wav')
 seq3.loadPreset('breakbeat')
 
 // ROUTING
-seq1.connect(output)
+seq1.connect(vca)
 seq2.connect(vca)
 seq3.connect(vca)
 seq4.connect(vca)
@@ -88,10 +88,45 @@ const sequenceActions = {
   GUI INITIALIZATION: PART V
 **/
 
-// GRID CONFIGURATION
-const gridOrigin = { x: 200, y: 100 }
-const gridSpacing = { x: 120, y: 80 }
-const buttonSize = { width: 80, height: 40 }
+// DYNAMIC GRID CONFIGURATION
+const canvas = document.getElementById('Canvas')
+// Set background to black to match desired aesthetic and remove gray space
+canvas.style.backgroundColor = '#000000'
+// Ensure canvas fills the container and removes any default margins/padding
+canvas.style.margin = '0'
+canvas.style.padding = '0'
+canvas.style.width = '100%'
+canvas.style.height = '100%'
+canvas.style.border = 'none' // Remove border
+
+// Hide the header/controls bar and remove parent padding to eliminate "gray bar"
+try {
+  const p5Container = canvas.parentElement
+  if (p5Container) {
+    p5Container.style.padding = '0'
+    const header = p5Container.querySelector('.span-container')
+    if (header) header.style.display = 'none'
+  }
+} catch (e) {
+  console.log('Could not hide header:', e)
+}
+
+const w = canvas.clientWidth || window.innerWidth
+const h = canvas.clientHeight || window.innerHeight
+
+const buttonWidth = w * 0.12  // Increased from 0.05
+const buttonHeight = h * 0.08 // Increased from 0.04
+const spacingX = w * 0.15     // Increased from 0.08
+const spacingY = h * 0.15     // Increased from 0.1
+
+// Center the grid
+const totalGridWidth = 3 * spacingX + buttonWidth
+const startX = (w - totalGridWidth) / 2
+const startY = h * 0.25
+
+const gridOrigin = { x: startX, y: startY }
+const gridSpacing = { x: spacingX, y: spacingY }
+const buttonSize = { width: buttonWidth, height: buttonHeight }
 
 // STORAGE FOR BUTTON REFERENCES
 const seqToggleGrid = {
@@ -382,27 +417,39 @@ seqToggleGrid.seq4[3] = seq4_stop
   SEQUENCE LABELS: PART X
 **/
 
-// Create text labels using DOM elements
-const labelStyle = 'position: absolute; color: #8796EB; font-family: monospace; font-size: 12px; pointer-events: none; user-select: none;'
+// Create text labels using DOM elements with percentage-based positioning for responsiveness
+const labelWidthPct = 15
+const labelRightMarginPct = 2
+// Calculate X position as percentage: (Grid Start X / Total Width) * 100 - Label Width - Margin
+const labelX_pct = ((startX / w) * 100) - labelWidthPct - labelRightMarginPct
+
+const labelStyle = `position: absolute; color: #8796EB; font-family: monospace; font-size: 16px; pointer-events: none; user-select: none; text-align: right; width: ${labelWidthPct}%; left: ${labelX_pct}%;`
+
+// Helper to calculate top percentage for each row
+const getRowTopPct = (rowIndex) => {
+  const yPx = startY + (rowIndex * spacingY)
+  // Center vertically relative to button: Button is 8% height. Add ~2.5% to center text.
+  return ((yPx / h) * 100) + 2.5
+}
 
 const seq1_label = document.createElement('div')
 seq1_label.textContent = 'sequence 1'
-seq1_label.style.cssText = labelStyle + `left: ${gridOrigin.x - 100}px; top: ${gridOrigin.y + 10}px;`
+seq1_label.style.cssText = labelStyle + `top: ${getRowTopPct(0)}%;`
 document.getElementById('Canvas').appendChild(seq1_label)
 
 const seq2_label = document.createElement('div')
 seq2_label.textContent = 'sequence 2'
-seq2_label.style.cssText = labelStyle + `left: ${gridOrigin.x - 100}px; top: ${gridOrigin.y + 1 * gridSpacing.y + 10}px;`
+seq2_label.style.cssText = labelStyle + `top: ${getRowTopPct(1)}%;`
 document.getElementById('Canvas').appendChild(seq2_label)
 
 const seq3_label = document.createElement('div')
 seq3_label.textContent = 'sequence 3'
-seq3_label.style.cssText = labelStyle + `left: ${gridOrigin.x - 100}px; top: ${gridOrigin.y + 2 * gridSpacing.y + 10}px;`
+seq3_label.style.cssText = labelStyle + `top: ${getRowTopPct(2)}%;`
 document.getElementById('Canvas').appendChild(seq3_label)
 
 const seq4_label = document.createElement('div')
 seq4_label.textContent = 'sequence 4'
-seq4_label.style.cssText = labelStyle + `left: ${gridOrigin.x - 100}px; top: ${gridOrigin.y + 3 * gridSpacing.y + 10}px;`
+seq4_label.style.cssText = labelStyle + `top: ${getRowTopPct(3)}%;`
 document.getElementById('Canvas').appendChild(seq4_label)
 
 
@@ -410,15 +457,27 @@ document.getElementById('Canvas').appendChild(seq4_label)
   ENABLE TOGGLE: PART XI
 **/
 
-const enable_toggle = new Switch(gridOrigin.x + 500, gridOrigin.y, 60, 30)
+// Center toggle above the grid
+const toggleWidth = w * 0.06
+const toggleHeight = h * 0.04
+// Grid center X
+const gridCenterX = startX + (totalGridWidth / 2)
+const toggleX = gridCenterX - (toggleWidth / 2)
+// Position above grid (e.g., 12% from top, since grid starts at 25%)
+const toggleY = h * 0.12
+
+const enable_toggle = new Switch(toggleX, toggleY, toggleWidth, toggleHeight)
 enable_toggle.element.on('change', function(value) {
   vca.factor.value = value ? 1 : 0
   console.log('VCA Enabled:', value)
 })
 
+const toggleX_pct = (toggleX / w) * 100
+const toggleY_pct = (toggleY / h) * 100
 const enable_label = document.createElement('div')
 enable_label.textContent = 'enable'
-enable_label.style.cssText = labelStyle + `left: ${gridOrigin.x + 500}px; top: ${gridOrigin.y - 20}px;`
+// Position label centered above the toggle
+enable_label.style.cssText = `position: absolute; color: #8796EB; font-family: monospace; font-size: 16px; pointer-events: none; user-select: none; left: ${toggleX_pct}%; top: ${toggleY_pct - 5}%; width: 6%; text-align: center;`
 document.getElementById('Canvas').appendChild(enable_label)
 
 
