@@ -15,7 +15,7 @@ import p5 from 'p5';
 import { sketch } from '../p5Library.js'
 import * as Tone from 'tone';
 // import NoiseVoicePresets from './synthPresets/NoiseVoicePresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
 import paramDefinitions from './params/noiseVoiceParams.js';

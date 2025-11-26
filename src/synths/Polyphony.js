@@ -5,7 +5,7 @@
 
 import p5 from 'p5';
 import * as Tone from 'tone';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {stepper} from  '../Utilities.js'
 import { sketch } from '../p5Library.js'
 

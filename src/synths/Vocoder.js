@@ -8,7 +8,7 @@ Single vco monosynth
 
 import * as Tone from 'tone';
 // import VocoderPresets from './synthPresets/VocoderPresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Parameter} from './ParameterModule.js'
 import basicLayout from './layouts/basicLayout.json';
 import paramDefinitions from './params/vocoderParams.js';

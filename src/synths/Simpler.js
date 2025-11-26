@@ -6,7 +6,7 @@
 
 import * as Tone from 'tone';
 // import SimplerPresets from './synthPresets/SimplerPresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Parameter} from './ParameterModule.js'
 import layout from './layouts/EffectLayout.json';
 import paramDefinitions from './params/simplerParams.js';

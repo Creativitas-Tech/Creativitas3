@@ -36,7 +36,7 @@ gain (into waveShaper)
 import p5 from 'p5';
 import * as Tone from 'tone';
 import RumblePresets from './synthPresets/RumblePresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Parameter} from './ParameterModule.js'
 import tightLayout from './layouts/tightLayout.json';
 import paramDefinitions from './params/rumbleParams.js';

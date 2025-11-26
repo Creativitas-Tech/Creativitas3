@@ -13,6 +13,12 @@ import './Editor-Initalizer.js';
 //tone
 import { FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
+// NexusUI wrappers
+import { Dial } from './ui/Dial.js';
+import { Slider } from './ui/Slider.js';
+import { NumberBox } from './ui/NumberBox.js';
+import { Button } from './ui/Button.js';
+import { Switch } from './ui/Switch.js';
 
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
@@ -20,7 +26,7 @@ import p5 from 'p5';
 import Groove from './Groove.js';
 import { setp5Theme } from './p5Elements.js';
 import * as Tone from 'tone';
-import { useToneContextSwitcher } from './initTone.js';
+// import { useToneContextSwitcher } from './initTone.js';
 //import { Tone, actx } from './initTone.js';
 import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';
@@ -314,6 +320,13 @@ function Editor(props) {
     window.Twinkle = Twinkle;
     window.EnvelopeLoop = EnvelopeLoop;
     window.MarkovChain = MarkovChain;
+
+    // NexusUI wrapper classes (for user code)
+    window.Dial = Dial;
+    window.Slider = Slider;
+    window.NumberBox = NumberBox;
+    window.Button = Button;
+    window.Switch = Switch;
 
     window.create_sequencer_gui = create_sequencer_gui;
 

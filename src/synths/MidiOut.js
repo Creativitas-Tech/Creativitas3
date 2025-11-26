@@ -7,7 +7,7 @@ MidiOut
 import p5 from 'p5';
 import * as Tone from 'tone';
 //import RumblePresets from './synthPresets/RumblePresets.json';
-import { MonophonicTemplate } from './MonophonicTemplate';
+import { MonophonicTemplate } from './MonophonicTemplate.js';
 import { midiHandlerInstance } from '../midi/Midi.js';
 import {Theory, parsePitchStringSequence, parsePitchStringBeat,getChord, pitchNameToMidi, intervalToMidi} from '../TheoryModule'
 
