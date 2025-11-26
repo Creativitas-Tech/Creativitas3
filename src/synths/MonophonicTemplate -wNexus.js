@@ -1,13 +1,14 @@
 // MonophonicTemplate.js
 
 import * as Tone from 'tone';
-import * as p5 from 'p5';
-import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule';
-import { Seq } from '../Seq'
-import { TuringMachine } from '../Turing'
-import { ArrayVisualizer } from '../visualizers/VisualizeArray';
+import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule.js';
+import { Seq } from '../Seq.js'
+import { TuringMachine } from '../Turing.js'
+import { ArrayVisualizer } from '../visualizers/VisualizeArray.js';
 import { Parameter } from './ParameterModule.js'
-import { sketch } from '../p5Library.js'
+import { Dial } from '../ui/Dial.js'
+import { Slider } from '../ui/Slider.js'
+import { NumberBox } from '../ui/NumberBox.js'
 import basicLayout from './layouts/basicLayout.json';
 import Groove from '../Groove.js'
 
@@ -504,17 +505,20 @@ export class MonophonicTemplate {
     }
 
     /**
-     * Initialize the GUI
+     * Initialize the GUI with NexusUI
      * @returns {void}
      * @example 
-     * const gui = new p5(sketch, 'Canvas1');
-     * synth.initGui(gui, 10, 10)
+     * synth.initGui()
      */
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
-        const sketchWithSize = (p) => sketch(p, { height: this.guiHeight });
-        //console.log(this.guiHeight)
-        this.gui = new p5(sketchWithSize, this.guiContainer);
+        if (!this.guiContainer) {
+            console.error('NexusUI container #Canvas not found in DOM');
+            return;
+        }
+        
+        // No need to create p5 instance for NexusUI
+        this.gui = true; // Flag to indicate GUI is initialized
         const layout = this.layout;
         //console.log(layout);
 
@@ -564,10 +568,11 @@ export class MonophonicTemplate {
                 }
             });
         });
-        this.gui.setTheme(this.gui, 'dark' )
-        this.gui.backgroundColor = this.backgroundColor
-        //setTimeout(this.loadPreset('default'),1000)
-        //setTimeout(this.gui.setTheme(this.gui, 'dark' ),1000)
+        
+        // Apply theme colors to all Nexus elements
+        if (this.backgroundColor) {
+            document.body.style.backgroundColor = `rgb(${this.backgroundColor[0]}, ${this.backgroundColor[1]}, ${this.backgroundColor[2]})`;
+        }
     }
 
     /**
@@ -575,8 +580,17 @@ export class MonophonicTemplate {
      * @returns {void}
      */
     hideGui() {
-        if (this.gui) {
-            this.gui.remove(); // Properly destroy p5 instance
+        if (this.gui && this.guiContainer) {
+            // Destroy all NexusUI elements
+            Object.values(this.param).forEach((param) => {
+                if (param.guiElements) {
+                    param.guiElements.forEach((element) => {
+                        if (element && element.destroy) {
+                            element.destroy();
+                        }
+                    });
+                }
+            });
             this.gui = null;
         }
     }
@@ -589,77 +603,55 @@ export class MonophonicTemplate {
         this.initGui()
     }
 
-    // Create individual GUI element
+    // Create individual GUI element using NexusUI wrappers
     createGuiElement(param, { x, y, size, controlType, color, i=null }) {
         //console.log('createG', param, x,y,size,controlType, i)
+        
+        // Convert size from p5 units to pixel dimensions for NexusUI
+        const width = size * 45;  // Adjust multiplier as needed
+        const height = size * 45;
+        
         if (controlType === 'knob') {
-            param.guiElements.push(this.gui.Knob({
-                label: i ? param.labels[i] : param.name,
-                min: param.min,
-                max: param.max,
-                value: param._value,
-                size: size , // Scale size
-                curve: param.curve,
-                x,
-                y,
-                accentColor: color,
-                callback: (value) => param.set(value,i,true),
-            }));
-        } else if (controlType === 'fader') {
-            param.guiElements.push(this.gui.Fader({
-                label: i ? param.labels[i] : param.name,
-                min: param.min,
-                max: param.max,
-                value: param._value,
-                curve: param.curve,
-                size: size , // Scale size
-                x,
-                y,
-                accentColor: color,
-                callback: (value) => param.set(value,i,true),
-            }));
-        } else if (controlType === 'radioButton') {
-            if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
-                console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
-                return null;
+            const dial = new Dial(x, y, width, height);
+            dial.min = param.min;
+            dial.max = param.max;
+            dial.value = i !== null && Array.isArray(param._value) ? param._value[i] : param._value;
+            
+            // Apply color if provided
+            if (color) {
+                dial.colorize("accent", color);
             }
-
-            param.guiElements.push(this.gui.RadioButton({
-                label: i ? param.labels[i] : param.name,
-                radioOptions: param.radioOptions,
-                value: param._value,
-                x:x,
-                y:y+10,
-                accentColor: color,
-                callback: (selectedOption) => param.set(selectedOption,i,true),
-            }));
+            
+            // Set up the callback
+            dial.mapTo((value) => param.set(value, i, true));
+            
+            param.guiElements.push(dial);
+            
+        } else if (controlType === 'fader') {
+            const slider = new Slider(x, y, width * 2, height);
+            slider.min = param.min;
+            slider.max = param.max;
+            slider.value = i !== null && Array.isArray(param._value) ? param._value[i] : param._value;
+            
+            // Apply color if provided
+            if (color) {
+                slider.colorize("accent", color);
+            }
+            
+            // Set up the callback
+            slider.mapTo((value) => param.set(value, i, true));
+            
+            param.guiElements.push(slider);
+            
+        } else if (controlType === 'radioButton') {
+            // RadioButton not yet implemented in NexusUI wrappers
+            console.warn(`RadioButton controlType not yet supported with NexusUI`);
         } else if (controlType === 'dropdown') {
-            // if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
-            //     console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
-            //     return null;
-            // }
-
-            param.guiElements.push( this.gui.Dropdown({
-                label: i ? param.labels[i] : param.name, 
-                dropdownOptions: this.drumkitList,
-                value: param._value,
-                x:x,
-                y:y+10,
-                size:15,
-                accentColor: color,
-                callback:(x)=>{this.loadSamples(x)}
-              }))
+            // Dropdown not yet implemented in NexusUI wrappers
+            console.warn(`Dropdown controlType not yet supported with NexusUI`);
         } else if (controlType === 'text') {
-            param.guiElements.push( this.gui.Text({
-                label: param.max,
-                value: param._value,
-                x:x+2,
-                y:y+10,
-                border:0.01,
-                textSize: size,
-                accentColor: color,
-                callback: (x) => {},
-            }) );
+            // Text display not yet implemented in NexusUI wrappers
+            console.warn(`Text controlType not yet supported with NexusUI`);
         } else {
             console.log('no gui creation element for ', controlType)
         }
@@ -684,14 +676,17 @@ export class MonophonicTemplate {
 
 
     createKnob(label, x, y, min, max, size, accentColor, callback) {
-        return this.gui.Knob({
-          label, min, max, size, accentColor,
-          x: x + this.x, y: y + this.y,
-          callback: callback,
-          showLabel: 1, showValue: 0, // Assuming these are common settings
-          curve: 2, // Adjust as needed
-          border: 2 // Adjust as needed
-        });
+        const dial = new Dial(x + (this.x || 0), y + (this.y || 0), size, size);
+        dial.min = min;
+        dial.max = max;
+        
+        if (accentColor) {
+            dial.colorize("accent", accentColor);
+        }
+        
+        dial.mapTo(callback);
+        
+        return dial;
     }
 
     linkGui(name){
@@ -699,8 +694,15 @@ export class MonophonicTemplate {
         let objectIndex = 0
         Object.keys(this.param).forEach(key => {
           let subObject = this.param[key];
-          if( subObject.guiElements[0] ) 
-            subObject.guiElements[0].setLink( name + objectIndex )
+          if( subObject.guiElements[0] ) {
+            // Note: CollabHub integration would require implementing setLink in NexusElement
+            // or manually setting up the callbacks to use ch.control()
+            if (subObject.guiElements[0].setLink) {
+                subObject.guiElements[0].setLink( name + objectIndex )
+            } else {
+                console.warn('setLink not implemented for NexusUI elements yet');
+            }
+          }
           objectIndex++
         });
     }
@@ -711,7 +713,8 @@ export class MonophonicTemplate {
         const value = snap ? snap[key]?.value : subObject._value;
 
         if (value !== undefined && subObject.guiElements?.[0]) {
-          subObject.guiElements[0].set(value);
+          // NexusUI elements use .value property directly
+          subObject.guiElements[0].value = value;
         }
       });
     }

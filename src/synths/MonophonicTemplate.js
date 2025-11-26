@@ -1,14 +1,16 @@
 // MonophonicTemplate.js
 
 import * as Tone from 'tone';
-import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule.js';
-import { Seq } from '../Seq.js'
-import { TuringMachine } from '../Turing.js'
-import { ArrayVisualizer } from '../visualizers/VisualizeArray.js';
+import * as p5 from 'p5';
+import { Theory, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from '../TheoryModule';
+import { Seq } from '../Seq'
+import { TuringMachine } from '../Turing'
+import { ArrayVisualizer } from '../visualizers/VisualizeArray';
 import { Parameter } from './ParameterModule.js'
 import { Dial } from '../ui/Dial.js'
 import { Slider } from '../ui/Slider.js'
 import { NumberBox } from '../ui/NumberBox.js'
+import { sketch } from '../p5Library.js'
 import basicLayout from './layouts/basicLayout.json';
 import Groove from '../Groove.js'
 
@@ -505,20 +507,17 @@ export class MonophonicTemplate {
     }
 
     /**
-     * Initialize the GUI with NexusUI
+     * Initialize the GUI
      * @returns {void}
      * @example 
-     * synth.initGui()
+     * const gui = new p5(sketch, 'Canvas1');
+     * synth.initGui(gui, 10, 10)
      */
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
-        if (!this.guiContainer) {
-            console.error('NexusUI container #Canvas not found in DOM');
-            return;
-        }
-        
-        // No need to create p5 instance for NexusUI
-        this.gui = true; // Flag to indicate GUI is initialized
+        const sketchWithSize = (p) => sketch(p, { height: this.guiHeight });
+        //console.log(this.guiHeight)
+        this.gui = new p5(sketchWithSize, this.guiContainer);
         const layout = this.layout;
         //console.log(layout);
 
@@ -568,6 +567,76 @@ export class MonophonicTemplate {
                 }
             });
         });
+        this.gui.setTheme(this.gui, 'dark' )
+        this.gui.backgroundColor = this.backgroundColor
+        //setTimeout(this.loadPreset('default'),1000)
+        //setTimeout(this.gui.setTheme(this.gui, 'dark' ),1000)
+    }
+
+    /**
+     * Initialize the GUI with NexusUI
+     * @returns {void}
+     * @example     
+     * synth.initGui()
+     */
+    initNexus(gui = null) {
+        this.guiContainer = document.getElementById('Canvas');
+        if (!this.guiContainer) {
+            console.error('NexusUI container #Canvas not found in DOM');
+            return;
+        }
+        
+        // No need to create p5 instance for NexusUI
+        this.gui = true; // Flag to indicate GUI is initialized
+        const layout = this.layout;
+        //console.log(layout);
+
+        // Group parameters by type
+        const groupedParams = {};
+        Object.values(this.param).forEach((param) => {
+            if (!groupedParams[param.type]) groupedParams[param.type] = [];
+            groupedParams[param.type].push(param);
+        });
+
+        // Create GUI for each group
+        Object.keys(groupedParams).forEach((groupType) => {
+            const groupLayout = layout[groupType];
+            if (!groupLayout) return;
+            if (groupType === 'hidden') return;
+
+            let indexOffset = 0;
+
+            groupedParams[groupType].forEach((param, index) => {
+                const isGroupA = groupLayout.groupA.includes(param.name);
+                const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
+                const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
+
+                // **Retrieve the current parameter value**
+                const paramValue = param.get ? param.get() : param._value;
+
+                if (Array.isArray(paramValue)) {
+                    paramValue.forEach((value, i) => {
+                        let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                        let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                        const x = groupLayout.boundingBox.x + xOffset;
+                        const y = groupLayout.boundingBox.y + yOffset;
+
+                        this.createNexusElement(param, { x, y, size, controlType, color: groupLayout.color, i, value });
+                        indexOffset++;
+                    });
+                } else {
+                    let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                    let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                    const x = groupLayout.boundingBox.x + xOffset;
+                    const y = groupLayout.boundingBox.y + yOffset;
+
+                    // Pass the **retrieved parameter value** to GUI
+                    this.createNexusElement(param, { x, y, size, controlType, color: groupLayout.color, value: paramValue });
+                }
+            });
+        });
         
         // Apply theme colors to all Nexus elements
         if (this.backgroundColor) {
@@ -580,17 +649,8 @@ export class MonophonicTemplate {
      * @returns {void}
      */
     hideGui() {
-        if (this.gui && this.guiContainer) {
-            // Destroy all NexusUI elements
-            Object.values(this.param).forEach((param) => {
-                if (param.guiElements) {
-                    param.guiElements.forEach((element) => {
-                        if (element && element.destroy) {
-                            element.destroy();
-                        }
-                    });
-                }
-            });
+        if (this.gui) {
+            this.gui.remove(); // Properly destroy p5 instance
             this.gui = null;
         }
     }
@@ -603,8 +663,84 @@ export class MonophonicTemplate {
         this.initGui()
     }
 
-    // Create individual GUI element using NexusUI wrappers
+    // Create individual GUI element
     createGuiElement(param, { x, y, size, controlType, color, i=null }) {
+        //console.log('createG', param, x,y,size,controlType, i)
+        if (controlType === 'knob') {
+            param.guiElements.push(this.gui.Knob({
+                label: i ? param.labels[i] : param.name,
+                min: param.min,
+                max: param.max,
+                value: param._value,
+                size: size , // Scale size
+                curve: param.curve,
+                x,
+                y,
+                accentColor: color,
+                callback: (value) => param.set(value,i,true),
+            }));
+        } else if (controlType === 'fader') {
+            param.guiElements.push(this.gui.Fader({
+                label: i ? param.labels[i] : param.name,
+                min: param.min,
+                max: param.max,
+                value: param._value,
+                curve: param.curve,
+                size: size , // Scale size
+                x,
+                y,
+                accentColor: color,
+                callback: (value) => param.set(value,i,true),
+            }));
+        } else if (controlType === 'radioButton') {
+            if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
+                console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
+                return null;
+            }
+
+            param.guiElements.push(this.gui.RadioButton({
+                label: i ? param.labels[i] : param.name,
+                radioOptions: param.radioOptions,
+                value: param._value,
+                x:x,
+                y:y+10,
+                accentColor: color,
+                callback: (selectedOption) => param.set(selectedOption,i,true),
+            }));
+        } else if (controlType === 'dropdown') {
+            // if (!Array.isArray(param.radioOptions) || param.radioOptions.length === 0) {
+            //     console.warn(`Parameter "${param.name}" has no options defined for radioBox.`);
+            //     return null;
+            // }
+
+            param.guiElements.push( this.gui.Dropdown({
+                label: i ? param.labels[i] : param.name, 
+                dropdownOptions: this.drumkitList,
+                value: param._value,
+                x:x,
+                y:y+10,
+                size:15,
+                accentColor: color,
+                callback:(x)=>{this.loadSamples(x)}
+              }))
+        } else if (controlType === 'text') {
+            param.guiElements.push( this.gui.Text({
+                label: param.max,
+                value: param._value,
+                x:x+2,
+                y:y+10,
+                border:0.01,
+                textSize: size,
+                accentColor: color,
+                callback: (x) => {},
+            }) );
+        } else {
+            console.log('no gui creation element for ', controlType)
+        }
+    }
+
+    // Create individual GUI element using NexusUI wrappers
+    createNexusElement(param, { x, y, size, controlType, color, i=null }) {
         //console.log('createG', param, x,y,size,controlType, i)
         
         // Convert size from p5 units to pixel dimensions for NexusUI
@@ -676,6 +812,17 @@ export class MonophonicTemplate {
 
 
     createKnob(label, x, y, min, max, size, accentColor, callback) {
+        return this.gui.Knob({
+          label, min, max, size, accentColor,
+          x: x + this.x, y: y + this.y,
+          callback: callback,
+          showLabel: 1, showValue: 0, // Assuming these are common settings
+          curve: 2, // Adjust as needed
+          border: 2 // Adjust as needed
+        });
+    }
+
+    createNexusKnob(label, x, y, min, max, size, accentColor, callback) {
         const dial = new Dial(x + (this.x || 0), y + (this.y || 0), size, size);
         dial.min = min;
         dial.max = max;
@@ -694,15 +841,8 @@ export class MonophonicTemplate {
         let objectIndex = 0
         Object.keys(this.param).forEach(key => {
           let subObject = this.param[key];
-          if( subObject.guiElements[0] ) {
-            // Note: CollabHub integration would require implementing setLink in NexusElement
-            // or manually setting up the callbacks to use ch.control()
-            if (subObject.guiElements[0].setLink) {
-                subObject.guiElements[0].setLink( name + objectIndex )
-            } else {
-                console.warn('setLink not implemented for NexusUI elements yet');
-            }
-          }
+          if( subObject.guiElements[0] ) 
+            subObject.guiElements[0].setLink( name + objectIndex )
           objectIndex++
         });
     }
@@ -713,8 +853,7 @@ export class MonophonicTemplate {
         const value = snap ? snap[key]?.value : subObject._value;
 
         if (value !== undefined && subObject.guiElements?.[0]) {
-          // NexusUI elements use .value property directly
-          subObject.guiElements[0].value = value;
+          subObject.guiElements[0].set(value);
         }
       });
     }
