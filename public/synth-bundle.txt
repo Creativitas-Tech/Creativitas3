@@ -1243,6 +1243,7 @@ class Element {
 
         //parameter values
         this.active = 0;
+        this.isInteger = options.isInteger || false;
         this.min = options.min || 0;
         this.max = options.max || 1;
         this.curve = options.curve || 1;
@@ -1252,6 +1253,7 @@ class Element {
         if (this.mapto || this.callback) this.maptoDefined = 'true'
         else this.maptoDefined = 'false'
         this.value = options.value != undefined ? options.value : scaleOutput(0.5, 0, 1, this.min, this.max, this.curve);
+        this.prevValue = this.value
         this.rawValue = unScaleOutput(this.value, 0, 1, this.min, this.max, this.curve);
         p.elements[this.id] = this;
 
@@ -1328,10 +1330,13 @@ class Element {
             this.p.textAlign(this.p.CENTER, this.p.CENTER);
             this.p.fill(this.setColor(this.textColor));
             this.p.textFont(getFont(this.valueFont))
-            if (Math.abs(this.max) < 1) output = output.toFixed(3)
-            else if (Math.abs(this.max) < 5) output = output.toFixed(2)
-            else if (Math.abs(this.max) < 100) output = output.toFixed(1)
-            else output = output.toFixed(1)
+            if(this.isInteger) output = output.toFixed(0)
+            else{
+                if (Math.abs(this.max) < 1) output = output.toFixed(3)
+                else if (Math.abs(this.max) < 5) output = output.toFixed(2)
+                else if (Math.abs(this.max) < 100) output = output.toFixed(1)
+                else output = output.toFixed(1)
+            }
             this.p.text(output, x + (this.valueX / 100) * this.p.width, y + (this.valueY / 100) * this.p.height);
         } catch(e){}
     }
@@ -1364,6 +1369,7 @@ class Element {
 
     mapValue(output, destination) {
         //console.log(output, destination)
+        if(this.isInteger) output = Math.floor(output)
         if (destination) {
             try {
                 destination.value.rampTo(output, .1);
@@ -1386,6 +1392,7 @@ class Element {
         //console.log(this.value, this.callback)
         if (this.callback) {
             let output = this.value
+            if(this.isInteger) output = Math.floor(output)
             try {
                 this.callback(output);
             } catch {
@@ -1407,7 +1414,7 @@ class Element {
         //console.log(value)
         if (typeof (value) === 'string') {
             this.value = value;
-        }
+        } 
         else {
             this.value = value
             this.rawValue = unScaleOutput(value, 0, 1, this.min, this.max, this.curve);
@@ -1867,7 +1874,7 @@ class Button extends Element {
             // Calculate the value
             let newValue = scaleOutput(1, 0, 1, this.min, this.max, this.curve);
             // Use the set method to update the value and trigger all necessary actions
-            console.log('Button isPressed - calling set() with value:', newValue);
+            //console.log('Button isPressed - calling set() with value:', newValue);
             this.set(newValue);
             if (this.maptoDefined === 'false') postButtonError('Buttons')
 
@@ -2388,7 +2395,7 @@ const sketch = (p, config = {}) => {
         p.activeTheme = themes['dark']
         p.width = dim[0]
         p.height = dim[1]
-        //console.log(p.width, p.height)
+        console.log(p.width, p.height)
         p.frame = 0
         p.x = 0
         p.y = 0
@@ -19221,12 +19228,12 @@ function pseudorandom(value){
  *   let c = new CircularVisualizer(s.seq[0], gui, { synth: s })
  *   // That's it! Automatically sets up callback and enables
  *
- * Custom position and color:
+ * Custom position, size, and color:
  *   let c = new CircularVisualizer(s.seq[0], gui, {
  *     synth: s,
  *     x: 25,  // Percentage from left (0-100), like other GUI elements
  *     y: 50,  // Percentage from top (0-100)
- *     diameter: 10,  // Percentage of canvas width (0-100)
+ *     size: 0.5,  // Size parameter (same as knobs) - scales like GUI elements
  *     currentColor: { r: 0, g: 255, b: 0 }  // Green instead of red
  *   })
  *
@@ -19246,8 +19253,20 @@ class CircularVisualizer {
         // Position & size (now using percentage like other GUI elements: 0-100)
         this.x = options.x !== undefined ? options.x : null  // null = auto center, otherwise percentage (0-100)
         this.y = options.y !== undefined ? options.y : null  // null = auto center, otherwise percentage (0-100)
-        // Diameter as percentage of canvas width (similar to how knob size works)
-        this.diameter = options.diameter !== undefined ? options.diameter : 15  // Default 15% of canvas width 
+
+        // Size parameter (like knobs) - scales the same way as GUI knobs
+        // If size is provided, use it directly; if diameter is provided, convert it; otherwise use default
+        // Knob formula: diameter = (size / 6) * canvasWidth / 2
+        // To convert diameter (as percentage) to size: size = (diameter / 100) * 12
+        // Default size of 2.5 gives approximately 20.8% of canvas width (bigger default size)
+        if (options.size !== undefined) {
+            this.size = options.size  // Use size parameter directly (e.g., size: 0.5)
+        } else if (options.diameter !== undefined) {
+            // Convert diameter percentage to size parameter for backward compatibility
+            this.size = (options.diameter / 100) * 12
+        } else {
+            this.size = 2.5  // Default size (gives ~20.8% of canvas width - bigger by default)
+        }
 
         // Visual style
         this.separatorWeight = options.separatorWeight || 0.5
@@ -19341,8 +19360,10 @@ class CircularVisualizer {
         const x = this.x !== null ? (this.x / 100) * canvasWidth : canvasWidth / 2
         const y = this.y !== null ? (this.y / 100) * canvasHeight : canvasHeight / 2
 
-        // Calculate diameter as percentage of canvas width (similar to knob sizing)
-        const diameter = (this.diameter / 100) * canvasWidth
+        // Calculate diameter using the exact same formula as knobs
+        // Knob formula: cur_size = (size / 6) * width / 2
+        // This makes CircularVisualizer scale proportionally with GUI knobs
+        const diameter = (this.size / 6) * canvasWidth / 2
         const outerRadius = diameter / 2
         const numSegments = array.length
 

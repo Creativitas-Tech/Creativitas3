@@ -23,6 +23,7 @@ export async function getBundledTimingPackages(): Promise<string> {
  */
 export async function getBundledSynthCode(): Promise<string> {
     try {
+        
         const response = await fetch('/creativitas/synth-bundle.min.js');
         if (!response.ok) throw new Error('Failed to load synth bundle');
         return await response.text();

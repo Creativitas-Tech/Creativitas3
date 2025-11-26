@@ -25,8 +25,10 @@ export * from '../src/synths/Chorus.js';
 export * from '../src/synths/Cymbal.js';
 export * from '../src/synths/Daisies.js';
 export * from '../src/synths/DatoDuo.js';
+export * from '../src/synths/Delay.js';
 export * from '../src/synths/DelayOp.js';
 export * from '../src/synths/Diffuseur.js';
+export * from '../src/synths/Distortion.js';
 export * from '../src/synths/Drone.js';
 export * from '../src/synths/DrumSampler.js';
 export * from '../src/synths/DrumTemplate.js';
@@ -34,6 +36,7 @@ export * from '../src/synths/DrumVoice.js';
 export * from '../src/synths/Drummer.js';
 export * from '../src/synths/ESPSynth.js';
 export * from '../src/synths/Feedback.js';
+export * from '../src/synths/FM4.js';
 export * from '../src/synths/KP.js';
 export * from '../src/synths/Kick.js';
 export * from '../src/synths/MidiOut.js';
@@ -46,6 +49,7 @@ export * from '../src/synths/Player.js';
 export * from '../src/synths/Polyphony.js';
 export * from '../src/synths/Quadrophonic.js';
 export * from '../src/synths/Resonator.js';
+export * from '../src/synths/Reverb.js';
 export * from '../src/synths/Rumble.js';
 export * from '../src/synths/Samples.js';
 export * from '../src/synths/SimpleSeq.js';
@@ -57,7 +61,6 @@ export * from '../src/synths/ToneWood.js';
 export * from '../src/synths/Twinkle.js';
 export * from '../src/synths/waveshapers.js';
 
-
 // Visualizers
 export * from '../src/visualizers/Oscilloscope.js';
 export * from '../src/visualizers/Spectroscope.js';
@@ -65,3 +68,8 @@ export * from '../src/visualizers/Spectrogram.js';
 export * from '../src/visualizers/PlotTransferFunction.js';
 export * from '../src/visualizers/VisualizeArray.js';
 export * from '../src/visualizers/CircularVisualizer.js';
+
+// Generators
+export * from '../src/generators/MarkovChain.js';
+
+export * from '../src/midi/MidiKeyboard2.js';

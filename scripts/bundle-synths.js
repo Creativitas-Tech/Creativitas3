@@ -9,7 +9,6 @@ require('../src/Editor-Initalizer.js');
 async function bundleSynthDependencies() {
     const processedFiles = new Set();
     const dependencies = new Map();
-    console.log('bundler ran')
 
     // Paths to ignore (i.e any duplicate declarations, experimental stuff that should not be included)
     const ignorePaths = [
@@ -18,13 +17,15 @@ async function bundleSynthDependencies() {
 
     const coreFiles = [
         'AsciiKeyboard.js',
+        //'./AsciiKeyboard.js',
         'CollabHub.js',
         'Midi.js',
         'p5Elements.js',
         'p5Library.js',
         'p5Themes.js',
         'TheoryModule.js',
-        'TimingManager.js'
+        'TimingManager.js',
+        './midi/MidiKeyboard2.js'
     ]
 
     const srcDir = path.join(__dirname, '..', 'src');
