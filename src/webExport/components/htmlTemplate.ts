@@ -125,8 +125,10 @@ const generateControls = `
 const generateVolumeWarningHTML = `
 <div id="volumeWarning">
     <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
-        <h2>⚠️ Volume Warning</h2>
-        <p>This page contains audio content. Please ensure your volume is at a comfortable level.</p>
+        <h2>Audio Application</h2>
+        <p>
+        This page contains audio content. Please ensure your volume is at a comfortable level.
+        </p>
         <button onclick="acknowledgeWarning()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">I understand</button>
     </div>
 </div>
@@ -149,6 +151,7 @@ const generateWindowInitializers = `
     window.sendCC = midiHandlerInstance.sendCC.bind(midiHandlerInstance);
     window.sendNote = midiHandlerInstance.sendNoteOn.bind(midiHandlerInstance);
     window.sendNoteOff = midiHandlerInstance.sendNoteOff.bind(midiHandlerInstance);
+    window.midiHandler = midiHandlerInstance
     `;
 
 // Helper function to generate the user code script block

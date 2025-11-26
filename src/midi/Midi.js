@@ -7,6 +7,7 @@ export var midiMsgs = {};
 export var ccCallbacks = {};
 
 /****** load webMIDI API ******/
+//comment out to disable MIDI
 if (navigator.requestMIDIAccess) {
     navigator.requestMIDIAccess()
         .then(onMIDISuccess)

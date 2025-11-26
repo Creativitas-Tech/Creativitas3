@@ -1,0 +1,259 @@
+//basic piano sampler
+let s = new Simpler()
+let output = new Tone.Multiply(.1).toDestination()
+s.connect(output)
+s.load('piano')
+//s.initGui()
+
+//
+let verb = new Delay()
+s.connect(verb)
+verb.connect(output)
+s.connect(output)
+// s.panic()
+verb.get()
+
+// === All Sequences ===
+let gui = new p5(sketch, Canvas)
+gui.backgroundColor = [90,60,100]
+//
+let whites = []
+let whiteNotes = ['z','x','c','v','b','n','m',',',]
+let blackNotes = ['s','d','g','h','j','l',';']
+let blacks = []
+let blackSpacing = [0,0,1,1,1,2,2,3,3,4]
+let keySpacing = 90/8
+for(let i=0;i<whiteNotes.length;i++){
+  whites.push(gui.Toggle({
+    label:whiteNotes[i],
+    size: 0.8, border: 2,
+    borderColor: [255,255,255],
+    x:10 + i*keySpacing, y:90,
+    textColor : [255,255,255],
+    accentColor:[0,0,200]
+  }))
+}
+for(let i=0;i<5;i++){
+  blacks.push(gui.Toggle({
+    label:blackNotes[i],
+    size: 0.8, border: 2,
+    borderColor: [0,0,0],
+    x:15 + (i+blackSpacing[i])*keySpacing , y:75,
+    textColor : [255,255,255]
+  }))
+}
+
+let rest = gui.Toggle({
+    label:'space\nbar\nrest',
+    size: 0.8, border: 2,
+    borderColor: [0,0,0],
+    x:10 + 7*keySpacing , y:75,
+    textColor : [255,255,255]
+  })
+//
+
+let playNoteOn = (note,vel)=>{
+  if(note == '.') {
+    rest.set(1)
+    return
+  }
+  note = note < 36 ?note%12+36 : note > 72 ? note%12+72 : note
+  s.triggerAttack(note, vel, Tone.immediate())
+  note = note%12
+  switch(note){
+    case 0: whites[0].set(1); whites[7].set(1);break;
+    case 1: blacks[0].set(1); break;
+    case 2: whites[1].set(1); break;
+    case 3: blacks[1].set(1); break;
+    case 4: whites[2].set(1); break;
+    case 5: whites[3].set(1); break;
+    case 6: blacks[2].set(1); break;
+    case 7: whites[4].set(1); break;
+    case 8: blacks[3].set(1); break;
+    case 9: whites[5].set(1); break;
+    case 10: blacks[4].set(1); break;
+    case 11: whites[6].set(1); break;
+  }
+}
+let playNoteOff = (note)=>{
+  if(note == '.') {
+    rest.set(0)
+    return
+  }
+  s.triggerRelease(note)
+  note = note%12
+  switch(note){
+    case 0: whites[0].set(0); whites[7].set(0);break;
+    case 1: blacks[0].set(0); break;
+    case 2: whites[1].set(0); break;
+    case 3: blacks[1].set(0); break;
+    case 4: whites[2].set(0); break;
+    case 5: whites[3].set(0); break;
+    case 6: blacks[2].set(0); break;
+    case 7: whites[4].set(0); break;
+    case 8: blacks[3].set(0); break;
+    case 9: whites[5].set(0); break;
+    case 10: blacks[4].set(0); break;
+    case 11: whites[6].set(0); break;
+  }
+}
+
+// //
+// let kVerb = gui.Dial({
+//   label:'Delay',
+//   x: 90, y:15, size:1,
+//   min:0.0, max:0.2, curve:2,
+//   callback: function(x){
+//     verb.level = x
+//   },
+//   value: 0.1,
+//   textColor: [255,255,255],
+//   borderColor:[100,0,0],
+//   accentColor: [0,0,200],
+//   border: 3
+// })
+//
+let matrixText = gui.Text({
+  label:'training data',
+  x:50,y:35,textColor:[255,255,255],
+  textSize:0.5,border:0
+})
+matrixText.border = 0
+matrixText.textSize = 2
+
+let genText = gui.Text({
+  label:'generated data',
+  x:50,y:55,textColor:[200,200,255],
+  textSize:0.5,border:0
+})
+genText.textSize = 2
+genText.border = 0
+
+let makeTable = (arr, lineLength=8)=>{
+  let out = ''
+  for(let i=0;i<arr.length;i+=lineLength){
+    console.log(i)
+    out = out + arr.slice(i,i+lineLength).join(',')
+    out = out +  '\n'
+    console.log(out)
+  }
+  return out
+}
+
+let m = new MarkovChain(1)
+console.log(m.matrix) //<- to see the current matrix
+// s.stop()
+
+//record your own training data!
+//enable the keyboard icon at the top of the screen to
+//play your melody in (C Major only)
+let trainingData = []
+let scale = [0,2,4,5,7,9,11]
+//
+//converts midi note 
+const midiToInterval = (midi)=>{
+  if(typeof midi != 'number') return '  '
+  const scale = [0,0,1,1,2,3,3,4,4,5,5,6]
+  const octave = Math.floor(midi/12)-5
+  const degree = midi%12
+  return scale[degree] + 7*octave
+}
+
+let isRecording = false
+setNoteOnHandler((note,vel)=>{
+  console.log(note)
+  //s.triggerAttackRelease(note, vel)
+  playNoteOn(note, vel)
+  if(isRecording){
+    trainingData.push(midiToInterval(note))
+    matrixText.label= 'training data\n'+makeTable(trainingData, 64)
+    matrixText.textSize = 2
+  }
+})
+setNoteOffHandler((note)=>{
+  playNoteOff(note)
+})
+
+const kb = MidiKeyboard2(midiHandler);
+kb.enable()
+s.stop()
+
+//m.train(trainingData) //<- updates the model
+//s.expr(i=> m.get(1)+7) //<-plays the update
+//m.train([0,2,4,2,4,5,4,5,7,5,4,5,4,2,4,2,0])
+console.log(trainingData)
+//console.log(m)
+
+
+let bRecord = gui.Toggle({
+    label:'record',
+    size: 1, border: 1,
+    borderColor: [0,0,0],
+    x:20 , y:20,
+    textColor : [255,255,255],
+    callback:x=>{
+      if(x){
+        trainingData= []
+        isRecording = true
+        matrixText.textSize = 1
+      }
+      else isRecording = false
+    }
+  })
+//
+let bTrain = gui.Button({
+    label:'train',
+    size: 1, border: 1,
+    borderColor: [0,0,0],
+    x:40 , y:20,
+    textColor : [255,255,255],
+    callback:x=>{
+      m.train(trainingData)
+      isRecording = false
+      bRecord.set(0)
+    }
+  })
+let bPlay = gui.Button({
+    label:'generate',
+    size: 1, border: 1,
+    borderColor: [0,0,0],
+    x:60 , y:20,
+    textColor : [255,255,255],
+    callback:x=>{
+      x = m.generateSequence(32)
+      s.sequence(x.map(x=>x==='  '?'.':x), '8n')
+      genText.label='generated sequence\n'+makeTable(x, 32)
+      genText.textSize = 2
+      s.sustainTime = .5
+    }
+  })
+let bStop = gui.Button({
+    label:'stop',
+    size: 1, border: 1,
+    borderColor: [0,0,0],
+    x:80 , y:20,
+    textColor : [255,255,255],
+    callback:x=>{
+      s.stop()
+    }
+  })
+let title = gui.Button({
+    label:'Markov Chain Generator',
+    size: 2, border: 0,
+    borderColor: [0,0,0],
+    x:50 , y:5,
+    textColor : [255,255,255]
+  })
+title.border = 0
+
+setTimeout(()=>{
+  't'
+  s.sustainTime =.5
+  verb.hicut = 300
+  verb.time = .5
+  verb.feedback = .4
+  verb.level = .5
+  matrixText.textSize = 2
+  genText.textSize = 2
+  title.textSize = 3
+},1000)

@@ -37,6 +37,7 @@ import WebSocketClient from './collabSocket';
 import { CollabSlobClient } from './CollabSlob.js';
 import {makeCollaborativeObject, ctx} from './CollabLink.js'
 
+import MidiKeyboard2 from './midi/MidiKeyboard2.js';
 import MidiKeyboard from './midi/MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
 import { AsciiGrid } from './AsciiGrid.js';
@@ -239,6 +240,7 @@ function Editor(props) {
 
       // You can call enableKeyboard() from anywhere in App
     window.enableMidiKeyboard = enableKeyboard;
+    window.midiHandler = midi.midiHandlerInstance
     //window.disableAsciiGrid = asciiGridInstance.disable.bind(asciiGridInstance);
     //window.setAsciiGridHandler = asciiGridInstance.setHandler.bind(asciiGridInstance);
 

@@ -547,7 +547,7 @@ class Element {
                     }
                 }
             }
-        } else if (this.maptoDefined === 'false') { console.log(this.label, 'no destination defined') }
+        } //else if (this.maptoDefined === 'false') { console.log(this.label, 'no destination defined') }
     }
 
     runCallBack() {

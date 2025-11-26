@@ -209,54 +209,60 @@ export class Simpler extends MonophonicTemplate {
     //envelopes
     triggerAttack (freq, amp=100, time=null){ 
         // console.log(freq, amp, time)
-        this.param.release = this.release
-        freq = freq - this.pitchOffset
-        freq = Tone.Midi(freq).toFrequency()
-        amp = amp/127
-        if(time){
-            this.sampler.triggerAttack(freq, time, amp)
-            this.filterEnv.triggerAttack(time)
-            //this.vca.factor.setValueAtTime(amp, time)
-        } else{
-        
-            this.sampler.triggerAttack(freq, Tone.now(), amp)
-            //console.log('s.a',freq, amp, time)
-            this.filterEnv.triggerAttack()
-            //this.vca.factor.value = amp
-        }
+        try{
+            this.param.release = this.release
+            freq = freq - this.pitchOffset
+            freq = Tone.Midi(freq).toFrequency()
+            amp = amp/127
+            if(time){
+                this.sampler.triggerAttack(freq, time, amp)
+                this.filterEnv.triggerAttack(time)
+                //this.vca.factor.setValueAtTime(amp, time)
+            } else{
+            
+                this.sampler.triggerAttack(freq, Tone.now(), amp)
+                //console.log('s.a',freq, amp, time)
+                this.filterEnv.triggerAttack()
+                //this.vca.factor.value = amp
+            }
+        }catch(e){}
     }
 
     triggerRelease (freq, time=null){
-        freq = freq - this.pitchOffset
-        freq = Tone.Midi(freq).toFrequency()
-        if(time) {
-            this.sampler.triggerRelease(freq, time)
-            this.filterEnv.triggerRelease(time)
-        }
-        else {
-            //console.log('s.r',freq, time)
-            this.sampler.triggerRelease(freq)
-            this.filterEnv.triggerRelease()
-        }
+        try{
+            freq = freq - this.pitchOffset
+            freq = Tone.Midi(freq).toFrequency()
+            if(time) {
+                this.sampler.triggerRelease(freq, time)
+                this.filterEnv.triggerRelease(time)
+            }
+            else {
+                //console.log('s.r',freq, time)
+                this.sampler.triggerRelease(freq)
+                this.filterEnv.triggerRelease()
+            }
+        }catch(e){}
     }
 
-    triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
-        //console.log('AR', freq, amp, dur, time)
-        this.param.release = this.release
-        freq = freq - this.pitchOffset 
-        freq = Tone.Midi(freq).toFrequency()
-        
-        amp = amp/127
-        //console.log(freq,amp,dur)
-        if(time){
-            this.sampler.triggerAttackRelease(freq, dur, time, amp)
-            this.filterEnv.triggerAttackRelease(dur,time)
-            this.vca.factor.setValueAtTime(amp, time)
-        } else{
-            this.sampler.triggerAttackRelease(freq, dur)
-            this.filterEnv.triggerAttackRelease(dur)
-            this.vca.factor.setValueAtTime(amp)
-        }
+    triggerAttackRelease (freq, amp, dur=0.01, time=null){
+        try{ 
+            //console.log('AR', freq, amp, dur, time)
+            this.param.release = this.release
+            freq = freq - this.pitchOffset 
+            freq = Tone.Midi(freq).toFrequency()
+            
+            amp = amp/127
+            //console.log(freq,amp,dur)
+            if(time){
+                this.sampler.triggerAttackRelease(freq, dur, time, amp)
+                this.filterEnv.triggerAttackRelease(dur,time)
+                this.vca.factor.setValueAtTime(amp, time)
+            } else{
+                this.sampler.triggerAttackRelease(freq, dur)
+                this.filterEnv.triggerAttackRelease(dur)
+                this.vca.factor.setValueAtTime(amp)
+            }
+        }catch(e){}
     }//attackRelease
 
 

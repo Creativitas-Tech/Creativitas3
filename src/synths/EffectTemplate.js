@@ -42,7 +42,8 @@ export class EffectTemplate {
      * Populate this.presets with presets fetched from the server
      * Using the name in this.synthPresetName
      */
-    async accessPreset(){      
+    async accessPreset(){
+    return      
         let presetData = {} 
         try {
             let response = await fetch('https://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
