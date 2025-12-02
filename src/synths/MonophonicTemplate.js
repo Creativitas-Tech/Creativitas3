@@ -10,6 +10,7 @@ import { Parameter } from './ParameterModule.js'
 import { Dial } from '../ui/Dial.js'
 import { Slider } from '../ui/Slider.js'
 import { NumberBox } from '../ui/NumberBox.js'
+import { RadioButton } from '../ui/RadioButton.js'
 import { sketch } from '../p5Library.js'
 import basicLayout from './layouts/basicLayout.json';
 import Groove from '../Groove.js'
@@ -577,7 +578,7 @@ export class MonophonicTemplate {
      * Initialize the GUI with NexusUI
      * @returns {void}
      * @example     
-     * synth.initGui()
+     * synth.initNexus()
      */
     initNexus(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
@@ -586,10 +587,20 @@ export class MonophonicTemplate {
             return;
         }
         
-        // No need to create p5 instance for NexusUI
-        this.gui = true; // Flag to indicate GUI is initialized
+        // Track created labels for cleanup
+        this.nexusLabels = [];
+        
+        // Flag to indicate NexusUI GUI is initialized (not p5)
+        this.gui = 'nexus';
+        this.isNexusGui = true;
         const layout = this.layout;
-        //console.log(layout);
+        
+        if (!layout) {
+            console.error('No layout defined for this synth');
+            return;
+        }
+        
+        console.log(`[initNexus] Initializing NexusUI GUI for ${this.name || 'synth'}`);
 
         // Group parameters by type
         const groupedParams = {};
@@ -601,7 +612,10 @@ export class MonophonicTemplate {
         // Create GUI for each group
         Object.keys(groupedParams).forEach((groupType) => {
             const groupLayout = layout[groupType];
-            if (!groupLayout) return;
+            if (!groupLayout) {
+                // console.log(`[initNexus] No layout for group: ${groupType}`);
+                return;
+            }
             if (groupType === 'hidden') return;
 
             let indexOffset = 0;
@@ -614,26 +628,35 @@ export class MonophonicTemplate {
                 // **Retrieve the current parameter value**
                 const paramValue = param.get ? param.get() : param._value;
 
+                // Calculate items per row safely (avoid division by zero)
+                const itemsPerRow = groupLayout.offsets.x > 0 
+                    ? Math.max(1, Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x))
+                    : 1;
+
+                // Extract optional layout settings
+                const orientation = groupLayout.orientation || 'horizontal';
+                const showValue = groupLayout.showValue || false;
+
                 if (Array.isArray(paramValue)) {
                     paramValue.forEach((value, i) => {
-                        let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-                        let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                        let xOffset = groupLayout.offsets.x * ((index + indexOffset) % itemsPerRow);
+                        let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / itemsPerRow);
 
                         const x = groupLayout.boundingBox.x + xOffset;
                         const y = groupLayout.boundingBox.y + yOffset;
 
-                        this.createNexusElement(param, { x, y, size, controlType, color: groupLayout.color, i, value });
+                        this.createNexusElement(param, { x, y, size, controlType, color: groupLayout.color, i, value, orientation, showValue });
                         indexOffset++;
                     });
                 } else {
-                    let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
-                    let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                    let xOffset = groupLayout.offsets.x * ((index + indexOffset) % itemsPerRow);
+                    let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / itemsPerRow);
 
                     const x = groupLayout.boundingBox.x + xOffset;
                     const y = groupLayout.boundingBox.y + yOffset;
 
                     // Pass the **retrieved parameter value** to GUI
-                    this.createNexusElement(param, { x, y, size, controlType, color: groupLayout.color, value: paramValue });
+                    this.createNexusElement(param, { x, y, size, controlType, color: groupLayout.color, value: paramValue, orientation, showValue });
                 }
             });
         });
@@ -642,6 +665,39 @@ export class MonophonicTemplate {
         if (this.backgroundColor) {
             document.body.style.backgroundColor = `rgb(${this.backgroundColor[0]}, ${this.backgroundColor[1]}, ${this.backgroundColor[2]})`;
         }
+        
+        console.log(`[initNexus] GUI initialization complete`);
+    }
+    
+    /**
+     * Hide/destroy the NexusUI GUI
+     * @returns {void}
+     */
+    hideNexus() {
+        // Destroy all NexusUI elements from parameters
+        Object.values(this.param).forEach((param) => {
+            if (param.guiElements && param.guiElements.length > 0) {
+                param.guiElements.forEach((element) => {
+                    if (element && element.destroy) {
+                        element.destroy();
+                    }
+                });
+                param.guiElements = [];
+            }
+        });
+        
+        // Remove all created labels
+        if (this.nexusLabels) {
+            this.nexusLabels.forEach((label) => {
+                if (label && label.parentNode) {
+                    label.parentNode.removeChild(label);
+                }
+            });
+            this.nexusLabels = [];
+        }
+        
+        this.gui = null;
+        this.isNexusGui = false;
     }
 
     /**
@@ -649,7 +705,14 @@ export class MonophonicTemplate {
      * @returns {void}
      */
     hideGui() {
-        if (this.gui) {
+        // Check if using NexusUI
+        if (this.isNexusGui || this.gui === 'nexus') {
+            this.hideNexus();
+            return;
+        }
+        
+        // Otherwise assume p5 instance
+        if (this.gui && this.gui.remove) {
             this.gui.remove(); // Properly destroy p5 instance
             this.gui = null;
         }
@@ -739,55 +802,179 @@ export class MonophonicTemplate {
         }
     }
 
+    // Helper to convert RGB array to hex color string
+    rgbToHex(colorArray) {
+        if (!colorArray || !Array.isArray(colorArray)) return '#FFFFFF';
+        const [r, g, b] = colorArray;
+        return '#' + [r, g, b].map(x => {
+            const hex = Math.max(0, Math.min(255, Math.round(x))).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+    }
+
     // Create individual GUI element using NexusUI wrappers
-    createNexusElement(param, { x, y, size, controlType, color, i=null }) {
-        //console.log('createG', param, x,y,size,controlType, i)
+    createNexusElement(param, { x, y, size, controlType, color, i=null, value, orientation='horizontal', showValue=false }) {
+        // console.log('createNexusElement', param.name, { x, y, size, controlType, color, i, value });
         
-        // Convert size from p5 units to pixel dimensions for NexusUI
-        const width = size * 45;  // Adjust multiplier as needed
-        const height = size * 45;
+        // Convert p5 percentage coordinates (0-100) to pixel coordinates
+        const container = document.getElementById('Canvas');
+        const containerWidth = container ? container.clientWidth : window.innerWidth;
+        const containerHeight = container ? container.clientHeight : window.innerHeight;
+        
+        // Convert from p5 percentage (0-100) to pixels
+        const pixelX = (x / 100) * containerWidth;
+        const pixelY = (y / 100) * containerHeight;
+        
+        // Calculate dial size - use a fixed base size scaled by the size parameter
+        // Target: ~50-70px dials that scale slightly with container
+        const baseDialSize = 55;  // Base dial size in pixels
+        const width = Math.round(baseDialSize * size);
+        const height = width;  // Keep square for dials
+        
+        // Get the actual value to use
+        const paramValue = value !== undefined ? value : 
+            (i !== null && Array.isArray(param._value) ? param._value[i] : param._value);
+        
+        // Convert RGB array to hex for NexusUI
+        const hexColor = Array.isArray(color) ? this.rgbToHex(color) : color;
+        
+        // Create label element for parameter name and store for cleanup
+        const createLabel = (labelText, labelX, labelY, labelWidth) => {
+            const label = document.createElement('div');
+            label.textContent = labelText;
+            label.style.cssText = `
+                position: absolute;
+                left: 0px;
+                top: -18px;
+                color: ${hexColor || '#AAAAAA'};
+                font-family: monospace;
+                font-size: 11px;
+                pointer-events: none;
+                user-select: none;
+                text-align: center;
+                width: ${labelWidth}px;
+            `;
+            return label;
+        };
         
         if (controlType === 'knob') {
-            const dial = new Dial(x, y, width, height);
-            dial.min = param.min;
-            dial.max = param.max;
-            dial.value = i !== null && Array.isArray(param._value) ? param._value[i] : param._value;
+            const dial = new Dial(pixelX, pixelY, width, height, showValue);
+            
+            // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
+            dial.min = param.min || 0;
+            dial.max = param.max || 1;
+            
+            // Validate and clamp value
+            let safeValue = paramValue;
+            if (typeof safeValue !== 'number' || isNaN(safeValue) || !isFinite(safeValue)) {
+                safeValue = dial.min;
+            }
+            safeValue = Math.max(dial.min, Math.min(dial.max, safeValue));
+            dial.value = safeValue;
+            
+            // Update value display with initial value
+            if (showValue) {
+                dial._updateValueDisplay(safeValue);
+            }
             
             // Apply color if provided
-            if (color) {
-                dial.colorize("accent", color);
+            if (hexColor) {
+                dial.colorize("accent", hexColor);
+            }
+            
+            // Create label above the dial - add to the dial's container
+            const labelText = i !== null && param.labels ? param.labels[i] : param.name;
+            const label = createLabel(labelText, 0, 0, width);
+            if (dial.elementContainer) {
+                dial.elementContainer.appendChild(label);
+            }
+            if (this.nexusLabels) {
+                this.nexusLabels.push(label);
             }
             
             // Set up the callback
-            dial.mapTo((value) => param.set(value, i, true));
+            dial.mapTo((v) => param.set(v, i, true));
             
             param.guiElements.push(dial);
             
         } else if (controlType === 'fader') {
-            const slider = new Slider(x, y, width * 2, height);
-            slider.min = param.min;
-            slider.max = param.max;
-            slider.value = i !== null && Array.isArray(param._value) ? param._value[i] : param._value;
+            // Faders are vertical sliders - make them taller than wide
+            const sliderWidth = width * 0.5;
+            const sliderHeight = width * 2;
+            
+            const slider = new Slider(pixelX, pixelY, sliderWidth, sliderHeight);
+            
+            // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
+            slider.min = param.min || 0;
+            slider.max = param.max || 1;
+            
+            // Validate and clamp value
+            let safeValue = paramValue;
+            if (typeof safeValue !== 'number' || isNaN(safeValue) || !isFinite(safeValue)) {
+                safeValue = slider.min;
+            }
+            safeValue = Math.max(slider.min, Math.min(slider.max, safeValue));
+            slider.value = safeValue;
             
             // Apply color if provided
-            if (color) {
-                slider.colorize("accent", color);
+            if (hexColor) {
+                slider.colorize("accent", hexColor);
+            }
+            
+            // Create label above the slider - add to the slider's container
+            const labelText = i !== null && param.labels ? param.labels[i] : param.name;
+            const label = createLabel(labelText, 0, 0, sliderWidth);
+            if (slider.elementContainer) {
+                slider.elementContainer.appendChild(label);
+            }
+            if (this.nexusLabels) {
+                this.nexusLabels.push(label);
             }
             
             // Set up the callback
-            slider.mapTo((value) => param.set(value, i, true));
+            slider.mapTo((v) => param.set(v, i, true));
             
             param.guiElements.push(slider);
             
         } else if (controlType === 'radioButton') {
-            // RadioButton not yet implemented in NexusUI wrappers
-            console.warn(`RadioButton controlType not yet supported with NexusUI`);
+            // Get the options from the parameter's radioOptions
+            const options = param.radioOptions || [];
+            if (options.length === 0) {
+                console.warn(`RadioButton has no options for param: ${param.name}`);
+                return;
+            }
+            
+            // Calculate button dimensions - smaller for vertical, wider for horizontal
+            const buttonWidth = orientation === 'vertical' ? 55 : Math.max(40, width);
+            const buttonHeight = 22;
+            
+            const radioBtn = new RadioButton(pixelX, pixelY, options, {
+                buttonWidth,
+                buttonHeight,
+                orientation: orientation,  // Use layout orientation
+                showLabel: true,
+                label: param.name
+            });
+            
+            // Apply color if provided
+            if (hexColor) {
+                radioBtn.colorize('accent', hexColor);
+            }
+            
+            // Set initial value
+            const currentValue = paramValue !== undefined ? paramValue : options[0];
+            radioBtn.ccSet(currentValue);
+            
+            // Set up the callback
+            radioBtn.mapTo((v) => param.set(v, i, true));
+            
+            param.guiElements.push(radioBtn);
         } else if (controlType === 'dropdown') {
             // Dropdown not yet implemented in NexusUI wrappers
-            console.warn(`Dropdown controlType not yet supported with NexusUI`);
+            console.warn(`Dropdown controlType not yet supported with NexusUI for param: ${param.name}`);
         } else if (controlType === 'text') {
             // Text display not yet implemented in NexusUI wrappers
-            console.warn(`Text controlType not yet supported with NexusUI`);
+            console.warn(`Text controlType not yet supported with NexusUI for param: ${param.name}`);
         } else {
             console.log('no gui creation element for ', controlType)
         }
@@ -823,7 +1010,15 @@ export class MonophonicTemplate {
     }
 
     createNexusKnob(label, x, y, min, max, size, accentColor, callback) {
-        const dial = new Dial(x + (this.x || 0), y + (this.y || 0), size, size);
+        // Convert p5 percentage coordinates (0-100) to pixel coordinates
+        const container = document.getElementById('Canvas');
+        const containerWidth = container ? container.clientWidth : window.innerWidth;
+        const containerHeight = container ? container.clientHeight : window.innerHeight;
+        
+        const pixelX = ((x + (this.x || 0)) / 100) * containerWidth;
+        const pixelY = ((y + (this.y || 0)) / 100) * containerHeight;
+        
+        const dial = new Dial(pixelX, pixelY, size, size);
         dial.min = min;
         dial.max = max;
         

@@ -5,6 +5,16 @@ export class Slider extends NexusElement {
         super('Slider', x, y, width, height);
     }
 
+    // ccSet is called by Parameter.set() to update the GUI without triggering callback
+    ccSet(value) {
+        // Validate value to prevent NaN errors
+        if (this.element && typeof value === 'number' && !isNaN(value) && isFinite(value)) {
+            // Clamp value to min/max range
+            const clampedValue = Math.max(this._min || 0, Math.min(this._max || 1, value));
+            this.element.value = clampedValue;
+        }
+    }
+
   
     // setMode(mode) {
     //     this.element.mode = mode; // "relative" or "absolute"

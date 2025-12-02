@@ -1,29 +1,79 @@
 // NexusUI wrapper base class
 // Uses the global Nexus object from the nexusui npm package
 
+// Static flag to track if Canvas has been initialized
+let canvasInitialized = false;
+
+/**
+ * Initialize the Canvas container for NexusUI elements
+ * Call this once before creating NexusUI elements, or it will be called automatically
+ * @param {string} backgroundColor - Optional background color (default: '#1a1a2e')
+ */
+export function initNexusCanvas(backgroundColor = '#1a1a2e') {
+    const container = document.getElementById('Canvas');
+    if (!container) {
+        console.error('initNexusCanvas: #Canvas container not found!');
+        return null;
+    }
+    
+    // Set up Canvas styling for NexusUI
+    container.style.backgroundColor = backgroundColor;
+    container.style.margin = '0';
+    container.style.padding = '0';
+    container.style.width = '100%';
+    container.style.height = '100%';
+    container.style.position = 'relative';
+    container.style.overflow = 'hidden';
+    
+    canvasInitialized = true;
+    return container;
+}
+
 export class NexusElement{
     constructor(element_type, x = 0, y = 0, width = 100, height = 100) {
         this.element_type = element_type;
 
-        // Initialize the Nexus element
-        // Reference Nexus from window object
+        // Get the Canvas container - this is where NexusUI elements should appear
+        const container = document.getElementById('Canvas');
+        if (!container) {
+            console.error('NexusElement: #Canvas container not found!');
+            return;
+        }
+        
+        // Auto-initialize Canvas if not already done
+        if (!canvasInitialized) {
+            initNexusCanvas();
+        }
+
+        // Initialize the Nexus element - NexusUI will create its own wrapper
         const Nexus = window.Nexus;
-        this.element = new Nexus[this.element_type]("#Canvas", {
+        
+        // Create a unique container div for this element inside Canvas
+        const elementContainer = document.createElement('div');
+        elementContainer.style.position = 'absolute';
+        elementContainer.style.left = x + 'px';
+        elementContainer.style.top = y + 'px';
+        container.appendChild(elementContainer);
+        
+        // Create the NexusUI element inside our positioned container
+        this.element = new Nexus[this.element_type](elementContainer, {
             size: [width, height]
         });
         
-        // Set positioning style for the element
-        this.element.element.style.position = 'absolute';
+        // Store reference to our container for cleanup
+        this.container = container;
+        this.elementContainer = elementContainer;
 
-        const container = document.getElementById('Canvas');
-        const containerWidth = container ? container.clientWidth : window.innerWidth;
-        const containerHeight = container ? container.clientHeight : window.innerHeight;
+        const containerWidth = container.clientWidth || window.innerWidth;
+        const containerHeight = container.clientHeight || window.innerHeight;
 
+        // Store position as percentages for responsive resizing
         this.xPercent = x / containerWidth;
         this.yPercent = y / containerHeight;
         this.widthPercent = width / containerWidth;
         this.heightPercent = height / containerHeight;
 
+        // Apply initial position (already set, but ensures consistency)
         this.updatePositionAndSize();
         
         // Use ResizeObserver to handle container resizing (e.g. split pane drag)
@@ -51,56 +101,72 @@ export class NexusElement{
 
     updatePositionAndSize() {
         // Update pixel values based on percentages and current container size
-        const container = document.getElementById('Canvas');
-        const newWidth = container ? container.clientWidth : window.innerWidth;
-        const newHeight = container ? container.clientHeight : window.innerHeight;
+        const container = this.container || document.getElementById('Canvas');
+        if (!container) return;
+        
+        const newWidth = container.clientWidth || window.innerWidth;
+        const newHeight = container.clientHeight || window.innerHeight;
 
-        this.element.element.style.left = this.xPercent * newWidth + "px";
-        this.element.element.style.top = this.yPercent * newHeight + "px";
-        this.element.resize(
-            this.widthPercent * newWidth,
-            this.heightPercent * newHeight
-        );
+        // Position our wrapper container
+        if (this.elementContainer) {
+            this.elementContainer.style.left = (this.xPercent * newWidth) + "px";
+            this.elementContainer.style.top = (this.yPercent * newHeight) + "px";
+        }
+        
+        // Resize the NexusUI element
+        if (this.element && this.element.resize) {
+            this.element.resize(
+                this.widthPercent * newWidth,
+                this.heightPercent * newHeight
+            );
+        }
     }
 
     colorize(property, color) {
-                this.element.colorize(property, color);
-            }
-        // for linking number boxes to other elements
-
-        //general, destroys any element
-        destroy(){
-            if (this.resizeObserver) {
-                this.resizeObserver.disconnect();
-            }
-            this.element.destroy()
+        if (this.element && this.element.colorize) {
+            this.element.colorize(property, color);
         }
+    }
+
+    // Destroy the element and clean up
+    destroy(){
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
+        if (this.element && this.element.destroy) {
+            this.element.destroy();
+        }
+        // Remove our container div
+        if (this.elementContainer && this.elementContainer.parentNode) {
+            this.elementContainer.parentNode.removeChild(this.elementContainer);
+        }
+    }
 
         //Dynamic sizing and positioning
 
         set x(value) {
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerWidth = container ? container.clientWidth : window.innerWidth;
             this.xPercent = value / containerWidth;
             this.updatePositionAndSize();
         }
     
         set y(value) {
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerHeight = container ? container.clientHeight : window.innerHeight;
             this.yPercent = value / containerHeight;
             this.updatePositionAndSize();
         }
     
         set width(value) {
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerWidth = container ? container.clientWidth : window.innerWidth;
             this.widthPercent = value / containerWidth;
             this.updatePositionAndSize();
         }
     
         set height(value) {
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerHeight = container ? container.clientHeight : window.innerHeight;
             this.heightPercent = value / containerHeight;
             this.updatePositionAndSize();
@@ -108,32 +174,31 @@ export class NexusElement{
     
         // Getters for convenience
         get x() {
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerWidth = container ? container.clientWidth : window.innerWidth;
             return this.xPercent * containerWidth;
         }
     
         get y() {
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerHeight = container ? container.clientHeight : window.innerHeight;
             return this.yPercent * containerHeight;
         }
     
         get width() {
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerWidth = container ? container.clientWidth : window.innerWidth;
             return this.widthPercent * containerWidth;
         }
     
         get height() {
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerHeight = container ? container.clientHeight : window.innerHeight;
             return this.heightPercent * containerHeight;
         }
 
         set size([newWidth, newHeight]) {
-            // Convert absolute size to percentages relative to the window size
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerWidth = container ? container.clientWidth : window.innerWidth;
             const containerHeight = container ? container.clientHeight : window.innerHeight;
             this.widthPercent = newWidth / containerWidth;
@@ -142,8 +207,7 @@ export class NexusElement{
         }
     
         get size() {
-            // Return the absolute size based on current window size
-            const container = document.getElementById('Canvas');
+            const container = this.container || document.getElementById('Canvas');
             const containerWidth = container ? container.clientWidth : window.innerWidth;
             const containerHeight = container ? container.clientHeight : window.innerHeight;
             return [

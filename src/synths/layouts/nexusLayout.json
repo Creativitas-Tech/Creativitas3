@@ -1,0 +1,52 @@
+{
+    "vco": {
+      "color": [180, 60, 60],
+      "boundingBox": { "x": 5, "y": 15, "width": 25, "height": 40 },
+      "offsets": { "x": 12, "y": 25 },
+      "groupA": [],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.7,
+      "sizeB": 0.7
+    },
+    "vcf": {
+      "color": [140, 80, 200],
+      "boundingBox": { "x": 25, "y": 15, "width": 35, "height": 40 },
+      "offsets": { "x": 12, "y": 25 },
+      "groupA": ["cutoff"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.6
+    },
+    "vca": {
+      "color": [140, 100, 160],
+      "boundingBox": { "x": 60, "y": 15, "width": 20, "height": 40 },
+      "offsets": { "x": 12, "y": 25 },
+      "groupA": ["level"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.6
+    },
+    "env": {
+      "color": [60, 180, 180],
+      "boundingBox": { "x": 5, "y": 55, "width": 60, "height": 40 },
+      "offsets": { "x": 12, "y": 0 },
+      "groupA": [],
+      "controlTypeA": "knob",
+      "controlTypeB": "fader",
+      "sizeA": 0.7,
+      "sizeB": 0.9
+    },
+    "lfo": {
+      "color": [60, 60, 180],
+      "boundingBox": { "x": 75, "y": 15, "width": 25, "height": 40 },
+      "offsets": { "x": 12, "y": 25 },
+      "groupA": ["rate"],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.7,
+      "sizeB": 0.6
+    }
+}
