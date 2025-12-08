@@ -25,7 +25,15 @@ async function bundleSynthDependencies() {
         'p5Themes.js',
         'TheoryModule.js',
         'TimingManager.js',
-        './midi/MidiKeyboard2.js'
+        './midi/MidiKeyboard2.js',
+        './ui/Button.js',
+        './ui/Dial.js',
+        './ui/NexusElement.js',
+        './ui/NumberBox.js',
+        './ui/parentNexus.js',
+        './ui/RadioButton.js',
+        './ui/Slider.js',
+        './ui/Switch.js'
     ]
 
     const srcDir = path.join(__dirname, '..', 'src');

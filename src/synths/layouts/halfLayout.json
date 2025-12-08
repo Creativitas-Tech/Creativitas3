@@ -1,5 +1,5 @@
 {
-
+    "height":0.5,
     "vco": {
       "color": [150, 0, 0],
       "boundingBox": { "x": 10, "y": 30, "width": 30, "height": 100 },

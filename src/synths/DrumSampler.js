@@ -17,6 +17,7 @@ import * as Tone from 'tone';
 import * as p5 from 'p5';
 import { sketch } from '../p5Library.js'
 import { DrumTemplate } from './DrumTemplate';
+import { DrumVoice } from './DrumVoice.js';
 import DrumSamplerPresets from './synthPresets/DrumSamplerPresets.json';
 import {parseStringSequence, parseStringBeat} from '../TheoryModule'
 import {Parameter} from './ParameterModule.js'
@@ -32,9 +33,8 @@ import layout from './layouts/drumSamplerLayout.json';
  * extends DrumTemplate
  */
 export class DrumSampler extends DrumTemplate{
-  constructor(kit = "default", gui=null) {
+  constructor(kit = "default") {
     super()
-    this.gui = gui
     this.backgroundColor = [150,50,50]
     
     this.presets = DrumSamplerPresets;
@@ -48,61 +48,24 @@ export class DrumSampler extends DrumTemplate{
     this.kit = kit
     this.drumkitList = ["LINN", "Techno", "TheCheebacabra1", "TheCheebacabra2", "acoustic-kit", "breakbeat13", "breakbeat8", "breakbeat9", "4OP-FM", "Bongos", "CR78", "KPR77", "Kit3", "Kit8"]
     //
-    this.closedEnv = new Tone.Envelope({attack:0.0,decay:.5,sustain:0,release:.4})
-    this.openEnv = new Tone.Envelope({attack:0.0,decay:1,sustain:0,release:.4})
-    this.hatVca = new Tone.Multiply()
-    this.openHatChoke = new Tone.Multiply()
+    
     this.comp = new Tone.Compressor(-20,4)
     this.distortion = new Tone.Distortion(.5)
     this.output = new Tone.Multiply(0.8);
     this.dry_kick = new Tone.Multiply(0.)
-    //
-    this.snareEnv = new Tone.Envelope(0.0, 1, 1, 10)
-    this.snare_vca = new Tone.Multiply()
-    this.snare_gain = new Tone.Multiply(1)
-    this.snare = new Tone.Player().connect(this.snare_vca)
-    this.hihat_vca = new Tone.Multiply(.9)
-    this.hihat = new Tone.Player().connect(this.hihat_vca)
-    //switched Toms to arrays
-    this.tom = []
-    this.tomEnv = []
-    this.tom_vca = []
-    this.tom_gain = []
-    for(let i=0;i<3;i++) {
-      this.tomEnv.push(new Tone.Envelope(0.0, 1, 1, 10))
-      this.tom_vca.push( new Tone.Multiply() )
-      this.tom_gain.push( new Tone.Multiply(.8) )
-      this.tom.push( new Tone.Player() )
-    }
-    for(let i=0;i<3;i++) {
-      this.tom[i].connect( this.tom_vca[i] ) 
-      this.tomEnv[i].connect( this.tom_gain[i] )
-      this.tom_gain[i].connect( this.tom_vca[i].factor )
-      this.tom_vca[i].connect(this.comp)
-    }
-    //
-    this.snareEnv.connect( this.snare_gain)
-    this.snare_gain.connect( this.snare_vca.factor)
-    this.snare_vca.connect(this.comp)
-    this.hihat_vca.connect(this.hatVca)
-    //
-    
+
     this.comp.connect(this.distortion)
     this.distortion.connect(this.output)
-    this.closedEnv.connect(this.hatVca.factor)
-    this.openEnv.connect(this.openHatChoke)
-    this.openHatChoke.connect(this.hatVca.factor)
-    this.hatVca.connect(this.comp)
-    //
 
-    this.newKick = new DrumVoice()
-    this.newKick.output.connect(this.dry_kick)
+    //
+    this.kick = new DrumVoice()
+    this.kick.output.connect(this.dry_kick)
     this.dry_kick.connect(this.output)
-    this.newKick.output.connect(this.comp)
-    this.newHat = new DrumVoice()
-    this.newHat.output.connect(this.comp)
-    this.newSnare = new DrumVoice()
-    this.newSnare.output.connect(this.comp)
+    this.kick.output.connect(this.comp)
+    this.hat = new DrumVoice()
+    this.hat.output.connect(this.comp)
+    this.snare = new DrumVoice()
+    this.snare.output.connect(this.comp)
     this.p1 = new DrumVoice()
     this.p1.output.connect(this.comp)
     this.p2 = new DrumVoice()
@@ -137,84 +100,9 @@ export class DrumSampler extends DrumTemplate{
     //for autocomplete
     this.autocompleteList = this.paramDefinitions.map(def => def.name);;
     
-    //this.loadKit('default')
+    this.loadKit('acoustic')
 
   }//constructor
-/*
-  //SETTERS AND GETTERS
-  get kickDecay() { return this.kickEnv.release; }
-  set kickDecay(value) { this.kickEnv.release = value; }
-  get snareDecay() { return this.snareEnv.release; }
-  set snareDecay(value) { this.snareEnv.release = value; }
-  get closedDecay() { return this.closedEnv.release; }
-  set closedDecay(value) { this.closedEnv.release = value; }
-  get openDecay() { return this.openEnv.decay; }
-  set openDecay(value) { this.openEnv.decay = value; }
-  get p1Decay() { return this.tomEnv[0].release; }
-  set p1Decay(value) { this.tomEnv[0].release = value; }
-  get p2Decay() { return this.tomEnv[1].release; }
-  set p2Decay(value) { this.tomEnv[1].release = value; }
-  get p3Decay() { return this.tomEnv[2].release; }
-  set p3Decay(value) { this.tomEnv[2].release = value; }
-
-  get kickRate() { return this.kick.playbackRate; }
-  set kickRate(value) { this.kick.playbackRate = value; }
-  get snareRate() { return this.snare.playbackRate; }
-  set snareRate(value) { this.snare.playbackRate = value; }
-  get closedRate() { return this.hihat.playbackRate; }
-  set closedRate(value) { this.hihat.playbackRate = value; }
-  get p1Rate() { return this.tom[0].playbackRate; }
-  set p1Rate(value) { this.tom[0].playbackRate = value; }
-  get p2Rate() { return this.tom[1].playbackRate.playbackRate; }
-  set p2Rate(value) { this.tom[1].playbackRate = value; }
-  get p3Rate() { return this.tomEnv[2].playbackRate; }
-  set p3Rate(value) { this.tom[2].playbackRate = value; }
-
-  get threshold() { return this.comp.threshold.value ; }
-  set threshold(value) { this.comp.threshold.value = value; }
-  get ratio() { return this.comp.ratio.value ; }
-  set ratio(value) { this.comp.ratio.value = value; }
-  get dist() { return this.distortion.distortion ; }
-  set dist(value) { this.distortion.distortion = value; }
-  get volume() { return this.output.factor.value; }
-  set volume(value) { this.output.factor.value = value; }
-
-  set dryKick(value) {this.dry_kick.factor.value = value}
-  get dryKick() {return this.dry_kick.factor.value}
-
-  setVelocity(voice, num, val){
-    if(val > 1) val = val/127 //account for 0-127 velocities
-    if(num>=0 && num<10){
-      switch( voice ){
-        case 'kick': case 'O': this.kickVelocity[num]=val; break;
-        case 'snare': case 'X': this.snareVelocity[num]=val; break;
-        case 'closed': case '*': this.closedVelocity[num]=val; break;
-        case 'open': case '^': this.openVelocity[num]=val; break;
-        case 'p1': case '1': this.p1Velocity[num]=val; break;
-        case 'p2': case '2': this.p1Velocity[num]=val; break;
-        case 'p3': case '3': this.p1Velocity[num]=val; break;
-        case 'o': this.kickGhostVelocity[num]=val; break;
-        case 'x': this.snareGhostVelocity[num]=val; break;
-      }
-    } else{
-      for(let i=0;i<10;i++){
-        switch( voice ){
-        case 'kick': case 'O': this.kickVelocity[i]=val; break;
-        case 'snare': case 'X': this.snareVelocity[i]=val; break;
-        case 'closed': case '*': this.closedVelocity[i]=val; break;
-        case 'open': case '^': this.openVelocity[i]=val; break;
-        case 'p1': case '1': this.p1Velocity[num]=i; break;
-        case 'p2': case '2': this.p1Velocity[num]=i; break;
-        case 'p3': case '3': this.p1Velocity[num]=i; break;
-        case 'o': this.kickGhostVelocity[num]=val; break;
-        case 'x': this.snareGhostVelocity[num]=val; break;
-      }
-      }
-
-    }
-
-  }
-  */
 
   /**
    * Load a specific drum kit.
@@ -257,12 +145,21 @@ export class DrumSampler extends DrumTemplate{
 
     //console.log("load sample", this.baseUrl)
     try{
-      this.newSnare.voice.load( this.baseUrl.concat("/snare.mp3") )
-      this.newHat.voice.load( this.baseUrl.concat("/hihat.mp3") )
+      this.snare.voice.load( this.baseUrl.concat("/snare.mp3") )
+      this.hat.voice.load( this.baseUrl.concat("/hihat.mp3") )
       this.p1.voice.load( this.baseUrl.concat("/tom1.mp3") )
       this.p2.voice.load( this.baseUrl.concat("/tom2.mp3") )
       this.p3.voice.load( this.baseUrl.concat("/tom3.mp3") )
-      this.newKick.voice.load( this.baseUrl.concat("/kick.mp3") )
+      this.kick.voice.load( this.baseUrl.concat("/kick.mp3") )
+    
+      setTimeout( ()=>{
+        this.snare.duration = this.snare.voice.buffer.duration
+        this.hat.duration = this.hat.voice.buffer.duration
+        this.p1.duration = this.p1.voice.buffer.duration
+        this.p2.duration = this.p2.voice.buffer.duration
+        this.p3.duration = this.p3.voice.buffer.duration
+        this.kick.duration = this.kick.voice.buffer.duration
+      }, 500)
     } catch(e){
       console.log('unable to load samples - try calling loadPreset(`default`)')
     }
@@ -329,14 +226,6 @@ export class DrumSampler extends DrumTemplate{
         if (subdivision) this.setSubdivision(subdivision, num) 
     }
 
-    // play(iterations = 1, arr = null, subdivision = '8n', num = 0) {
-
-    //     if(arr) this.seq[num] = parseStringSequence(arr)
-
-    //     this.createLoop(subdivision, num, iterations)
-    //     //this.loopInstance[num].start()
-    // }
-
     newCreateLoop (){
         // Create a Tone.Loop
       //console.log('loop made')
@@ -394,14 +283,14 @@ export class DrumSampler extends DrumTemplate{
 
     switch(val){
       case '.': break;
-      case '0': this.newKick.trigger(1*velocity,1,time); break; //just because. . . .
-      case 'O': this.newKick.trigger(1*velocity,1,time); break;
-      case 'o': this.newKick.trigger(.2*velocity,1.5,time); break;
+      case '0': this.kick.trigger(1*velocity,1,time); break; //just because. . . .
+      case 'O': this.kick.trigger(1*velocity,1,time); break;
+      case 'o': this.kick.trigger(.2*velocity,1.5,time); break;
       
-      case 'X': this.newSnare.trigger(1*velocity,1,time); break;
-      case 'x': this.newSnare.trigger(.2*velocity,1,time); break;
-      case '*': this.newHat.triggerChoke(.75*velocity,0.1,time); break;
-      case '^': this.newHat.trigger(.75*velocity,1,time); break;
+      case 'X': this.snare.trigger(1*velocity,1,time); break;
+      case 'x': this.snare.trigger(.2*velocity,1,time); break;
+      case '*': this.hat.triggerChoke(.75*velocity,0.1,time); break;
+      case '^': this.hat.trigger(.75*velocity,1,time); break;
       
       case '1': this.p1.trigger(1*velocity,1,time); break;
       case '2': this.p2.trigger(1*velocity,1,time); break;
@@ -468,147 +357,5 @@ export class DrumSampler extends DrumTemplate{
             //console.log("No preset of name ", name);
         }
       },1000)
-    }
-
-}
-
-class DrumVoice{
-  constructor(){
-    this.chokeRatio = .1
-    this.decayTime = 1
-    this.startPoint = 0
-    this.env = new Tone.Envelope(0.0, 1, 1, 10)
-    this.vca = new Tone.Multiply()
-    this.output = new Tone.Multiply(1)
-    this.dryOut = new Tone.Multiply(0)
-    this.voice = new Tone.Player().connect(this.vca)
-    this.vca.connect(this.output)
-    this.voice.connect(this.dryOut)
-    this.env.connect(this.vca.factor)
-
-    let paramDefinitions = [
-      {name:'choke',min:0.,max:1,curve:2,callback:x=>{
-        this.chokeRatio = x
-      }},
-      {name:'decay',min:0.0,max:5,curve:3,callback:x=>{
-        this.decayTime = x
-      }},
-      {name:'amp',min:0,max:1,curve:2,callback:x=>this.output.factor.value = x},
-      {name:'dry',min:0,max:1,curve:2,callback:x=>this.dryOut.factor.value = x},
-      {name:'rate',value:1, min:-10,max:10,curve:1,callback:x=>{
-        this.voice.playbackRate = Math.abs(x)
-        if(x<0) this.voice.reverse = true
-      }},
-      // {name:'wet',min:0.0,max:1.2,curve:2,callback:value=>this.wetSig.factor.value = value},
-      // {name:'gain',min:0.0,max:1,curve:0.2,callback:value=>this.ws_input.factor.value = value},
-      // {name:'amp',min:0.0,max:1.2,curve:2,callback:value=>this.output.factor.value = value},
-    ]
-
-    this.param = this.generateParameters(paramDefinitions)
-    this.createAccessors(this, this.param);
-  }
-
-  setDecayTime(decay, choke){
-    this.decayTime = decay
-    this.chokeRatio = choke
-    this.env.release = decay*choke
-  }
-  triggerSample(amplitude, decay,time){
-    //console.log(amplitude,decay,time, this.voice)
-    try{
-      //this.env.release = decay == 0 ? this.decayTime * this.chokeRatio : this.decayTime
-      this.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
-      this.voice.start(time, this.startPoint)
-      //this.voice.start()
-      this.env.triggerAttackRelease(0.001, time)
-    } catch(e){
-        //console.log('time error', e)
-    }
-  }
-    trigger(amplitude, decay,time){
-      this.env.release =  this.decayTime
-      this.env.decay =  this.decayTime 
-      this.triggerSample(amplitude, decay,time)
-    }
-    triggerChoke(amplitude, decay,time){
-      this.env.release =  this.decayTime * this.chokeRatio
-      this.env.decay =  this.decayTime * this.chokeRatio
-      this.triggerSample(amplitude, decay,time)
-    }
-
-  generateParameters(paramDefinitions) {
-        const params = {};
-        paramDefinitions.forEach((def) => {
-            const param = new Parameter(this, def);
-            params[def.name] = param;
-        });
-        return params;
-    }
-
-    createAccessors(parent, params) {
-      //console.log(params)
-      Object.keys(params).forEach((key) => {
-        const param = params[key];
-
-        // Ensure the Parameter object has a `set` method
-        if (typeof param.set !== 'function') {
-            throw new Error(`Parameter '${key}' does not have a set method`);
-        }
-
-        // Proxy to handle array-like access
-        const proxyHandler = {
-            get(target, prop) {
-                if (typeof prop === 'string' && !isNaN(prop)) {
-                    // Access individual array element
-                    return target.get(parseInt(prop));
-                }
-                return target.get();
-            },
-            set(target, prop, value) {
-                console.log(target, prop, value)
-                if (typeof prop === 'string' && !isNaN(prop)) {
-                    // Set individual array element
-                    target.set(value, parseInt(prop));
-                    return true;
-                }
-                // Set the entire array or scalar value
-                target.set(value);
-                return true;
-            }
-        };
-
-        // Define the accessor property on the parent
-        Object.defineProperty(parent, key, {
-            get: () => new Proxy(param, proxyHandler),
-            set: (newValue) => param.set(newValue),
-        });
-    });
-}//createAccessors
-
-    setParameter(name, value, time = null) {
-        const param = this.param[name];
-        if (!param) throw new Error(`Parameter '${name}' does not exist.`);
-        
-        if (time) {
-            // Handle sequenced parameter updates
-            param.callback(value, time);
-        } else {
-            // Handle immediate parameter updates
-            param.callback(value);
-        }
-
-        // Update associated GUI elements
-        if (param.guiElement) {
-            param.guiElement.setValue(value);
-        }
-    }
-
-    get() {
-        let output = 'Parameters:\n';
-        for (let key in this.param) {
-            const param = this.param[key];
-            output += `${param.name}: ${param._value}\n`;
-        }
-        console.log(output);
     }
 }

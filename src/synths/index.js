@@ -34,7 +34,8 @@ export { Vocoder } from './Vocoder.js';
 
 export { MidiOut } from './MidiOut.js';
 
-export { DrumSynth } from './DrumVoice.js';
+export { DrumSynth } from './DrumSynth.js';
+export { DrumVoice } from './DrumVoice.js';
 export { FMOperator } from './FM.js';
 export { FM } from './FM.js';
 export { FM4 } from './FM4.js';
