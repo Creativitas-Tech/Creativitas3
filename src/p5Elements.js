@@ -135,8 +135,9 @@ export function divResized(p, maxClicked, canvasLength) {
     const canvasesHeight = canvasesCont ? canvasesCont.offsetHeight : (p.div ? p.div.offsetHeight : prevHeight);
     const flexWidth = flexCont ? flexCont.offsetWidth : (p.div ? p.div.offsetWidth : prevWidth);
     const divWidth = p.div ? p.div.offsetWidth : prevWidth;
-    const divHeight = p.div ? p.div.offsetHeight : prevHeight;
-
+    //const divHeight = p.div ? p.div.offsetHeight : prevHeight;
+    const divHeight =  prevHeight;
+    
     if (maxClicked === '+h') {
         p.height = canvasesHeight - controlsHeight;
         p.width = divWidth;
