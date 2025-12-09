@@ -174,14 +174,13 @@ function Canvas(props) {
         }
 
         try {
-            //disable div resizing to not affect p5 dimensions?
-            // if (props.maximized === props.id) {
-            //     target.divResized('+h', props.canvasLength);
-            // } else if (props.maximized) {
-            //     target.divResized('-h', props.canvasLength);
-            // } else {
-            //     target.divResized();
-            // }
+            if (props.maximized === props.id) {
+                target.divResized('+h', props.canvasLength);
+            } else if (props.maximized) {
+                target.divResized('-h', props.canvasLength);
+            } else {
+                target.divResized();
+            }
         } catch (error) {
             console.log(error);
         }
