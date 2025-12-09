@@ -6,13 +6,32 @@
 //  Alt(option)-Shift-Enter: Evaluate Block
 
 /**
-  INITIALIZATION: PART I  
+  INITIALIZATION & COLLABORATION
 **/
 
+// Initialize collaboration - creates window.chClient
 initCollab()
-chClient.username = 'Change name'
 
-// TONE.JS AUDIO CHAIN
+// COLLABORATIVE SETUP - Change these to join a room with others!
+// To collaborate: everyone should join the same room name
+chClient.joinRoom('sequencer-jam')  // Change 'sequencer-jam' to any room name
+chClient.username = 'Player1'       // Change to your name
+
+// Helper to send sequence changes to collaborators
+function sendToCollab(seqName, actionName) {
+  if (chClient && chClient.roomJoined) {
+    chClient.control(seqName, { action: actionName })
+  }
+}
+
+// Flag to prevent feedback loops when updating button states from collab
+var isRemoteUpdateRef = { value: false }
+
+
+/**
+  TONE.JS AUDIO CHAIN
+**/
+
 const vco = new Tone.Oscillator().start()
 const vcf = new Tone.Filter()
 const vca = new Tone.Multiply()
@@ -25,7 +44,7 @@ env.connect(vca.factor)
 
 
 /**
-  SYNTH INSTANCES: PART II 
+  SYNTH INSTANCES
 **/
 
 const seq1 = new Twinkle()
@@ -41,8 +60,9 @@ seq3.connect(vca)
 seq4.connect(vca)
 Theory.tempo = 90
 
+
 /**
-  HELPER FUNCTIONS: PART III
+  PATTERN DEFINITIONS
 **/
 
 const startPattern = (synth, pattern, rate) => {
@@ -51,70 +71,170 @@ const startPattern = (synth, pattern, rate) => {
   synth.sequence(pattern, rate)
 }
 
+// Store current patterns and rates for each sequence slot
+const sequencePatterns = {
+  seq1: {
+    '1c': { pattern: '0 2 4 6 4 2', rate: '2n' },
+    '2c': { pattern: '0... 0... 1 2 3 4 5 6 7 8', rate: '8n' },
+    '3c': { pattern: '0 5 2 7 4 9 2 11', rate: '8n' }
+  },
+  seq2: {
+    '1b': { pattern: '0 2 4 6 4 2', rate: '2n' },
+    '2b': { pattern: '0... 0... 1 2 3 4 5 6 7 8', rate: '8n' },
+    '3b': { pattern: '0 4 3 7 5 9 7 4', rate: '8n' }
+  },
+  seq3: {
+    '1d': { pattern: 'O*.o X.*x .xO* X*^.', rate: '16n' },
+    '2d': { pattern: '***^***^', rate: '8n' },
+    '3d': { pattern: '1232', rate: '8n' }
+  },
+  seq4: {
+    '1a': { pattern: '0 1 1 1 5 6 5 6', rate: '8n' },
+    '2a': { pattern: '0 1 2 3 4 5 6 7', rate: '8n' },
+    '3a': { pattern: '0 4 0 7 5 3 2 1', rate: '8n' }
+  }
+}
 
-/**
-  SEQUENCE ACTIONS: PART IV
-**/
+// Map sequence names to synth instances
+const seqSynths = { 
+  seq1: seq1, 
+  seq2: seq2, 
+  seq3: seq3, 
+  seq4: seq4 
+}
 
+// Define sequence actions
 const sequenceActions = {
   seq1: {
-    '1c': () => startPattern(seq1, '0 2 4 6 4 2', '2n'),
-    '2c': () => startPattern(seq1, '0... 0... 1 2 3 4 5 6 7 8', '8n'),
-    '3c': () => startPattern(seq1, '0 5 2 7 4 9 2 11', '8n'),
+    '1c': () => startPattern(seq1, sequencePatterns.seq1['1c'].pattern, sequencePatterns.seq1['1c'].rate),
+    '2c': () => startPattern(seq1, sequencePatterns.seq1['2c'].pattern, sequencePatterns.seq1['2c'].rate),
+    '3c': () => startPattern(seq1, sequencePatterns.seq1['3c'].pattern, sequencePatterns.seq1['3c'].rate),
     stop: () => seq1.stop()
   },
   seq2: {
-    '1b': () => startPattern(seq2, '0 2 4 6 4 2', '2n'),
-    '2b': () => startPattern(seq2, '0... 0... 1 2 3 4 5 6 7 8', '8n'),
-    '3b': () => startPattern(seq2, '0 4 3 7 5 9 7 4', '8n'),
+    '1b': () => startPattern(seq2, sequencePatterns.seq2['1b'].pattern, sequencePatterns.seq2['1b'].rate),
+    '2b': () => startPattern(seq2, sequencePatterns.seq2['2b'].pattern, sequencePatterns.seq2['2b'].rate),
+    '3b': () => startPattern(seq2, sequencePatterns.seq2['3b'].pattern, sequencePatterns.seq2['3b'].rate),
     stop: () => seq2.stop()
   },
   seq3: {
-    '1d': () => startPattern(seq3, 'O*.o X.*x .xO* X*^.', '16n'),
-    '2d': () => startPattern(seq3, '***^***^'),
-    '3d': () => startPattern(seq3, '1232'),
+    '1d': () => startPattern(seq3, sequencePatterns.seq3['1d'].pattern, sequencePatterns.seq3['1d'].rate),
+    '2d': () => startPattern(seq3, sequencePatterns.seq3['2d'].pattern, sequencePatterns.seq3['2d'].rate),
+    '3d': () => startPattern(seq3, sequencePatterns.seq3['3d'].pattern, sequencePatterns.seq3['3d'].rate),
     stop: () => seq3.stop()
   },
   seq4: {
-    '1a': () => startPattern(seq4, '0 1 1 1 5 6 5 6', '8n'),
-    '2a': () => startPattern(seq4, '0 1 2 3 4 5 6 7', '8n'),
-    '3a': () => startPattern(seq4, '0 4 0 7 5 3 2 1', '8n'),
+    '1a': () => startPattern(seq4, sequencePatterns.seq4['1a'].pattern, sequencePatterns.seq4['1a'].rate),
+    '2a': () => startPattern(seq4, sequencePatterns.seq4['2a'].pattern, sequencePatterns.seq4['2a'].rate),
+    '3a': () => startPattern(seq4, sequencePatterns.seq4['3a'].pattern, sequencePatterns.seq4['3a'].rate),
     stop: () => seq4.stop()
   }
 }
 
 
 /**
-  GUI INITIALIZATION: PART V
+  USER-FACING HELPER FUNCTIONS
 **/
 
-// CANVAS SETUP
-const canvas = document.getElementById('Canvas')
-canvas.style.backgroundColor = '#1a1a2e'
-canvas.style.margin = '0'
-canvas.style.padding = '0'
-canvas.style.width = '100%'
-canvas.style.height = '100%'
-canvas.style.border = 'none'
-canvas.style.position = 'relative'
-canvas.style.overflow = 'hidden'
-
-// Hide header if present
-try {
-  const p5Container = canvas.parentElement
-  if (p5Container) {
-    p5Container.style.padding = '0'
-    const header = p5Container.querySelector('.span-container')
-    if (header) header.style.display = 'none'
+/**
+ * Update a sequence pattern and optionally push to collaborators
+ * @param {string} seqName - 'seq1', 'seq2', 'seq3', or 'seq4'
+ * @param {string} slot - '1c', '2c', '3c' for seq1, '1b', '2b', '3b' for seq2, etc.
+ * @param {string} pattern - The new pattern string
+ * @param {string} rate - Optional new rate (e.g., '8n', '16n', '4n')
+ * @param {boolean} broadcast - Whether to send to collaborators (default: true)
+ * @example
+ *   updateSequence('seq1', '1c', '0 1 2 3 4 5 6 7', '16n')
+ *   updateSequence('seq2', '2b', '0 4 7 11 7 4')
+ */
+function updateSequence(seqName, slot, pattern, rate, broadcast) {
+  if (broadcast === undefined) broadcast = true
+  
+  if (!sequencePatterns[seqName] || !sequencePatterns[seqName][slot]) {
+    console.warn('Invalid sequence or slot:', seqName, slot)
+    return
   }
-} catch (e) {}
+  
+  // Update the stored pattern
+  sequencePatterns[seqName][slot].pattern = pattern
+  if (rate) sequencePatterns[seqName][slot].rate = rate
+  
+  console.log('Updated', seqName, slot, '→', pattern, rate || sequencePatterns[seqName][slot].rate)
+  
+  // Broadcast to collaborators
+  if (broadcast && chClient && chClient.roomJoined) {
+    chClient.control(seqName + '-pattern', { 
+      slot: slot, 
+      pattern: pattern, 
+      rate: rate || sequencePatterns[seqName][slot].rate 
+    })
+  }
+}
 
-const w = canvas.clientWidth || window.innerWidth
-const h = canvas.clientHeight || window.innerHeight
+/**
+ * Update a sequence pattern AND immediately play it
+ * @param {string} seqName - 'seq1', 'seq2', 'seq3', or 'seq4'
+ * @param {string} slot - '1c', '2c', '3c' for seq1, etc.
+ * @param {string} pattern - The new pattern string
+ * @param {string} rate - Optional new rate
+ * @example
+ *   setSequence('seq1', '1c', '0 1 2 3 4 5 6 7', '16n')
+ */
+function setSequence(seqName, slot, pattern, rate) {
+  // Update the stored pattern
+  updateSequence(seqName, slot, pattern, rate, true)
+  
+  // Get the synth and play immediately
+  var synth = seqSynths[seqName]
+  var seqData = sequencePatterns[seqName][slot]
+  if (synth && seqData) {
+    startPattern(synth, seqData.pattern, seqData.rate)
+    console.log('Playing', seqName, slot)
+  }
+}
+
+/**
+ * Push/sync all current synth GUI states (for synths that support pushState)
+ * This updates knobs/sliders to match internal parameter values
+ */
+function pushState() {
+  // Push synth GUI states
+  if (seq1.pushState) seq1.pushState()
+  if (seq2.pushState) seq2.pushState()
+  if (seq3.pushState) seq3.pushState()
+  if (seq4.pushState) seq4.pushState()
+  
+  console.log('State pushed for all synths')
+}
+
+/**
+ * Get current pattern for a slot
+ * @example getPattern('seq1', '1c') // returns { pattern: '...', rate: '8n' }
+ */
+function getPattern(seqName, slot) {
+  if (sequencePatterns[seqName] && sequencePatterns[seqName][slot]) {
+    return sequencePatterns[seqName][slot]
+  }
+  return null
+}
+
+/**
+ * List all current patterns
+ */
+function listPatterns() {
+  console.log('Current Patterns:')
+  Object.keys(sequencePatterns).forEach(function(seqName) {
+    console.log('  ' + seqName + ':')
+    Object.keys(sequencePatterns[seqName]).forEach(function(slot) {
+      var p = sequencePatterns[seqName][slot]
+      console.log('    ' + slot + ': "' + p.pattern + '" @ ' + p.rate)
+    })
+  })
+}
 
 
 /**
-  SYNTH GUI (initNexus): PART VI
+  SYNTH GUI SETUP
 **/
 
 // Layout for seq1 (Twinkle) - compact, positioned at top-left
@@ -154,334 +274,94 @@ seq1.layout = {
   }
 }
 
+// Initialize synth GUI
+seq1.initNexus()
+
 // Add synth label
+const canvas = document.getElementById('Canvas')
+const w = canvas.clientWidth || window.innerWidth
+const h = canvas.clientHeight || window.innerHeight
+
 const seq1SynthLabel = document.createElement('div')
 seq1SynthLabel.textContent = 'TWINKLE'
 seq1SynthLabel.style.cssText = `position: absolute; left: ${w * 0.02}px; top: ${h * 0.01}px; color: #DC7850; font-family: monospace; font-size: 11px; font-weight: bold; pointer-events: none;`
 canvas.appendChild(seq1SynthLabel)
 
-seq1.initNexus()
-
 
 /**
-  SEQUENCER BUTTON GRID: PART VII
+  GUI INITIALIZATION (Infrastructure handles all button/label/resize logic)
 **/
 
-// Grid configuration - positioned below synth controls
-const buttonSize_w = w * 0.08
-const buttonSize_h = h * 0.07
-const spacingX = w * 0.10
-const spacingY = h * 0.10
-const numCols = 4
-const numRows = 4
-
-const totalGridWidth = (numCols - 1) * spacingX + buttonSize_w
-const totalGridHeight = (numRows - 1) * spacingY + buttonSize_h
-
-const labelSpace = w * 0.12
-const availableWidth = w - labelSpace
-const startX = labelSpace + (availableWidth - totalGridWidth) / 2
-const startY = h * 0.32  // Below synth controls
-
-const gridOrigin = { x: startX, y: startY }
-const gridSpacing = { x: spacingX, y: spacingY }
-const buttonSize = { width: buttonSize_w, height: buttonSize_h }
-
-const seqToggleGrid = { seq1: [], seq2: [], seq3: [], seq4: [] }
-
-
-/**
-  SEQUENCE 1 BUTTONS
-**/
-
-const seq1_1c = new Button(gridOrigin.x + 0 * gridSpacing.x, gridOrigin.y + 0 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq1_1c.mode = 'toggle'
-seq1_1c.state = false
-seq1_1c.colorize('accent', '#AEC6CF')
-seq1_1c.colorize('fill', '#303030')
-seq1_1c.element.on('change', function(v) {
-  if (v) {
-    seq1_2c.state = false; seq1_3c.state = false; seq1_stop.state = false
-    sequenceActions.seq1['1c']()
-  }
-})
-seqToggleGrid.seq1[0] = seq1_1c
-
-const seq1_2c = new Button(gridOrigin.x + 1 * gridSpacing.x, gridOrigin.y + 0 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq1_2c.mode = 'toggle'
-seq1_2c.state = false
-seq1_2c.colorize('accent', '#AEC6CF')
-seq1_2c.colorize('fill', '#303030')
-seq1_2c.element.on('change', function(v) {
-  if (v) {
-    seq1_1c.state = false; seq1_3c.state = false; seq1_stop.state = false
-    sequenceActions.seq1['2c']()
-  }
-})
-seqToggleGrid.seq1[1] = seq1_2c
-
-const seq1_3c = new Button(gridOrigin.x + 2 * gridSpacing.x, gridOrigin.y + 0 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq1_3c.mode = 'toggle'
-seq1_3c.state = false
-seq1_3c.colorize('accent', '#AEC6CF')
-seq1_3c.colorize('fill', '#303030')
-seq1_3c.element.on('change', function(v) {
-  if (v) {
-    seq1_1c.state = false; seq1_2c.state = false; seq1_stop.state = false
-    sequenceActions.seq1['3c']()
-  }
-})
-seqToggleGrid.seq1[2] = seq1_3c
-
-const seq1_stop = new Button(gridOrigin.x + 3 * gridSpacing.x, gridOrigin.y + 0 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq1_stop.mode = 'toggle'
-seq1_stop.state = false
-seq1_stop.colorize('accent', '#FF6961')
-seq1_stop.colorize('fill', '#303030')
-seq1_stop.element.on('change', function(v) {
-  if (v) {
-    seq1_1c.state = false; seq1_2c.state = false; seq1_3c.state = false
-    sequenceActions.seq1.stop()
-  }
-})
-seqToggleGrid.seq1[3] = seq1_stop
-
-
-/**
-  SEQUENCE 2 BUTTONS
-**/
-
-const seq2_1b = new Button(gridOrigin.x + 0 * gridSpacing.x, gridOrigin.y + 1 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq2_1b.mode = 'toggle'
-seq2_1b.state = false
-seq2_1b.colorize('accent', '#B4D7A8')
-seq2_1b.colorize('fill', '#303030')
-seq2_1b.element.on('change', function(v) {
-  if (v) {
-    seq2_2b.state = false; seq2_3b.state = false; seq2_stop.state = false
-    sequenceActions.seq2['1b']()
-  }
-})
-seqToggleGrid.seq2[0] = seq2_1b
-
-const seq2_2b = new Button(gridOrigin.x + 1 * gridSpacing.x, gridOrigin.y + 1 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq2_2b.mode = 'toggle'
-seq2_2b.state = false
-seq2_2b.colorize('accent', '#B4D7A8')
-seq2_2b.colorize('fill', '#303030')
-seq2_2b.element.on('change', function(v) {
-  if (v) {
-    seq2_1b.state = false; seq2_3b.state = false; seq2_stop.state = false
-    sequenceActions.seq2['2b']()
-  }
-})
-seqToggleGrid.seq2[1] = seq2_2b
-
-const seq2_3b = new Button(gridOrigin.x + 2 * gridSpacing.x, gridOrigin.y + 1 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq2_3b.mode = 'toggle'
-seq2_3b.state = false
-seq2_3b.colorize('accent', '#B4D7A8')
-seq2_3b.colorize('fill', '#303030')
-seq2_3b.element.on('change', function(v) {
-  if (v) {
-    seq2_1b.state = false; seq2_2b.state = false; seq2_stop.state = false
-    sequenceActions.seq2['3b']()
-  }
-})
-seqToggleGrid.seq2[2] = seq2_3b
-
-const seq2_stop = new Button(gridOrigin.x + 3 * gridSpacing.x, gridOrigin.y + 1 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq2_stop.mode = 'toggle'
-seq2_stop.state = false
-seq2_stop.colorize('accent', '#FF6961')
-seq2_stop.colorize('fill', '#303030')
-seq2_stop.element.on('change', function(v) {
-  if (v) {
-    seq2_1b.state = false; seq2_2b.state = false; seq2_3b.state = false
-    sequenceActions.seq2.stop()
-  }
-})
-seqToggleGrid.seq2[3] = seq2_stop
-
-
-/**
-  SEQUENCE 3 BUTTONS
-**/
-
-const seq3_1d = new Button(gridOrigin.x + 0 * gridSpacing.x, gridOrigin.y + 2 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq3_1d.mode = 'toggle'
-seq3_1d.state = false
-seq3_1d.colorize('accent', '#FFD580')
-seq3_1d.colorize('fill', '#303030')
-seq3_1d.element.on('change', function(v) {
-  if (v) {
-    seq3_2d.state = false; seq3_3d.state = false; seq3_stop.state = false
-    sequenceActions.seq3['1d']()
-  }
-})
-seqToggleGrid.seq3[0] = seq3_1d
-
-const seq3_2d = new Button(gridOrigin.x + 1 * gridSpacing.x, gridOrigin.y + 2 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq3_2d.mode = 'toggle'
-seq3_2d.state = false
-seq3_2d.colorize('accent', '#FFD580')
-seq3_2d.colorize('fill', '#303030')
-seq3_2d.element.on('change', function(v) {
-  if (v) {
-    seq3_1d.state = false; seq3_3d.state = false; seq3_stop.state = false
-    sequenceActions.seq3['2d']()
-  }
-})
-seqToggleGrid.seq3[1] = seq3_2d
-
-const seq3_3d = new Button(gridOrigin.x + 2 * gridSpacing.x, gridOrigin.y + 2 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq3_3d.mode = 'toggle'
-seq3_3d.state = false
-seq3_3d.colorize('accent', '#FFD580')
-seq3_3d.colorize('fill', '#303030')
-seq3_3d.element.on('change', function(v) {
-  if (v) {
-    seq3_1d.state = false; seq3_2d.state = false; seq3_stop.state = false
-    sequenceActions.seq3['3d']()
-  }
-})
-seqToggleGrid.seq3[2] = seq3_3d
-
-const seq3_stop = new Button(gridOrigin.x + 3 * gridSpacing.x, gridOrigin.y + 2 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq3_stop.mode = 'toggle'
-seq3_stop.state = false
-seq3_stop.colorize('accent', '#FF6961')
-seq3_stop.colorize('fill', '#303030')
-seq3_stop.element.on('change', function(v) {
-  if (v) {
-    seq3_1d.state = false; seq3_2d.state = false; seq3_3d.state = false
-    sequenceActions.seq3.stop()
-  }
-})
-seqToggleGrid.seq3[3] = seq3_stop
-
-
-/**
-  SEQUENCE 4 BUTTONS
-**/
-
-const seq4_1a = new Button(gridOrigin.x + 0 * gridSpacing.x, gridOrigin.y + 3 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq4_1a.mode = 'toggle'
-seq4_1a.state = false
-seq4_1a.colorize('accent', '#D4A5D9')
-seq4_1a.colorize('fill', '#303030')
-seq4_1a.element.on('change', function(v) {
-  if (v) {
-    seq4_2a.state = false; seq4_3a.state = false; seq4_stop.state = false
-    sequenceActions.seq4['1a']()
-  }
-})
-seqToggleGrid.seq4[0] = seq4_1a
-
-const seq4_2a = new Button(gridOrigin.x + 1 * gridSpacing.x, gridOrigin.y + 3 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq4_2a.mode = 'toggle'
-seq4_2a.state = false
-seq4_2a.colorize('accent', '#D4A5D9')
-seq4_2a.colorize('fill', '#303030')
-seq4_2a.element.on('change', function(v) {
-  if (v) {
-    seq4_1a.state = false; seq4_3a.state = false; seq4_stop.state = false
-    sequenceActions.seq4['2a']()
-  }
-})
-seqToggleGrid.seq4[1] = seq4_2a
-
-const seq4_3a = new Button(gridOrigin.x + 2 * gridSpacing.x, gridOrigin.y + 3 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq4_3a.mode = 'toggle'
-seq4_3a.state = false
-seq4_3a.colorize('accent', '#D4A5D9')
-seq4_3a.colorize('fill', '#303030')
-seq4_3a.element.on('change', function(v) {
-  if (v) {
-    seq4_1a.state = false; seq4_2a.state = false; seq4_stop.state = false
-    sequenceActions.seq4['3a']()
-  }
-})
-seqToggleGrid.seq4[2] = seq4_3a
-
-const seq4_stop = new Button(gridOrigin.x + 3 * gridSpacing.x, gridOrigin.y + 3 * gridSpacing.y, buttonSize.width, buttonSize.height)
-seq4_stop.mode = 'toggle'
-seq4_stop.state = false
-seq4_stop.colorize('accent', '#FF6961')
-seq4_stop.colorize('fill', '#303030')
-seq4_stop.element.on('change', function(v) {
-  if (v) {
-    seq4_1a.state = false; seq4_2a.state = false; seq4_3a.state = false
-    sequenceActions.seq4.stop()
-  }
-})
-seqToggleGrid.seq4[3] = seq4_stop
-
-
-/**
-  SEQUENCE LABELS: PART VIII
-**/
-
-const labelRightEdge = startX - (w * 0.02)
-const labelWidth = w * 0.10
-const labelLeftPx = labelRightEdge - labelWidth
-const labelStyle = `position: absolute; font-family: monospace; font-size: 12px; pointer-events: none; user-select: none; text-align: right; width: ${labelWidth}px; left: ${labelLeftPx}px;`
-
-const getRowTopPx = (rowIndex) => startY + (rowIndex * spacingY) + (buttonSize_h / 2) - 7
-
-const seq1_label = document.createElement('div')
-seq1_label.textContent = 'seq 1'
-seq1_label.style.cssText = labelStyle + `top: ${getRowTopPx(0)}px; color: #AEC6CF;`
-canvas.appendChild(seq1_label)
-
-const seq2_label = document.createElement('div')
-seq2_label.textContent = 'seq 2'
-seq2_label.style.cssText = labelStyle + `top: ${getRowTopPx(1)}px; color: #B4D7A8;`
-canvas.appendChild(seq2_label)
-
-const seq3_label = document.createElement('div')
-seq3_label.textContent = 'seq 3'
-seq3_label.style.cssText = labelStyle + `top: ${getRowTopPx(2)}px; color: #FFD580;`
-canvas.appendChild(seq3_label)
-
-const seq4_label = document.createElement('div')
-seq4_label.textContent = 'seq 4'
-seq4_label.style.cssText = labelStyle + `top: ${getRowTopPx(3)}px; color: #D4A5D9;`
-canvas.appendChild(seq4_label)
-
-
-/**
-  ENABLE TOGGLE: PART IX
-**/
-
-const toggleWidth = w * 0.07
-const toggleHeight = h * 0.03
-const gridCenterX = startX + (totalGridWidth / 2)
-const toggleX = gridCenterX - (toggleWidth / 2)
-const toggleY = startY - (h * 0.08)
-
-const enable_toggle = new Switch(toggleX, toggleY, toggleWidth, toggleHeight)
-enable_toggle.element.on('change', function(value) {
-  vca.factor.value = value ? 1 : 0
-  console.log('VCA Enabled:', value)
+// Initialize sequencer GUI with infrastructure function
+const gui = initSequencerGUI({
+  sequenceActions: sequenceActions,
+  sequences: seqSynths,
+  sendToCollab: sendToCollab,
+  isRemoteUpdateRef: isRemoteUpdateRef
 })
 
-const enable_label = document.createElement('div')
-enable_label.textContent = 'enable'
-const enableLabelWidth = 60
-enable_label.style.cssText = `position: absolute; color: #8796EB; font-family: monospace; font-size: 11px; pointer-events: none; user-select: none; left: ${gridCenterX - enableLabelWidth/2}px; top: ${toggleY - 18}px; width: ${enableLabelWidth}px; text-align: center;`
-canvas.appendChild(enable_label)
-
-
-/**
-  BACKWARD COMPATIBILITY: PART X
-**/
-
+// Extract GUI elements for backward compatibility
+const seqToggleGrid = gui.seqToggleGrid
 const seq1g = seqToggleGrid.seq1
 const seq2g = seqToggleGrid.seq2
 const seq3g = seqToggleGrid.seq3
 const seq4g = seqToggleGrid.seq4
 
+// Wire enable toggle to VCA
+gui.enable_toggle.element.on('change', function(value) {
+  vca.factor.value = value ? 1 : 0
+  console.log('VCA Enabled:', value)
+})
+
+
+/**
+  COLLABORATION - PATTERN UPDATE HANDLERS
+**/
+
+// Listen for pattern updates from collaborators
+chClient.on('seq1-pattern', function(data) {
+  if (data.values && data.values.slot && data.values.pattern) {
+    updateSequence('seq1', data.values.slot, data.values.pattern, data.values.rate, false)
+  }
+})
+chClient.on('seq2-pattern', function(data) {
+  if (data.values && data.values.slot && data.values.pattern) {
+    updateSequence('seq2', data.values.slot, data.values.pattern, data.values.rate, false)
+  }
+})
+chClient.on('seq3-pattern', function(data) {
+  if (data.values && data.values.slot && data.values.pattern) {
+    updateSequence('seq3', data.values.slot, data.values.pattern, data.values.rate, false)
+  }
+})
+chClient.on('seq4-pattern', function(data) {
+  if (data.values && data.values.slot && data.values.pattern) {
+    updateSequence('seq4', data.values.slot, data.values.pattern, data.values.rate, false)
+  }
+})
+
+
+console.log('═══════════════════════════════════════════════')
 console.log('4-SEQUENCE CONTROLLER initialized')
+console.log('═══════════════════════════════════════════════')
 console.log('Synth controls via initNexus() for:', seq1.name)
 console.log('Sequences loaded:', { seq1, seq2, seq3, seq4 })
+console.log('')
+console.log('SEQUENCE FUNCTIONS:')
+console.log('  setSequence(seq, slot, pattern, rate)')
+console.log('    → Updates AND plays immediately')
+console.log('    → Example: setSequence("seq1", "1c", "0 1 2 3", "16n")')
+console.log('')
+console.log('  updateSequence(seq, slot, pattern, rate)')
+console.log('    → Updates pattern (plays on next button click)')
+console.log('')
+console.log('  getPattern(seq, slot) → returns {pattern, rate}')
+console.log('  listPatterns() → shows all current patterns')
+console.log('  pushState() → sync synth GUI knobs/sliders')
+console.log('')
+console.log('COLLABORATION:')
+console.log('  Room:', chClient.roomJoined || 'Not connected')
+console.log('  Username:', chClient.username || 'Not set')
+console.log('  chClient.joinRoom("room-name")')
+console.log('  chClient.username = "YourName"')
+console.log('═══════════════════════════════════════════════')

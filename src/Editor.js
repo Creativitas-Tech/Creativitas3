@@ -329,6 +329,10 @@ function Editor(props) {
     window.Button = Button;
     window.Switch = Switch;
 
+    // Collab and GUI initialization functions
+    window.initCollab = initCollab;
+    window.initSequencerGUI = initSequencerGUI;
+
     window.create_sequencer_gui = create_sequencer_gui;
 
     //utilities
@@ -591,6 +595,312 @@ function Editor(props) {
       //const hue = Math.floor(Math.random()*100)
       return colorPalette[hue]+"80"
       //return { h: hue, s: 70, l: 60 };
+    }
+
+    /**
+     * Initialize a 4-sequence button grid GUI with NexusUI
+     * @param {Object} config - Configuration object
+     * @param {Object} config.sequenceActions - Object mapping sequence names to action functions
+     * @param {Object} config.sequences - Object mapping sequence names to synth instances
+     * @param {Function} config.sendToCollab - Function to broadcast actions to collaborators
+     * @param {Object} config.isRemoteUpdateRef - Object with 'value' property to prevent feedback loops
+     * @returns {Object} GUI elements and helper functions
+     */
+    function initSequencerGUI(config) {
+      const { sequenceActions, sequences, sendToCollab, isRemoteUpdateRef } = config;
+      
+      // Get canvas
+      const canvas = document.getElementById('Canvas');
+      if (!canvas) {
+        console.error('Canvas element not found');
+        return null;
+      }
+      
+      // Setup canvas styling
+      canvas.style.backgroundColor = '#1a1a2e';
+      canvas.style.margin = '0';
+      canvas.style.padding = '0';
+      canvas.style.width = '100%';
+      canvas.style.height = '100%';
+      canvas.style.border = 'none';
+      canvas.style.position = 'relative';
+      canvas.style.overflow = 'hidden';
+
+      // Hide header if present
+      try {
+        const p5Container = canvas.parentElement;
+        if (p5Container) {
+          p5Container.style.padding = '0';
+          const header = p5Container.querySelector('.span-container');
+          if (header) header.style.display = 'none';
+        }
+      } catch (e) {}
+      
+      const w = canvas.clientWidth || window.innerWidth;
+      const h = canvas.clientHeight || window.innerHeight;
+      
+      // Grid configuration
+      const buttonSize_w = w * 0.08;
+      const buttonSize_h = h * 0.07;
+      const spacingX = w * 0.10;
+      const spacingY = w * 0.10;
+      const numCols = 4;
+      const numRows = 4;
+
+      const totalGridWidth = (numCols - 1) * spacingX + buttonSize_w;
+      const totalGridHeight = (numRows - 1) * spacingY + buttonSize_h;
+
+      const labelSpace = w * 0.12;
+      const availableWidth = w - labelSpace;
+      const startX = labelSpace + (availableWidth - totalGridWidth) / 2;
+      const startY = h * 0.32;
+
+      const gridOrigin = { x: startX, y: startY };
+      const gridSpacing = { x: spacingX, y: spacingY };
+      const buttonSize = { width: buttonSize_w, height: buttonSize_h };
+
+      const seqToggleGrid = { seq1: [], seq2: [], seq3: [], seq4: [] };
+      
+      // Helper to create button with toggle behavior
+      function createButton(col, row, seqName, action, accentColor) {
+        const btn = new Button(
+          gridOrigin.x + col * gridSpacing.x,
+          gridOrigin.y + row * gridSpacing.y,
+          buttonSize.width,
+          buttonSize.height
+        );
+        btn.mode = 'toggle';
+        btn.state = false;
+        btn.colorize('accent', accentColor);
+        btn.colorize('fill', '#303030');
+        return btn;
+      }
+      
+      // Helper to wire button with action and collaboration
+      function wireButton(button, seqName, action, otherButtons) {
+        button.element.on('change', function(v) {
+          if (v && !isRemoteUpdateRef.value) {
+            // Turn off other buttons
+            otherButtons.forEach(function(btn) { btn.state = false; });
+            // Execute action
+            if (sequenceActions[seqName] && sequenceActions[seqName][action]) {
+              sequenceActions[seqName][action]();
+            }
+            // Send to collaborators
+            if (sendToCollab) sendToCollab(seqName, action);
+          }
+        });
+      }
+      
+      // SEQ 1 - row 0
+      const seq1_1c = createButton(0, 0, 'seq1', '1c', '#AEC6CF');
+      const seq1_2c = createButton(1, 0, 'seq1', '2c', '#AEC6CF');
+      const seq1_3c = createButton(2, 0, 'seq1', '3c', '#AEC6CF');
+      const seq1_stop = createButton(3, 0, 'seq1', 'stop', '#FF6961');
+      seqToggleGrid.seq1 = [seq1_1c, seq1_2c, seq1_3c, seq1_stop];
+      wireButton(seq1_1c, 'seq1', '1c', [seq1_2c, seq1_3c, seq1_stop]);
+      wireButton(seq1_2c, 'seq1', '2c', [seq1_1c, seq1_3c, seq1_stop]);
+      wireButton(seq1_3c, 'seq1', '3c', [seq1_1c, seq1_2c, seq1_stop]);
+      wireButton(seq1_stop, 'seq1', 'stop', [seq1_1c, seq1_2c, seq1_3c]);
+      
+      // SEQ 2 - row 1
+      const seq2_1b = createButton(0, 1, 'seq2', '1b', '#B4D7A8');
+      const seq2_2b = createButton(1, 1, 'seq2', '2b', '#B4D7A8');
+      const seq2_3b = createButton(2, 1, 'seq2', '3b', '#B4D7A8');
+      const seq2_stop = createButton(3, 1, 'seq2', 'stop', '#FF6961');
+      seqToggleGrid.seq2 = [seq2_1b, seq2_2b, seq2_3b, seq2_stop];
+      wireButton(seq2_1b, 'seq2', '1b', [seq2_2b, seq2_3b, seq2_stop]);
+      wireButton(seq2_2b, 'seq2', '2b', [seq2_1b, seq2_3b, seq2_stop]);
+      wireButton(seq2_3b, 'seq2', '3b', [seq2_1b, seq2_2b, seq2_stop]);
+      wireButton(seq2_stop, 'seq2', 'stop', [seq2_1b, seq2_2b, seq2_3b]);
+      
+      // SEQ 3 - row 2
+      const seq3_1d = createButton(0, 2, 'seq3', '1d', '#FFD580');
+      const seq3_2d = createButton(1, 2, 'seq3', '2d', '#FFD580');
+      const seq3_3d = createButton(2, 2, 'seq3', '3d', '#FFD580');
+      const seq3_stop = createButton(3, 2, 'seq3', 'stop', '#FF6961');
+      seqToggleGrid.seq3 = [seq3_1d, seq3_2d, seq3_3d, seq3_stop];
+      wireButton(seq3_1d, 'seq3', '1d', [seq3_2d, seq3_3d, seq3_stop]);
+      wireButton(seq3_2d, 'seq3', '2d', [seq3_1d, seq3_3d, seq3_stop]);
+      wireButton(seq3_3d, 'seq3', '3d', [seq3_1d, seq3_2d, seq3_stop]);
+      wireButton(seq3_stop, 'seq3', 'stop', [seq3_1d, seq3_2d, seq3_3d]);
+      
+      // SEQ 4 - row 3
+      const seq4_1a = createButton(0, 3, 'seq4', '1a', '#D4A5D9');
+      const seq4_2a = createButton(1, 3, 'seq4', '2a', '#D4A5D9');
+      const seq4_3a = createButton(2, 3, 'seq4', '3a', '#D4A5D9');
+      const seq4_stop = createButton(3, 3, 'seq4', 'stop', '#FF6961');
+      seqToggleGrid.seq4 = [seq4_1a, seq4_2a, seq4_3a, seq4_stop];
+      wireButton(seq4_1a, 'seq4', '1a', [seq4_2a, seq4_3a, seq4_stop]);
+      wireButton(seq4_2a, 'seq4', '2a', [seq4_1a, seq4_3a, seq4_stop]);
+      wireButton(seq4_3a, 'seq4', '3a', [seq4_1a, seq4_2a, seq4_stop]);
+      wireButton(seq4_stop, 'seq4', 'stop', [seq4_1a, seq4_2a, seq4_3a]);
+      
+      // Create labels
+      const labelRightEdge = startX - (w * 0.02);
+      const labelWidth = w * 0.10;
+      const labelLeftPx = labelRightEdge - labelWidth;
+      const labelStyle = `position: absolute; font-family: monospace; font-size: 12px; pointer-events: none; user-select: none; text-align: right; width: ${labelWidth}px; left: ${labelLeftPx}px;`;
+
+      const getRowTopPx = (rowIndex) => startY + (rowIndex * spacingY) + (buttonSize.height / 2) - 7;
+
+      const seq1_label = document.createElement('div');
+      seq1_label.textContent = 'seq 1';
+      seq1_label.style.cssText = labelStyle + `top: ${getRowTopPx(0)}px; color: #AEC6CF;`;
+      canvas.appendChild(seq1_label);
+
+      const seq2_label = document.createElement('div');
+      seq2_label.textContent = 'seq 2';
+      seq2_label.style.cssText = labelStyle + `top: ${getRowTopPx(1)}px; color: #B4D7A8;`;
+      canvas.appendChild(seq2_label);
+
+      const seq3_label = document.createElement('div');
+      seq3_label.textContent = 'seq 3';
+      seq3_label.style.cssText = labelStyle + `top: ${getRowTopPx(2)}px; color: #FFD580;`;
+      canvas.appendChild(seq3_label);
+
+      const seq4_label = document.createElement('div');
+      seq4_label.textContent = 'seq 4';
+      seq4_label.style.cssText = labelStyle + `top: ${getRowTopPx(3)}px; color: #D4A5D9;`;
+      canvas.appendChild(seq4_label);
+
+      // Enable toggle
+      const toggleWidth = w * 0.07;
+      const toggleHeight = h * 0.03;
+      const gridCenterX = startX + (3 * spacingX + buttonSize.width) / 2;
+      const toggleX = gridCenterX - (toggleWidth / 2);
+      const toggleY = startY - (h * 0.08);
+
+      const enable_toggle = new Switch(toggleX, toggleY, toggleWidth, toggleHeight);
+      
+      const enable_label = document.createElement('div');
+      enable_label.textContent = 'enable';
+      const enableLabelWidth = 60;
+      enable_label.style.cssText = `position: absolute; color: #8796EB; font-family: monospace; font-size: 11px; pointer-events: none; user-select: none; left: ${gridCenterX - enableLabelWidth/2}px; top: ${toggleY - 18}px; width: ${enableLabelWidth}px; text-align: center;`;
+      canvas.appendChild(enable_label);
+      
+      // Setup collaboration handlers
+      const buttons = {
+        seq1: { '1c': seq1_1c, '2c': seq1_2c, '3c': seq1_3c, 'stop': seq1_stop },
+        seq2: { '1b': seq2_1b, '2b': seq2_2b, '3b': seq2_3b, 'stop': seq2_stop },
+        seq3: { '1d': seq3_1d, '2d': seq3_2d, '3d': seq3_3d, 'stop': seq3_stop },
+        seq4: { '1a': seq4_1a, '2a': seq4_2a, '3a': seq4_3a, 'stop': seq4_stop }
+      };
+      
+      function setupCollabHandlers(seqName) {
+        if (!window.chClient) return;
+        
+        window.chClient.on(seqName, function(data) {
+          if (data.values && data.values.action) {
+            isRemoteUpdateRef.value = true;
+            // Execute action
+            if (sequenceActions[seqName] && sequenceActions[seqName][data.values.action]) {
+              sequenceActions[seqName][data.values.action]();
+            }
+            // Update button states
+            Object.keys(buttons[seqName]).forEach(function(actionName) {
+              buttons[seqName][actionName].state = (actionName === data.values.action);
+            });
+            isRemoteUpdateRef.value = false;
+          }
+        });
+      }
+      
+      setupCollabHandlers('seq1');
+      setupCollabHandlers('seq2');
+      setupCollabHandlers('seq3');
+      setupCollabHandlers('seq4');
+      
+      // Setup dynamic resize handler
+      const layoutPercents = {
+        buttonSize_w: 0.08,
+        buttonSize_h: 0.07,
+        spacingX: 0.10,
+        spacingY: 0.10,
+        labelSpace: 0.12,
+        startY: 0.32,
+        toggleWidth: 0.07,
+        toggleHeight: 0.03,
+        toggleYOffset: 0.08,
+        enableLabelWidth: 60
+      };
+      
+      function handleResize() {
+        const newW = canvas.clientWidth || window.innerWidth;
+        const newH = canvas.clientHeight || window.innerHeight;
+        
+        // Recalculate grid dimensions
+        const newButtonW = newW * layoutPercents.buttonSize_w;
+        const newButtonH = newH * layoutPercents.buttonSize_h;
+        const newSpacingX = newW * layoutPercents.spacingX;
+        const newSpacingY = newH * layoutPercents.spacingY;
+        const newLabelSpace = newW * layoutPercents.labelSpace;
+        const newAvailableWidth = newW - newLabelSpace;
+        const newTotalGridWidth = 3 * newSpacingX + newButtonW;
+        const newStartX = newLabelSpace + (newAvailableWidth - newTotalGridWidth) / 2;
+        const newStartY = newH * layoutPercents.startY;
+        
+        // Update sequence labels
+        const newLabelRightEdge = newStartX - (newW * 0.02);
+        const newLabelWidth = newW * 0.10;
+        const newLabelLeftPx = newLabelRightEdge - newLabelWidth;
+        const labelFontSize = Math.max(10, Math.min(14, newW * 0.018)) + 'px';
+        
+        function updateSeqLabel(label, rowIndex) {
+          const topPx = newStartY + (rowIndex * newSpacingY) + (newButtonH / 2) - 7;
+          label.style.left = newLabelLeftPx + 'px';
+          label.style.top = topPx + 'px';
+          label.style.width = newLabelWidth + 'px';
+          label.style.fontSize = labelFontSize;
+        }
+        
+        updateSeqLabel(seq1_label, 0);
+        updateSeqLabel(seq2_label, 1);
+        updateSeqLabel(seq3_label, 2);
+        updateSeqLabel(seq4_label, 3);
+        
+        // Update enable label
+        const newGridCenterX = newStartX + (newTotalGridWidth / 2);
+        const newToggleY = newStartY - (newH * layoutPercents.toggleYOffset);
+        enable_label.style.left = (newGridCenterX - layoutPercents.enableLabelWidth / 2) + 'px';
+        enable_label.style.top = (newToggleY - 18) + 'px';
+        enable_label.style.fontSize = Math.max(9, Math.min(12, newW * 0.015)) + 'px';
+        
+        // Trigger synth GUI resize if available
+        Object.values(sequences).forEach(function(synth) {
+          if (synth && synth.nexusElements) {
+            synth.nexusElements.forEach(function(el) {
+              if (el && el.updatePositionAndSize) {
+                el.updatePositionAndSize();
+              }
+            });
+          }
+        });
+      }
+      
+      // Set up ResizeObserver for the canvas
+      const resizeObserver = new ResizeObserver(function(entries) {
+        window.requestAnimationFrame(function() {
+          handleResize();
+        });
+      });
+      resizeObserver.observe(canvas);
+
+      // Also listen to window resize as fallback
+      window.addEventListener('resize', function() {
+        window.requestAnimationFrame(function() {
+          handleResize();
+        });
+      });
+      
+      // Return GUI elements and helper functions
+      return {
+        seqToggleGrid,
+        buttons,
+        enable_toggle,
+        labels: { seq1: seq1_label, seq2: seq2_label, seq3: seq3_label, seq4: seq4_label, enable: enable_label },
+        handleResize
+      };
     }
 
     function ensureUserBackgroundCSS(userID, color) {
