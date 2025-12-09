@@ -91,6 +91,7 @@ p5.prototype.initialize = function (div, height) {
 };
 
 function resizeP5(string, scaleWidth, scaleHeight) {
+    console.log('resizeP5')
     var regex = /(\w+)\.(\w+)\((.*?)\)/;
     var match = string.match(regex);
 
@@ -122,6 +123,8 @@ function resizeP5(string, scaleWidth, scaleHeight) {
 }
 
 export function divResized(p, maxClicked, canvasLength) {
+    //console.log('divResized')
+
     let prevWidth = p.width;
     let prevHeight = p.height;
     const doc = (p && p.canvas && p.canvas.ownerDocument) || document;
@@ -135,8 +138,8 @@ export function divResized(p, maxClicked, canvasLength) {
     const canvasesHeight = canvasesCont ? canvasesCont.offsetHeight : (p.div ? p.div.offsetHeight : prevHeight);
     const flexWidth = flexCont ? flexCont.offsetWidth : (p.div ? p.div.offsetWidth : prevWidth);
     const divWidth = p.div ? p.div.offsetWidth : prevWidth;
-    const divHeight = p.div ? p.div.offsetHeight : prevHeight;
-
+    //const divHeight = p.div ? p.div.offsetHeight : prevHeight;
+    const divHeight =  prevHeight;
     if (maxClicked === '+h') {
         p.height = canvasesHeight - controlsHeight;
         p.width = divWidth;
@@ -645,7 +648,6 @@ export class Knob extends Element {
     }
 
     draw() {
-        //console.log(this.rawValue)
         if (this.hide === true) return;
         // Calculate the angle based on the knob's value
         this.startAngle = this.p.PI * (4 / 8 + (360 - this.degrees) / 360);
@@ -695,6 +697,7 @@ export class Knob extends Element {
     isDragged() {
         if (this.hide === true) return;
         if (this.active) {
+            console.log('knob', this.p.width, this.p.height)
 
             if (this.p.movedY != 0) {
                 if (this.p.keyIsDown(this.p.ALT)) this.rawValue -= this.p.movedY * this.incr / 10;
