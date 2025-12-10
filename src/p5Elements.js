@@ -781,6 +781,7 @@ export class Fader extends Element {
         let curTextY = this.isHorizontal ? this.cur_y + border * 2 + textHeightValue * .5 : this.cur_y + this.cur_size / 2 + border + textHeightValue * .5
         if (this.showLabel) this.drawLabel(this.cur_x, curTextY)
         if (this.showValue) this.drawValue(this.cur_x, curTextY + (this.showLabel ? 1 : 0) * textHeightValue)
+        //console.log('fader', this.cur_x, curTextY)
 
         //Display Actual Fader
         this.p.noFill();
@@ -847,11 +848,7 @@ p5.prototype.Slider = function (options = {}) {
 };
 
 /**************************************** PAD ******************************************/
-// NOTE THIS LOOKS BROKEN!!
-// It's the only element that has a custom valueX, valueY thingy
-// var value gets ignored and so the callback doesn't work asa expected
-// maybe represent values of x and y as a string instead??
-// doesn't support collab-hub features as of now for the same reason
+// This is fixed now - value is an array [x,y]
 
 export class Pad extends Element {
     constructor(p, options) {
@@ -862,6 +859,8 @@ export class Pad extends Element {
         this.dragging = false;
         this.sizeX = options.sizeX || options.size || 5
         this.sizeY = options.sizeY || options.size || 5
+        this.labelX = 0
+        this.labelY = 0
         // if (typeof (options.mapto) == 'string') this.mapto = eval(options.mapto)
         // else this.mapto = options.mapto || null;
         // if (typeof (options.maptoY) == 'string') this.maptoY = eval(options.maptoY)
@@ -902,7 +901,7 @@ export class Pad extends Element {
         this.thickness = border // cur_size * .1; //Indicator thickness
         let rectThickness = this.thickness * .95;
 
-        //Display Actual Fader
+        //Display Pad
         this.p.fill(this.setColor(this.borderColor));
         this.p.stroke(this.setColor(this.borderColor))
         this.p.strokeWeight(border * 1.5);
@@ -915,20 +914,22 @@ export class Pad extends Element {
         let indicatorY = y_corner + this.rawValue[1] * (this.cur_sizeY - 0 * border)
         //this.pos = this.p.map(this.value, 0,1,  x_corner  + this.cur_size - this.thickness, this.isHorizontal ? x_corner + this.cur_size - this.thickness : y_corner);
         this.p.circle(indicatorX, indicatorY, (this.cur_sizeX + this.cur_sizeY) / 30)
-        
+
 
         // Display the label and values
-        let textHeightValue = this.p.textAscent() + this.p.textDescent();
-        if (this.showLabel) this.drawLabel(this.cur_x, this.cur_y - this.cur_sizeY / 2 - textHeightValue)
+        // let textHeightValue = this.p.textAscent() + this.p.textDescent();
+        // if (this.showLabel) this.drawLabel(this.cur_x, this.cur_y - this.cur_sizeY / 2 - textHeightValue)
 
         // Display the label and value strings
-        // this.p.textSize(this.textSize*10);
-        // let textWidthValue = this.p.textWidth(this.label);
-        // let textHeightValue = this.p.textAscent() + this.p.textDescent();
-        // let curTextY = this.isHorizontal ? this.cur_y+border*2 + textHeightValue* .5 : this.cur_y+this.cur_size/2+ border + textHeightValue * .5
-        // if(this.showLabel) this.drawLabel(this.cur_x, curTextY)
-        // if(this.showValue) this.drawValue(this.cur_x, curTextY + textHeightValue)
+        this.p.textSize(this.textSize * 10 * this.p.width/600);
+        let textWidthValue = this.p.textWidth(this.label);
+        let textHeightValue = this.p.textAscent() + this.p.textDescent();
 
+        let curTextY = this.cur_y + this.cur_sizeY/2  + textHeightValue * 1 
+        if (this.showLabel) this.drawLabel(this.cur_x , curTextY)
+        //console.log(this.showLabel, this.cur_x+ this.textX, curTextY+ this.textY)
+        //if (this.showValue) this.drawValue(this.cur_x, curTextY + (this.showLabel ? 1 : 0) * textHeightValue)
+ 
     }
 
     isDragged() {
