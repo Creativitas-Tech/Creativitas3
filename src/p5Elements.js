@@ -137,7 +137,7 @@ export function divResized(p, maxClicked, canvasLength) {
     const divWidth = p.div ? p.div.offsetWidth : prevWidth;
     //const divHeight = p.div ? p.div.offsetHeight : prevHeight;
     const divHeight =  prevHeight;
-    
+
     if (maxClicked === '+h') {
         p.height = canvasesHeight - controlsHeight;
         p.width = divWidth;
@@ -474,9 +474,9 @@ class Element {
     }
 
     drawLabel(x, y) {
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width / 600);
         this.p.stroke(this.setColor(this.textColor))
-        this.p.strokeWeight(0.00001 * this.textSize * 20);
+        this.p.strokeWeight(0.00001 * this.textSize * 20 * this.p.width/600);
         this.p.textAlign(this.p.CENTER, this.p.CENTER);
         this.p.fill(this.setColor(this.textColor));
         this.p.textFont(getFont(this.labelFont))
@@ -488,7 +488,7 @@ class Element {
             let output = this.value
             //console.log(this.value,x,y)
             this.p.stroke(this.setColor(this.textColor))
-            this.p.textSize(this.textSize * 10);
+            this.p.textSize(this.textSize * 10 * this.p.width/600);
             this.p.strokeWeight(0.00001 * this.textSize * 20);
             this.p.textAlign(this.p.CENTER, this.p.CENTER);
             this.p.fill(this.setColor(this.textColor));
@@ -505,7 +505,7 @@ class Element {
     }
 
     drawText(text, x, y) {
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width/600);
         this.p.stroke(this.setColor(this.textColor))
         this.p.strokeWeight(0.00001 * this.textSize * 20);
         this.p.textAlign(this.p.CENTER, this.p.CENTER);
@@ -669,7 +669,7 @@ export class Knob extends Element {
         // this.p.arc(cur_x, cur_y, cur_size*1.2, cur_size*1.2,0,2*this.p.PI);
 
         // Display the label string beneath the knob
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width/600);
         let textWidthValue = this.p.textWidth(this.label);
         let textHeightValue = this.p.textAscent() + this.p.textDescent();
         if (this.showLabel) this.drawLabel(this.cur_x, this.cur_y + this.cur_size / 2 + textHeightValue * .5)
@@ -775,7 +775,7 @@ export class Fader extends Element {
         let rectThickness = this.thickness * .95;
 
         // Display the label and value strings
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width/600);
         let textWidthValue = this.p.textWidth(this.label);
         let textHeightValue = this.p.textAscent() + this.p.textDescent();
         let curTextY = this.isHorizontal ? this.cur_y + border * 2 + textHeightValue * .5 : this.cur_y + this.cur_size / 2 + border + textHeightValue * .5
@@ -911,10 +911,11 @@ export class Pad extends Element {
         //Display indicator
         this.p.fill(this.setColor(this.accentColor));
         this.p.stroke(this.setColor(this.accentColor))
-        let indicatorX = x_corner + this.rawValueX * (this.cur_sizeX - 0 * border)
-        let indicatorY = y_corner + this.rawValueY * (this.cur_sizeY - 0 * border)
+        let indicatorX = x_corner + this.rawValue[0] * (this.cur_sizeX - 0 * border)
+        let indicatorY = y_corner + this.rawValue[1] * (this.cur_sizeY - 0 * border)
         //this.pos = this.p.map(this.value, 0,1,  x_corner  + this.cur_size - this.thickness, this.isHorizontal ? x_corner + this.cur_size - this.thickness : y_corner);
         this.p.circle(indicatorX, indicatorY, (this.cur_sizeX + this.cur_sizeY) / 30)
+        
 
         // Display the label and values
         let textHeightValue = this.p.textAscent() + this.p.textDescent();
@@ -1207,7 +1208,7 @@ export class RadioButton extends Button {
 
 
         //calculate widest radioOption for radioButton width
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width / 600); 
         let textWidth = 0
         for (let i = 0; i < this.radioOptions.length; i++) {
             let width = this.p.textWidth(this.radioOptions[i]);
@@ -1358,7 +1359,7 @@ export class Dropdown extends Button {
         this.cur_x = (this.x / 100) * this.p.width;
         this.cur_y = (this.y / 100) * this.p.height;
 
-        this.p.textSize(this.cur_size * 0.9); // Larger text size
+        this.p.textSize(this.cur_size * 0.9 * this.p.width / 600); // Larger text size
         let textWidth = this.p.textWidth(this.value);
         this.boxWidth = Math.max(textWidth + 20, 100); // Ensure a minimum width for the dropdown
         this.boxHeight = this.cur_size;

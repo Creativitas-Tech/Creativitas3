@@ -973,7 +973,8 @@ function divResized(p, maxClicked, canvasLength) {
     const canvasesHeight = canvasesCont ? canvasesCont.offsetHeight : (p.div ? p.div.offsetHeight : prevHeight);
     const flexWidth = flexCont ? flexCont.offsetWidth : (p.div ? p.div.offsetWidth : prevWidth);
     const divWidth = p.div ? p.div.offsetWidth : prevWidth;
-    const divHeight = p.div ? p.div.offsetHeight : prevHeight;
+    //const divHeight = p.div ? p.div.offsetHeight : prevHeight;
+    const divHeight =  prevHeight;
 
     if (maxClicked === '+h') {
         p.height = canvasesHeight - controlsHeight;
@@ -1311,9 +1312,9 @@ class Element {
     }
 
     drawLabel(x, y) {
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width / 600);
         this.p.stroke(this.setColor(this.textColor))
-        this.p.strokeWeight(0.00001 * this.textSize * 20);
+        this.p.strokeWeight(0.00001 * this.textSize * 20 * this.p.width/600);
         this.p.textAlign(this.p.CENTER, this.p.CENTER);
         this.p.fill(this.setColor(this.textColor));
         this.p.textFont(getFont(this.labelFont))
@@ -1325,7 +1326,7 @@ class Element {
             let output = this.value
             //console.log(this.value,x,y)
             this.p.stroke(this.setColor(this.textColor))
-            this.p.textSize(this.textSize * 10);
+            this.p.textSize(this.textSize * 10 * this.p.width/600);
             this.p.strokeWeight(0.00001 * this.textSize * 20);
             this.p.textAlign(this.p.CENTER, this.p.CENTER);
             this.p.fill(this.setColor(this.textColor));
@@ -1342,7 +1343,7 @@ class Element {
     }
 
     drawText(text, x, y) {
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width/600);
         this.p.stroke(this.setColor(this.textColor))
         this.p.strokeWeight(0.00001 * this.textSize * 20);
         this.p.textAlign(this.p.CENTER, this.p.CENTER);
@@ -1385,7 +1386,7 @@ class Element {
                     }
                 }
             }
-        } else if (this.maptoDefined === 'false') { console.log(this.label, 'no destination defined') }
+        } //else if (this.maptoDefined === 'false') { console.log(this.label, 'no destination defined') }
     }
 
     runCallBack() {
@@ -1506,7 +1507,7 @@ class Knob extends Element {
         // this.p.arc(cur_x, cur_y, cur_size*1.2, cur_size*1.2,0,2*this.p.PI);
 
         // Display the label string beneath the knob
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width/600);
         let textWidthValue = this.p.textWidth(this.label);
         let textHeightValue = this.p.textAscent() + this.p.textDescent();
         if (this.showLabel) this.drawLabel(this.cur_x, this.cur_y + this.cur_size / 2 + textHeightValue * .5)
@@ -1612,7 +1613,7 @@ class Fader extends Element {
         let rectThickness = this.thickness * .95;
 
         // Display the label and value strings
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width/600);
         let textWidthValue = this.p.textWidth(this.label);
         let textHeightValue = this.p.textAscent() + this.p.textDescent();
         let curTextY = this.isHorizontal ? this.cur_y + border * 2 + textHeightValue * .5 : this.cur_y + this.cur_size / 2 + border + textHeightValue * .5
@@ -1748,10 +1749,11 @@ class Pad extends Element {
         //Display indicator
         this.p.fill(this.setColor(this.accentColor));
         this.p.stroke(this.setColor(this.accentColor))
-        let indicatorX = x_corner + this.rawValueX * (this.cur_sizeX - 0 * border)
-        let indicatorY = y_corner + this.rawValueY * (this.cur_sizeY - 0 * border)
+        let indicatorX = x_corner + this.rawValue[0] * (this.cur_sizeX - 0 * border)
+        let indicatorY = y_corner + this.rawValue[1] * (this.cur_sizeY - 0 * border)
         //this.pos = this.p.map(this.value, 0,1,  x_corner  + this.cur_size - this.thickness, this.isHorizontal ? x_corner + this.cur_size - this.thickness : y_corner);
         this.p.circle(indicatorX, indicatorY, (this.cur_sizeX + this.cur_sizeY) / 30)
+        
 
         // Display the label and values
         let textHeightValue = this.p.textAscent() + this.p.textDescent();
@@ -2044,7 +2046,7 @@ class RadioButton extends Button {
 
 
         //calculate widest radioOption for radioButton width
-        this.p.textSize(this.textSize * 10);
+        this.p.textSize(this.textSize * 10 * this.p.width / 600); 
         let textWidth = 0
         for (let i = 0; i < this.radioOptions.length; i++) {
             let width = this.p.textWidth(this.radioOptions[i]);
@@ -2195,7 +2197,7 @@ class Dropdown extends Button {
         this.cur_x = (this.x / 100) * this.p.width;
         this.cur_y = (this.y / 100) * this.p.height;
 
-        this.p.textSize(this.cur_size * 0.9); // Larger text size
+        this.p.textSize(this.cur_size * 0.9 * this.p.width / 600); // Larger text size
         let textWidth = this.p.textWidth(this.value);
         this.boxWidth = Math.max(textWidth + 20, 100); // Ensure a minimum width for the dropdown
         this.boxHeight = this.cur_size;
@@ -2395,7 +2397,7 @@ const sketch = (p, config = {}) => {
         p.activeTheme = themes['dark']
         p.width = dim[0]
         p.height = dim[1]
-        console.log(p.width, p.height)
+        //console.log(p.width, p.height)
         p.frame = 0
         p.x = 0
         p.y = 0
@@ -3509,202 +3511,514 @@ function rearrangeAccidentals(arr, usesPitchNames) {
 
 
 
-/*
-This class mimics the midi keyboard react component.
-It is a hassle to find a way to programmatically convert the component to usable html and js,
-so here is an alternative
-*/
-class MidiKeyboard {
-    constructor() {
-        this.midiOn = false;
-        this.notesOn = new Set();
-        this.activeKeys = {};
-        this.octave = 4;
-        this.keyToNote = {
-            90: { "midi": 60, "pitch": "C" },     // Z
-            83: { "midi": 61, "pitch": "C#/Db" }, // S
-            88: { "midi": 62, "pitch": "D" },     // X
-            68: { "midi": 63, "pitch": "D#/Eb" }, // D
-            67: { "midi": 64, "pitch": "E" },     // C
-            86: { "midi": 65, "pitch": "F" },     // V
-            71: { "midi": 66, "pitch": "F#/Gb" }, // G
-            66: { "midi": 67, "pitch": "G" },     // B
-            72: { "midi": 68, "pitch": "G#/Ab" }, // H
-            78: { "midi": 69, "pitch": "A" },     // N
-            74: { "midi": 70, "pitch": "A#/Bb" }, // J
-            77: { "midi": 71, "pitch": "B" },     // M
-            188: { "midi": 72, "pitch": "C" },    // ,
-            76: { "midi": 73, "pitch": "C#/Db" }, // L
-            190: { "midi": 74, "pitch": "D" },    // .
-            186: { "midi": 75, "pitch": "D#/Eb" }, // ;
-            191: { "midi": 76, "pitch": "E" },    // /
+// MidiKeyboard2.js
+function MidiKeyboard2(midiHandler) {
 
-            // second octave
-            81: { "midi": 72, "pitch": "C" },     // Q
-            50: { "midi": 73, "pitch": "C#/Db" }, // 2
-            87: { "midi": 74, "pitch": "D" },     // W
-            51: { "midi": 75, "pitch": "D#/Eb" }, // 3
-            69: { "midi": 76, "pitch": "E" },     // E
-            82: { "midi": 77, "pitch": "F" },     // R
-            53: { "midi": 78, "pitch": "F#/Gb" }, // 5
-            84: { "midi": 79, "pitch": "G" },     // T
-            54: { "midi": 80, "pitch": "G#/Ab" }, // 6
-            89: { "midi": 81, "pitch": "A" },     // Y
-            55: { "midi": 82, "pitch": "A#/Bb" }, // 7
-            85: { "midi": 83, "pitch": "B" },     // U
-            73: { "midi": 84, "pitch": "C" },     // I
-            57: { "midi": 85, "pitch": "C#/Db" }, // 9
-            79: { "midi": 86, "pitch": "D" },     // O
-            48: { "midi": 87, "pitch": "D#/Eb" }, // 0
-            80: { "midi": 88, "pitch": "E" }      // P
-        };
+    let activeKeys = {};
+    let octave = 4;
+    let midiOn = false;
+    let notesOn = new Set();
 
-        this.init();
+    const keyToNote = {
+        32: { midi: '.' },
+        90: { midi: 60 }, 83: { midi: 61 }, 88: { midi: 62 },
+        68: { midi: 63 }, 67: { midi: 64 }, 86: { midi: 65 },
+        71: { midi: 66 }, 66: { midi: 67 }, 72: { midi: 68 },
+        78: { midi: 69 }, 74: { midi: 70 }, 77: { midi: 71 },
+        188: { midi: 72 }, 76: { midi: 73 }, 190: { midi: 74 },
+        186: { midi: 75 }, 191: { midi: 76 },
+
+        81: { midi: 72 }, 50: { midi: 73 }, 87: { midi: 74 },
+        51: { midi: 75 }, 69: { midi: 76 }, 82: { midi: 77 },
+        53: { midi: 78 }, 84: { midi: 79 }, 54: { midi: 80 },
+        89: { midi: 81 }, 55: { midi: 82 }, 85: { midi: 83 },
+        73: { midi: 84 }, 57: { midi: 85 }, 79: { midi: 86 },
+        48: { midi: 87 }, 80: { midi: 88 }
+    };
+
+    function enable() {
+        if (midiOn) return;
+        midiOn = true;
+        document.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keyup", handleKeyUp);
     }
 
-    init() {
-        // Add event listeners
-        document.addEventListener('keydown', this.handleKeyDown.bind(this));
-        document.addEventListener('keyup', this.handleKeyUp.bind(this));
+    function disable() {
+        if (!midiOn) return;
+        midiOn = false;
 
-        // Get DOM elements
-        // WARNING: These are assumed to be defined
-        this.keyboardButton = document.getElementById('keyboard-button');
-        this.keyboardIcon = document.getElementById('keyboard-icon');
-        this.notesDisplay = document.getElementById('notes-display');
+        document.removeEventListener("keydown", handleKeyDown);
+        document.removeEventListener("keyup", handleKeyUp);
 
-        // Add click handler
-        this.keyboardButton.addEventListener('click', this.toggleMidi.bind(this));
+        for (let note of notesOn) {
+            midiHandler.handleNoteOff(note, 0);
+        }
+        notesOn.clear();
     }
 
-    handleKeyDown(event) {
-        if (this.midiOn) {
-            const keyCode = event.keyCode;
-            if (!this.activeKeys[keyCode]) {
-                this.activeKeys[keyCode] = true;
-                try {
-                    let note = this.keyToNote[keyCode];
-                    let midiNote = note["midi"] + (this.octave - 4) * 12;
-                    if (midiNote <= 127) {
-                        this.notesOn.add(midiNote);
-                        this.updateNotesDisplay();
-                        if (window.midiHandlerInstance) {
-                            window.midiHandlerInstance.handleNoteOn(midiNote, 100);
-                        }
-                    }
-                } catch (error) {
-                    if (keyCode === 37) {
-                        this.decreaseOctave();
-                    } else if (keyCode === 39) {
-                        this.increaseOctave();
-                    }
-                }
-            }
+    function toggle() {
+        midiOn ? disable() : enable();
+    }
+
+    function handleKeyDown(event) {
+        if (!midiOn) return;
+        const keyCode = event.keyCode;
+
+        if (activeKeys[keyCode]) return;
+        activeKeys[keyCode] = true;
+
+        if (keyCode === 37) return decreaseOctave();
+        if (keyCode === 39) return increaseOctave();
+
+        const map = keyToNote[keyCode];
+        if (!map) return;
+        if (map.midi === '.') {
+            midiHandler.handleNoteOn('.', 100);
+            return;
+        }
+
+        const midiNote = map.midi + (octave - 4) * 12;
+
+        if (midiNote < 128) {
+            notesOn.add(midiNote);
+            midiHandler.handleNoteOn(midiNote, 100);
         }
     }
 
-    handleKeyUp(event) {
-        if (this.midiOn) {
-            const keyCode = event.keyCode;
-            this.activeKeys[keyCode] = false;
-            try {
-                let note = this.keyToNote[keyCode];
-                let midiNote = note["midi"] + (this.octave - 4) * 12;
-                if (midiNote <= 127) {
-                    this.notesOn.delete(midiNote);
-                    this.updateNotesDisplay();
-                    if (window.midiHandlerInstance) {
-                        window.midiHandlerInstance.handleNoteOff(midiNote, 0);
-                    }
-                }
-            } catch (error) {
-                // Ignore errors for non-mapped keys
-            }
+    function handleKeyUp(event) {
+        if (!midiOn) return;
+        const keyCode = event.keyCode;
+
+        activeKeys[keyCode] = false;
+
+        const map = keyToNote[keyCode];
+        if (!map) return;
+        if (map.midi === '.') {
+            midiHandler.handleNoteOff('.', 100);
+            return;
+        }
+
+        const midiNote = map.midi + (octave - 4) * 12;
+
+        if (midiNote < 128) {
+            notesOn.delete(midiNote);
+            midiHandler.handleNoteOff(midiNote, 0);
         }
     }
 
-    toggleMidi() {
-        this.midiOn = !this.midiOn;
-        this.keyboardIcon.className = `icon ${this.midiOn ? 'active' : 'inactive'}`;
+    function increaseOctave() {
+        if (octave < 7) octave++;
     }
 
-    increaseOctave() {
-        if (this.octave < 7) {
-            this.octave++;
-        }
+    function decreaseOctave() {
+        if (octave > 1) octave--;
     }
 
-    decreaseOctave() {
-        if (this.octave > 1) {
-            this.octave--;
-        }
-    }
-
-    updateNotesDisplay() {
-        this.notesDisplay.innerHTML = Array.from(this.notesOn)
-            .map(note => `<div class="note-pill">${note}</div>`)
-            .join('');
-    }
+    return {
+        enable,
+        disable,
+        toggle,
+        get activeNotes() { return Array.from(notesOn); }
+    };
 }
 
-// Initialize the keyboard when the page loads
-document.addEventListener('DOMContentLoaded', () => {
-    window.midiKeyboard = new MidiKeyboard();
-});
 
+// browser global
+if (typeof window !== "undefined") {
+    window.MidiKeyboard2 = MidiKeyboard2;
+}
 
-/*
-DelayOp
+// node if (typeof module !== "undefined") {
+    module.exports = MidiKeyboard2;
+}
 
-Delays
-* input->hpf->feedbackDelay->drive->waveShaper->lpf->panner->output
-* 
-* 
+// NexusUI wrapper base class
+// Uses the global Nexus object from the nexusui npm package
 
-methods:
+// Static flag to track if Canvas has been initialized
+let canvasInitialized = false;
 
-
-properties:
-
-- 
-*/
-
-;
-;
-
-class DelayOp{
-  constructor(){
-    //signal
-    this.input = new Tone.Multiply(1)
-    this.hpf = new Tone.OnePoleFilter({type:'highpass',frequency:100})
-    this.delay = new Tone.FeedbackDelay()
-    this.drive = new Tone.Multiply(0.8)
-    this. waveShaper = new Tone.WaveShaper((x)=>{
-      return Math.tanh(x*16) *.9
-    })
-    this.lpf = new Tone.Filter({frequency:2000})
-    this.panner = new Tone.Panner(0)
-    this.output = new Tone.Multiply(1)
-    //mod
-    this.delayTime = new Tone.Signal(.1)
-    //connections
-    this.input.connect(this.hpf)
-    this.hpf.connect(this.delay)
-    this.delay.connect(this.drive)
-    this.drive.connect(this.waveShaper)
-    this.waveShaper.connect(this.lpf)
-    this.lpf.connect(this.panner)
-    this.panner.connect(this.output)
-    //mod connections
-    this.delayTime.connect(this.delay.delayTime)
-  }
-  connect(destination) {
-    if (destination.input) {
-      this.output.connect(destination.input);
-    } else {
-      this.output.connect(destination);
+/**
+ * Initialize the Canvas container for NexusUI elements
+ * Call this once before creating NexusUI elements, or it will be called automatically
+ * @param {string} backgroundColor - Optional background color (default: '#1a1a2e')
+ */
+function initNexusCanvas(backgroundColor = '#1a1a2e') {
+    const container = document.getElementById('Canvas');
+    if (!container) {
+        console.error('initNexusCanvas: #Canvas container not found!');
+        return null;
     }
-  }
+    
+    // Set up Canvas styling for NexusUI
+    container.style.backgroundColor = backgroundColor;
+    container.style.margin = '0';
+    container.style.padding = '0';
+    container.style.width = '100%';
+    container.style.height = '100%';
+    container.style.position = 'relative';
+    container.style.overflow = 'hidden';
+    
+    canvasInitialized = true;
+    return container;
+}
+
+class NexusElement{
+    constructor(element_type, x = 0, y = 0, width = 100, height = 100) {
+        this.element_type = element_type;
+
+        // Get the Canvas container - this is where NexusUI elements should appear
+        const container = document.getElementById('Canvas');
+        if (!container) {
+            console.error('NexusElement: #Canvas container not found!');
+            return;
+        }
+        
+        // Auto-initialize Canvas if not already done
+        if (!canvasInitialized) {
+            initNexusCanvas();
+        }
+
+        // Initialize the Nexus element - NexusUI will create its own wrapper
+        const Nexus = window.Nexus;
+        
+        // Create a unique container div for this element inside Canvas
+        const elementContainer = document.createElement('div');
+        elementContainer.style.position = 'absolute';
+        elementContainer.style.left = x + 'px';
+        elementContainer.style.top = y + 'px';
+        container.appendChild(elementContainer);
+        
+        // Create the NexusUI element inside our positioned container
+        this.element = new Nexus[this.element_type](elementContainer, {
+            size: [width, height]
+        });
+        
+        // Store reference to our container for cleanup
+        this.container = container;
+        this.elementContainer = elementContainer;
+
+        const containerWidth = container.clientWidth || window.innerWidth;
+        const containerHeight = container.clientHeight || window.innerHeight;
+
+        // Store position as percentages for responsive resizing
+        this.xPercent = x / containerWidth;
+        this.yPercent = y / containerHeight;
+        this.widthPercent = width / containerWidth;
+        this.heightPercent = height / containerHeight;
+
+        // Apply initial position (already set, but ensures consistency)
+        this.updatePositionAndSize();
+        
+        // Use ResizeObserver to handle container resizing (e.g. split pane drag)
+        if (container) {
+            this.resizeObserver = new ResizeObserver(() => {
+                window.requestAnimationFrame(() => {
+                    if (!this.element || !this.element.element || !document.body.contains(this.element.element)) {
+                        if (this.resizeObserver) this.resizeObserver.disconnect();
+                        return;
+                    }
+                    this.updatePositionAndSize();
+                });
+            });
+            this.resizeObserver.observe(container);
+        } else {
+            // Fallback to window resize if container not found immediately
+            window.addEventListener("resize", () => this.updatePositionAndSize());
+        }
+    }
+
+    mapTo(callback){
+        this.element.on("change", callback)
+        //callback must be written as (element_output) => {function}
+    }
+
+    updatePositionAndSize() {
+        // Update pixel values based on percentages and current container size
+        const container = this.container || document.getElementById('Canvas');
+        if (!container) return;
+        
+        const newWidth = container.clientWidth || window.innerWidth;
+        const newHeight = container.clientHeight || window.innerHeight;
+
+        // Position our wrapper container
+        if (this.elementContainer) {
+            this.elementContainer.style.left = (this.xPercent * newWidth) + "px";
+            this.elementContainer.style.top = (this.yPercent * newHeight) + "px";
+        }
+        
+        // Resize the NexusUI element
+        if (this.element && this.element.resize) {
+            this.element.resize(
+                this.widthPercent * newWidth,
+                this.heightPercent * newHeight
+            );
+        }
+    }
+
+    colorize(property, color) {
+        if (this.element && this.element.colorize) {
+            this.element.colorize(property, color);
+        }
+    }
+
+    // Destroy the element and clean up
+    destroy(){
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
+        if (this.element && this.element.destroy) {
+            this.element.destroy();
+        }
+        // Remove our container div
+        if (this.elementContainer && this.elementContainer.parentNode) {
+            this.elementContainer.parentNode.removeChild(this.elementContainer);
+        }
+    }
+
+        //Dynamic sizing and positioning
+
+        set x(value) {
+            const container = this.container || document.getElementById('Canvas');
+            const containerWidth = container ? container.clientWidth : window.innerWidth;
+            this.xPercent = value / containerWidth;
+            this.updatePositionAndSize();
+        }
+    
+        set y(value) {
+            const container = this.container || document.getElementById('Canvas');
+            const containerHeight = container ? container.clientHeight : window.innerHeight;
+            this.yPercent = value / containerHeight;
+            this.updatePositionAndSize();
+        }
+    
+        set width(value) {
+            const container = this.container || document.getElementById('Canvas');
+            const containerWidth = container ? container.clientWidth : window.innerWidth;
+            this.widthPercent = value / containerWidth;
+            this.updatePositionAndSize();
+        }
+    
+        set height(value) {
+            const container = this.container || document.getElementById('Canvas');
+            const containerHeight = container ? container.clientHeight : window.innerHeight;
+            this.heightPercent = value / containerHeight;
+            this.updatePositionAndSize();
+        }
+    
+        // Getters for convenience
+        get x() {
+            const container = this.container || document.getElementById('Canvas');
+            const containerWidth = container ? container.clientWidth : window.innerWidth;
+            return this.xPercent * containerWidth;
+        }
+    
+        get y() {
+            const container = this.container || document.getElementById('Canvas');
+            const containerHeight = container ? container.clientHeight : window.innerHeight;
+            return this.yPercent * containerHeight;
+        }
+    
+        get width() {
+            const container = this.container || document.getElementById('Canvas');
+            const containerWidth = container ? container.clientWidth : window.innerWidth;
+            return this.widthPercent * containerWidth;
+        }
+    
+        get height() {
+            const container = this.container || document.getElementById('Canvas');
+            const containerHeight = container ? container.clientHeight : window.innerHeight;
+            return this.heightPercent * containerHeight;
+        }
+
+        set size([newWidth, newHeight]) {
+            const container = this.container || document.getElementById('Canvas');
+            const containerWidth = container ? container.clientWidth : window.innerWidth;
+            const containerHeight = container ? container.clientHeight : window.innerHeight;
+            this.widthPercent = newWidth / containerWidth;
+            this.heightPercent = newHeight / containerHeight;
+            this.updatePositionAndSize();
+        }
+    
+        get size() {
+            const container = this.container || document.getElementById('Canvas');
+            const containerWidth = container ? container.clientWidth : window.innerWidth;
+            const containerHeight = container ? container.clientHeight : window.innerHeight;
+            return [
+                this.widthPercent * containerWidth,
+                this.heightPercent * containerHeight
+            ];
+        }
+    }
+
+;
+
+class Button extends NexusElement {
+    constructor(x = 0, y = 0, width = 150, height = 300) {
+        // Pass the type "Dial" to the parent constructor
+        super('Button', x, y, width, height);
+    }
+
+    flip(){
+        this.element.flip()
+    }
+
+    //button functions
+    turnOn(){
+        this.element.turnOn()
+    }
+
+    turnOff(){
+        this.element.turnOff()
+    }
+
+    get mode() {
+        return this._mode;
+    }
+
+    set mode(type){
+        this._mode = type;
+        this.element.mode = type
+    }
+
+    get state(){
+        return this._state
+    }
+
+    set state(pressed){
+        this._state = pressed;
+        this.element.state = pressed
+    }
+
+}
+
+;
+
+class Dial extends NexusElement {
+    constructor(x = 0, y = 0, width = 100, height = 100, showValue = false) {
+        // Pass the type "Dial" to the parent constructor
+        super('Dial', x, y, width, height);
+        
+        this._showValue = showValue;
+        this._valueDisplay = null;
+        
+        if (showValue) {
+            this._createValueDisplay(width);
+        }
+    }
+    
+    _createValueDisplay(width) {
+        if (!this.elementContainer) return;
+        
+        const valueDiv = document.createElement('div');
+        valueDiv.style.cssText = `
+            position: absolute;
+            left: 0;
+            bottom: -16px;
+            width: ${width}px;
+            text-align: center;
+            color: #888888;
+            font-family: monospace;
+            font-size: 10px;
+            pointer-events: none;
+            user-select: none;
+        `;
+        valueDiv.textContent = '0.00';
+        this.elementContainer.appendChild(valueDiv);
+        this._valueDisplay = valueDiv;
+        
+        // Update value display when dial changes
+        this.element.on('change', (v) => {
+            this._updateValueDisplay(v);
+        });
+    }
+    
+    _updateValueDisplay(value) {
+        if (this._valueDisplay && typeof value === 'number') {
+            // Format based on value range
+            if (Math.abs(value) >= 100) {
+                this._valueDisplay.textContent = Math.round(value).toString();
+            } else if (Math.abs(value) >= 10) {
+                this._valueDisplay.textContent = value.toFixed(1);
+            } else {
+                this._valueDisplay.textContent = value.toFixed(2);
+            }
+        }
+    }
+    
+    // Enable or disable value display
+    set showValue(show) {
+        this._showValue = show;
+        if (show && !this._valueDisplay) {
+            this._createValueDisplay(this.width);
+            this._updateValueDisplay(this.element.value);
+        } else if (!show && this._valueDisplay) {
+            this._valueDisplay.remove();
+            this._valueDisplay = null;
+        }
+    }
+    
+    get showValue() {
+        return this._showValue;
+    }
+
+    // ccSet is called by Parameter.set() to update the GUI without triggering callback
+    ccSet(value) {
+        // Validate value to prevent NaN errors
+        if (this.element && typeof value === 'number' && !isNaN(value) && isFinite(value)) {
+            // Clamp value to min/max range
+            const clampedValue = Math.max(this._min || 0, Math.min(this._max || 1, value));
+            this.element.value = clampedValue;
+            this._updateValueDisplay(clampedValue);
+        }
+    }
+
+
+    // setMode(mode) {
+    //     this.element.mode = mode; // "relative" or "absolute"
+    // }
+
+    get mode() {
+        return this._mode;
+    }
+
+    set mode(type){
+        this._mode = type;
+        this.element.mode = type
+    }
+
+    get value() {
+        return this.element.value;
+    }
+    set value(value) {
+        this.element.value = value;
+    }
+
+    get step(){
+        return this._step
+    }
+
+    set step(increment){
+        this._step = increment;
+        this.element.step = increment
+    }
+
+    get max() {
+        return this._max;
+    }
+    set max(value) {
+        this._max = value;
+        this.element.max = value
+    }
+
+    get min() {
+        return this._min;
+    }
+    set min(value) {
+        this._min = value;
+        this.element.min = value
+    }
+
 }
 
 window.basicLayout = {
@@ -4621,6 +4935,760 @@ class Parameter {
 }
 
 
+;
+;
+
+class NexusElement{
+    constructor(element_type, x = 0, y = 0, width = 100, height = 100) {
+        this.element_type = element_type;
+
+        // Initialize the Nexus element
+        // Access Nexus object provided by module import
+        if (!Nexus || !Nexus[this.element_type]) {
+            console.error(`NexusUI interface "${this.element_type}" is not available.`);
+            return;
+        }
+
+        this.element = new Nexus[this.element_type]("#nexus", {
+            size: [width, height]
+        });
+        
+        // Set positioning style for the element
+        this.element.element.style.position = 'absolute';
+
+        this.xPercent = x / window.innerWidth;
+        this.yPercent = y / window.innerHeight;
+        this.widthPercent = width / window.innerWidth;
+        this.heightPercent = height / window.innerHeight;
+
+        this.updatePositionAndSize();
+        //window.addEventListener("resize", () => this.updatePositionAndSize());
+    }
+
+    mapTo(callback){
+        if (!this.element) {
+            return;
+        }
+
+        this.element.on("change", callback)
+        //callback must be written as (element_output) => {function}
+    }
+
+    updatePositionAndSize() {
+        if (!this.element) {
+            return;
+        }
+
+        // Update pixel values based on percentages and current window size
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+
+        this.element.element.style.left = this.xPercent * newWidth + "px";
+        this.element.element.style.top = this.yPercent * newHeight + "px";
+        this.element.resize(
+            this.widthPercent * newWidth,
+            this.heightPercent * newHeight
+        );
+    }
+
+    generateParameters(paramDefinitions) {
+        const params = {};
+        paramDefinitions.forEach((def) => {
+          const param = new Parameter(def);
+          params[def.name] = param;
+        });
+        return params;
+      }
+    
+      createAccessors(parent, params) {
+        Object.keys(params).forEach((key) => {
+          Object.defineProperty(parent, key, {
+            get: () => params[key].value,
+            set: (newValue) => {
+              params[key].value = newValue;
+            },
+          });
+        });
+      }
+    
+      get() {
+      let output = 'Parameters:\n';
+      for (let key in this.param) {
+        const param = this.param[key];
+        output += `${param.name}: ${param.value}\n`;
+      }
+      console.log(output);
+    }
+
+        colorize(property, color) {
+                if (!this.element) {
+                    return;
+                }
+                this.element.colorize(property, color);
+            }
+        // for linking number boxes to other elements
+
+        //general, destroys any element
+        destroy(){
+            if (!this.element) {
+                return;
+            }
+            this.element.destroy()
+        }
+
+        //Dynamic sizing and positioning
+
+        set x(value) {
+            this.xPercent = value / window.innerWidth;
+            this.updatePositionAndSize();
+        }
+    
+        set y(value) {
+            this.yPercent = value / window.innerHeight;
+            this.updatePositionAndSize();
+        }
+    
+        set width(value) {
+            this.widthPercent = value / window.innerWidth;
+            this.updatePositionAndSize();
+        }
+    
+        set height(value) {
+            this.heightPercent = value / window.innerHeight;
+            this.updatePositionAndSize();
+        }
+    
+        // Getters for convenience
+        get x() {
+            return this.xPercent * window.innerWidth;
+        }
+    
+        get y() {
+            return this.yPercent * window.innerHeight;
+        }
+    
+        get width() {
+            return this.widthPercent * window.innerWidth;
+        }
+    
+        get height() {
+            return this.heightPercent * window.innerHeight;
+        }
+
+        set size([newWidth, newHeight]) {
+            // Convert absolute size to percentages relative to the window size
+            this.widthPercent = newWidth / window.innerWidth;
+            this.heightPercent = newHeight / window.innerHeight;
+            this.updatePositionAndSize();
+        }
+    
+        get size() {
+            // Return the absolute size based on current window size
+            return [
+                this.widthPercent * window.innerWidth,
+                this.heightPercent * window.innerHeight
+            ];
+        }
+    }
+
+NexusElement;
+
+
+;
+
+class NumberBox extends NexusElement {
+    constructor(x = 0, y = 0, width = 75, height = 25) {
+        // Pass the type "Dial" to the parent constructor
+        super('Number', x, y, width, height);
+    }
+
+    link(source) {
+        this.element.link(source.element);
+    }
+
+    get value(){
+        return this._value
+    }
+
+    set value(number){
+        this._value = number;
+        this.element.value = number
+    }
+
+    get max() {
+        return this._max;
+    }
+    set max(value) {
+        this._max = value;
+        this.element.max = value
+    }
+
+    get min() {
+        return this._min;
+    }
+    set min(value) {
+        this._min = value;
+        this.element.min = value
+    }
+
+}
+
+;
+
+/**
+ * RadioButton - A group of toggle buttons where only one can be active
+ * Uses NexusUI TextButton components arranged horizontally or vertically
+ * 
+ * @param {number} x - X position in pixels
+ * @param {number} y - Y position in pixels
+ * @param {string[]} options - Array of option labels/values
+ * @param {Object} config - Configuration object
+ * @param {number} config.buttonWidth - Width of each button (default 60)
+ * @param {number} config.buttonHeight - Height of each button (default 25)
+ * @param {string} config.orientation - 'horizontal' or 'vertical' (default 'horizontal')
+ * @param {boolean} config.showLabel - Whether to show parameter label (default false)
+ * @param {string} config.label - Label text if showLabel is true
+ */
+class RadioButton {
+    constructor(x = 0, y = 0, options = ['A', 'B', 'C'], config = {}) {
+        // Handle legacy 4th parameter as string (orientation)
+        const normalizedConfig = typeof config === 'string' 
+            ? { orientation: config } 
+            : config;
+        
+        const {
+            buttonWidth = 60,
+            buttonHeight = 25,
+            orientation = 'horizontal',
+            showLabel = false,
+            label = ''
+        } = normalizedConfig;
+        
+        this.options = options;
+        this.orientation = orientation;
+        this.selectedIndex = 0;
+        this.selectedValue = options[0];
+        this.buttons = [];
+        this.callbacks = [];
+        this.label = label;
+        this.showLabel = showLabel;
+        
+        // Get the Canvas container
+        const container = document.getElementById('Canvas');
+        if (!container) {
+            console.error('RadioButton: #Canvas container not found!');
+            return;
+        }
+        
+        // Auto-initialize Canvas if needed
+        initNexusCanvas();
+        
+        // Store reference to container
+        this.container = container;
+        
+        // Calculate dimensions
+        const containerWidth = container.clientWidth || window.innerWidth;
+        const containerHeight = container.clientHeight || window.innerHeight;
+        
+        // Button sizing from config
+        const spacing = 5;
+        
+        // Create container div for the radio group
+        this.elementContainer = document.createElement('div');
+        this.elementContainer.style.position = 'absolute';
+        this.elementContainer.style.left = x + 'px';
+        this.elementContainer.style.top = y + 'px';
+        container.appendChild(this.elementContainer);
+        
+        // Add label if showLabel is true
+        if (showLabel && label) {
+            const labelDiv = document.createElement('div');
+            labelDiv.textContent = label;
+            labelDiv.style.cssText = `
+                color: #AAAAAA;
+                font-family: monospace;
+                font-size: 11px;
+                margin-bottom: 4px;
+                pointer-events: none;
+                user-select: none;
+            `;
+            this.elementContainer.appendChild(labelDiv);
+            this.labelElement = labelDiv;
+        }
+        
+        // Create buttons container
+        const buttonsContainer = document.createElement('div');
+        buttonsContainer.style.display = 'flex';
+        buttonsContainer.style.flexDirection = orientation === 'horizontal' ? 'row' : 'column';
+        buttonsContainer.style.gap = spacing + 'px';
+        this.elementContainer.appendChild(buttonsContainer);
+        this.buttonsContainer = buttonsContainer;
+        
+        // Store percentages for responsive resizing
+        this.xPercent = x / containerWidth;
+        this.yPercent = y / containerHeight;
+        
+        // Create buttons for each option
+        const Nexus = window.Nexus;
+        
+        options.forEach((option, index) => {
+            const btnContainer = document.createElement('div');
+            btnContainer.style.position = 'relative';
+            buttonsContainer.appendChild(btnContainer);
+            
+            // Use Button (momentary) instead of TextButton (toggle) to avoid double-click issues
+            const btn = new Nexus.TextButton(btnContainer, {
+                size: [buttonWidth, buttonHeight],
+                state: false,
+                text: option,
+                alternateText: option,
+                mode: 'button'  // Momentary mode - doesn't toggle state
+            });
+            
+            // Style the button - highlight first one as selected
+            const isSelected = index === 0;
+            btn.colorize('fill', isSelected ? '#6060a0' : '#303030');
+            btn.colorize('accent', '#8080c0');
+            btn.colorize('text', '#ffffff');
+            
+            // Handle click - triggers on press
+            btn.on('change', (v) => {
+                if (v && !this._isUpdating) {
+                    this.select(index);
+                }
+            });
+            
+            this.buttons.push(btn);
+        });
+        
+        // Set up resize observer
+        this.resizeObserver = new ResizeObserver(() => {
+            window.requestAnimationFrame(() => {
+                if (!this.elementContainer || !document.body.contains(this.elementContainer)) {
+                    if (this.resizeObserver) this.resizeObserver.disconnect();
+                    return;
+                }
+                this.updatePosition();
+            });
+        });
+        this.resizeObserver.observe(container);
+    }
+    
+    /**
+     * Select an option by index
+     */
+    select(index, triggerCallbacks = true) {
+        if (index < 0 || index >= this.options.length) return;
+        if (this._isUpdating) return;  // Prevent recursion
+        
+        this._isUpdating = true;  // Set guard flag
+        
+        this.selectedIndex = index;
+        this.selectedValue = this.options[index];
+        
+        // Use stored accent color or default
+        const activeColor = this.accentColor || '#6060a0';
+        const inactiveColor = '#303030';
+        
+        // Update button colors only (don't touch state to avoid text toggle)
+        this.buttons.forEach((btn, i) => {
+            const isSelected = i === index;
+            btn.colorize('fill', isSelected ? activeColor : inactiveColor);
+        });
+        
+        this._isUpdating = false;  // Clear guard flag
+        
+        // Trigger callbacks (unless suppressed, e.g. during ccSet)
+        if (triggerCallbacks) {
+            this.callbacks.forEach(cb => cb(this.selectedValue, index));
+        }
+    }
+    
+    /**
+     * Select an option by value (without triggering callbacks - for ccSet)
+     */
+    selectByValue(value, triggerCallbacks = false) {
+        const index = this.options.indexOf(value);
+        if (index !== -1) {
+            this.select(index, triggerCallbacks);
+        }
+    }
+    
+    /**
+     * Get current value
+     */
+    get value() {
+        return this.selectedValue;
+    }
+    
+    /**
+     * Set value
+     */
+    set value(val) {
+        this.selectByValue(val);
+    }
+    
+    /**
+     * Register a callback for when selection changes
+     */
+    on(event, callback) {
+        if (event === 'change') {
+            this.callbacks.push(callback);
+        }
+    }
+    
+    /**
+     * Alias for on('change', callback)
+     */
+    mapTo(callback) {
+        this.on('change', callback);
+    }
+    
+    /**
+     * ccSet - for Parameter module compatibility
+     */
+    ccSet(value) {
+        this.selectByValue(value);
+    }
+    
+    /**
+     * Update position on resize
+     */
+    updatePosition() {
+        const container = this.container || document.getElementById('Canvas');
+        if (!container || !this.elementContainer) return;
+        
+        const newWidth = container.clientWidth || window.innerWidth;
+        const newHeight = container.clientHeight || window.innerHeight;
+        
+        this.elementContainer.style.left = (this.xPercent * newWidth) + 'px';
+        this.elementContainer.style.top = (this.yPercent * newHeight) + 'px';
+    }
+    
+    /**
+     * Colorize all buttons and label
+     */
+    colorize(property, color) {
+        this.buttons.forEach((btn, i) => {
+            if (property === 'accent') {
+                btn.colorize('accent', color);
+                if (i === this.selectedIndex) {
+                    btn.colorize('fill', color);
+                }
+            } else {
+                btn.colorize(property, color);
+            }
+        });
+        // Store accent color for future selections
+        if (property === 'accent') {
+            this.accentColor = color;
+            // Also color the label
+            if (this.labelElement) {
+                this.labelElement.style.color = color;
+            }
+        }
+    }
+    
+    /**
+     * Destroy the radio button group
+     */
+    destroy() {
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+        }
+        this.buttons.forEach(btn => btn.destroy());
+        if (this.elementContainer && this.elementContainer.parentNode) {
+            this.elementContainer.parentNode.removeChild(this.elementContainer);
+        }
+    }
+}
+
+
+;
+
+class Slider extends NexusElement {
+    constructor(x = 0, y = 0, width = 200, height = 50) {
+        super('Slider', x, y, width, height);
+    }
+
+    // ccSet is called by Parameter.set() to update the GUI without triggering callback
+    ccSet(value) {
+        // Validate value to prevent NaN errors
+        if (this.element && typeof value === 'number' && !isNaN(value) && isFinite(value)) {
+            // Clamp value to min/max range
+            const clampedValue = Math.max(this._min || 0, Math.min(this._max || 1, value));
+            this.element.value = clampedValue;
+        }
+    }
+
+  
+    // setMode(mode) {
+    //     this.element.mode = mode; // "relative" or "absolute"
+    // }
+
+    get mode() {
+        return this._mode;
+    }
+
+    set mode(type){
+        this._mode = type;
+        this.element.mode = type
+    }
+
+    get value() {
+        return this.element.value;
+    }
+    set value(value) {
+        this.element.value = value;
+    }
+
+    get step(){
+        return this._step
+    }
+
+    set step(increment){
+        this._step = increment;
+        this.element.step = increment
+    }
+
+    get max() {
+        return this._max;
+    }
+    set max(value) {
+        this._max = value;
+        this.element.max = value
+    }
+
+    get min() {
+        return this._min;
+    }
+    set min(value) {
+        this._min = value;
+        this.element.min = value
+    }
+
+}
+
+;
+
+class Switch extends NexusElement {
+    constructor(x = 0, y = 0, width = 75, height = 25) {
+        // Pass the type "Dial" to the parent constructor
+        super('Toggle', x, y, width, height);
+    }
+
+    flip(){
+        this.element.flip()
+    }
+
+    get state(){
+        return this._state
+    }
+
+    set state(flipped){
+        this._state = flipped;
+        this.element.state = flipped
+    }
+}
+
+/*
+This class mimics the midi keyboard react component.
+It is a hassle to find a way to programmatically convert the component to usable html and js,
+so here is an alternative
+*/
+class MidiKeyboard {
+    constructor() {
+        this.midiOn = false;
+        this.notesOn = new Set();
+        this.activeKeys = {};
+        this.octave = 4;
+        this.keyToNote = {
+            90: { "midi": 60, "pitch": "C" },     // Z
+            83: { "midi": 61, "pitch": "C#/Db" }, // S
+            88: { "midi": 62, "pitch": "D" },     // X
+            68: { "midi": 63, "pitch": "D#/Eb" }, // D
+            67: { "midi": 64, "pitch": "E" },     // C
+            86: { "midi": 65, "pitch": "F" },     // V
+            71: { "midi": 66, "pitch": "F#/Gb" }, // G
+            66: { "midi": 67, "pitch": "G" },     // B
+            72: { "midi": 68, "pitch": "G#/Ab" }, // H
+            78: { "midi": 69, "pitch": "A" },     // N
+            74: { "midi": 70, "pitch": "A#/Bb" }, // J
+            77: { "midi": 71, "pitch": "B" },     // M
+            188: { "midi": 72, "pitch": "C" },    // ,
+            76: { "midi": 73, "pitch": "C#/Db" }, // L
+            190: { "midi": 74, "pitch": "D" },    // .
+            186: { "midi": 75, "pitch": "D#/Eb" }, // ;
+            191: { "midi": 76, "pitch": "E" },    // /
+
+            // second octave
+            81: { "midi": 72, "pitch": "C" },     // Q
+            50: { "midi": 73, "pitch": "C#/Db" }, // 2
+            87: { "midi": 74, "pitch": "D" },     // W
+            51: { "midi": 75, "pitch": "D#/Eb" }, // 3
+            69: { "midi": 76, "pitch": "E" },     // E
+            82: { "midi": 77, "pitch": "F" },     // R
+            53: { "midi": 78, "pitch": "F#/Gb" }, // 5
+            84: { "midi": 79, "pitch": "G" },     // T
+            54: { "midi": 80, "pitch": "G#/Ab" }, // 6
+            89: { "midi": 81, "pitch": "A" },     // Y
+            55: { "midi": 82, "pitch": "A#/Bb" }, // 7
+            85: { "midi": 83, "pitch": "B" },     // U
+            73: { "midi": 84, "pitch": "C" },     // I
+            57: { "midi": 85, "pitch": "C#/Db" }, // 9
+            79: { "midi": 86, "pitch": "D" },     // O
+            48: { "midi": 87, "pitch": "D#/Eb" }, // 0
+            80: { "midi": 88, "pitch": "E" }      // P
+        };
+
+        this.init();
+    }
+
+    init() {
+        // Add event listeners
+        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+        document.addEventListener('keyup', this.handleKeyUp.bind(this));
+
+        // Get DOM elements
+        // WARNING: These are assumed to be defined
+        this.keyboardButton = document.getElementById('keyboard-button');
+        this.keyboardIcon = document.getElementById('keyboard-icon');
+        this.notesDisplay = document.getElementById('notes-display');
+
+        // Add click handler
+        this.keyboardButton.addEventListener('click', this.toggleMidi.bind(this));
+    }
+
+    handleKeyDown(event) {
+        if (this.midiOn) {
+            const keyCode = event.keyCode;
+            if (!this.activeKeys[keyCode]) {
+                this.activeKeys[keyCode] = true;
+                try {
+                    let note = this.keyToNote[keyCode];
+                    let midiNote = note["midi"] + (this.octave - 4) * 12;
+                    if (midiNote <= 127) {
+                        this.notesOn.add(midiNote);
+                        this.updateNotesDisplay();
+                        if (window.midiHandlerInstance) {
+                            window.midiHandlerInstance.handleNoteOn(midiNote, 100);
+                        }
+                    }
+                } catch (error) {
+                    if (keyCode === 37) {
+                        this.decreaseOctave();
+                    } else if (keyCode === 39) {
+                        this.increaseOctave();
+                    }
+                }
+            }
+        }
+    }
+
+    handleKeyUp(event) {
+        if (this.midiOn) {
+            const keyCode = event.keyCode;
+            this.activeKeys[keyCode] = false;
+            try {
+                let note = this.keyToNote[keyCode];
+                let midiNote = note["midi"] + (this.octave - 4) * 12;
+                if (midiNote <= 127) {
+                    this.notesOn.delete(midiNote);
+                    this.updateNotesDisplay();
+                    if (window.midiHandlerInstance) {
+                        window.midiHandlerInstance.handleNoteOff(midiNote, 0);
+                    }
+                }
+            } catch (error) {
+                // Ignore errors for non-mapped keys
+            }
+        }
+    }
+
+    toggleMidi() {
+        this.midiOn = !this.midiOn;
+        this.keyboardIcon.className = `icon ${this.midiOn ? 'active' : 'inactive'}`;
+    }
+
+    increaseOctave() {
+        if (this.octave < 7) {
+            this.octave++;
+        }
+    }
+
+    decreaseOctave() {
+        if (this.octave > 1) {
+            this.octave--;
+        }
+    }
+
+    updateNotesDisplay() {
+        this.notesDisplay.innerHTML = Array.from(this.notesOn)
+            .map(note => `<div class="note-pill">${note}</div>`)
+            .join('');
+    }
+}
+
+// Initialize the keyboard when the page loads
+document.addEventListener('DOMContentLoaded', () => {
+    window.midiKeyboard = new MidiKeyboard();
+});
+
+
+/*
+DelayOp
+
+Delays
+* input->hpf->feedbackDelay->drive->waveShaper->lpf->panner->output
+* 
+* 
+
+methods:
+
+
+properties:
+
+- 
+*/
+
+;
+;
+
+class DelayOp{
+  constructor(){
+    //signal
+    this.input = new Tone.Multiply(1)
+    this.hpf = new Tone.OnePoleFilter({type:'highpass',frequency:100})
+    this.delay = new Tone.FeedbackDelay()
+    this.drive = new Tone.Multiply(0.8)
+    this. waveShaper = new Tone.WaveShaper((x)=>{
+      return Math.tanh(x*16) *.9
+    })
+    this.lpf = new Tone.Filter({frequency:2000})
+    this.panner = new Tone.Panner(0)
+    this.output = new Tone.Multiply(1)
+    //mod
+    this.delayTime = new Tone.Signal(.1)
+    //connections
+    this.input.connect(this.hpf)
+    this.hpf.connect(this.delay)
+    this.delay.connect(this.drive)
+    this.drive.connect(this.waveShaper)
+    this.waveShaper.connect(this.lpf)
+    this.lpf.connect(this.panner)
+    this.panner.connect(this.output)
+    //mod connections
+    this.delayTime.connect(this.delay.delayTime)
+  }
+  connect(destination) {
+    if (destination.input) {
+      this.output.connect(destination.input);
+    } else {
+      this.output.connect(destination);
+    }
+  }
+}
+
 const paramDefinitions = (synth) => [
     {
       name:'time', min:0.0001, max:1, curve:2,
@@ -4755,7 +5823,8 @@ class EffectTemplate {
      * Populate this.presets with presets fetched from the server
      * Using the name in this.synthPresetName
      */
-    async accessPreset(){      
+    async accessPreset(){
+    return      
         let presetData = {} 
         try {
             let response = await fetch('https://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
@@ -6153,6 +7222,58 @@ class EMAHumanizer {
 const Groove = new GrooveGenerator();
 Groove;
 
+// consoleManager.js
+
+let consoleDiv = null;
+
+function initConsole(parentElement) {
+
+  if (consoleDiv) return consoleDiv; // already created
+
+  const div = document.createElement('div');
+  div.className = 'app-console';
+  div.style.fontFamily = 'monospace';
+  div.style.whiteSpace = 'pre-wrap';
+  div.style.overflowY = 'auto';
+  div.style.maxHeight = '200px';
+  div.style.borderTop = '1px solid #444';
+  div.style.padding = '4px';
+  div.style.background = '#111';
+  div.style.color = '#eee';
+
+  parentElement = document.getElementById('Canvas');
+  parentElement.appendChild(div);
+  consoleDiv = div;
+  return consoleDiv;
+}
+
+function deinitConsole() {
+  if (!consoleDiv) return;
+
+  const parent = consoleDiv.parentNode;
+  if (parent) parent.removeChild(consoleDiv);
+  consoleDiv = null;
+}
+
+function hasConsole() {
+  // also handles the case where the parent was removed externally
+  if (!consoleDiv) return false;
+  if (!document.body.contains(consoleDiv)) {
+    consoleDiv = null;
+    return false;
+  }
+  return true;
+}
+
+function consoleWrite(msg) {
+  if (!hasConsole()) return;
+
+  const line = document.createElement('div');
+  line.textContent = String(msg);
+  consoleDiv.appendChild(line);
+  consoleDiv.scrollTop = consoleDiv.scrollHeight;
+}
+
 // MonophonicTemplate.js
 
 ;
@@ -6163,8 +7284,13 @@ Groove;
 ;
 
 
+
+
+
+
 ;
 
+;
 
 /**
  * Represents a Monophonic Synth
@@ -6280,7 +7406,7 @@ class MonophonicTemplate {
         for (let element of Object.values(this.param)) {
             _preset[element.name] = element._value;
         }
-        console.log(this.presets)
+        this.printToConsole(this.presets)
         // Update the presetsData in memory
         //console.log(this.presets);
         if (!this.presets[name]) {
@@ -6318,7 +7444,7 @@ class MonophonicTemplate {
         //old preset code below
         
         
-        console.log(`Preset saved under ${this.name}/${name}`);
+        this.printToConsole(`Preset saved under ${this.name}/${name}`);
     };
 
     async deletePreset (name) {
@@ -6341,7 +7467,7 @@ class MonophonicTemplate {
                 const result = await response.json(); // Parse the server's JSON response
 
                 if (response.ok) {
-                    console.log(`Delete successful: ${result.message}`);
+                    this.printToConsole(`Delete successful: ${result.message}`);
                     return result.success;
                 } else {
                     console.warn(`Delete failed: ${result.message}`);
@@ -6354,7 +7480,7 @@ class MonophonicTemplate {
             }
         }
 
-        console.log(`Preset deleted  under ${this.name}/${name}`);
+        this.printToConsole(`Preset deleted  under ${this.name}/${name}`);
     };
 
     async downloadAllPresets() {
@@ -6374,7 +7500,7 @@ class MonophonicTemplate {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url); // Clean up the object URL
-        console.log('Presets folder downloaded successfully.');
+        this.printToConsole('Presets folder downloaded successfully.');
     } catch (error) {
         console.error('Error downloading presets:', error);
     }
@@ -6398,12 +7524,12 @@ class MonophonicTemplate {
                 this.param[name].set(presetData[name]);
               }
             } catch (e) {
-              console.log(name, presetData[name], e);
+              this.printToConsole(name, presetData[name], e);
             }
           }
           //console.log(this.param.vco_mix)
         } else {
-            console.log("No preset of name ", name);
+            this.printToConsole("No preset of name ", name);
         }
     }
 
@@ -6428,11 +7554,11 @@ class MonophonicTemplate {
               else if(typeof param === 'number') output += `${key}: ${param.toFixed(2)}\n`;
               else output += `${key}: ${param}\n`;
           }
-          console.log(output);
+          this.printToConsole(output);
         }
 
         else {
-            console.log("No preset of name ", this.curPreset);
+            this.printToConsole("No preset of name ", this.curPreset);
         }
     }
 
@@ -6442,7 +7568,7 @@ class MonophonicTemplate {
      * @example synth.listPresets()
      */
     listPresets() {
-        console.log("Synth presets", this.presets);
+        this.printToConsole("Synth presets", this.presets);
     }
 
     /**
@@ -6488,7 +7614,7 @@ class MonophonicTemplate {
      * @example synth.triggerAttackRelease(60, 100, 0.01)
      */
     triggerAttackRelease(val, vel = 100, dur = 0.01, time = null) {
-        console.log('AR ',val,vel,dur,time)
+        //console.log('AR ',val,vel,dur,time)
         vel = vel / 127;
         if (time) {
             this.frequency.setValueAtTime(Tone.Midi(val).toFrequency(), time);
@@ -6618,9 +7744,14 @@ class MonophonicTemplate {
             }
             output += `${param.name}: ${value}\n`;
         }
-        console.log(output);
+        this.printToConsole(output);
     }
     print(){ this.get()}
+
+    printToConsole( data ){
+        if( hasConsole ) consoleWrite( data )
+        console.log(data)
+    }
 
     /**
      * Set the ADSR values for the envelope
@@ -6726,11 +7857,144 @@ class MonophonicTemplate {
     }
 
     /**
+     * Initialize the GUI with NexusUI
+     * @returns {void}
+     * @example     
+     * synth.initNexus()
+     */
+    initNexus(gui = null) {
+        this.guiContainer = document.getElementById('Canvas');
+        if (!this.guiContainer) {
+            console.error('NexusUI container #Canvas not found in DOM');
+            return;
+        }
+        
+        // Track created labels for cleanup
+        this.nexusLabels = [];
+        
+        // Flag to indicate NexusUI GUI is initialized (not p5)
+        this.gui = 'nexus';
+        this.isNexusGui = true;
+        const layout = this.layout;
+        
+        if (!layout) {
+            console.error('No layout defined for this synth');
+            return;
+        }
+        
+        this.printToConsole(`[initNexus] Initializing NexusUI GUI for ${this.name || 'synth'}`);
+
+        // Group parameters by type
+        const groupedParams = {};
+        Object.values(this.param).forEach((param) => {
+            if (!groupedParams[param.type]) groupedParams[param.type] = [];
+            groupedParams[param.type].push(param);
+        });
+
+        // Create GUI for each group
+        Object.keys(groupedParams).forEach((groupType) => {
+            const groupLayout = layout[groupType];
+            if (!groupLayout) {
+                // console.log(`[initNexus] No layout for group: ${groupType}`);
+                return;
+            }
+            if (groupType === 'hidden') return;
+
+            let indexOffset = 0;
+
+            groupedParams[groupType].forEach((param, index) => {
+                const isGroupA = groupLayout.groupA.includes(param.name);
+                const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
+                const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
+
+                // **Retrieve the current parameter value**
+                const paramValue = param.get ? param.get() : param._value;
+
+                // Calculate items per row safely (avoid division by zero)
+                const itemsPerRow = groupLayout.offsets.x > 0 
+                    ? Math.max(1, Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x))
+                    : 1;
+
+                // Extract optional layout settings
+                const orientation = groupLayout.orientation || 'horizontal';
+                const showValue = groupLayout.showValue || false;
+
+                if (Array.isArray(paramValue)) {
+                    paramValue.forEach((value, i) => {
+                        let xOffset = groupLayout.offsets.x * ((index + indexOffset) % itemsPerRow);
+                        let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / itemsPerRow);
+
+                        const x = groupLayout.boundingBox.x + xOffset;
+                        const y = groupLayout.boundingBox.y + yOffset;
+
+                        this.createNexusElement(param, { x, y, size, controlType, color: groupLayout.color, i, value, orientation, showValue });
+                        indexOffset++;
+                    });
+                } else {
+                    let xOffset = groupLayout.offsets.x * ((index + indexOffset) % itemsPerRow);
+                    let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / itemsPerRow);
+
+                    const x = groupLayout.boundingBox.x + xOffset;
+                    const y = groupLayout.boundingBox.y + yOffset;
+
+                    // Pass the **retrieved parameter value** to GUI
+                    this.createNexusElement(param, { x, y, size, controlType, color: groupLayout.color, value: paramValue, orientation, showValue });
+                }
+            });
+        });
+        
+        // Apply theme colors to all Nexus elements
+        if (this.backgroundColor) {
+            document.body.style.backgroundColor = `rgb(${this.backgroundColor[0]}, ${this.backgroundColor[1]}, ${this.backgroundColor[2]})`;
+        }
+        
+        this.printToConsole(`[initNexus] GUI initialization complete`);
+    }
+    
+    /**
+     * Hide/destroy the NexusUI GUI
+     * @returns {void}
+     */
+    hideNexus() {
+        // Destroy all NexusUI elements from parameters
+        Object.values(this.param).forEach((param) => {
+            if (param.guiElements && param.guiElements.length > 0) {
+                param.guiElements.forEach((element) => {
+                    if (element && element.destroy) {
+                        element.destroy();
+                    }
+                });
+                param.guiElements = [];
+            }
+        });
+        
+        // Remove all created labels
+        if (this.nexusLabels) {
+            this.nexusLabels.forEach((label) => {
+                if (label && label.parentNode) {
+                    label.parentNode.removeChild(label);
+                }
+            });
+            this.nexusLabels = [];
+        }
+        
+        this.gui = null;
+        this.isNexusGui = false;
+    }
+
+    /**
      * Hide the GUI
      * @returns {void}
      */
     hideGui() {
-        if (this.gui) {
+        // Check if using NexusUI
+        if (this.isNexusGui || this.gui === 'nexus') {
+            this.hideNexus();
+            return;
+        }
+        
+        // Otherwise assume p5 instance
+        if (this.gui && this.gui.remove) {
             this.gui.remove(); // Properly destroy p5 instance
             this.gui = null;
         }
@@ -6816,7 +8080,185 @@ class MonophonicTemplate {
                 callback: (x) => {},
             }) );
         } else {
-            console.log('no gui creation element for ', controlType)
+            this.printToConsole('no gui creation element for ', controlType)
+        }
+    }
+
+    // Helper to convert RGB array to hex color string
+    rgbToHex(colorArray) {
+        if (!colorArray || !Array.isArray(colorArray)) return '#FFFFFF';
+        const [r, g, b] = colorArray;
+        return '#' + [r, g, b].map(x => {
+            const hex = Math.max(0, Math.min(255, Math.round(x))).toString(16);
+            return hex.length === 1 ? '0' + hex : hex;
+        }).join('');
+    }
+
+    // Create individual GUI element using NexusUI wrappers
+    createNexusElement(param, { x, y, size, controlType, color, i=null, value, orientation='horizontal', showValue=false }) {
+        // console.log('createNexusElement', param.name, { x, y, size, controlType, color, i, value });
+        
+        // Convert p5 percentage coordinates (0-100) to pixel coordinates
+        const container = document.getElementById('Canvas');
+        const containerWidth = container ? container.clientWidth : window.innerWidth;
+        const containerHeight = container ? container.clientHeight : window.innerHeight;
+        
+        // Convert from p5 percentage (0-100) to pixels
+        const pixelX = (x / 100) * containerWidth;
+        const pixelY = (y / 100) * containerHeight;
+        
+        // Calculate dial size - use a fixed base size scaled by the size parameter
+        // Target: ~50-70px dials that scale slightly with container
+        const baseDialSize = 55;  // Base dial size in pixels
+        const width = Math.round(baseDialSize * size);
+        const height = width;  // Keep square for dials
+        
+        // Get the actual value to use
+        const paramValue = value !== undefined ? value : 
+            (i !== null && Array.isArray(param._value) ? param._value[i] : param._value);
+        
+        // Convert RGB array to hex for NexusUI
+        const hexColor = Array.isArray(color) ? this.rgbToHex(color) : color;
+        
+        // Create label element for parameter name and store for cleanup
+        const createLabel = (labelText, labelX, labelY, labelWidth) => {
+            const label = document.createElement('div');
+            label.textContent = labelText;
+            label.style.cssText = `
+                position: absolute;
+                left: 0px;
+                top: -18px;
+                color: ${hexColor || '#AAAAAA'};
+                font-family: monospace;
+                font-size: 11px;
+                pointer-events: none;
+                user-select: none;
+                text-align: center;
+                width: ${labelWidth}px;
+            `;
+            return label;
+        };
+        
+        if (controlType === 'knob') {
+            const dial = new Dial(pixelX, pixelY, width, height, showValue);
+            
+            // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
+            dial.min = param.min || 0;
+            dial.max = param.max || 1;
+            
+            // Validate and clamp value
+            let safeValue = paramValue;
+            if (typeof safeValue !== 'number' || isNaN(safeValue) || !isFinite(safeValue)) {
+                safeValue = dial.min;
+            }
+            safeValue = Math.max(dial.min, Math.min(dial.max, safeValue));
+            dial.value = safeValue;
+            
+            // Update value display with initial value
+            if (showValue) {
+                dial._updateValueDisplay(safeValue);
+            }
+            
+            // Apply color if provided
+            if (hexColor) {
+                dial.colorize("accent", hexColor);
+            }
+            
+            // Create label above the dial - add to the dial's container
+            const labelText = i !== null && param.labels ? param.labels[i] : param.name;
+            const label = createLabel(labelText, 0, 0, width);
+            if (dial.elementContainer) {
+                dial.elementContainer.appendChild(label);
+            }
+            if (this.nexusLabels) {
+                this.nexusLabels.push(label);
+            }
+            
+            // Set up the callback
+            dial.mapTo((v) => param.set(v, i, true));
+            
+            param.guiElements.push(dial);
+            
+        } else if (controlType === 'fader') {
+            // Faders are vertical sliders - make them taller than wide
+            const sliderWidth = width * 0.5;
+            const sliderHeight = width * 2;
+            
+            const slider = new Slider(pixelX, pixelY, sliderWidth, sliderHeight);
+            
+            // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
+            slider.min = param.min || 0;
+            slider.max = param.max || 1;
+            
+            // Validate and clamp value
+            let safeValue = paramValue;
+            if (typeof safeValue !== 'number' || isNaN(safeValue) || !isFinite(safeValue)) {
+                safeValue = slider.min;
+            }
+            safeValue = Math.max(slider.min, Math.min(slider.max, safeValue));
+            slider.value = safeValue;
+            
+            // Apply color if provided
+            if (hexColor) {
+                slider.colorize("accent", hexColor);
+            }
+            
+            // Create label above the slider - add to the slider's container
+            const labelText = i !== null && param.labels ? param.labels[i] : param.name;
+            const label = createLabel(labelText, 0, 0, sliderWidth);
+            if (slider.elementContainer) {
+                slider.elementContainer.appendChild(label);
+            }
+            if (this.nexusLabels) {
+                this.nexusLabels.push(label);
+            }
+            
+            // Set up the callback
+            slider.mapTo((v) => param.set(v, i, true));
+            
+            param.guiElements.push(slider);
+            
+        } else if (controlType === 'radioButton') {
+            // Get the options from the parameter's radioOptions
+            const options = param.radioOptions || [];
+            if (options.length === 0) {
+                console.warn(`RadioButton has no options for param: ${param.name}`);
+                return;
+            }
+            
+            // Calculate button dimensions - smaller for vertical, wider for horizontal
+            const buttonWidth = orientation === 'vertical' ? 55 : Math.max(40, width);
+            const buttonHeight = 22;
+            
+            const radioBtn = new RadioButton(pixelX, pixelY, options, {
+                buttonWidth,
+                buttonHeight,
+                orientation: orientation,  // Use layout orientation
+                showLabel: true,
+                label: param.name
+            });
+            
+            // Apply color if provided
+            if (hexColor) {
+                radioBtn.colorize('accent', hexColor);
+            }
+            
+            // Set initial value
+            const currentValue = paramValue !== undefined ? paramValue : options[0];
+            radioBtn.ccSet(currentValue);
+            
+            // Set up the callback
+            radioBtn.mapTo((v) => param.set(v, i, true));
+            
+            param.guiElements.push(radioBtn);
+        } else if (controlType === 'dropdown') {
+            // Dropdown not yet implemented in NexusUI wrappers
+            console.warn(`Dropdown controlType not yet supported with NexusUI for param: ${param.name}`);
+        } else if (controlType === 'text') {
+            // Text display not yet implemented in NexusUI wrappers
+            console.warn(`Text controlType not yet supported with NexusUI for param: ${param.name}`);
+        } else {
+            this.printToConsole('no gui creation element for ', controlType)
         }
     }
 
@@ -6847,6 +8289,28 @@ class MonophonicTemplate {
           curve: 2, // Adjust as needed
           border: 2 // Adjust as needed
         });
+    }
+
+    createNexusKnob(label, x, y, min, max, size, accentColor, callback) {
+        // Convert p5 percentage coordinates (0-100) to pixel coordinates
+        const container = document.getElementById('Canvas');
+        const containerWidth = container ? container.clientWidth : window.innerWidth;
+        const containerHeight = container ? container.clientHeight : window.innerHeight;
+        
+        const pixelX = ((x + (this.x || 0)) / 100) * containerWidth;
+        const pixelY = ((y + (this.y || 0)) / 100) * containerHeight;
+        
+        const dial = new Dial(pixelX, pixelY, size, size);
+        dial.min = min;
+        dial.max = max;
+        
+        if (accentColor) {
+            dial.colorize("accent", accentColor);
+        }
+        
+        dial.mapTo(callback);
+        
+        return dial;
     }
 
     linkGui(name){
@@ -6881,7 +8345,7 @@ class MonophonicTemplate {
         };
       });
 
-      console.log(`Snapshot "${name}" saved.`);
+      this.printToConsole(`Snapshot "${name}" saved.`);
     }
 
     loadSnap(name) {
@@ -6891,11 +8355,11 @@ class MonophonicTemplate {
         return;
       }
       this.pushState(snap);
-      console.log(`Snapshot "${name}" loaded.`);
+      this.printToConsole(`Snapshot "${name}" loaded.`);
     }
 
     listSnapshots() {
-      console.log( Object.keys(this.snapshots) )
+      this.printToConsole( Object.keys(this.snapshots) )
     }
 
     /**
@@ -7226,7 +8690,7 @@ class MonophonicTemplate {
 
         if (note < 0) return;
         if (note >127) {
-            console.log("MIDI note ", note, "ignored")
+            this.printToConsole("MIDI note ", note, "ignored")
             return;
         }
 
@@ -7254,7 +8718,7 @@ class MonophonicTemplate {
                 time + timeOffset
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
+            this.printToConsole('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
         }
     }
 }
@@ -9921,6 +11385,153 @@ class Drone extends MonophonicTemplate{
 }
 
 
+const paramDefinitions = (synth) => [
+  {
+    name:'rate',type: 'input',
+    value:1, min:-10,max:10,curve:1,callback:x=>{
+      synth.voice.playbackRate = Math.abs(x)
+      if(x<0) synth.voice.reverse = true
+    }
+  },
+
+  {
+    name: 'volume', type: 'output', min: 0, max: 2, value: 1, curve: 1,
+    callback: x => synth.output.factor.value = x
+  },
+  {
+    name:'amp',type: 'hidden',
+    min:0,max:1,curve:2,callback:x=>synth.output.factor.value = x
+  },
+
+  {
+    name:'decay',type: 'param',value:1,
+    min:0.0,max:1,curve:3,callback:x=> {
+      synth.decayTime = x * synth.duration
+      synth.setDecayTime()
+    }
+  },
+  {
+    name:'choke',type: 'param',value:1,
+    min:0.,max:1,curve:2,callback:x=> {
+      synth.chokeRatio = x
+      synth.setDecayTime()
+    }
+  },
+  
+  {
+    name:'dry',type: 'output',value:0,
+    min:0,max:1,curve:2,callback:x=>synth._dry.factor.value = x
+  },
+];
+
+paramDefinitions;
+
+;
+;
+
+
+
+;
+
+;
+;
+
+class DrumVoice extends DrumTemplate{
+  constructor(){
+    super()
+    this.layout= layout
+    this.guiHeight = 0.4
+
+    this.chokeRatio = .1
+    this.decayTime = 1
+    this.duration = 1
+    this.startPoint = 0
+    this.env = new Tone.Envelope(0.0, 1, 1, 10)
+    this.vca = new Tone.Multiply()
+    this.output = new Tone.Multiply(1)
+    this._dry = new Tone.Multiply(0)
+    this.voice = new Tone.Player().connect(this.vca)
+    this.vca.connect(this.output)
+    this.voice.connect(this._dry)
+    this.env.connect(this.vca.factor)
+
+    // Bind parameters with this instance
+    this.paramDefinitions = paramDefinitions(this)
+    //console.log(this.paramDefinitions)
+    this.param = this.generateParameters(this.paramDefinitions)
+    this.createAccessors(this, this.param);
+
+    //for autocomplete
+    this.autocompleteList = this.paramDefinitions.map(def => def.name);;
+    
+  }
+
+  loadSamples(name){ this.load(name)}
+  load(sampleName){
+    const match = sampleName.match(/^([a-zA-Z]+)(\d+)$/);
+    if (!match){
+        console.log('Error: drum voice, incorrent name. Should be `kick0` or similar')
+        return
+    }
+
+    this.name = match[1];
+    const num = parseInt(match[2], 10);
+
+    this.drumFolders = [
+        "acoustic-kit",
+        "LINN",
+        'breakbeat8',
+        'breakbeat9',
+        'KPR77',
+
+        'CR78',
+        'breakbeat13',
+        'Kit8',
+        'Kit3',
+        "TheCheebacabra1"
+        ]
+
+    this.baseUrl = "https://tonejs.github.io/audio/drum-samples/".concat(this.drumFolders[num]).concat('/');
+    //console.log(this.baseUrl.concat(this.name).concat('.mp3') )
+    try{
+      this.voice.load( this.baseUrl.concat(this.name).concat('.mp3') )
+    } catch(e){
+      console.log('unable to load sample - try calling load(`kick0`)')
+    }
+    this.duration = this.voice.buffer.duration
+  }
+
+    setDecayTime(decay=null, choke=null){
+        if (decay != null) this.decayTime = decay * this.duration
+        if (choke != null) this.chokeRatio = choke
+        this.env.release = this.decayTime*this.chokeRatio
+    }
+
+  triggerSample(amplitude, decay,time){
+    //console.log(amplitude,decay,time, this.voice)
+    try{
+      //this.env.release = decay == 0 ? this.decayTime * this.chokeRatio : this.decayTime
+      this.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
+      this.voice.start(time, this.startPoint)
+      //this.voice.start()
+      this.env.triggerAttackRelease(0.001, time)
+    } catch(e){
+        //console.log('time error', e)
+    }
+  }
+    trigger(amplitude, decay,time){
+      this.env.release =  this.decayTime
+      this.env.decay =  this.decayTime 
+      this.triggerSample(amplitude, decay,time)
+    }
+    triggerChoke(amplitude, decay,time){
+      this.env.release =  this.decayTime * this.chokeRatio
+      this.env.decay =  this.decayTime * this.chokeRatio
+      this.triggerSample(amplitude, decay,time)
+    }
+}
+
+
 window.DrumSamplerPresets = {
   "default": {
     "Kick": 0.5,
@@ -10103,15 +11714,27 @@ window.DrumSamplerPresets = {
 const paramDefinitions = (synth) => [
   {
     name: 'kick_vca', type: 'kick', min: 0, max: 2, value: 1, curve: 1,
-    callback: x => synth.newKick.output.factor.value = x
+    callback: x => synth.kick.output.factor.value = x
+  },
+  {
+    name: 'kick_start', type: 'hidden', min: 0, max: .1, value: 0, curve: 1,
+    callback: x => synth.kick.startPoint= x
   },
   {
     name: 'snare_vca', type: 'snare', min: 0, max: 1, value: .7, curve: 1,
-    callback: x => synth.newSnare.output.factor.value = x
+    callback: x => synth.snare.output.factor.value = x
+  },
+  {
+    name: 'snare_start', type: 'hidden', min: 0, max: .1, value: 0, curve: 1,
+    callback: x => synth.snare.startPoint= x
   },
   {
     name: 'hat_vca', type: 'hihat', min: 0, max: 1, value: .5, curve: 1,
-    callback: x => synth.newHat.output.factor.value = x
+    callback: x => synth.hat.output.factor.value = x
+  },
+  {
+    name: 'hat_start', type: 'hidden', min: 0, max: .1, value: 0, curve: 1,
+    callback: x => synth.hat.startPoint= x
   },
   {
     name: 'toms_vca', type: 'toms', min: 0, max: 1, value: .7, curve: 1,
@@ -10122,20 +11745,28 @@ const paramDefinitions = (synth) => [
     }
   },
   {
-    name: 'kick_rate', type: 'kick', min: 0, max: 2, value: 1, curve: 1,
-    callback: x => synth.newKick.rate = x
+    name: 'toms_start', type: 'hidden', min: 0, max: .1, value: 0, curve: 1,
+    callback: x=>{
+      synth.p1.startPoint= x
+      synth.p2.startPoint= x
+      synth.p3.startPoint= x
+    }
   },
   {
-    name: 'kick_decay', type: 'kick', min: 0, max: 1, value: 0.5, curve: 1,
-    callback: x => synth.newKick.decay = x * 2 + 0.01
+    name: 'kick_rate', type: 'kick', min: 0, max: 2, value: 1, curve: 1,
+    callback: x => synth.kick.rate = x
+  },
+  {
+    name: 'kick_decay', type: 'kick', min: 0, max: 1, value: 1, curve: 2,
+    callback: x => synth.kick.decay = x *  synth.kick.duration
   },
   {
     name: 'snare_rate', type: 'snare', min: 0, max: 2, value: 1, curve: 1,
-    callback: x => synth.newSnare.rate = x
+    callback: x => synth.snare.rate = x
   },
   {
-    name: 'snare_decay', type: 'snare', min: 0, max: 1, value: 0.5, curve: 1,
-    callback: x => synth.newSnare.decay = x * 1 + 0.01
+    name: 'snare_decay', type: 'snare', min: 0.01, max: 1, value: 1, curve: 2,
+    callback: x => synth.snare.decay = x * synth.snare.duration
   },
   
   {
@@ -10144,15 +11775,15 @@ const paramDefinitions = (synth) => [
   },
   {
     name: 'hat_rate', type: 'hihat', min: 0, max: 2, value: 1, curve: 1,
-    callback: x => synth.newHat.rate = x
+    callback: x => synth.hat.rate = x
   },
   {
-    name: 'closed_decay', type: 'hihat', min: 0.01, max: 1, value: 0.25, curve: 1,
-    callback: x => synth.newHat.choke = x
+    name: 'closed_decay', type: 'hihat', min: 0.01, max: 1, value: 0.25, curve: 2,
+    callback: x => synth.hat.choke = x
   },
   {
-    name: 'open_decay', type: 'hihat', min: 0.01, max: 2, value: 0.75, curve: 1,
-    callback: x => synth.newHat.decay = x
+    name: 'open_decay', type: 'hihat', min: 0.01, max: 1, value: 1, curve: 2,
+    callback: x => synth.hat.decay = x  * synth.snare.duration
   },
   {
     name: 'tom1_rate', type: 'toms', min: 0, max: 2, value: 1, curve: 1,
@@ -10167,11 +11798,11 @@ const paramDefinitions = (synth) => [
     callback: x => synth.p3.rate = x
   },
   {
-    name: 'toms_decay', type: 'toms', min: 0, max: 1, value: 0.5, curve: 1,
+    name: 'toms_decay', type: 'toms', min: 0.01, max: 1, value: 1, curve: 2,
     callback: x => {
-      synth.p1.decay = x * 1 + 0.01;
-      synth.p2.decay = x * 1 + 0.01;
-      synth.p3.decay = x * 1 + 0.01;
+      synth.p1.decay = x * synth.p1.duration;
+      synth.p2.decay = x * synth.p2.duration;
+      synth.p3.decay = x * synth.p3.duration;
     }
   },
 
@@ -10191,13 +11822,13 @@ const paramDefinitions = (synth) => [
     name: 'output_gain', type: 'output', min: 0, max: 4, value: 1, curve: 1,
     callback: x => synth.output.factor.value = x
   },
-  {
-    name: 'drumkit', type: 'dropdown', value: synth.defaultKit || '', radioOptions: synth.drumkitList,
-    callback: x => {
-        //console.log("dropdown load", x)
-        synth.loadSamples(x)
-    }
-  }
+  // {
+  //   name: 'drumkit', type: 'dropdown', value: synth.defaultKit || '', radioOptions: synth.drumkitList,
+  //   callback: x => {
+  //       console.log("dropdown load", x)
+  //       synth.loadSamples(x)
+  //   }
+  // }
 ];
 
 paramDefinitions;
@@ -10287,6 +11918,7 @@ window.drumSamplerLayout = {
 
 ;
 ;
+;
 
 
 
@@ -10301,9 +11933,8 @@ window.drumSamplerLayout = {
  * extends DrumTemplate
  */
 class DrumSampler extends DrumTemplate{
-  constructor(kit = "default", gui=null) {
+  constructor(kit = "default") {
     super()
-    this.gui = gui
     this.backgroundColor = [150,50,50]
     
     this.presets = DrumSamplerPresets;
@@ -10317,61 +11948,24 @@ class DrumSampler extends DrumTemplate{
     this.kit = kit
     this.drumkitList = ["LINN", "Techno", "TheCheebacabra1", "TheCheebacabra2", "acoustic-kit", "breakbeat13", "breakbeat8", "breakbeat9", "4OP-FM", "Bongos", "CR78", "KPR77", "Kit3", "Kit8"]
     //
-    this.closedEnv = new Tone.Envelope({attack:0.0,decay:.5,sustain:0,release:.4})
-    this.openEnv = new Tone.Envelope({attack:0.0,decay:1,sustain:0,release:.4})
-    this.hatVca = new Tone.Multiply()
-    this.openHatChoke = new Tone.Multiply()
+    
     this.comp = new Tone.Compressor(-20,4)
     this.distortion = new Tone.Distortion(.5)
     this.output = new Tone.Multiply(0.8);
     this.dry_kick = new Tone.Multiply(0.)
-    //
-    this.snareEnv = new Tone.Envelope(0.0, 1, 1, 10)
-    this.snare_vca = new Tone.Multiply()
-    this.snare_gain = new Tone.Multiply(1)
-    this.snare = new Tone.Player().connect(this.snare_vca)
-    this.hihat_vca = new Tone.Multiply(.9)
-    this.hihat = new Tone.Player().connect(this.hihat_vca)
-    //switched Toms to arrays
-    this.tom = []
-    this.tomEnv = []
-    this.tom_vca = []
-    this.tom_gain = []
-    for(let i=0;i<3;i++) {
-      this.tomEnv.push(new Tone.Envelope(0.0, 1, 1, 10))
-      this.tom_vca.push( new Tone.Multiply() )
-      this.tom_gain.push( new Tone.Multiply(.8) )
-      this.tom.push( new Tone.Player() )
-    }
-    for(let i=0;i<3;i++) {
-      this.tom[i].connect( this.tom_vca[i] ) 
-      this.tomEnv[i].connect( this.tom_gain[i] )
-      this.tom_gain[i].connect( this.tom_vca[i].factor )
-      this.tom_vca[i].connect(this.comp)
-    }
-    //
-    this.snareEnv.connect( this.snare_gain)
-    this.snare_gain.connect( this.snare_vca.factor)
-    this.snare_vca.connect(this.comp)
-    this.hihat_vca.connect(this.hatVca)
-    //
-    
+
     this.comp.connect(this.distortion)
     this.distortion.connect(this.output)
-    this.closedEnv.connect(this.hatVca.factor)
-    this.openEnv.connect(this.openHatChoke)
-    this.openHatChoke.connect(this.hatVca.factor)
-    this.hatVca.connect(this.comp)
-    //
 
-    this.newKick = new DrumVoice()
-    this.newKick.output.connect(this.dry_kick)
+    //
+    this.kick = new DrumVoice()
+    this.kick.output.connect(this.dry_kick)
     this.dry_kick.connect(this.output)
-    this.newKick.output.connect(this.comp)
-    this.newHat = new DrumVoice()
-    this.newHat.output.connect(this.comp)
-    this.newSnare = new DrumVoice()
-    this.newSnare.output.connect(this.comp)
+    this.kick.output.connect(this.comp)
+    this.hat = new DrumVoice()
+    this.hat.output.connect(this.comp)
+    this.snare = new DrumVoice()
+    this.snare.output.connect(this.comp)
     this.p1 = new DrumVoice()
     this.p1.output.connect(this.comp)
     this.p2 = new DrumVoice()
@@ -10406,84 +12000,9 @@ class DrumSampler extends DrumTemplate{
     //for autocomplete
     this.autocompleteList = this.paramDefinitions.map(def => def.name);;
     
-    //this.loadKit('default')
+    this.loadKit('acoustic')
 
   }//constructor
-/*
-  //SETTERS AND GETTERS
-  get kickDecay() { return this.kickEnv.release; }
-  set kickDecay(value) { this.kickEnv.release = value; }
-  get snareDecay() { return this.snareEnv.release; }
-  set snareDecay(value) { this.snareEnv.release = value; }
-  get closedDecay() { return this.closedEnv.release; }
-  set closedDecay(value) { this.closedEnv.release = value; }
-  get openDecay() { return this.openEnv.decay; }
-  set openDecay(value) { this.openEnv.decay = value; }
-  get p1Decay() { return this.tomEnv[0].release; }
-  set p1Decay(value) { this.tomEnv[0].release = value; }
-  get p2Decay() { return this.tomEnv[1].release; }
-  set p2Decay(value) { this.tomEnv[1].release = value; }
-  get p3Decay() { return this.tomEnv[2].release; }
-  set p3Decay(value) { this.tomEnv[2].release = value; }
-
-  get kickRate() { return this.kick.playbackRate; }
-  set kickRate(value) { this.kick.playbackRate = value; }
-  get snareRate() { return this.snare.playbackRate; }
-  set snareRate(value) { this.snare.playbackRate = value; }
-  get closedRate() { return this.hihat.playbackRate; }
-  set closedRate(value) { this.hihat.playbackRate = value; }
-  get p1Rate() { return this.tom[0].playbackRate; }
-  set p1Rate(value) { this.tom[0].playbackRate = value; }
-  get p2Rate() { return this.tom[1].playbackRate.playbackRate; }
-  set p2Rate(value) { this.tom[1].playbackRate = value; }
-  get p3Rate() { return this.tomEnv[2].playbackRate; }
-  set p3Rate(value) { this.tom[2].playbackRate = value; }
-
-  get threshold() { return this.comp.threshold.value ; }
-  set threshold(value) { this.comp.threshold.value = value; }
-  get ratio() { return this.comp.ratio.value ; }
-  set ratio(value) { this.comp.ratio.value = value; }
-  get dist() { return this.distortion.distortion ; }
-  set dist(value) { this.distortion.distortion = value; }
-  get volume() { return this.output.factor.value; }
-  set volume(value) { this.output.factor.value = value; }
-
-  set dryKick(value) {this.dry_kick.factor.value = value}
-  get dryKick() {return this.dry_kick.factor.value}
-
-  setVelocity(voice, num, val){
-    if(val > 1) val = val/127 //account for 0-127 velocities
-    if(num>=0 && num<10){
-      switch( voice ){
-        case 'kick': case 'O': this.kickVelocity[num]=val; break;
-        case 'snare': case 'X': this.snareVelocity[num]=val; break;
-        case 'closed': case '*': this.closedVelocity[num]=val; break;
-        case 'open': case '^': this.openVelocity[num]=val; break;
-        case 'p1': case '1': this.p1Velocity[num]=val; break;
-        case 'p2': case '2': this.p1Velocity[num]=val; break;
-        case 'p3': case '3': this.p1Velocity[num]=val; break;
-        case 'o': this.kickGhostVelocity[num]=val; break;
-        case 'x': this.snareGhostVelocity[num]=val; break;
-      }
-    } else{
-      for(let i=0;i<10;i++){
-        switch( voice ){
-        case 'kick': case 'O': this.kickVelocity[i]=val; break;
-        case 'snare': case 'X': this.snareVelocity[i]=val; break;
-        case 'closed': case '*': this.closedVelocity[i]=val; break;
-        case 'open': case '^': this.openVelocity[i]=val; break;
-        case 'p1': case '1': this.p1Velocity[num]=i; break;
-        case 'p2': case '2': this.p1Velocity[num]=i; break;
-        case 'p3': case '3': this.p1Velocity[num]=i; break;
-        case 'o': this.kickGhostVelocity[num]=val; break;
-        case 'x': this.snareGhostVelocity[num]=val; break;
-      }
-      }
-
-    }
-
-  }
-  */
 
   /**
    * Load a specific drum kit.
@@ -10526,12 +12045,21 @@ class DrumSampler extends DrumTemplate{
 
     //console.log("load sample", this.baseUrl)
     try{
-      this.newSnare.voice.load( this.baseUrl.concat("/snare.mp3") )
-      this.newHat.voice.load( this.baseUrl.concat("/hihat.mp3") )
+      this.snare.voice.load( this.baseUrl.concat("/snare.mp3") )
+      this.hat.voice.load( this.baseUrl.concat("/hihat.mp3") )
       this.p1.voice.load( this.baseUrl.concat("/tom1.mp3") )
       this.p2.voice.load( this.baseUrl.concat("/tom2.mp3") )
       this.p3.voice.load( this.baseUrl.concat("/tom3.mp3") )
-      this.newKick.voice.load( this.baseUrl.concat("/kick.mp3") )
+      this.kick.voice.load( this.baseUrl.concat("/kick.mp3") )
+    
+      setTimeout( ()=>{
+        this.snare.duration = this.snare.voice.buffer.duration
+        this.hat.duration = this.hat.voice.buffer.duration
+        this.p1.duration = this.p1.voice.buffer.duration
+        this.p2.duration = this.p2.voice.buffer.duration
+        this.p3.duration = this.p3.voice.buffer.duration
+        this.kick.duration = this.kick.voice.buffer.duration
+      }, 500)
     } catch(e){
       console.log('unable to load samples - try calling loadPreset(`default`)')
     }
@@ -10598,14 +12126,6 @@ class DrumSampler extends DrumTemplate{
         if (subdivision) this.setSubdivision(subdivision, num) 
     }
 
-    // play(iterations = 1, arr = null, subdivision = '8n', num = 0) {
-
-    //     if(arr) this.seq[num] = parseStringSequence(arr)
-
-    //     this.createLoop(subdivision, num, iterations)
-    //     //this.loopInstance[num].start()
-    // }
-
     newCreateLoop (){
         // Create a Tone.Loop
       //console.log('loop made')
@@ -10663,14 +12183,14 @@ class DrumSampler extends DrumTemplate{
 
     switch(val){
       case '.': break;
-      case '0': this.newKick.trigger(1*velocity,1,time); break; //just because. . . .
-      case 'O': this.newKick.trigger(1*velocity,1,time); break;
-      case 'o': this.newKick.trigger(.2*velocity,1.5,time); break;
+      case '0': this.kick.trigger(1*velocity,1,time); break; //just because. . . .
+      case 'O': this.kick.trigger(1*velocity,1,time); break;
+      case 'o': this.kick.trigger(.2*velocity,1.5,time); break;
       
-      case 'X': this.newSnare.trigger(1*velocity,1,time); break;
-      case 'x': this.newSnare.trigger(.2*velocity,1,time); break;
-      case '*': this.newHat.triggerChoke(.75*velocity,0.1,time); break;
-      case '^': this.newHat.trigger(.75*velocity,1,time); break;
+      case 'X': this.snare.trigger(1*velocity,1,time); break;
+      case 'x': this.snare.trigger(.2*velocity,1,time); break;
+      case '*': this.hat.triggerChoke(.75*velocity,0.1,time); break;
+      case '^': this.hat.trigger(.75*velocity,1,time); break;
       
       case '1': this.p1.trigger(1*velocity,1,time); break;
       case '2': this.p2.trigger(1*velocity,1,time); break;
@@ -10737,148 +12257,6 @@ class DrumSampler extends DrumTemplate{
             //console.log("No preset of name ", name);
         }
       },1000)
-    }
-
-}
-
-class DrumVoice{
-  constructor(){
-    this.chokeRatio = .1
-    this.decayTime = 1
-    this.startPoint = 0
-    this.env = new Tone.Envelope(0.0, 1, 1, 10)
-    this.vca = new Tone.Multiply()
-    this.output = new Tone.Multiply(1)
-    this.dryOut = new Tone.Multiply(0)
-    this.voice = new Tone.Player().connect(this.vca)
-    this.vca.connect(this.output)
-    this.voice.connect(this.dryOut)
-    this.env.connect(this.vca.factor)
-
-    let paramDefinitions = [
-      {name:'choke',min:0.,max:1,curve:2,callback:x=>{
-        this.chokeRatio = x
-      }},
-      {name:'decay',min:0.0,max:5,curve:3,callback:x=>{
-        this.decayTime = x
-      }},
-      {name:'amp',min:0,max:1,curve:2,callback:x=>this.output.factor.value = x},
-      {name:'dry',min:0,max:1,curve:2,callback:x=>this.dryOut.factor.value = x},
-      {name:'rate',value:1, min:-10,max:10,curve:1,callback:x=>{
-        this.voice.playbackRate = Math.abs(x)
-        if(x<0) this.voice.reverse = true
-      }},
-      // {name:'wet',min:0.0,max:1.2,curve:2,callback:value=>this.wetSig.factor.value = value},
-      // {name:'gain',min:0.0,max:1,curve:0.2,callback:value=>this.ws_input.factor.value = value},
-      // {name:'amp',min:0.0,max:1.2,curve:2,callback:value=>this.output.factor.value = value},
-    ]
-
-    this.param = this.generateParameters(paramDefinitions)
-    this.createAccessors(this, this.param);
-  }
-
-  setDecayTime(decay, choke){
-    this.decayTime = decay
-    this.chokeRatio = choke
-    this.env.release = decay*choke
-  }
-  triggerSample(amplitude, decay,time){
-    //console.log(amplitude,decay,time, this.voice)
-    try{
-      //this.env.release = decay == 0 ? this.decayTime * this.chokeRatio : this.decayTime
-      this.voice.volume.setValueAtTime( Tone.gainToDb(amplitude), time)
-      this.voice.start(time, this.startPoint)
-      //this.voice.start()
-      this.env.triggerAttackRelease(0.001, time)
-    } catch(e){
-        //console.log('time error', e)
-    }
-  }
-    trigger(amplitude, decay,time){
-      this.env.release =  this.decayTime
-      this.env.decay =  this.decayTime 
-      this.triggerSample(amplitude, decay,time)
-    }
-    triggerChoke(amplitude, decay,time){
-      this.env.release =  this.decayTime * this.chokeRatio
-      this.env.decay =  this.decayTime * this.chokeRatio
-      this.triggerSample(amplitude, decay,time)
-    }
-
-  generateParameters(paramDefinitions) {
-        const params = {};
-        paramDefinitions.forEach((def) => {
-            const param = new Parameter(this, def);
-            params[def.name] = param;
-        });
-        return params;
-    }
-
-    createAccessors(parent, params) {
-      //console.log(params)
-      Object.keys(params).forEach((key) => {
-        const param = params[key];
-
-        // Ensure the Parameter object has a `set` method
-        if (typeof param.set !== 'function') {
-            throw new Error(`Parameter '${key}' does not have a set method`);
-        }
-
-        // Proxy to handle array-like access
-        const proxyHandler = {
-            get(target, prop) {
-                if (typeof prop === 'string' && !isNaN(prop)) {
-                    // Access individual array element
-                    return target.get(parseInt(prop));
-                }
-                return target.get();
-            },
-            set(target, prop, value) {
-                console.log(target, prop, value)
-                if (typeof prop === 'string' && !isNaN(prop)) {
-                    // Set individual array element
-                    target.set(value, parseInt(prop));
-                    return true;
-                }
-                // Set the entire array or scalar value
-                target.set(value);
-                return true;
-            }
-        };
-
-        // Define the accessor property on the parent
-        Object.defineProperty(parent, key, {
-            get: () => new Proxy(param, proxyHandler),
-            set: (newValue) => param.set(newValue),
-        });
-    });
-}//createAccessors
-
-    setParameter(name, value, time = null) {
-        const param = this.param[name];
-        if (!param) throw new Error(`Parameter '${name}' does not exist.`);
-        
-        if (time) {
-            // Handle sequenced parameter updates
-            param.callback(value, time);
-        } else {
-            // Handle immediate parameter updates
-            param.callback(value);
-        }
-
-        // Update associated GUI elements
-        if (param.guiElement) {
-            param.guiElement.setValue(value);
-        }
-    }
-
-    get() {
-        let output = 'Parameters:\n';
-        for (let key in this.param) {
-            const param = this.param[key];
-            output += `${param.name}: ${param._value}\n`;
-        }
-        console.log(output);
     }
 }
 
@@ -12600,7 +13978,7 @@ window.TwinklePresets = {
 };;
 
 window.halfLayout = {
-
+    "height":0.5,
     "vco": {
       "color": [150, 0, 0],
       "boundingBox": { "x": 10, "y": 30, "width": 30, "height": 100 },
@@ -14298,6 +15676,7 @@ var midiMsgs = {};
 var ccCallbacks = {};
 
 /****** load webMIDI API ******/
+//comment out to disable MIDI
 if (navigator.requestMIDIAccess) {
     navigator.requestMIDIAccess()
         .then(onMIDISuccess)
@@ -14624,6 +16003,2226 @@ class MidiOut extends MonophonicTemplate {
   //       }
   //   }
 
+}
+
+
+// MonophonicTemplate.js
+
+;
+;
+
+
+;
+
+
+
+
+;
+
+
+/**
+ * Represents a Monophonic Synth
+ * 
+ * Base class for synths. Includes:
+ * - methods for loading and saving presets
+ * - connect/disconnect
+ * - setting ADSR values for env and vcf_env objects
+ * - show/hide gui, and custom createKnob function
+ *
+ * ## Working with presets
+ * - all synths can load presets saved in the synth/synthPresets folder.
+ *
+ * To add preset functionality to a synth:
+ * - create the preset file `synths/synthPresets/yourSynthPresets.json`
+ *     - your preset file needs an open/close brace {} in it
+ *
+ * - make sure to:
+ *     - import your presets and assign to this.presets 
+ *     - name your synth correctly in its constructor
+ *     - pass the gui into the synth constructor
+ *     - add this optional code to the end of the constructor to load
+ *         default preset:
+ *     if (this.gui !== null) {
+ *         this.initGui()
+ *         this.hideGui();
+ *         setTimeout(()=>{this.loadPreset('default')}, 500);
+ *     }
+ *
+ * When saving presets you will need to manually download and copy
+ * the preset file into synth/synthPresets/
+ *
+ * @constructor
+ */
+class MonophonicTemplate {
+    constructor() {
+        this.presets = {};
+        this.synthPresetName = ""
+        this.gui_elements = [];
+        this.gui = null;
+        this.guiContainer = null;
+        this.guiHeight = 1
+        this.layout = basicLayout
+        this.poly_ref = null;
+        this.super = null;
+        this.type = 'Synth';
+        this.name = "";
+        this.presetsData = null;
+        this.curPreset = null;
+        this.backgroundColor = [10,10,10]
+        this.snapshots = {}
+
+        // Sequencer related
+        this.seq = []; // Array of Seq instances
+        this.turingMachine = null;
+        this.callback = (i, time) => { }
+        this.callbackLoop = new Tone.Loop((time) => {
+            this.index = Math.floor(Theory.ticks / Tone.Time('16n').toTicks());
+            this.callback(this.index, time = null)
+        }, '16n').start()
+
+        // Drawing
+        this.seqToDraw = 0;
+        this.drawing = new ArrayVisualizer(this, [0], 'Canvas', .2);
+        this.drawingLoop = new Tone.Loop(time => {
+            if (this.drawing.enabled === true) {
+                this.drawing.startVisualFrame();
+                if (this.seq[this.seqToDraw]) {
+                    const seq = this.seq[this.seqToDraw];
+                    if (seq.vals.length > 0) {
+                        const index = Math.floor(Theory.ticks / Tone.Time(seq.subdivision).toTicks());
+                        this.drawing.visualize(seq.vals, index);
+                    }
+                }
+            }
+        }, '16n').start();
+    }
+
+    /**
+     * Populate this.presets with presets fetched from the server
+     * Using the name in this.synthPresetName
+     */
+    async accessPreset(){      
+        let presetData = {} 
+        try {
+            let response = await fetch('https://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
+            let jsonString = ""
+                if (!response.ok) {
+                    // Handle HTTP errors (e.g., 404 Not Found, 500 Internal Server Error)
+                    console.warn("Error accessing file");
+                }else{
+                    jsonString = await response.text();
+                }
+                presetData = JSON.parse(jsonString);
+                //console.log("jsonString", jsonString);
+                //console.log("presetData", presetData);
+        } catch (error) {
+            console.warn("Error parsing JSON:", error);
+        }
+        this.presets = await presetData;
+        //this.loadPreset("default");
+    }
+    
+    /**
+     * Save a preset by name
+     * @param {string} name - Name of the preset to save
+     * @returns {void}
+     * @example synth.savePreset('default')
+     */
+    //async savePreset (name) {
+    savePreset (name) {
+        const _preset = {};
+        for (let element of Object.values(this.param)) {
+            _preset[element.name] = element._value;
+        }
+        console.log(this.presets)
+        // Update the presetsData in memory
+        //console.log(this.presets);
+        if (!this.presets[name]) {
+            this.presets[name] = {};
+        }
+        this.presets[name] = _preset;
+
+        //  try {
+        //     const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/save', {
+        //         method: 'POST', // Specify the HTTP method
+        //         headers: {
+        //             'Content-Type': 'application/json' // Tell the server we're sending JSON
+        //         },
+        //         body: JSON.stringify({ // Convert your data to a JSON string for the body
+        //             name: this.synthPresetName,
+        //             data: this.presets
+        //     })
+        //     });
+
+        //     const result = await response.json(); // Parse the server's JSON response
+
+        //     if (response.ok) {
+        //         console.log(`Save successful: ${result.message}`);
+        //         return result.success;
+        //     } else {
+        //         console.warn(`Save failed: ${result.message}`);
+        //         // You might want to throw an error here or handle specific status codes
+        //         return false;
+        //     }
+        // } catch (error) {
+        //     console.error(`Error sending save request for '${name}':`, error);
+        //     return false;
+        // }
+
+        //old preset code below
+        
+        
+        console.log(`Preset saved under ${this.name}/${name}`);
+    };
+
+    async deletePreset (name) {
+        // Update the presetsData in memory
+        //console.log(this.presets);
+        if (this.presets[name]) {
+            delete this.presets[name]
+            try {
+                const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/save', {
+                    method: 'POST', // Specify the HTTP method
+                    headers: {
+                        'Content-Type': 'application/json' // Tell the server we're sending JSON
+                    },
+                    body: JSON.stringify({ // Convert your data to a JSON string for the body
+                        name: this.synthPresetName,
+                        data: this.presets
+                })
+                });
+
+                const result = await response.json(); // Parse the server's JSON response
+
+                if (response.ok) {
+                    console.log(`Delete successful: ${result.message}`);
+                    return result.success;
+                } else {
+                    console.warn(`Delete failed: ${result.message}`);
+                    // You might want to throw an error here or handle specific status codes
+                    return false;
+                }
+            } catch (error) {
+                console.error(`Error sending delete request for '${name}':`, error);
+                return false;
+            }
+        }
+
+        console.log(`Preset deleted  under ${this.name}/${name}`);
+    };
+
+    async downloadAllPresets() {
+    try {
+        const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/download_presets');
+        if (!response.ok) {
+            console.error('Failed to download presets:', response.status, response.statusText);
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'synth_presets.zip'; // The filename the user will see
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url); // Clean up the object URL
+        console.log('Presets folder downloaded successfully.');
+    } catch (error) {
+        console.error('Error downloading presets:', error);
+    }
+}
+
+    /**
+     * Load a preset by name
+     * @param {string} name - Name of the preset to load
+     * @returns {void}
+     * @example synth.loadPreset('default')
+     */
+    loadPreset(name) {
+        this.curPreset = name;
+        const presetData = this.presets[this.curPreset];
+
+        if (presetData) {
+          //console.log("Loading preset", this.curPreset, presetData);
+          for (let name in presetData) {
+            try {
+              if (this.param[name]?.set) {
+                this.param[name].set(presetData[name]);
+              }
+            } catch (e) {
+              console.log(name, presetData[name], e);
+            }
+          }
+          //console.log(this.param.vco_mix)
+        } else {
+            console.log("No preset of name ", name);
+        }
+    }
+
+    logPreset() {
+        const presetData = this.presets[this.curPreset];
+
+        if (presetData) {
+
+          let output = 'Parameters:\n';
+          for (let key in presetData) {
+              const param = presetData[key];
+              if (Array.isArray(param)) {
+                  const formattedArray = param.map((value) => {
+                      if (typeof value === "number") {
+                          return Number(value.toFixed(2)); // Limit to 2 decimals
+                      }
+                      return value; // Keep non-numbers unchanged
+                  });
+
+                  output += `${key}: [${formattedArray.join(", ")}]\n`; // Add the array to output
+              }
+              else if(typeof param === 'number') output += `${key}: ${param.toFixed(2)}\n`;
+              else output += `${key}: ${param}\n`;
+          }
+          console.log(output);
+        }
+
+        else {
+            console.log("No preset of name ", this.curPreset);
+        }
+    }
+
+    /**
+     * Console log all available presets
+     * @returns {void}
+     * @example synth.listPresets()
+     */
+    listPresets() {
+        console.log("Synth presets", this.presets);
+    }
+
+    /**
+     * Trigger the attack phase of the envelope
+     * @param {number} val - MIDI note value
+     * @param {number} vel - MIDI velocity value
+     * @param {number} time - Time to trigger the attack
+     * @returns {void}
+     * @example synth.triggerAttack(60, 100, Tone.now())
+     */
+    triggerAttack(val, vel = 100, time = null) {
+        vel = vel / 127;
+        if (time) {
+            this.frequency.setValueAtTime(Tone.Midi(val).toFrequency(), time);
+            this.env.triggerAttack(time);
+        } else {
+            this.frequency.value = Tone.Midi(val).toFrequency();
+            this.env.triggerAttack();
+        }
+    }
+
+    /**
+     * Trigger the release phase of the envelope
+     * @param {number} val - MIDI note value
+     * @param {number} time - Time to trigger the release
+     * @returns {void}
+     * @example synth.triggerRelease(60, Tone.now())
+     * @example synth.triggerRelease(60)
+     */
+    triggerRelease(val, time = null) {
+        if (time) this.env.triggerRelease(time);
+        else this.env.triggerRelease();
+    }
+
+    /**
+     * Trigger the attack and release phases of the envelope
+     * @param {number} val - MIDI note value
+     * @param {number} vel - MIDI velocity value
+     * @param {number} dur - Duration of the attack and release
+     * @param {number} time - Time to trigger the attack and release
+     * @returns {void}
+     * @example synth.triggerAttackRelease(60, 100, 0.01, Tone.now())
+     * @example synth.triggerAttackRelease(60, 100, 0.01)
+     */
+    triggerAttackRelease(val, vel = 100, dur = 0.01, time = null) {
+        console.log('AR ',val,vel,dur,time)
+        vel = vel / 127;
+        if (time) {
+            this.frequency.setValueAtTime(Tone.Midi(val).toFrequency(), time);
+            this.env.triggerAttackRelease(dur, time);
+        } else {
+            this.frequency.value = Tone.Midi(val).toFrequency();
+            this.env.triggerAttackRelease(dur);
+        }
+    }
+
+    generateParameters(paramDefinitions) {
+        // console.log(paramDefinitions)
+        const params = {};
+        paramDefinitions.forEach((def) => {
+            //console.log(def)
+            const param = new Parameter(this,def);
+            //console.log(param)
+            params[def.name] = param;
+        });
+        //console.log(params)
+        return params;
+    }
+
+    createAccessors(parent, params) {
+        Object.keys(params).forEach((key) => {
+            const param = params[key];
+            let currentSeq = null; // Track active sequence
+
+            if (typeof param.set !== 'function' || typeof param.get !== 'function') {
+                throw new Error(`Parameter '${key}' does not have valid get/set methods`);
+            }
+
+            // Proxy handler to intercept method calls
+            const proxyHandler = {
+                get(target, prop,value=null) {
+                    if (prop === 'sequence') return (valueArray, subdivision = '16n') => {
+                        param.sequence(valueArray,subdivision)
+                    };
+                    if (prop === 'stop') return () => {
+                        param.stop()
+                    };
+                    if (prop === 'set') return () => {
+                        //console.log('set',target,prop,value)
+                        const rawValue = (typeof value === 'function') ? value() : value.value;
+                        if (currentSeq) {
+                            currentSeq.dispose();
+                            currentSeq = null;
+                        }
+                        //console.log(target,prop,rawValue)
+                        param.set(value,null,false) 
+                    };
+                    if (prop === 'from') {
+                      return (source, options = {}) => {
+                        param.from(source, options);
+                      };
+                    }
+                    return target.get(); // Return the current value
+                },
+                set(target, _, newValue) {
+                    if (Array.isArray(newValue)) {
+                        // console.log(target, newValue)
+                        if (currentSeq) currentSeq.dispose();
+                        currentSeq = new Seq(
+                            parent,
+                            newValue,
+                             '4n',
+                            'infinite',
+                            0,
+                            ((v, time) => param.set(Number(v[0]),null,false, time)) // Ensure time is passed
+                        );
+                    } else {
+                        if (currentSeq) {
+                            currentSeq.dispose();
+                            currentSeq = null;
+                        }
+                        param.set(newValue);
+                    }
+                    return true;
+                }
+            };
+
+            // Define the parameter with a Proxy
+            Object.defineProperty(parent, key, {
+                get: () => new Proxy(param, proxyHandler),
+                set: (newValue) => {
+                    if (Array.isArray(newValue)) {
+                        param.sequence(newValue, this.seq[0].subdivision)
+                    } else {
+                        param.stop()
+                        param.set(newValue);
+                    }
+                },
+            });
+        });
+    }//accessors
+
+    // Method to trigger the sequence in the Proxy
+    startSequence(paramName, valueArray, subdivision = '16n') {
+        const param = this.param[paramName];
+
+        if (param ) {
+            param.sequence(valueArray, subdivision);
+        } else {
+            console.warn(`Param ${paramName} has no sequence method or doesn't exist.`);
+        }
+    }
+
+    stopSequence(paramName) {
+        const param = this.param[paramName];
+        if (param.seq ) {
+            param.stop(); 
+        } else {
+            //console.warn(`Param ${paramName} has no stop method or doesn't exist.`);
+        }
+    }
+
+    get() {
+        let output = '\t' + this.name + ' Parameters:\n';
+        for (let key in this.param) {
+            const param = this.param[key];
+            let value = param._value
+            //console.log(value)
+            if( typeof value === 'number') {
+                if(value > 100) value = value.toFixed()
+                else if( value > 1) value = value.toFixed(1)
+                else value = value.toFixed(3)
+            }
+            output += `${param.name}: ${value}\n`;
+        }
+        console.log(output);
+    }
+    print(){ this.get()}
+
+    /**
+     * Set the ADSR values for the envelope
+     * @param {number} a - Attack time
+     * @param {number} d - Decay time
+     * @param {number} s - Sustain level
+     * @param {number} r - Release time
+     * @returns {void}
+     * @example synth.setADSR(0.01, 0.1, 0.5, 0.1)
+     */
+    setADSR(a, d, s, r) {
+        if (this.env) {
+            this.attack = a > 0.001 ? a : 0.001;
+            this.decay = d > 0.01 ? d : 0.01;
+            this.sustain = Math.abs(s) < 1 ? s : 1;
+            this.release = r > 0.01 ? r : 0.01;
+        }
+    }
+
+    /**
+     * Set the ADSR values for the filter envelope
+     * @param {number} a - Attack time
+     * @param {number} d - Decay time
+     * @param {number} s - Sustain level
+     * @param {number} r - Release time
+     * @returns {void}
+     * @example synth.setFilterADSR(0.01, 0.1, 0.5, 0.1)
+     */
+    setFilterADSR(a, d, s, r) {
+        if (this.vcf_env) {
+            this.vcf_env.attack = a > 0.001 ? a : 0.001;
+            this.vcf_env.decay = d > 0.01 ? d : 0.01;
+            this.vcf_env.sustain = Math.abs(s) < 1 ? s : 1;
+            this.vcf_env.release = r > 0.01 ? r : 0.01;
+        }
+    }
+
+    /**
+     * Initialize the GUI with NexusUI
+     * @returns {void}
+     * @example 
+     * synth.initGui()
+     */
+    initGui(gui = null) {
+        this.guiContainer = document.getElementById('Canvas');
+        if (!this.guiContainer) {
+            console.error('NexusUI container #Canvas not found in DOM');
+            return;
+        }
+        
+        // No need to create p5 instance for NexusUI
+        this.gui = true; // Flag to indicate GUI is initialized
+        const layout = this.layout;
+        //console.log(layout);
+
+        // Group parameters by type
+        const groupedParams = {};
+        Object.values(this.param).forEach((param) => {
+            if (!groupedParams[param.type]) groupedParams[param.type] = [];
+            groupedParams[param.type].push(param);
+        });
+
+        // Create GUI for each group
+        Object.keys(groupedParams).forEach((groupType) => {
+            const groupLayout = layout[groupType];
+            if (!groupLayout) return;
+            if (groupType === 'hidden') return;
+
+            let indexOffset = 0;
+
+            groupedParams[groupType].forEach((param, index) => {
+                const isGroupA = groupLayout.groupA.includes(param.name);
+                const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
+                const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
+
+                // **Retrieve the current parameter value**
+                const paramValue = param.get ? param.get() : param._value;
+
+                if (Array.isArray(paramValue)) {
+                    paramValue.forEach((value, i) => {
+                        let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                        let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                        const x = groupLayout.boundingBox.x + xOffset;
+                        const y = groupLayout.boundingBox.y + yOffset;
+
+                        this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, i, value });
+                        indexOffset++;
+                    });
+                } else {
+                    let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                    let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                    const x = groupLayout.boundingBox.x + xOffset;
+                    const y = groupLayout.boundingBox.y + yOffset;
+
+                    // Pass the **retrieved parameter value** to GUI
+                    this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, value: paramValue });
+                }
+            });
+        });
+        
+        // Apply theme colors to all Nexus elements
+        if (this.backgroundColor) {
+            document.body.style.backgroundColor = `rgb(${this.backgroundColor[0]}, ${this.backgroundColor[1]}, ${this.backgroundColor[2]})`;
+        }
+    }
+
+    /**
+     * Hide the GUI
+     * @returns {void}
+     */
+    hideGui() {
+        if (this.gui && this.guiContainer) {
+            // Destroy all NexusUI elements
+            Object.values(this.param).forEach((param) => {
+                if (param.guiElements) {
+                    param.guiElements.forEach((element) => {
+                        if (element && element.destroy) {
+                            element.destroy();
+                        }
+                    });
+                }
+            });
+            this.gui = null;
+        }
+    }
+
+    /**
+     * Show the GUI
+     * @returns {void}
+     */
+    showGui() {
+        this.initGui()
+    }
+
+    // Create individual GUI element using NexusUI wrappers
+    createGuiElement(param, { x, y, size, controlType, color, i=null }) {
+        //console.log('createG', param, x,y,size,controlType, i)
+        
+        // Convert size from p5 units to pixel dimensions for NexusUI
+        const width = size * 45;  // Adjust multiplier as needed
+        const height = size * 45;
+        
+        if (controlType === 'knob') {
+            const dial = new Dial(x, y, width, height);
+            dial.min = param.min;
+            dial.max = param.max;
+            dial.value = i !== null && Array.isArray(param._value) ? param._value[i] : param._value;
+            
+            // Apply color if provided
+            if (color) {
+                dial.colorize("accent", color);
+            }
+            
+            // Set up the callback
+            dial.mapTo((value) => param.set(value, i, true));
+            
+            param.guiElements.push(dial);
+            
+        } else if (controlType === 'fader') {
+            const slider = new Slider(x, y, width * 2, height);
+            slider.min = param.min;
+            slider.max = param.max;
+            slider.value = i !== null && Array.isArray(param._value) ? param._value[i] : param._value;
+            
+            // Apply color if provided
+            if (color) {
+                slider.colorize("accent", color);
+            }
+            
+            // Set up the callback
+            slider.mapTo((value) => param.set(value, i, true));
+            
+            param.guiElements.push(slider);
+            
+        } else if (controlType === 'radioButton') {
+            // RadioButton not yet implemented in NexusUI wrappers
+            console.warn(`RadioButton controlType not yet supported with NexusUI`);
+        } else if (controlType === 'dropdown') {
+            // Dropdown not yet implemented in NexusUI wrappers
+            console.warn(`Dropdown controlType not yet supported with NexusUI`);
+        } else if (controlType === 'text') {
+            // Text display not yet implemented in NexusUI wrappers
+            console.warn(`Text controlType not yet supported with NexusUI`);
+        } else {
+            console.log('no gui creation element for ', controlType)
+        }
+    }
+
+    /**
+     * Fast way to create a knob GUI element
+     * @param {string} _label - Label for the knob
+     * @param {number} _x - X position of the knob
+     * @param {number} _y - Y position of the knob
+     * @param {number} _min - Minimum value of the knob
+     * @param {number} _max - Maximum value of the knob
+     * @param {number} _size - Size of the knob
+     * @param {string} _accentColor - Accent color of the knob
+     * @param {function} callback - Callback function for the knob
+     * @returns {object} - p5.gui knob object
+     * @example
+     * this.createKnob('Attack', 10, 10, 0.01, 1, 100, '#ff0000', (val) => {
+     *    this.setADSR(val, this.gui.get('Decay').value(), this.gui.get('Sustain').value(), this.gui.get('Release').value());
+     * });
+     */
+
+
+    createKnob(label, x, y, min, max, size, accentColor, callback) {
+        const dial = new Dial(x + (this.x || 0), y + (this.y || 0), size, size);
+        dial.min = min;
+        dial.max = max;
+        
+        if (accentColor) {
+            dial.colorize("accent", accentColor);
+        }
+        
+        dial.mapTo(callback);
+        
+        return dial;
+    }
+
+    linkGui(name){
+        //console.log(this.param)
+        let objectIndex = 0
+        Object.keys(this.param).forEach(key => {
+          let subObject = this.param[key];
+          if( subObject.guiElements[0] ) {
+            // Note: CollabHub integration would require implementing setLink in NexusElement
+            // or manually setting up the callbacks to use ch.control()
+            if (subObject.guiElements[0].setLink) {
+                subObject.guiElements[0].setLink( name + objectIndex )
+            } else {
+                console.warn('setLink not implemented for NexusUI elements yet');
+            }
+          }
+          objectIndex++
+        });
+    }
+
+    pushState(snap = null) {
+      Object.keys(this.param).forEach(key => {
+        const subObject = this.param[key];
+        const value = snap ? snap[key]?.value : subObject._value;
+
+        if (value !== undefined && subObject.guiElements?.[0]) {
+          // NexusUI elements use .value property directly
+          subObject.guiElements[0].value = value;
+        }
+      });
+    }
+
+    saveSnap(name) {
+      this.snapshots[name] = {};
+
+      Object.keys(this.param).forEach(key => {
+        let subObject = this.param[key];
+        this.snapshots[name][key] = {
+          value: subObject._value // store raw value
+        };
+      });
+
+      console.log(`Snapshot "${name}" saved.`);
+    }
+
+    loadSnap(name) {
+      const snap = this.snapshots[name];
+      if (!snap) {
+        console.warn(`Snapshot "${name}" not found.`);
+        return;
+      }
+      this.pushState(snap);
+      console.log(`Snapshot "${name}" loaded.`);
+    }
+
+    listSnapshots() {
+      console.log( Object.keys(this.snapshots) )
+    }
+
+    /**
+     * Connects to Tone.js destination
+     * @param {object} destination - Tone.js destination object
+     * @returns {void}
+     * @example 
+     * const amp = new Tone.Gain(0.5).toDestination();
+     * synth.connect(amp)
+     */
+    connect(destination) {
+        if (destination.input) {
+            this.output.connect(destination.input);
+        } else {
+            this.output.connect(destination);
+        }
+    }
+
+    /**
+     * Disconnects from Tone.js destination
+     * @param {object} destination - Tone.js destination object
+     * @returns {void}
+     * @example
+     * const amp = new Tone.Gain(0.5).toDestination();
+     * synth.connect(amp)
+     * synth.disconnect(amp)
+     */
+    disconnect(destination) {
+        if (destination.input) {
+            this.output.disconnect(destination.input);
+        } else {
+            this.output.disconnect(destination);
+        }
+    }
+
+    /**
+     * Sequences the provided array of notes and initializes a Tone.Loop with the given subdivision.
+     *
+     * @param {string} arr - The sequence of notes as a string.
+     * @param {string} [subdivision] - The rhythmic subdivision for the loop (e.g., '16n', '8n').
+     * @param {string} num (default 0) - the sequence number. Up to 10 sequences per instance.
+     */
+    sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].sequence(arr, subdivision, phraseLength);
+        }
+        this.start(num);
+    }
+
+    /**
+     * Plays the provided sequence array initializes a Tone.Loop with the given subdivision.
+     *
+     * @param {string} arr - The sequence of notes as a string.
+     * @param {number} iterations - The the number of times to play the sequence
+     * @param {string} [subdivision] - The rhythmic subdivision for the loop (e.g., '16n', '8n').
+     * @param {string} num (default 0) - the sequence number. Up to 10 sequences per instance.
+     */
+    setSeq(arr, subdivision = '8n', num = 0) {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].setSeq(arr, subdivision);
+        }
+    }
+
+    play(arr, subdivision = '8n', num = 0, phraseLength = 1) {
+        if (!this.seq[num]) {
+            // this.seq[num]._offset = 0//make sure the new one starts at the beginning as well
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+            this.seq[num]._offset = 0
+        } else {
+            this.seq[num]._offset = 0//there is a time delay between this and where the index is, but i can set it such as this so that I know that is started
+            this.seq[num].sequence(arr, subdivision, phraseLength);
+        }
+        this.start(num);
+
+        // if (this.seq[num]) {
+        //     this.seq[num].play(length);
+        // }
+    }
+
+    expr(func, len = 32, subdivision = '16n', num = 0) {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        }
+        this.seq[num].expr(func, len, subdivision);
+        this.start(num);
+    }
+
+    euclid(seq, hits=4, beats=8, rotate=0, subdivision = '8n', num = 0){
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, seq, subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].sequence(seq, subdivision, 'infinite');
+        }
+        this.seq[num].euclid(hits, beats,rotate);
+        this.start(num);
+    }
+
+    set velocity(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].velocity = val
+        }
+    }
+
+    set orn(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].orn = val
+        }
+    }
+
+    set octave(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].octave = val
+        }
+    }
+
+    set sustain(val) {//turn into duration
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].sustain = val
+        }
+    }
+
+    set subdivision(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].subdivision = val
+        }
+    }
+
+    set transform(val) {
+        if (typeof val !== 'function') {
+            console.warn(`Transform must be a function. Received: ${typeof val}`);
+            return;
+        }
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].transform = val
+        }
+    }
+//roll already exists in seq
+    set roll(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].roll = val
+        }
+    }
+
+    set rotate(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].rotate = val
+        }
+    }
+
+    set offset(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].offset = val
+        }
+    }
+
+    /**
+     * Sets the transformation for the loop.
+     * 
+     * @param {string} transform - The transformation to apply.
+     */
+    setTransform(transform, num = 'all') {
+        if (num === 'all') {
+            for (let seq of this.seq) {
+                if (seq) seq.setTransform(transform);
+            }
+        } else {
+            if (this.seq[num]) this.seq[num].setTransform(transform);
+        }
+    }
+    //possible implementation of rotate
+    get sustain() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setSustain(value);
+                    }
+                }
+                return true; // Indicate success
+            }
+        });
+    }
+
+    get velocity() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setVelocity(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get octave() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setOctave(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get subdivision() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setSubdivision(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get roll() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setRoll(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get rotate() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setRotate(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get transform() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setTransform(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    start(num = 'all') {
+        if (num === 'all') {
+            for (let seq of this.seq) {
+                if (seq) seq.start();
+            }
+            this.drawingLoop.start();
+        } else {
+            if (this.seq[num]) this.seq[num].start();
+        }
+    }
+
+    stop(num = 'all') {
+        if (num === 'all') {
+            for (let seq of this.seq) {
+                if (seq) seq.stop();
+            }
+            this.drawingLoop.stop();
+        } else {
+            if (this.seq[num]) this.seq[num].stop();
+        }
+    }
+
+    turing(val){
+
+    }
+
+    // Visualizations
+
+    draw(arr = this.drawing.array, target = this.drawing.target, ratio = this.drawing.ratio) {
+        this.drawing = new ArrayVisualizer(arr, target, ratio);
+    }
+
+    getSeqParam(val, index) {
+        //console.log(val, index,)
+        if (Array.isArray(val)) return val[index % val.length];
+        else return val;
+    }
+
+    parseNoteString(val, time, index, num=null) {
+       //console.log(val,time,index, num, isNaN(Number(val[0])))
+        if (val[0] === ".") return;
+        if (!val || val.length === 0 ) return '.';
+
+        const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
+        //console.log(usesPitchNames, val[0])
+        let note = '';
+        if (usesPitchNames) note = pitchNameToMidi(val[0]);
+        else note = intervalToMidi(val[0], this.min, this.max);
+
+        if (note < 0) return;
+        if (note >127) {
+            console.log("MIDI note ", note, "ignored")
+            return;
+        }
+
+        let octave = this.getSeqParam(this.seq[num].octave, index);
+        let velocity = this.getSeqParam(this.seq[num].velocity, index);
+        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
+        let lag = this.getSeqParam(this.seq[num].lag, index);
+        //handle in the Seq class
+        //let rotate = this.getSeqParam(this.seq[num].rotate, index);
+        //let offset = this.getSeqParam(this.seq[num].offset, index);
+
+        let groove = Groove.get(subdivision,index);
+        
+        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+        velocity = velocity * groove.velocity
+        if( Math.abs(velocity)>256) velocity = 256
+        //console.log('pa', note, octave, velocity, sustain, time, timeOffset)
+        try {
+            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
+            this.triggerAttackRelease(
+                note + octave * Theory.scaleRatios.length,
+                velocity,
+                sustain,
+                time + timeOffset
+            );
+        } catch (e) {
+            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
+        }
+    }
+}
+
+
+// MonophonicTemplate.js
+
+;
+;
+
+
+;
+
+
+
+
+;
+
+
+/**
+ * Represents a Monophonic Synth
+ * 
+ * Base class for synths. Includes:
+ * - methods for loading and saving presets
+ * - connect/disconnect
+ * - setting ADSR values for env and vcf_env objects
+ * - show/hide gui, and custom createKnob function
+ *
+ * ## Working with presets
+ * - all synths can load presets saved in the synth/synthPresets folder.
+ *
+ * To add preset functionality to a synth:
+ * - create the preset file `synths/synthPresets/yourSynthPresets.json`
+ *     - your preset file needs an open/close brace {} in it
+ *
+ * - make sure to:
+ *     - import your presets and assign to this.presets 
+ *     - name your synth correctly in its constructor
+ *     - pass the gui into the synth constructor
+ *     - add this optional code to the end of the constructor to load
+ *         default preset:
+ *     if (this.gui !== null) {
+ *         this.initGui()
+ *         this.hideGui();
+ *         setTimeout(()=>{this.loadPreset('default')}, 500);
+ *     }
+ *
+ * When saving presets you will need to manually download and copy
+ * the preset file into synth/synthPresets/
+ *
+ * @constructor
+ */
+class MonophonicTemplate {
+    constructor() {
+        this.presets = {};
+        this.synthPresetName = ""
+        this.gui_elements = [];
+        this.gui = null;
+        this.guiContainer = null;
+        this.guiHeight = 1
+        this.layout = basicLayout
+        this.poly_ref = null;
+        this.super = null;
+        this.type = 'Synth';
+        this.name = "";
+        this.presetsData = null;
+        this.curPreset = null;
+        this.backgroundColor = [10,10,10]
+        this.snapshots = {}
+
+        // Sequencer related
+        this.seq = []; // Array of Seq instances
+        this.turingMachine = null;
+        this.callback = (i, time) => { }
+        this.callbackLoop = new Tone.Loop((time) => {
+            this.index = Math.floor(Theory.ticks / Tone.Time('16n').toTicks());
+            this.callback(this.index, time = null)
+        }, '16n').start()
+
+        // Drawing
+        this.seqToDraw = 0;
+        this.drawing = new ArrayVisualizer(this, [0], 'Canvas', .2);
+        this.drawingLoop = new Tone.Loop(time => {
+            if (this.drawing.enabled === true) {
+                this.drawing.startVisualFrame();
+                if (this.seq[this.seqToDraw]) {
+                    const seq = this.seq[this.seqToDraw];
+                    if (seq.vals.length > 0) {
+                        const index = Math.floor(Theory.ticks / Tone.Time(seq.subdivision).toTicks());
+                        this.drawing.visualize(seq.vals, index);
+                    }
+                }
+            }
+        }, '16n').start();
+    }
+
+    /**
+     * Populate this.presets with presets fetched from the server
+     * Using the name in this.synthPresetName
+     */
+    async accessPreset(){      
+        let presetData = {} 
+        try {
+            let response = await fetch('https://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/'+this.synthPresetName+'.json')
+            let jsonString = ""
+                if (!response.ok) {
+                    // Handle HTTP errors (e.g., 404 Not Found, 500 Internal Server Error)
+                    console.warn("Error accessing file");
+                }else{
+                    jsonString = await response.text();
+                }
+                presetData = JSON.parse(jsonString);
+                //console.log("jsonString", jsonString);
+                //console.log("presetData", presetData);
+        } catch (error) {
+            console.warn("Error parsing JSON:", error);
+        }
+        this.presets = await presetData;
+        //this.loadPreset("default");
+    }
+    
+    /**
+     * Save a preset by name
+     * @param {string} name - Name of the preset to save
+     * @returns {void}
+     * @example synth.savePreset('default')
+     */
+    //async savePreset (name) {
+    savePreset (name) {
+        const _preset = {};
+        for (let element of Object.values(this.param)) {
+            _preset[element.name] = element._value;
+        }
+        console.log(this.presets)
+        // Update the presetsData in memory
+        //console.log(this.presets);
+        if (!this.presets[name]) {
+            this.presets[name] = {};
+        }
+        this.presets[name] = _preset;
+
+        //  try {
+        //     const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/save', {
+        //         method: 'POST', // Specify the HTTP method
+        //         headers: {
+        //             'Content-Type': 'application/json' // Tell the server we're sending JSON
+        //         },
+        //         body: JSON.stringify({ // Convert your data to a JSON string for the body
+        //             name: this.synthPresetName,
+        //             data: this.presets
+        //     })
+        //     });
+
+        //     const result = await response.json(); // Parse the server's JSON response
+
+        //     if (response.ok) {
+        //         console.log(`Save successful: ${result.message}`);
+        //         return result.success;
+        //     } else {
+        //         console.warn(`Save failed: ${result.message}`);
+        //         // You might want to throw an error here or handle specific status codes
+        //         return false;
+        //     }
+        // } catch (error) {
+        //     console.error(`Error sending save request for '${name}':`, error);
+        //     return false;
+        // }
+
+        //old preset code below
+        
+        
+        console.log(`Preset saved under ${this.name}/${name}`);
+    };
+
+    async deletePreset (name) {
+        // Update the presetsData in memory
+        //console.log(this.presets);
+        if (this.presets[name]) {
+            delete this.presets[name]
+            try {
+                const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/synth_presets/save', {
+                    method: 'POST', // Specify the HTTP method
+                    headers: {
+                        'Content-Type': 'application/json' // Tell the server we're sending JSON
+                    },
+                    body: JSON.stringify({ // Convert your data to a JSON string for the body
+                        name: this.synthPresetName,
+                        data: this.presets
+                })
+                });
+
+                const result = await response.json(); // Parse the server's JSON response
+
+                if (response.ok) {
+                    console.log(`Delete successful: ${result.message}`);
+                    return result.success;
+                } else {
+                    console.warn(`Delete failed: ${result.message}`);
+                    // You might want to throw an error here or handle specific status codes
+                    return false;
+                }
+            } catch (error) {
+                console.error(`Error sending delete request for '${name}':`, error);
+                return false;
+            }
+        }
+
+        console.log(`Preset deleted  under ${this.name}/${name}`);
+    };
+
+    async downloadAllPresets() {
+    try {
+        const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/download_presets');
+        if (!response.ok) {
+            console.error('Failed to download presets:', response.status, response.statusText);
+            return;
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'synth_presets.zip'; // The filename the user will see
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url); // Clean up the object URL
+        console.log('Presets folder downloaded successfully.');
+    } catch (error) {
+        console.error('Error downloading presets:', error);
+    }
+}
+
+    /**
+     * Load a preset by name
+     * @param {string} name - Name of the preset to load
+     * @returns {void}
+     * @example synth.loadPreset('default')
+     */
+    loadPreset(name) {
+        this.curPreset = name;
+        const presetData = this.presets[this.curPreset];
+
+        if (presetData) {
+          //console.log("Loading preset", this.curPreset, presetData);
+          for (let name in presetData) {
+            try {
+              if (this.param[name]?.set) {
+                this.param[name].set(presetData[name]);
+              }
+            } catch (e) {
+              console.log(name, presetData[name], e);
+            }
+          }
+          //console.log(this.param.vco_mix)
+        } else {
+            console.log("No preset of name ", name);
+        }
+    }
+
+    logPreset() {
+        const presetData = this.presets[this.curPreset];
+
+        if (presetData) {
+
+          let output = 'Parameters:\n';
+          for (let key in presetData) {
+              const param = presetData[key];
+              if (Array.isArray(param)) {
+                  const formattedArray = param.map((value) => {
+                      if (typeof value === "number") {
+                          return Number(value.toFixed(2)); // Limit to 2 decimals
+                      }
+                      return value; // Keep non-numbers unchanged
+                  });
+
+                  output += `${key}: [${formattedArray.join(", ")}]\n`; // Add the array to output
+              }
+              else if(typeof param === 'number') output += `${key}: ${param.toFixed(2)}\n`;
+              else output += `${key}: ${param}\n`;
+          }
+          console.log(output);
+        }
+
+        else {
+            console.log("No preset of name ", this.curPreset);
+        }
+    }
+
+    /**
+     * Console log all available presets
+     * @returns {void}
+     * @example synth.listPresets()
+     */
+    listPresets() {
+        console.log("Synth presets", this.presets);
+    }
+
+    /**
+     * Trigger the attack phase of the envelope
+     * @param {number} val - MIDI note value
+     * @param {number} vel - MIDI velocity value
+     * @param {number} time - Time to trigger the attack
+     * @returns {void}
+     * @example synth.triggerAttack(60, 100, Tone.now())
+     */
+    triggerAttack(val, vel = 100, time = null) {
+        vel = vel / 127;
+        if (time) {
+            this.frequency.setValueAtTime(Tone.Midi(val).toFrequency(), time);
+            this.env.triggerAttack(time);
+        } else {
+            this.frequency.value = Tone.Midi(val).toFrequency();
+            this.env.triggerAttack();
+        }
+    }
+
+    /**
+     * Trigger the release phase of the envelope
+     * @param {number} val - MIDI note value
+     * @param {number} time - Time to trigger the release
+     * @returns {void}
+     * @example synth.triggerRelease(60, Tone.now())
+     * @example synth.triggerRelease(60)
+     */
+    triggerRelease(val, time = null) {
+        if (time) this.env.triggerRelease(time);
+        else this.env.triggerRelease();
+    }
+
+    /**
+     * Trigger the attack and release phases of the envelope
+     * @param {number} val - MIDI note value
+     * @param {number} vel - MIDI velocity value
+     * @param {number} dur - Duration of the attack and release
+     * @param {number} time - Time to trigger the attack and release
+     * @returns {void}
+     * @example synth.triggerAttackRelease(60, 100, 0.01, Tone.now())
+     * @example synth.triggerAttackRelease(60, 100, 0.01)
+     */
+    triggerAttackRelease(val, vel = 100, dur = 0.01, time = null) {
+        console.log('AR ',val,vel,dur,time)
+        vel = vel / 127;
+        if (time) {
+            this.frequency.setValueAtTime(Tone.Midi(val).toFrequency(), time);
+            this.env.triggerAttackRelease(dur, time);
+        } else {
+            this.frequency.value = Tone.Midi(val).toFrequency();
+            this.env.triggerAttackRelease(dur);
+        }
+    }
+
+    generateParameters(paramDefinitions) {
+        // console.log(paramDefinitions)
+        const params = {};
+        paramDefinitions.forEach((def) => {
+            //console.log(def)
+            const param = new Parameter(this,def);
+            //console.log(param)
+            params[def.name] = param;
+        });
+        //console.log(params)
+        return params;
+    }
+
+    createAccessors(parent, params) {
+        Object.keys(params).forEach((key) => {
+            const param = params[key];
+            let currentSeq = null; // Track active sequence
+
+            if (typeof param.set !== 'function' || typeof param.get !== 'function') {
+                throw new Error(`Parameter '${key}' does not have valid get/set methods`);
+            }
+
+            // Proxy handler to intercept method calls
+            const proxyHandler = {
+                get(target, prop,value=null) {
+                    if (prop === 'sequence') return (valueArray, subdivision = '16n') => {
+                        param.sequence(valueArray,subdivision)
+                    };
+                    if (prop === 'stop') return () => {
+                        param.stop()
+                    };
+                    if (prop === 'set') return () => {
+                        //console.log('set',target,prop,value)
+                        const rawValue = (typeof value === 'function') ? value() : value.value;
+                        if (currentSeq) {
+                            currentSeq.dispose();
+                            currentSeq = null;
+                        }
+                        //console.log(target,prop,rawValue)
+                        param.set(value,null,false) 
+                    };
+                    if (prop === 'from') {
+                      return (source, options = {}) => {
+                        param.from(source, options);
+                      };
+                    }
+                    return target.get(); // Return the current value
+                },
+                set(target, _, newValue) {
+                    if (Array.isArray(newValue)) {
+                        // console.log(target, newValue)
+                        if (currentSeq) currentSeq.dispose();
+                        currentSeq = new Seq(
+                            parent,
+                            newValue,
+                             '4n',
+                            'infinite',
+                            0,
+                            ((v, time) => param.set(Number(v[0]),null,false, time)) // Ensure time is passed
+                        );
+                    } else {
+                        if (currentSeq) {
+                            currentSeq.dispose();
+                            currentSeq = null;
+                        }
+                        param.set(newValue);
+                    }
+                    return true;
+                }
+            };
+
+            // Define the parameter with a Proxy
+            Object.defineProperty(parent, key, {
+                get: () => new Proxy(param, proxyHandler),
+                set: (newValue) => {
+                    if (Array.isArray(newValue)) {
+                        param.sequence(newValue, this.seq[0].subdivision)
+                    } else {
+                        param.stop()
+                        param.set(newValue);
+                    }
+                },
+            });
+        });
+    }//accessors
+
+    // Method to trigger the sequence in the Proxy
+    startSequence(paramName, valueArray, subdivision = '16n') {
+        const param = this.param[paramName];
+
+        if (param ) {
+            param.sequence(valueArray, subdivision);
+        } else {
+            console.warn(`Param ${paramName} has no sequence method or doesn't exist.`);
+        }
+    }
+
+    stopSequence(paramName) {
+        const param = this.param[paramName];
+        if (param.seq ) {
+            param.stop(); 
+        } else {
+            //console.warn(`Param ${paramName} has no stop method or doesn't exist.`);
+        }
+    }
+
+    get() {
+        let output = '\t' + this.name + ' Parameters:\n';
+        for (let key in this.param) {
+            const param = this.param[key];
+            let value = param._value
+            //console.log(value)
+            if( typeof value === 'number') {
+                if(value > 100) value = value.toFixed()
+                else if( value > 1) value = value.toFixed(1)
+                else value = value.toFixed(3)
+            }
+            output += `${param.name}: ${value}\n`;
+        }
+        console.log(output);
+    }
+    print(){ this.get()}
+
+    /**
+     * Set the ADSR values for the envelope
+     * @param {number} a - Attack time
+     * @param {number} d - Decay time
+     * @param {number} s - Sustain level
+     * @param {number} r - Release time
+     * @returns {void}
+     * @example synth.setADSR(0.01, 0.1, 0.5, 0.1)
+     */
+    setADSR(a, d, s, r) {
+        if (this.env) {
+            this.attack = a > 0.001 ? a : 0.001;
+            this.decay = d > 0.01 ? d : 0.01;
+            this.sustain = Math.abs(s) < 1 ? s : 1;
+            this.release = r > 0.01 ? r : 0.01;
+        }
+    }
+
+    /**
+     * Set the ADSR values for the filter envelope
+     * @param {number} a - Attack time
+     * @param {number} d - Decay time
+     * @param {number} s - Sustain level
+     * @param {number} r - Release time
+     * @returns {void}
+     * @example synth.setFilterADSR(0.01, 0.1, 0.5, 0.1)
+     */
+    setFilterADSR(a, d, s, r) {
+        if (this.vcf_env) {
+            this.vcf_env.attack = a > 0.001 ? a : 0.001;
+            this.vcf_env.decay = d > 0.01 ? d : 0.01;
+            this.vcf_env.sustain = Math.abs(s) < 1 ? s : 1;
+            this.vcf_env.release = r > 0.01 ? r : 0.01;
+        }
+    }
+
+    /**
+     * Initialize the GUI with NexusUI
+     * @returns {void}
+     * @example 
+     * synth.initGui()
+     */
+    initGui(gui = null) {
+        this.guiContainer = document.getElementById('Canvas');
+        if (!this.guiContainer) {
+            console.error('NexusUI container #Canvas not found in DOM');
+            return;
+        }
+        
+        // No need to create p5 instance for NexusUI
+        this.gui = true; // Flag to indicate GUI is initialized
+        const layout = this.layout;
+        //console.log(layout);
+
+        // Group parameters by type
+        const groupedParams = {};
+        Object.values(this.param).forEach((param) => {
+            if (!groupedParams[param.type]) groupedParams[param.type] = [];
+            groupedParams[param.type].push(param);
+        });
+
+        // Create GUI for each group
+        Object.keys(groupedParams).forEach((groupType) => {
+            const groupLayout = layout[groupType];
+            if (!groupLayout) return;
+            if (groupType === 'hidden') return;
+
+            let indexOffset = 0;
+
+            groupedParams[groupType].forEach((param, index) => {
+                const isGroupA = groupLayout.groupA.includes(param.name);
+                const controlType = isGroupA ? groupLayout.controlTypeA : groupLayout.controlTypeB;
+                const size = isGroupA ? groupLayout.sizeA : groupLayout.sizeB;
+
+                // **Retrieve the current parameter value**
+                const paramValue = param.get ? param.get() : param._value;
+
+                if (Array.isArray(paramValue)) {
+                    paramValue.forEach((value, i) => {
+                        let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                        let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                        const x = groupLayout.boundingBox.x + xOffset;
+                        const y = groupLayout.boundingBox.y + yOffset;
+
+                        this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, i, value });
+                        indexOffset++;
+                    });
+                } else {
+                    let xOffset = groupLayout.offsets.x * ((index + indexOffset) % Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+                    let yOffset = groupLayout.offsets.y * Math.floor((index + indexOffset) / Math.floor(groupLayout.boundingBox.width / groupLayout.offsets.x));
+
+                    const x = groupLayout.boundingBox.x + xOffset;
+                    const y = groupLayout.boundingBox.y + yOffset;
+
+                    // Pass the **retrieved parameter value** to GUI
+                    this.createGuiElement(param, { x, y, size, controlType, color: groupLayout.color, value: paramValue });
+                }
+            });
+        });
+        
+        // Apply theme colors to all Nexus elements
+        if (this.backgroundColor) {
+            document.body.style.backgroundColor = `rgb(${this.backgroundColor[0]}, ${this.backgroundColor[1]}, ${this.backgroundColor[2]})`;
+        }
+    }
+
+    /**
+     * Hide the GUI
+     * @returns {void}
+     */
+    hideGui() {
+        if (this.gui && this.guiContainer) {
+            // Destroy all NexusUI elements
+            Object.values(this.param).forEach((param) => {
+                if (param.guiElements) {
+                    param.guiElements.forEach((element) => {
+                        if (element && element.destroy) {
+                            element.destroy();
+                        }
+                    });
+                }
+            });
+            this.gui = null;
+        }
+    }
+
+    /**
+     * Show the GUI
+     * @returns {void}
+     */
+    showGui() {
+        this.initGui()
+    }
+
+    // Create individual GUI element using NexusUI wrappers
+    createGuiElement(param, { x, y, size, controlType, color, i=null }) {
+        //console.log('createG', param, x,y,size,controlType, i)
+        
+        // Convert size from p5 units to pixel dimensions for NexusUI
+        const width = size * 45;  // Adjust multiplier as needed
+        const height = size * 45;
+        
+        if (controlType === 'knob') {
+            const dial = new Dial(x, y, width, height);
+            dial.min = param.min;
+            dial.max = param.max;
+            dial.value = i !== null && Array.isArray(param._value) ? param._value[i] : param._value;
+            
+            // Apply color if provided
+            if (color) {
+                dial.colorize("accent", color);
+            }
+            
+            // Set up the callback
+            dial.mapTo((value) => param.set(value, i, true));
+            
+            param.guiElements.push(dial);
+            
+        } else if (controlType === 'fader') {
+            const slider = new Slider(x, y, width * 2, height);
+            slider.min = param.min;
+            slider.max = param.max;
+            slider.value = i !== null && Array.isArray(param._value) ? param._value[i] : param._value;
+            
+            // Apply color if provided
+            if (color) {
+                slider.colorize("accent", color);
+            }
+            
+            // Set up the callback
+            slider.mapTo((value) => param.set(value, i, true));
+            
+            param.guiElements.push(slider);
+            
+        } else if (controlType === 'radioButton') {
+            // RadioButton not yet implemented in NexusUI wrappers
+            console.warn(`RadioButton controlType not yet supported with NexusUI`);
+        } else if (controlType === 'dropdown') {
+            // Dropdown not yet implemented in NexusUI wrappers
+            console.warn(`Dropdown controlType not yet supported with NexusUI`);
+        } else if (controlType === 'text') {
+            // Text display not yet implemented in NexusUI wrappers
+            console.warn(`Text controlType not yet supported with NexusUI`);
+        } else {
+            console.log('no gui creation element for ', controlType)
+        }
+    }
+
+    /**
+     * Fast way to create a knob GUI element
+     * @param {string} _label - Label for the knob
+     * @param {number} _x - X position of the knob
+     * @param {number} _y - Y position of the knob
+     * @param {number} _min - Minimum value of the knob
+     * @param {number} _max - Maximum value of the knob
+     * @param {number} _size - Size of the knob
+     * @param {string} _accentColor - Accent color of the knob
+     * @param {function} callback - Callback function for the knob
+     * @returns {object} - p5.gui knob object
+     * @example
+     * this.createKnob('Attack', 10, 10, 0.01, 1, 100, '#ff0000', (val) => {
+     *    this.setADSR(val, this.gui.get('Decay').value(), this.gui.get('Sustain').value(), this.gui.get('Release').value());
+     * });
+     */
+
+
+    createKnob(label, x, y, min, max, size, accentColor, callback) {
+        const dial = new Dial(x + (this.x || 0), y + (this.y || 0), size, size);
+        dial.min = min;
+        dial.max = max;
+        
+        if (accentColor) {
+            dial.colorize("accent", accentColor);
+        }
+        
+        dial.mapTo(callback);
+        
+        return dial;
+    }
+
+    linkGui(name){
+        //console.log(this.param)
+        let objectIndex = 0
+        Object.keys(this.param).forEach(key => {
+          let subObject = this.param[key];
+          if( subObject.guiElements[0] ) {
+            // Note: CollabHub integration would require implementing setLink in NexusElement
+            // or manually setting up the callbacks to use ch.control()
+            if (subObject.guiElements[0].setLink) {
+                subObject.guiElements[0].setLink( name + objectIndex )
+            } else {
+                console.warn('setLink not implemented for NexusUI elements yet');
+            }
+          }
+          objectIndex++
+        });
+    }
+
+    pushState(snap = null) {
+      Object.keys(this.param).forEach(key => {
+        const subObject = this.param[key];
+        const value = snap ? snap[key]?.value : subObject._value;
+
+        if (value !== undefined && subObject.guiElements?.[0]) {
+          // NexusUI elements use .value property directly
+          subObject.guiElements[0].value = value;
+        }
+      });
+    }
+
+    saveSnap(name) {
+      this.snapshots[name] = {};
+
+      Object.keys(this.param).forEach(key => {
+        let subObject = this.param[key];
+        this.snapshots[name][key] = {
+          value: subObject._value // store raw value
+        };
+      });
+
+      console.log(`Snapshot "${name}" saved.`);
+    }
+
+    loadSnap(name) {
+      const snap = this.snapshots[name];
+      if (!snap) {
+        console.warn(`Snapshot "${name}" not found.`);
+        return;
+      }
+      this.pushState(snap);
+      console.log(`Snapshot "${name}" loaded.`);
+    }
+
+    listSnapshots() {
+      console.log( Object.keys(this.snapshots) )
+    }
+
+    /**
+     * Connects to Tone.js destination
+     * @param {object} destination - Tone.js destination object
+     * @returns {void}
+     * @example 
+     * const amp = new Tone.Gain(0.5).toDestination();
+     * synth.connect(amp)
+     */
+    connect(destination) {
+        if (destination.input) {
+            this.output.connect(destination.input);
+        } else {
+            this.output.connect(destination);
+        }
+    }
+
+    /**
+     * Disconnects from Tone.js destination
+     * @param {object} destination - Tone.js destination object
+     * @returns {void}
+     * @example
+     * const amp = new Tone.Gain(0.5).toDestination();
+     * synth.connect(amp)
+     * synth.disconnect(amp)
+     */
+    disconnect(destination) {
+        if (destination.input) {
+            this.output.disconnect(destination.input);
+        } else {
+            this.output.disconnect(destination);
+        }
+    }
+
+    /**
+     * Sequences the provided array of notes and initializes a Tone.Loop with the given subdivision.
+     *
+     * @param {string} arr - The sequence of notes as a string.
+     * @param {string} [subdivision] - The rhythmic subdivision for the loop (e.g., '16n', '8n').
+     * @param {string} num (default 0) - the sequence number. Up to 10 sequences per instance.
+     */
+    sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].sequence(arr, subdivision, phraseLength);
+        }
+        this.start(num);
+    }
+
+    /**
+     * Plays the provided sequence array initializes a Tone.Loop with the given subdivision.
+     *
+     * @param {string} arr - The sequence of notes as a string.
+     * @param {number} iterations - The the number of times to play the sequence
+     * @param {string} [subdivision] - The rhythmic subdivision for the loop (e.g., '16n', '8n').
+     * @param {string} num (default 0) - the sequence number. Up to 10 sequences per instance.
+     */
+    setSeq(arr, subdivision = '8n', num = 0) {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, arr, subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].setSeq(arr, subdivision);
+        }
+    }
+
+    play(arr, subdivision = '8n', num = 0, phraseLength = 1) {
+        if (!this.seq[num]) {
+            // this.seq[num]._offset = 0//make sure the new one starts at the beginning as well
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+            this.seq[num]._offset = 0
+        } else {
+            this.seq[num]._offset = 0//there is a time delay between this and where the index is, but i can set it such as this so that I know that is started
+            this.seq[num].sequence(arr, subdivision, phraseLength);
+        }
+        this.start(num);
+
+        // if (this.seq[num]) {
+        //     this.seq[num].play(length);
+        // }
+    }
+
+    expr(func, len = 32, subdivision = '16n', num = 0) {
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        }
+        this.seq[num].expr(func, len, subdivision);
+        this.start(num);
+    }
+
+    euclid(seq, hits=4, beats=8, rotate=0, subdivision = '8n', num = 0){
+        if (!this.seq[num]) {
+            this.seq[num] = new Seq(this, seq, subdivision, 'infinite', num, this.parseNoteString.bind(this));
+        } else {
+            this.seq[num].sequence(seq, subdivision, 'infinite');
+        }
+        this.seq[num].euclid(hits, beats,rotate);
+        this.start(num);
+    }
+
+    set velocity(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].velocity = val
+        }
+    }
+
+    set orn(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].orn = val
+        }
+    }
+
+    set octave(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].octave = val
+        }
+    }
+
+    set sustain(val) {//turn into duration
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].sustain = val
+        }
+    }
+
+    set subdivision(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].subdivision = val
+        }
+    }
+
+    set transform(val) {
+        if (typeof val !== 'function') {
+            console.warn(`Transform must be a function. Received: ${typeof val}`);
+            return;
+        }
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].transform = val
+        }
+    }
+//roll already exists in seq
+    set roll(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].roll = val
+        }
+    }
+
+    set rotate(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].rotate = val
+        }
+    }
+
+    set offset(val) {
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].offset = val
+        }
+    }
+
+    /**
+     * Sets the transformation for the loop.
+     * 
+     * @param {string} transform - The transformation to apply.
+     */
+    setTransform(transform, num = 'all') {
+        if (num === 'all') {
+            for (let seq of this.seq) {
+                if (seq) seq.setTransform(transform);
+            }
+        } else {
+            if (this.seq[num]) this.seq[num].setTransform(transform);
+        }
+    }
+    //possible implementation of rotate
+    get sustain() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setSustain(value);
+                    }
+                }
+                return true; // Indicate success
+            }
+        });
+    }
+
+    get velocity() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setVelocity(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get octave() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setOctave(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get subdivision() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setSubdivision(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get roll() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setRoll(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get rotate() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setRotate(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    get transform() {
+        const self = this;
+        return new Proxy([], {
+            set(target, prop, value) {
+                const index = parseInt(prop);
+                if (!isNaN(index)) {
+                    if (self.seq[index]) {
+                        self.seq[index].setTransform(value);
+                    }
+                }
+                return true;
+            }
+        });
+    }
+
+    start(num = 'all') {
+        if (num === 'all') {
+            for (let seq of this.seq) {
+                if (seq) seq.start();
+            }
+            this.drawingLoop.start();
+        } else {
+            if (this.seq[num]) this.seq[num].start();
+        }
+    }
+
+    stop(num = 'all') {
+        if (num === 'all') {
+            for (let seq of this.seq) {
+                if (seq) seq.stop();
+            }
+            this.drawingLoop.stop();
+        } else {
+            if (this.seq[num]) this.seq[num].stop();
+        }
+    }
+
+    turing(val){
+
+    }
+
+    // Visualizations
+
+    draw(arr = this.drawing.array, target = this.drawing.target, ratio = this.drawing.ratio) {
+        this.drawing = new ArrayVisualizer(arr, target, ratio);
+    }
+
+    getSeqParam(val, index) {
+        //console.log(val, index,)
+        if (Array.isArray(val)) return val[index % val.length];
+        else return val;
+    }
+
+    parseNoteString(val, time, index, num=null) {
+       //console.log(val,time,index, num, isNaN(Number(val[0])))
+        if (val[0] === ".") return;
+        if (!val || val.length === 0 ) return '.';
+
+        const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
+        //console.log(usesPitchNames, val[0])
+        let note = '';
+        if (usesPitchNames) note = pitchNameToMidi(val[0]);
+        else note = intervalToMidi(val[0], this.min, this.max);
+
+        if (note < 0) return;
+        if (note >127) {
+            console.log("MIDI note ", note, "ignored")
+            return;
+        }
+
+        let octave = this.getSeqParam(this.seq[num].octave, index);
+        let velocity = this.getSeqParam(this.seq[num].velocity, index);
+        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
+        let lag = this.getSeqParam(this.seq[num].lag, index);
+        //handle in the Seq class
+        //let rotate = this.getSeqParam(this.seq[num].rotate, index);
+        //let offset = this.getSeqParam(this.seq[num].offset, index);
+
+        let groove = Groove.get(subdivision,index);
+        
+        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+        velocity = velocity * groove.velocity
+        if( Math.abs(velocity)>256) velocity = 256
+        //console.log('pa', note, octave, velocity, sustain, time, timeOffset)
+        try {
+            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
+            this.triggerAttackRelease(
+                note + octave * Theory.scaleRatios.length,
+                velocity,
+                sustain,
+                time + timeOffset
+            );
+        } catch (e) {
+            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
+        }
+    }
 }
 
 
@@ -17980,54 +21579,60 @@ class Simpler extends MonophonicTemplate {
     //envelopes
     triggerAttack (freq, amp=100, time=null){ 
         // console.log(freq, amp, time)
-        this.param.release = this.release
-        freq = freq - this.pitchOffset
-        freq = Tone.Midi(freq).toFrequency()
-        amp = amp/127
-        if(time){
-            this.sampler.triggerAttack(freq, time, amp)
-            this.filterEnv.triggerAttack(time)
-            //this.vca.factor.setValueAtTime(amp, time)
-        } else{
-        
-            this.sampler.triggerAttack(freq, Tone.now(), amp)
-            //console.log('s.a',freq, amp, time)
-            this.filterEnv.triggerAttack()
-            //this.vca.factor.value = amp
-        }
+        try{
+            this.param.release = this.release
+            freq = freq - this.pitchOffset
+            freq = Tone.Midi(freq).toFrequency()
+            amp = amp/127
+            if(time){
+                this.sampler.triggerAttack(freq, time, amp)
+                this.filterEnv.triggerAttack(time)
+                //this.vca.factor.setValueAtTime(amp, time)
+            } else{
+            
+                this.sampler.triggerAttack(freq, Tone.now(), amp)
+                //console.log('s.a',freq, amp, time)
+                this.filterEnv.triggerAttack()
+                //this.vca.factor.value = amp
+            }
+        }catch(e){}
     }
 
     triggerRelease (freq, time=null){
-        freq = freq - this.pitchOffset
-        freq = Tone.Midi(freq).toFrequency()
-        if(time) {
-            this.sampler.triggerRelease(freq, time)
-            this.filterEnv.triggerRelease(time)
-        }
-        else {
-            //console.log('s.r',freq, time)
-            this.sampler.triggerRelease(freq)
-            this.filterEnv.triggerRelease()
-        }
+        try{
+            freq = freq - this.pitchOffset
+            freq = Tone.Midi(freq).toFrequency()
+            if(time) {
+                this.sampler.triggerRelease(freq, time)
+                this.filterEnv.triggerRelease(time)
+            }
+            else {
+                //console.log('s.r',freq, time)
+                this.sampler.triggerRelease(freq)
+                this.filterEnv.triggerRelease()
+            }
+        }catch(e){}
     }
 
-    triggerAttackRelease (freq, amp, dur=0.01, time=null){ 
-        //console.log('AR', freq, amp, dur, time)
-        this.param.release = this.release
-        freq = freq - this.pitchOffset 
-        freq = Tone.Midi(freq).toFrequency()
-        
-        amp = amp/127
-        //console.log(freq,amp,dur)
-        if(time){
-            this.sampler.triggerAttackRelease(freq, dur, time, amp)
-            this.filterEnv.triggerAttackRelease(dur,time)
-            this.vca.factor.setValueAtTime(amp, time)
-        } else{
-            this.sampler.triggerAttackRelease(freq, dur)
-            this.filterEnv.triggerAttackRelease(dur)
-            this.vca.factor.setValueAtTime(amp)
-        }
+    triggerAttackRelease (freq, amp, dur=0.01, time=null){
+        try{ 
+            //console.log('AR', freq, amp, dur, time)
+            this.param.release = this.release
+            freq = freq - this.pitchOffset 
+            freq = Tone.Midi(freq).toFrequency()
+            
+            amp = amp/127
+            //console.log(freq,amp,dur)
+            if(time){
+                this.sampler.triggerAttackRelease(freq, dur, time, amp)
+                this.filterEnv.triggerAttackRelease(dur,time)
+                this.vca.factor.setValueAtTime(amp, time)
+            } else{
+                this.sampler.triggerAttackRelease(freq, dur)
+                this.filterEnv.triggerAttackRelease(dur)
+                this.vca.factor.setValueAtTime(amp)
+            }
+        }catch(e){}
     }//attackRelease
 
 
@@ -19167,6 +22772,7 @@ class Vocoder extends MonophonicTemplate {
 
 ;
 
+;
 ;
 ;
 ;

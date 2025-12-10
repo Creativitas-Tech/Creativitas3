@@ -35,8 +35,10 @@ import { TextField, Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunctio
 import * as waveshapers from './synths/waveshapers.js'
 import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
+
 import { GraphVisualizer } from './visualizers/Grapher.js'
 import { MarkovChain } from './generators/MarkovChain.js'
+import { initConsole, deinitConsole, hasConsole, consoleWrite } from './visualizers/Console.js';
 
 import WebSocketClient from './collabSocket';
 // import { CollabHubClient, CollabHubTracker, CollabHubDisplay } from './CollabHub.js';
@@ -232,6 +234,7 @@ function Editor(props) {
     window.plotTransferFunction = PlotTransferFunction;
     window.MultiRowSeqGui = MultiRowSeqGui;
     window.TextField = TextField
+    window.initConsole = initConsole
     // window.CollabHub = CollabHubDisplay;
 
     window.enableAsciiInput = asciiCallbackInstance.enable.bind(asciiCallbackInstance);

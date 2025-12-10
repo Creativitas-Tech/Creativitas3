@@ -14,6 +14,7 @@ import { RadioButton } from '../ui/RadioButton.js'
 import { sketch } from '../p5Library.js'
 import basicLayout from './layouts/basicLayout.json';
 import Groove from '../Groove.js'
+import { initConsole, deinitConsole, hasConsole, consoleWrite } from '../visualizers/Console.js';
 
 /**
  * Represents a Monophonic Synth
@@ -129,7 +130,7 @@ export class MonophonicTemplate {
         for (let element of Object.values(this.param)) {
             _preset[element.name] = element._value;
         }
-        console.log(this.presets)
+        this.printToConsole(this.presets)
         // Update the presetsData in memory
         //console.log(this.presets);
         if (!this.presets[name]) {
@@ -167,7 +168,7 @@ export class MonophonicTemplate {
         //old preset code below
         
         
-        console.log(`Preset saved under ${this.name}/${name}`);
+        this.printToConsole(`Preset saved under ${this.name}/${name}`);
     };
 
     async deletePreset (name) {
@@ -190,7 +191,7 @@ export class MonophonicTemplate {
                 const result = await response.json(); // Parse the server's JSON response
 
                 if (response.ok) {
-                    console.log(`Delete successful: ${result.message}`);
+                    this.printToConsole(`Delete successful: ${result.message}`);
                     return result.success;
                 } else {
                     console.warn(`Delete failed: ${result.message}`);
@@ -203,7 +204,7 @@ export class MonophonicTemplate {
             }
         }
 
-        console.log(`Preset deleted  under ${this.name}/${name}`);
+        this.printToConsole(`Preset deleted  under ${this.name}/${name}`);
     };
 
     async downloadAllPresets() {
@@ -223,7 +224,7 @@ export class MonophonicTemplate {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url); // Clean up the object URL
-        console.log('Presets folder downloaded successfully.');
+        this.printToConsole('Presets folder downloaded successfully.');
     } catch (error) {
         console.error('Error downloading presets:', error);
     }
@@ -247,12 +248,12 @@ export class MonophonicTemplate {
                 this.param[name].set(presetData[name]);
               }
             } catch (e) {
-              console.log(name, presetData[name], e);
+              this.printToConsole(name, presetData[name], e);
             }
           }
           //console.log(this.param.vco_mix)
         } else {
-            console.log("No preset of name ", name);
+            this.printToConsole("No preset of name ", name);
         }
     }
 
@@ -277,11 +278,11 @@ export class MonophonicTemplate {
               else if(typeof param === 'number') output += `${key}: ${param.toFixed(2)}\n`;
               else output += `${key}: ${param}\n`;
           }
-          console.log(output);
+          this.printToConsole(output);
         }
 
         else {
-            console.log("No preset of name ", this.curPreset);
+            this.printToConsole("No preset of name ", this.curPreset);
         }
     }
 
@@ -291,7 +292,7 @@ export class MonophonicTemplate {
      * @example synth.listPresets()
      */
     listPresets() {
-        console.log("Synth presets", this.presets);
+        this.printToConsole("Synth presets", this.presets);
     }
 
     /**
@@ -337,7 +338,7 @@ export class MonophonicTemplate {
      * @example synth.triggerAttackRelease(60, 100, 0.01)
      */
     triggerAttackRelease(val, vel = 100, dur = 0.01, time = null) {
-        console.log('AR ',val,vel,dur,time)
+        //console.log('AR ',val,vel,dur,time)
         vel = vel / 127;
         if (time) {
             this.frequency.setValueAtTime(Tone.Midi(val).toFrequency(), time);
@@ -467,9 +468,14 @@ export class MonophonicTemplate {
             }
             output += `${param.name}: ${value}\n`;
         }
-        console.log(output);
+        this.printToConsole(output);
     }
     print(){ this.get()}
+
+    printToConsole( data ){
+        if( hasConsole ) consoleWrite( data )
+        console.log(data)
+    }
 
     /**
      * Set the ADSR values for the envelope
@@ -600,7 +606,7 @@ export class MonophonicTemplate {
             return;
         }
         
-        console.log(`[initNexus] Initializing NexusUI GUI for ${this.name || 'synth'}`);
+        this.printToConsole(`[initNexus] Initializing NexusUI GUI for ${this.name || 'synth'}`);
 
         // Group parameters by type
         const groupedParams = {};
@@ -666,7 +672,7 @@ export class MonophonicTemplate {
             document.body.style.backgroundColor = `rgb(${this.backgroundColor[0]}, ${this.backgroundColor[1]}, ${this.backgroundColor[2]})`;
         }
         
-        console.log(`[initNexus] GUI initialization complete`);
+        this.printToConsole(`[initNexus] GUI initialization complete`);
     }
     
     /**
@@ -798,7 +804,7 @@ export class MonophonicTemplate {
                 callback: (x) => {},
             }) );
         } else {
-            console.log('no gui creation element for ', controlType)
+            this.printToConsole('no gui creation element for ', controlType)
         }
     }
 
@@ -976,7 +982,7 @@ export class MonophonicTemplate {
             // Text display not yet implemented in NexusUI wrappers
             console.warn(`Text controlType not yet supported with NexusUI for param: ${param.name}`);
         } else {
-            console.log('no gui creation element for ', controlType)
+            this.printToConsole('no gui creation element for ', controlType)
         }
     }
 
@@ -1063,7 +1069,7 @@ export class MonophonicTemplate {
         };
       });
 
-      console.log(`Snapshot "${name}" saved.`);
+      this.printToConsole(`Snapshot "${name}" saved.`);
     }
 
     loadSnap(name) {
@@ -1073,11 +1079,11 @@ export class MonophonicTemplate {
         return;
       }
       this.pushState(snap);
-      console.log(`Snapshot "${name}" loaded.`);
+      this.printToConsole(`Snapshot "${name}" loaded.`);
     }
 
     listSnapshots() {
-      console.log( Object.keys(this.snapshots) )
+      this.printToConsole( Object.keys(this.snapshots) )
     }
 
     /**
@@ -1408,7 +1414,7 @@ export class MonophonicTemplate {
 
         if (note < 0) return;
         if (note >127) {
-            console.log("MIDI note ", note, "ignored")
+            this.printToConsole("MIDI note ", note, "ignored")
             return;
         }
 
@@ -1436,7 +1442,7 @@ export class MonophonicTemplate {
                 time + timeOffset
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
+            this.printToConsole('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
         }
     }
 }

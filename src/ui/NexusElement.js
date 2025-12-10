@@ -25,7 +25,7 @@ class NexusElement{
         this.heightPercent = height / window.innerHeight;
 
         this.updatePositionAndSize();
-        window.addEventListener("resize", () => this.updatePositionAndSize());
+        //window.addEventListener("resize", () => this.updatePositionAndSize());
     }
 
     mapTo(callback){
