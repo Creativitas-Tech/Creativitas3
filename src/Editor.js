@@ -364,6 +364,82 @@ function Editor(props) {
         console.log('t is defined')
     } else { }//console.log('tght is already defined')}
 
+    // Store current page name for cache functions
+    window.__creativitasCurrentPage = props.page;
+
+    // Code cache function - save current editor code
+    // Define as a global function
+    const saveCode = (name) => {
+        if (!name || typeof name !== 'string' || name.trim() === '') {
+            console.error('saveCode: Please provide a valid name for the code snippet');
+            return false;
+        }
+
+        const trimmedName = name.trim();
+        // Use window property to avoid closure issues with props
+        const currentPage = window.__creativitasCurrentPage || props.page;
+
+        // Get current editor code from localStorage
+        let fullCode = localStorage.getItem(`${currentPage}Value`) || '';
+
+        // Remove lines that contain saveCode calls (to avoid saving the save call itself)
+        // This regex matches lines with saveCode( calls
+        const lines = fullCode.split('\n');
+        const filteredLines = lines.filter(line => {
+            // Keep the line unless it's a saveCode call (with optional whitespace/comments)
+            const trimmedLine = line.trim();
+            return !trimmedLine.match(/^(\/\/.*)?\s*saveCode\s*\(/);
+        });
+        const codeToSave = filteredLines.join('\n').trim();
+
+        // Save to cache with prefix
+        const storageKey = `creativitas_cache_${trimmedName}`;
+        localStorage.setItem(storageKey, codeToSave);
+
+        // Update the list of saved snippets
+        const savedListKey = 'creativitas_cache_list';
+        const savedList = JSON.parse(localStorage.getItem(savedListKey) || '[]');
+        if (!savedList.includes(trimmedName)) {
+            savedList.push(trimmedName);
+            localStorage.setItem(savedListKey, JSON.stringify(savedList));
+        }
+
+        console.log(`Code saved as: ${trimmedName}`);
+        return true;
+    }
+
+    // Code cache function - list all saved code snippets
+    const listSavedCodes = () => {
+        const savedListKey = 'creativitas_cache_list';
+        const savedList = JSON.parse(localStorage.getItem(savedListKey) || '[]');
+
+        if (savedList.length === 0) {
+            console.log('No saved code snippets found.');
+            return [];
+        }
+
+        console.log('Saved code snippets:');
+        savedList.forEach((name, index) => {
+            console.log(`  ${index + 1}. ${name}`);
+        });
+
+        return savedList;
+    };
+
+    // Make functions available globally - assign to window
+    window.saveCode = saveCode;
+    window.listSavedCodes = listSavedCodes;
+    // In non-strict mode, this creates a global variable
+    try {
+        (function() {
+            this.saveCode = saveCode;
+        }).call(this);
+    } catch (e) {
+        // Fallback: just use window
+    }
+
+    // Code cache function - load saved code
+    // This will be set up in useEffect to have access to editorView and setCode
 
 
 
@@ -611,14 +687,14 @@ function Editor(props) {
      */
     function initSequencerGUI(config) {
       const { sequenceActions, sequences, sendToCollab, isRemoteUpdateRef } = config;
-      
+
       // Get canvas
       const canvas = document.getElementById('Canvas');
       if (!canvas) {
         console.error('Canvas element not found');
         return null;
       }
-      
+
       // Setup canvas styling
       canvas.style.backgroundColor = '#1a1a2e';
       canvas.style.margin = '0';
@@ -638,10 +714,10 @@ function Editor(props) {
           if (header) header.style.display = 'none';
         }
       } catch (e) {}
-      
+
       const w = canvas.clientWidth || window.innerWidth;
       const h = canvas.clientHeight || window.innerHeight;
-      
+
       // Grid configuration
       const buttonSize_w = w * 0.08;
       const buttonSize_h = h * 0.07;
@@ -663,7 +739,7 @@ function Editor(props) {
       const buttonSize = { width: buttonSize_w, height: buttonSize_h };
 
       const seqToggleGrid = { seq1: [], seq2: [], seq3: [], seq4: [] };
-      
+
       // Helper to create button with toggle behavior
       function createButton(col, row, seqName, action, accentColor) {
         const btn = new Button(
@@ -678,7 +754,7 @@ function Editor(props) {
         btn.colorize('fill', '#303030');
         return btn;
       }
-      
+
       // Helper to wire button with action and collaboration
       function wireButton(button, seqName, action, otherButtons) {
         button.element.on('change', function(v) {
@@ -694,7 +770,7 @@ function Editor(props) {
           }
         });
       }
-      
+
       // SEQ 1 - row 0
       const seq1_1c = createButton(0, 0, 'seq1', '1c', '#AEC6CF');
       const seq1_2c = createButton(1, 0, 'seq1', '2c', '#AEC6CF');
@@ -705,7 +781,7 @@ function Editor(props) {
       wireButton(seq1_2c, 'seq1', '2c', [seq1_1c, seq1_3c, seq1_stop]);
       wireButton(seq1_3c, 'seq1', '3c', [seq1_1c, seq1_2c, seq1_stop]);
       wireButton(seq1_stop, 'seq1', 'stop', [seq1_1c, seq1_2c, seq1_3c]);
-      
+
       // SEQ 2 - row 1
       const seq2_1b = createButton(0, 1, 'seq2', '1b', '#B4D7A8');
       const seq2_2b = createButton(1, 1, 'seq2', '2b', '#B4D7A8');
@@ -716,7 +792,7 @@ function Editor(props) {
       wireButton(seq2_2b, 'seq2', '2b', [seq2_1b, seq2_3b, seq2_stop]);
       wireButton(seq2_3b, 'seq2', '3b', [seq2_1b, seq2_2b, seq2_stop]);
       wireButton(seq2_stop, 'seq2', 'stop', [seq2_1b, seq2_2b, seq2_3b]);
-      
+
       // SEQ 3 - row 2
       const seq3_1d = createButton(0, 2, 'seq3', '1d', '#FFD580');
       const seq3_2d = createButton(1, 2, 'seq3', '2d', '#FFD580');
@@ -727,7 +803,7 @@ function Editor(props) {
       wireButton(seq3_2d, 'seq3', '2d', [seq3_1d, seq3_3d, seq3_stop]);
       wireButton(seq3_3d, 'seq3', '3d', [seq3_1d, seq3_2d, seq3_stop]);
       wireButton(seq3_stop, 'seq3', 'stop', [seq3_1d, seq3_2d, seq3_3d]);
-      
+
       // SEQ 4 - row 3
       const seq4_1a = createButton(0, 3, 'seq4', '1a', '#D4A5D9');
       const seq4_2a = createButton(1, 3, 'seq4', '2a', '#D4A5D9');
@@ -738,7 +814,7 @@ function Editor(props) {
       wireButton(seq4_2a, 'seq4', '2a', [seq4_1a, seq4_3a, seq4_stop]);
       wireButton(seq4_3a, 'seq4', '3a', [seq4_1a, seq4_2a, seq4_stop]);
       wireButton(seq4_stop, 'seq4', 'stop', [seq4_1a, seq4_2a, seq4_3a]);
-      
+
       // Create labels
       const labelRightEdge = startX - (w * 0.02);
       const labelWidth = w * 0.10;
@@ -775,13 +851,13 @@ function Editor(props) {
       const toggleY = startY - (h * 0.08);
 
       const enable_toggle = new Switch(toggleX, toggleY, toggleWidth, toggleHeight);
-      
+
       const enable_label = document.createElement('div');
       enable_label.textContent = 'enable';
       const enableLabelWidth = 60;
       enable_label.style.cssText = `position: absolute; color: #8796EB; font-family: monospace; font-size: 11px; pointer-events: none; user-select: none; left: ${gridCenterX - enableLabelWidth/2}px; top: ${toggleY - 18}px; width: ${enableLabelWidth}px; text-align: center;`;
       canvas.appendChild(enable_label);
-      
+
       // Setup collaboration handlers
       const buttons = {
         seq1: { '1c': seq1_1c, '2c': seq1_2c, '3c': seq1_3c, 'stop': seq1_stop },
@@ -789,10 +865,10 @@ function Editor(props) {
         seq3: { '1d': seq3_1d, '2d': seq3_2d, '3d': seq3_3d, 'stop': seq3_stop },
         seq4: { '1a': seq4_1a, '2a': seq4_2a, '3a': seq4_3a, 'stop': seq4_stop }
       };
-      
+
       function setupCollabHandlers(seqName) {
         if (!window.chClient) return;
-        
+
         window.chClient.on(seqName, function(data) {
           if (data.values && data.values.action) {
             isRemoteUpdateRef.value = true;
@@ -808,12 +884,12 @@ function Editor(props) {
           }
         });
       }
-      
+
       setupCollabHandlers('seq1');
       setupCollabHandlers('seq2');
       setupCollabHandlers('seq3');
       setupCollabHandlers('seq4');
-      
+
       // Setup dynamic resize handler
       const layoutPercents = {
         buttonSize_w: 0.08,
@@ -827,11 +903,11 @@ function Editor(props) {
         toggleYOffset: 0.08,
         enableLabelWidth: 60
       };
-      
+
       function handleResize() {
         const newW = canvas.clientWidth || window.innerWidth;
         const newH = canvas.clientHeight || window.innerHeight;
-        
+
         // Recalculate grid dimensions
         const newButtonW = newW * layoutPercents.buttonSize_w;
         const newButtonH = newH * layoutPercents.buttonSize_h;
@@ -842,13 +918,13 @@ function Editor(props) {
         const newTotalGridWidth = 3 * newSpacingX + newButtonW;
         const newStartX = newLabelSpace + (newAvailableWidth - newTotalGridWidth) / 2;
         const newStartY = newH * layoutPercents.startY;
-        
+
         // Update sequence labels
         const newLabelRightEdge = newStartX - (newW * 0.02);
         const newLabelWidth = newW * 0.10;
         const newLabelLeftPx = newLabelRightEdge - newLabelWidth;
         const labelFontSize = Math.max(10, Math.min(14, newW * 0.018)) + 'px';
-        
+
         function updateSeqLabel(label, rowIndex) {
           const topPx = newStartY + (rowIndex * newSpacingY) + (newButtonH / 2) - 7;
           label.style.left = newLabelLeftPx + 'px';
@@ -856,19 +932,19 @@ function Editor(props) {
           label.style.width = newLabelWidth + 'px';
           label.style.fontSize = labelFontSize;
         }
-        
+
         updateSeqLabel(seq1_label, 0);
         updateSeqLabel(seq2_label, 1);
         updateSeqLabel(seq3_label, 2);
         updateSeqLabel(seq4_label, 3);
-        
+
         // Update enable label
         const newGridCenterX = newStartX + (newTotalGridWidth / 2);
         const newToggleY = newStartY - (newH * layoutPercents.toggleYOffset);
         enable_label.style.left = (newGridCenterX - layoutPercents.enableLabelWidth / 2) + 'px';
         enable_label.style.top = (newToggleY - 18) + 'px';
         enable_label.style.fontSize = Math.max(9, Math.min(12, newW * 0.015)) + 'px';
-        
+
         // Trigger synth GUI resize if available
         Object.values(sequences).forEach(function(synth) {
           if (synth && synth.nexusElements) {
@@ -880,7 +956,7 @@ function Editor(props) {
           }
         });
       }
-      
+
       // Set up ResizeObserver for the canvas
       const resizeObserver = new ResizeObserver(function(entries) {
         window.requestAnimationFrame(function() {
@@ -895,7 +971,7 @@ function Editor(props) {
           handleResize();
         });
       });
-      
+
       // Return GUI elements and helper functions
       return {
         seqToggleGrid,
@@ -1200,6 +1276,49 @@ function Editor(props) {
         //console.log('EditorView created:', view);
     };
 
+    // Set up loadCode function with access to editorView and setCode
+    useEffect(() => {
+        window.loadCode = (name) => {
+            if (!name || typeof name !== 'string' || name.trim() === '') {
+                console.error('loadCode: Please provide a valid name for the code snippet');
+                return false;
+            }
+
+            const trimmedName = name.trim();
+            const currentPage = props.page;
+
+            // Get saved code from cache
+            const storageKey = `creativitas_cache_${trimmedName}`;
+            const savedCode = localStorage.getItem(storageKey);
+
+            if (!savedCode) {
+                console.error(`loadCode: Snippet "${trimmedName}" not found`);
+                return false;
+            }
+
+            // Update localStorage for current page (so it persists)
+            localStorage.setItem(`${currentPage}Value`, savedCode);
+
+            // Update code state
+            setCode(savedCode);
+
+            // Update editor view if available
+            if (editorView) {
+                const transaction = editorView.state.update({
+                    changes: {
+                        from: 0,
+                        to: editorView.state.doc.length,
+                        insert: savedCode
+                    }
+                });
+                editorView.dispatch(transaction);
+            }
+
+            console.log(`Code loaded: ${trimmedName}`);
+            return true;
+        };
+    }, [editorView, props.page]); // setCode is stable, doesn't need to be in deps
+
 
     useEffect(() => {
         setHighlightEnable(true)
@@ -1212,7 +1331,7 @@ function Editor(props) {
             setTheme('okaidia');
         });
 
-        
+
         return () => {
 
         };
@@ -1404,7 +1523,15 @@ function Editor(props) {
     function evaluate(string, p5Code) {
         try {
             //console.log('eval', string);
-            eval(string);
+            // Prepend code with variable declarations to make saveCode, loadCode, and listSavedCodes available
+            // This ensures they're in scope when eval runs
+            const codeToEval = `
+                var saveCode = window.saveCode;
+                var loadCode = window.loadCode;
+                var listSavedCodes = window.listSavedCodes;
+                ${string}
+            `;
+            eval(codeToEval);
 
             const edit = {
                 execute: string, // Use the entire content as `fullText`
