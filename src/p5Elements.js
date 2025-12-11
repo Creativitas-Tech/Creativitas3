@@ -532,7 +532,10 @@ class Element {
 
     mapValue(output, destination) {
         //console.log(output, destination)
-        if(this.isInteger) output = Math.floor(output)
+        if(this.isInteger) {
+            output = Math.floor(output)
+            if(output === this.prevValue) return
+        }
         if (destination) {
             try {
                 destination.value.rampTo(output, .1);
@@ -555,7 +558,10 @@ class Element {
         //console.log(this.value, this.callback)
         if (this.callback) {
             let output = this.value
-            if(this.isInteger) output = Math.floor(output)
+            if(this.isInteger) {
+                output = Math.floor(output)
+                if(output === this.prevValue) return
+            }
             try {
                 this.callback(output);
             } catch {
@@ -715,6 +721,13 @@ export class Knob extends Element {
                 this.ch.control(this.linkName, this.value);
             }
             if (this.linkFunc) this.linkFunc();
+
+            let output = this.value
+            if(this.isInteger) {
+                output = Math.floor(output)
+                if(output === this.prevValue) return
+            }
+            this.prevValue = output
         }
     }
 }
