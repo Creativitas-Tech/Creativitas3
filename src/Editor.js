@@ -14,11 +14,11 @@ import './Editor-Initalizer.js';
 import { DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 // NexusUI wrappers
-import { Dial } from './ui/Dial.js';
-import { Slider } from './ui/Slider.js';
-import { NumberBox } from './ui/NumberBox.js';
-import { Button } from './ui/Button.js';
-import { Switch } from './ui/Switch.js';
+import { Dial } from './nexus/Dial.js';
+import { Slider } from './nexus/Slider.js';
+import { NumberBox } from './nexus/NumberBox.js';
+import { Button } from './nexus/Button.js';
+import { Switch } from './nexus/Switch.js';
 
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
@@ -342,6 +342,10 @@ function Editor(props) {
     window.stepper = stepper
     window.expr = expr
     window.enableHighlight = (x) => { setHighlightEnable(x) }
+    
+    // Load and execute external code files
+    window.loadCode = loadCode;
+    
     // lib
     window.drumPatterns = drumPatterns;
     window.expr = (func, len = 32) => {
@@ -1578,6 +1582,89 @@ function Editor(props) {
         }
     }
 
+    /**
+     * Load and execute external JavaScript code files
+     * @param {string} filepath - Path to the file (relative to public folder or absolute URL)
+     * @param {boolean} silent - If true, don't log execution (default: false)
+     * @returns {Promise} Promise that resolves when code is loaded and executed
+     * @example
+     *   loadCode('SEQUENCER_COMPLETE.js')
+     *   loadCode('./myScripts/synth.js')
+     *   loadCode('https://example.com/code.js')
+     */
+    async function loadCode(filepath, silent = false) {
+        try {
+            // Normalize the path
+            let url = filepath;
+            
+            // Handle home directory expansion (~)
+            if (filepath.startsWith('~/')) {
+                console.warn('Browser environment cannot access home directory (~). Use relative paths from public folder instead.');
+                filepath = filepath.substring(2); // Remove ~/
+            }
+            
+            // If it's a relative path (not starting with http/https), 
+            // treat it as relative to the public folder
+            if (!filepath.startsWith('http://') && !filepath.startsWith('https://')) {
+                // Remove leading ./ if present
+                if (filepath.startsWith('./')) {
+                    filepath = filepath.substring(2);
+                }
+                // Remove leading / if present (we'll add it back)
+                if (filepath.startsWith('/')) {
+                    filepath = filepath.substring(1);
+                }
+                
+                // In development, files in public/ are served from root
+                // In production (after build), they're in the build folder
+                // We use process.env.PUBLIC_URL which React Scripts provides
+                const baseUrl = process.env.PUBLIC_URL || '';
+                url = `${baseUrl}/${filepath}`;
+            }
+            
+            if (!silent) {
+                console.log(`Loading code from: ${url}`);
+            }
+            
+            // Fetch the file
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`Failed to load ${filepath}: ${response.status} ${response.statusText}`);
+            }
+            
+            const contentType = response.headers.get('content-type');
+            const code = await response.text();
+            
+            // Check if we got HTML instead of JavaScript (common error)
+            if (contentType && contentType.includes('text/html')) {
+                throw new Error(`Received HTML instead of JavaScript. File might not exist in public folder: ${filepath}`);
+            }
+            
+            // Additional check: if code starts with HTML tags
+            if (code.trim().startsWith('<!DOCTYPE') || code.trim().startsWith('<html')) {
+                throw new Error(`File not found - received HTML page instead of ${filepath}. Make sure the file is in the public/ folder.`);
+            }
+            
+            if (!silent) {
+                console.log(`Loaded ${filepath} (${code.length} characters)`);
+            }
+            
+            // Execute the code in the background (same way the editor does)
+            evaluate(code, []);
+            
+            if (!silent) {
+                console.log(`✓ Executed ${filepath}`);
+            }
+            
+            return { success: true, filepath, code };
+            
+        } catch (error) {
+            console.error(`✗ Error loading code from ${filepath}:`, error);
+            throw error;
+        }
+    }
+
     function updateVars(varNames) {
         let cleanedCode = removeComments();
         //console.log(node)
@@ -2044,6 +2131,202 @@ function Editor(props) {
                 alert('Please select an export option.');
         }
         document.getElementById('exportOptions').value = "default";
+    }
+
+    /************************************************
+     *
+     * Code Importing
+     *
+     *************************************************/
+    function importCode() {
+        const selectedOption = document.getElementById('importOptions').value;
+
+        switch (selectedOption) {
+            case 'file':
+                importFromFile();
+                break;
+            case 'loadCode':
+                importFromPublic();
+                break;
+            default:
+                alert('Please select an import option.');
+        }
+        document.getElementById('importOptions').value = "default";
+    }
+
+    /**
+     * Import code from user's local file with three options: Load, Run Background, Cancel
+     */
+    function importFromFile() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.js,.txt';
+        
+        input.onchange = async (e) => {
+            try {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                const text = await file.text();
+                
+                // Create custom dialog with three buttons
+                const message = `Loaded "${file.name}" (${text.length} characters)\n\nWhat would you like to do?`;
+                
+                // Using confirm dialogs in sequence (browser limitation)
+                const loadInEditor = window.confirm(
+                    message + '\n\n' +
+                    'Click OK to LOAD into editor (replaces current code)\n' +
+                    'Click Cancel for more options'
+                );
+                
+                if (loadInEditor) {
+                    // Load into editor - replace with starter template
+                    const starterTemplate = `/*\n  Alt(option)-Enter: Evaluate Line\n  Alt(option)-Shift-Enter: Evaluate Block\n*/\n\n${text}`;
+                    localStorage.setItem(`${props.page}Value`, starterTemplate);
+                    setCode(starterTemplate);
+                    setRefresh(!refresh);
+                    console.log(`✓ Loaded ${file.name} into editor`);
+                } else {
+                    // Ask if they want to run in background
+                    const runBackground = window.confirm(
+                        'Click OK to RUN in background (without changing editor)\n' +
+                        'Click Cancel to do nothing'
+                    );
+                    
+                    if (runBackground) {
+                        evaluate(text, []);
+                        console.log(`✓ Executed ${file.name} in background`);
+                    } else {
+                        console.log('Import cancelled');
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading file:', error);
+                alert(`Error loading file: ${error.message}`);
+            }
+        };
+        
+        input.click();
+    }
+
+    /**
+     * Import code from public folder using loadCode - now with dropdown
+     */
+    function importFromPublic() {
+        // Create modal dialog with dropdown
+        const modal = document.createElement('div');
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+        
+        const dialog = document.createElement('div');
+        dialog.style.cssText = `
+            background: #2a2a2a;
+            color: #e0e0e0;
+            padding: 25px;
+            border-radius: 8px;
+            min-width: 400px;
+            max-width: 500px;
+            font-family: monospace;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        `;
+        
+        dialog.innerHTML = `
+            <h3 style="margin-top: 0; color: #4a9eff;">Load from Public Folder</h3>
+            <p style="margin-bottom: 15px; font-size: 13px;">Select a file to load and run in background:</p>
+            
+            <select id="publicFileSelect" style="
+                width: 100%;
+                padding: 8px;
+                margin-bottom: 20px;
+                background: #1a1a1a;
+                color: #e0e0e0;
+                border: 1px solid #555;
+                border-radius: 4px;
+                font-family: monospace;
+                font-size: 13px;
+            ">
+                <option value="">-- Select a file --</option>
+                <optgroup label="Main Files">
+                    <option value="SEQUENCER_COMPLETE.js">SEQUENCER_COMPLETE.js</option>
+                </optgroup>
+                <optgroup label="Examples">
+                    <option value="examples/Arpeggiator/index.js">Arpeggiator</option>
+                    <option value="examples/Breakbeats!/index.js">Breakbeats!</option>
+                    <option value="examples/MarkovChain/index.js">MarkovChain</option>
+                    <option value="examples/Sequencing/index.js">Sequencing</option>
+                    <option value="examples/Theory/index.js">Theory</option>
+                </optgroup>
+                <optgroup label="Assignments">
+                    <option value="assignments/Promenade/StarterCode.js">Promenade</option>
+                    <option value="assignments/Sequencing Basics/StarterCode.js">Sequencing Basics</option>
+                </optgroup>
+            </select>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button id="publicLoadBtn" style="
+                    padding: 8px 16px;
+                    background: #4a9eff;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-family: monospace;
+                    font-size: 13px;
+                ">Load</button>
+                <button id="publicCancelBtn" style="
+                    padding: 8px 16px;
+                    background: #555;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-family: monospace;
+                    font-size: 13px;
+                ">Cancel</button>
+            </div>
+        `;
+        
+        modal.appendChild(dialog);
+        document.body.appendChild(modal);
+        
+        // Handle Load button
+        document.getElementById('publicLoadBtn').onclick = () => {
+            const filename = document.getElementById('publicFileSelect').value;
+            if (filename) {
+                loadCode(filename)
+                    .then(() => {
+                        console.log(`✓ Successfully loaded ${filename}`);
+                    })
+                    .catch(err => {
+                        alert(`Failed to load ${filename}:\n${err.message}`);
+                    });
+                document.body.removeChild(modal);
+            } else {
+                alert('Please select a file');
+            }
+        };
+        
+        // Handle Cancel button
+        document.getElementById('publicCancelBtn').onclick = () => {
+            document.body.removeChild(modal);
+        };
+        
+        // Close on background click
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                document.body.removeChild(modal);
+            }
+        };
     }
 
     function exportAsLink(code) {
@@ -2737,6 +3020,13 @@ function Editor(props) {
                         </span>
                         <span className="span-container">
 
+                            {/* Import options */}
+                            <select id="importOptions" onChange={importCode} defaultValue="default">
+                                <option value="default" disabled>Import Code</option>
+                                <option value="file">From File</option>
+                                <option value="loadCode">From Public Folder</option>
+                            </select>
+
                             {/* Export options */}
                             <select id="exportOptions" onChange={exportCode} defaultValue="default">
                                 <option value="default" disabled>Export Code</option>
@@ -2744,7 +3034,6 @@ function Editor(props) {
                                 <option value="textFile">Text File</option>
                                 <option value="webPage">Web Page</option>
                             </select>
-                            { /* <input type="file" ref={fileInputRef} style={{ display: 'none' }} /> */}
 
                             {!p5Minimized &&
                                 <button className="button-container" onClick={codeMinClicked}>-</button>
