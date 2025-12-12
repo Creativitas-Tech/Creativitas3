@@ -14,11 +14,11 @@ import './Editor-Initalizer.js';
 import { DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 // NexusUI wrappers
-import { Dial } from './ui/Dial.js';
-import { Slider } from './ui/Slider.js';
-import { NumberBox } from './ui/NumberBox.js';
-import { Button } from './ui/Button.js';
-import { Switch } from './ui/Switch.js';
+import { Dial } from './nexus/Dial.js';
+import { Slider } from './nexus/Slider.js';
+import { NumberBox } from './nexus/NumberBox.js';
+import { Button } from './nexus/Button.js';
+import { Switch } from './nexus/Switch.js';
 
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
