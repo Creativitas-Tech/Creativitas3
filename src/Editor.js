@@ -426,9 +426,39 @@ function Editor(props) {
         return savedList;
     };
 
+    // Code cache function - delete a saved code snippet
+    const deleteSavedCode = (name) => {
+        if (!name || typeof name !== 'string' || name.trim() === '') {
+            console.error('deleteSavedCode: Please provide a valid name for the code snippet');
+            return false;
+        }
+
+        const trimmedName = name.trim();
+        const storageKey = `creativitas_cache_${trimmedName}`;
+
+        // Check if the snippet exists
+        if (!localStorage.getItem(storageKey)) {
+            console.error(`deleteSavedCode: Snippet "${trimmedName}" not found`);
+            return false;
+        }
+
+        // Delete the code from localStorage
+        localStorage.removeItem(storageKey);
+
+        // Update the list - remove the name from saved snippets
+        const savedListKey = 'creativitas_cache_list';
+        const savedList = JSON.parse(localStorage.getItem(savedListKey) || '[]');
+        const updatedList = savedList.filter(n => n !== trimmedName);
+        localStorage.setItem(savedListKey, JSON.stringify(updatedList));
+
+        console.log(`Code snippet "${trimmedName}" deleted successfully`);
+        return true;
+    };
+
     // Make functions available globally - assign to window
     window.saveCode = saveCode;
     window.listSavedCodes = listSavedCodes;
+    window.deleteSavedCode = deleteSavedCode;
     // In non-strict mode, this creates a global variable
     try {
         (function() {
@@ -1523,12 +1553,13 @@ function Editor(props) {
     function evaluate(string, p5Code) {
         try {
             //console.log('eval', string);
-            // Prepend code with variable declarations to make saveCode, loadCode, and listSavedCodes available
+            // Prepend code with variable declarations to make saveCode, loadCode, listSavedCodes, and deleteSavedCode available
             // This ensures they're in scope when eval runs
             const codeToEval = `
                 var saveCode = window.saveCode;
                 var loadCode = window.loadCode;
                 var listSavedCodes = window.listSavedCodes;
+                var deleteSavedCode = window.deleteSavedCode;
                 ${string}
             `;
             eval(codeToEval);
