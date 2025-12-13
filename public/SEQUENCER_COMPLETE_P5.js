@@ -1,4 +1,4 @@
-// 4-SEQUENCE CONTROLLER
+// 4-SEQUENCE CONTROLLER (p5 GUI Version)
 // Alt-Enter: run line  |  Alt-Shift-Enter: run block
 
 // COLLABORATION SETUP
@@ -14,8 +14,8 @@ function sendToCollab(seqName, actionName) {
 
 var isRemoteUpdateRef = { value: false }
 
-
 // AUDIO CHAIN
+
 const vco = new Tone.Oscillator().start()
 const vcf = new Tone.Filter()
 const vca = new Tone.Multiply()
@@ -27,7 +27,6 @@ vca.connect(output)
 env.connect(vca.factor)
 
 // SYNTH INSTANCES
-
 const seq1 = new Twinkle()
 const seq2 = new Daisy()
 const seq3 = new DrumSampler()
@@ -179,7 +178,7 @@ function listPatterns() {
 seq1.layout = {
   "vco": {
     "color": [220, 120, 80],
-    "boundingBox": { "x": 2, "y": 12, "width": 12, "height": 18 },
+    "boundingBox": { "x": 2, "y": 15, "width": 10, "height": 18 },
     "offsets": { "x": 0, "y": 6 },
     "groupA": ["type"],
     "controlTypeA": "radioButton",
@@ -190,7 +189,7 @@ seq1.layout = {
   },
   "vcf": {
     "color": [160, 100, 220],
-    "boundingBox": { "x": 16, "y": 12, "width": 30, "height": 18 },
+    "boundingBox": { "x": 14, "y": 15, "width": 30, "height": 18 },
     "offsets": { "x": 8, "y": 0 },
     "groupA": ["cutoff"],
     "controlTypeA": "knob",
@@ -201,8 +200,8 @@ seq1.layout = {
   },
   "vca": {
     "color": [80, 200, 200],
-    "boundingBox": { "x": 48, "y": 12, "width": 40, "height": 18 },
-    "offsets": { "x": 9, "y": 0 },
+    "boundingBox": { "x": 42, "y": 15, "width": 36, "height": 18 },
+    "offsets": { "x": 7, "y": 0 },
     "groupA": [],
     "controlTypeA": "knob",
     "controlTypeB": "knob",
@@ -212,63 +211,187 @@ seq1.layout = {
   }
 }
 
-seq1.initNexus()
+seq1.initGui()
 
-const canvas = document.getElementById('Canvas')
-const w = canvas.clientWidth || window.innerWidth
-const h = canvas.clientHeight || window.innerHeight
+// P5 GUI SETUP
 
-const seq1SynthLabel = document.createElement('div')
-seq1SynthLabel.textContent = 'TWINKLE'
-seq1SynthLabel.style.cssText = `position: absolute; left: ${w * 0.02}px; top: ${h * 0.10}px; color: #DC7850; font-family: monospace; font-size: 11px; font-weight: bold; pointer-events: none;`
-canvas.appendChild(seq1SynthLabel)
+// Grid configuration (defined globally to avoid scope errors)
+const buttonW = 8
+const buttonH = 7
+const spacingX = 10
+const spacingY = 10
+const labelSpace = 15
+const startX = 25
+const startY = 45
+const seqToggleGrid = { seq1: [], seq2: [], seq3: [], seq4: [] }
 
-// SEQUENCER GUI
-
-const gui = initSequencerGUI({
-  sequenceActions: sequenceActions,
-  sequences: seqSynths,
-  sendToCollab: sendToCollab,
-  isRemoteUpdateRef: isRemoteUpdateRef
-})
-
-const seqToggleGrid = gui.seqToggleGrid
-const seq1g = seqToggleGrid.seq1
-const seq2g = seqToggleGrid.seq2
-const seq3g = seqToggleGrid.seq3
-const seq4g = seqToggleGrid.seq4
-
-gui.enable_toggle.element.on('change', function(value) {
-  vca.factor.value = value ? 1 : 0
-  console.log('VCA Enabled:', value)
-})
-
-// COLLABORATION HANDLERS
-
-chClient.on('seq1-pattern', function(data) {
-  if (data.values && data.values.slot && data.values.pattern) {
-    updateSequence('seq1', data.values.slot, data.values.pattern, data.values.rate, false)
+const sketch = function(p) {
+  p.elements = {}
+  
+  p.setup = function() {
+    const canvas = document.getElementById('Canvas')
+    const w = canvas.clientWidth || window.innerWidth
+    const h = canvas.clientHeight || window.innerHeight
+    p.createCanvas(w, h)
   }
-})
-chClient.on('seq2-pattern', function(data) {
-  if (data.values && data.values.slot && data.values.pattern) {
-    updateSequence('seq2', data.values.slot, data.values.pattern, data.values.rate, false)
+  
+  p.draw = function() {}
+  
+  p.mousePressed = function() {
+    Object.values(p.elements).forEach(el => {
+      if (el.isPressed) el.isPressed()
+    })
   }
-})
-chClient.on('seq3-pattern', function(data) {
-  if (data.values && data.values.slot && data.values.pattern) {
-    updateSequence('seq3', data.values.slot, data.values.pattern, data.values.rate, false)
+  
+  p.mouseReleased = function() {
+    Object.values(p.elements).forEach(el => {
+      if (el.isReleased) el.isReleased()
+    })
   }
-})
-chClient.on('seq4-pattern', function(data) {
-  if (data.values && data.values.slot && data.values.pattern) {
-    updateSequence('seq4', data.values.slot, data.values.pattern, data.values.rate, false)
+}
+
+const gui = new p5(sketch, 'Canvas')
+
+setTimeout(() => {
+  gui.createCanvas(gui.width, gui.height)
+  
+  // Row definitions
+  const rows = [
+    { seq: 'seq1', label: 'sequence 1', color: [174, 198, 207], actions: ['1c', '2c', '3c', 'stop'] },
+    { seq: 'seq2', label: 'sequence 2', color: [174, 198, 207], actions: ['1b', '2b', '3b', 'stop'] },
+    { seq: 'seq3', label: 'sequence 3', color: [174, 198, 207], actions: ['1d', '2d', '3d', 'stop'] },
+    { seq: 'seq4', label: 'sequence 4', color: [212, 165, 217], actions: ['1a', '2a', '3a', 'stop'] }
+  ]
+  
+  // Create sequence button
+  function createSeqButton(row, col, seqName, action, otherButtons) {
+    const color = action === 'stop' ? [255, 105, 97] : rows[row].color
+    
+    const btn = gui.Toggle({
+      label: action.toUpperCase(),
+      callback: function(value) {
+        if (isRemoteUpdateRef.value) {
+          isRemoteUpdateRef.value = false
+          return
+        }
+        
+        if (value > 0.5) {
+          // Turn off other buttons in this row
+          otherButtons.forEach(other => {
+            if (other !== btn) other.set(0)
+          })
+          
+          // Execute action
+          if (sequenceActions[seqName] && sequenceActions[seqName][action]) {
+            sequenceActions[seqName][action]()
+            console.log(seqName + ': ' + action.toUpperCase() + ' activated')
+          }
+          
+          // Send to collaborators
+          sendToCollab(seqName, action)
+        }
+      },
+      x: startX + col * spacingX,
+      y: startY + row * spacingY,
+      size: 0.7,
+      border: 1,
+      borderColor: color,
+      accentColor: color,
+      textColor: [255, 255, 255]
+    })
+    
+    return btn
   }
-})
+  
+  // Create all sequence buttons
+  rows.forEach((rowConfig, rowIdx) => {
+    const buttons = []
+    
+    rowConfig.actions.forEach((action, colIdx) => {
+      const btn = createSeqButton(rowIdx, colIdx, rowConfig.seq, action, buttons)
+      buttons.push(btn)
+      seqToggleGrid[rowConfig.seq].push(btn)
+    })
+    
+    // Add row label (better aligned)
+    gui.Text({
+      label: rowConfig.label,
+      x: 4,
+      y: startY + rowIdx * spacingY + 2.5,
+      size: 0.55,
+      textColor: rowConfig.color,
+      border: 0
+    })
+  })
+  
+  // Enable toggle (positioned to avoid overlap)
+  const enable_toggle = gui.Toggle({
+    label: 'enable',
+    callback: function(value) {
+      vca.factor.value = value > 0.5 ? 1 : 0
+      console.log('VCA Enabled:', value > 0.5)
+    },
+    x: startX + 1.5 * spacingX,
+    y: startY - 10,
+    size: 0.9,
+    border: 1,
+    borderColor: [100, 100, 100],
+    accentColor: [100, 200, 100],
+    textColor: [255, 255, 255]
+  })
+  
+  enable_toggle.set(1)
+  
+  // COLLABORATION HANDLERS
+  
+  function activateRemoteButton(seqName, action) {
+    const seqIndex = rows.findIndex(r => r.seq === seqName)
+    const actionIndex = rows[seqIndex].actions.indexOf(action)
+    
+    if (seqIndex >= 0 && actionIndex >= 0) {
+      isRemoteUpdateRef.value = true
+      seqToggleGrid[seqName][actionIndex].set(1)
+    }
+  }
+  
+  // Listen for button presses
+  ;['seq1', 'seq2', 'seq3', 'seq4'].forEach(seqName => {
+    chClient.on(seqName, function(data) {
+      if (data.values && data.values.action) {
+        activateRemoteButton(seqName, data.values.action)
+      }
+    })
+  })
+  
+  // Listen for pattern updates
+  chClient.on('seq1-pattern', function(data) {
+    if (data.values && data.values.slot && data.values.pattern) {
+      updateSequence('seq1', data.values.slot, data.values.pattern, data.values.rate, false)
+    }
+  })
+  chClient.on('seq2-pattern', function(data) {
+    if (data.values && data.values.slot && data.values.pattern) {
+      updateSequence('seq2', data.values.slot, data.values.pattern, data.values.rate, false)
+    }
+  })
+  chClient.on('seq3-pattern', function(data) {
+    if (data.values && data.values.slot && data.values.pattern) {
+      updateSequence('seq3', data.values.slot, data.values.pattern, data.values.rate, false)
+    }
+  })
+  chClient.on('seq4-pattern', function(data) {
+    if (data.values && data.values.slot && data.values.pattern) {
+      updateSequence('seq4', data.values.slot, data.values.pattern, data.values.rate, false)
+    }
+  })
+  
+  window.seqToggleGrid = seqToggleGrid
+  
+}, 100)
 
 
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
-console.log('4-SEQUENCE CONTROLLER')
+console.log('4-SEQUENCE CONTROLLER (p5 Version)')
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━')
 console.log('Functions:')
 console.log('  setSequence("seq1", "1c", "0 1 2 3", "16n") - play pattern')
