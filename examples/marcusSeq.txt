@@ -1,0 +1,172 @@
+//create room
+Theory.root = 'A'
+Theory.tempo = 120
+initCollab('MinimalismCooperationLab')
+chClient.joinRoom('foo')
+chClient.username = 'Marcus'
+
+let ID = 0
+//set instrument
+//problem: here everyone can only control a single synth
+//I want each musician to have his own instrument
+//but still I imagine that the instrument should be in one collaboration room 
+//because in that way the tempo would be stable and there would be no requirement 
+//for performing
+
+// console.log(octaveK2.value, octaveK1.value)
+// console.log(s.seq[0].vals, s2.seq[0].vals)
+
+//audio objects and connections
+const gui = new p5(sketch, Canvas)
+const gui2 = new p5(sketch, Canvas)
+const output = new Tone.Multiply(.1).toDestination()
+const verb = new Diffuseur()
+const s = new Rumble()
+const s2 = new Rumble()
+s.connect(output)
+s.connect(verb), verb.connect(output)
+s2.connect(output)
+// s.initGui(gui)
+// s2.initGui(gui)
+s.loadPreset('sub')
+s.loadPreset('sub')
+// s.linkGui('Rumble1')
+// s2.linkGui('Rumble2')
+
+let changeID = (IDnum) => {
+  ID = IDnum
+  if (ID == 1) { 
+    octaveK1.hide = false
+    octaveK2.hide = true
+    cutoffK1.hide = false
+    cutoffK2.hide = true
+  }
+  if (ID == 2) { 
+    octaveK2.hide = false
+    octaveK1.hide = true
+    cutoffK2.hide = false
+    cutoffK1.hide = true
+  }
+  for(let i=0;i<knobs1.length;i++){
+    knobs1[i].callback =  function(x){
+      x = Math.floor(x)
+      if (melodyA[i] != x)  melodyA[i] = x
+      if( ID == 1){
+        //s.sequence(melodyA)
+        display1[i].set(x)
+      }
+      else {
+        //s2.sequence(melodyA)
+        display2[i].set(x)
+      }      
+    }
+  }
+}
+
+verb.input.factor.value = .7
+s.output.factor.value = 1.5
+verb.stretchIR(.75)
+
+let playerSelect = gui.RadioButton({
+  label: 's', radioOptions: ['choose','player1', 'player2'],
+  callback: x=> x==='player1' ? changeID(1) : x==='player2'  ? changeID(2) : ID=0
+})
+playerSelect.y = 80
+
+let octaveK1 = gui.Knob({
+  label: 'octave', min:0, max:2, isInteger:true,
+  callback: x=>{
+    s.octave = Math.floor(x)
+  }, 
+  x: 40, y: 80,
+  textColor : [255,255,255]
+})
+octaveK1.setLink('octaveK1')
+let octaveK2 = gui.Knob({
+  label: 'octave', min:0, max:2, isInteger:true,
+  callback: x=>{
+  s2.octave = Math.floor(x)
+  }, 
+  x: 40, y: 80,
+  textColor : [255,255,255]
+})
+octaveK2.setLink('octaveK2')
+
+let cutoffK1 = gui.Knob({
+  label: 'cutoff', min:100, max:1000, curve:2, 
+  callback: x=>{
+      s.cutoff = Math.floor(x)
+      s.Q = x/100
+  }, 
+  x: 60, y: 80,
+  textColor : [255,255,255]
+})
+let cutoffK2 = gui.Knob({
+  label: 'cutoff', min:100, max:1000, curve:2, 
+  callback: x=>{
+      s2.cutoff = Math.floor(x)
+      s2.Q = x/100
+  }, 
+  x: 60, y: 80,
+  textColor : [255,255,255]
+})
+cutoffK2.setLink('octaveK2')
+cutoffK1.setLink('octaveK1')
+
+
+let knobs1 = []
+let melodyA = [0,0,0,0, 0,0,0,0 ]
+let melodyB = [0,0,0,0, 0,0,0,0 ]
+let display1 = []
+let display2 = []
+
+for (let i = 0; i < 8; i++){
+  knobs1.push(gui.Knob({
+    label: i+1,
+    x: 10+i*10, y: 30, size:0.5, 
+    min:0, max: 8, curve: 1,
+    callback: function(x){
+      x = Math.floor(x)
+    
+      if( ID == 1){
+        //s.sequence(melodyA)
+        if (melodyA[i] != x)  melodyA[i] = x
+        display1[i].set(x)
+      }
+      else if( ID == 2){
+        //s2.sequence(melodyA)
+        if (melodyB[i] != x)  melodyB[i] = x
+        display2[i].set(x)
+      }      
+    }
+  }))
+}
+// for (let i = 0; i < 8; i++) knobs1[i].hide = false
+
+
+for (let i = 0; i < 8; i++){
+  display1.push(gui2.Knob({
+    label: i+1,
+    x: 10+(i%8)*10, y: 30+ Math.floor(i/8)*30, size:0.5, 
+    min:0, max: 8, curve: 1,
+    callback: function(x){
+      melodyA[i] = Math.floor(x)
+      s.sequence(melodyA)
+      console.log('seqA', x)
+    }
+  }))
+  display1[i].setLink('seqA'+i)
+}
+for (let i = 0; i < 8; i++){
+  display2.push(gui2.Knob({
+    label: i+1,
+    x: 10+(i%8)*10, y: 60+Math.floor(i/8)*30, size:0.5, 
+    min:0, max: 8, curve: 1,
+    callback: function(x){
+      melodyB[i] = Math.floor(x)
+      s2.sequence(melodyB)
+      console.log('seqB', x)
+    }
+  }))
+  display2[i].setLink('seqB' + i)
+}

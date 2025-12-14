@@ -1,0 +1,236 @@
+initCollab('andrew')
+
+let gui = new p5(sketch, Canvas)
+//
+let s = new Polyphony(Twinkle)
+let output = new Tone.Multiply(.1).toDestination()
+s.connect(output)
+//
+let currentStep = -1
+let seqLength = 8
+s.callback = ()=>{
+  currentStep = (s.index+seqLength-1)%seqLength
+}
+s.sequence(expr(i=> '.', seqLength), '16n')
+//
+let rows = 13
+let cols = 8
+let grid = []
+let cellW = gui.width / cols *.9
+let cellH = gui.height / rows *.7
+let playing = true
+let presets = [null, null, null, null]
+let buttons = []
+//
+//
+const savePreset = (i)=>{
+  presets[i] = grid.map(row => row.slice())
+  console.log("Preset " + (i + 1) + " saved.")
+}
+const loadPreset = (i)=> {
+  if (presets[i]) {
+    grid = presets[i].map(row => row.slice())
+    console.log("Preset " + (i + 1) + " loaded.")
+    for(let i=0; i < seqLength ; i++) updateSequenceFromGrid(i)
+  } else {
+    console.log("Preset " + (i + 1) + " empty — clearing grid.")
+    clearGrid()
+  }
+}
+//
+
+const clearGrid = ()=> {
+  grid = Array.from({ length: rows }, () => Array(cols).fill(false))
+  s.sequence(expr(i=> '.', seqLength), '16n')
+}
+clearGrid()
+//
+const w = 70
+const h = 35
+const gap = 6
+const topRowY = gui.height - h -5
+const bottomRowY = gui.height
+const totalW = 4
+const startX = 0
+const width = gui.width
+const createGUIButtons = () => {
+  buttons = []
+   totalW = w * 4 + gap * 3
+   startX = (w / 8) + gap*0
+
+  for (let i = 0; i < 4; i++) buttons.push({
+    label: "Save " + (i + 1),
+    x: startX + i * (w + gap),
+    y: topRowY,
+    w, h,
+    color: gui.color(70, 130, 180),
+    action: () => savePreset(i) // 
+  })
+
+  for (let i = 0; i < 4; i++) buttons.push({
+    label: "Load " + (i + 1),
+    x: startX + i * (w + gap),
+    y: bottomRowY,
+    w, h,
+    color: gui.color(90, 180, 90),
+    action: () => loadPreset(i)
+  })
+
+  buttons.push({
+    label: "Clear",
+    x: width - 100,
+    y: bottomRowY,
+    w: 70,
+    h,
+    color: gui.color(200, 80, 80),
+    action: clearGrid
+  })
+}
+//
+createGUIButtons()
+let hovered = 0
+const drawButtons = () => {
+  gui.textAlign(gui.CENTER, gui.CENTER)
+  gui.textSize(13)
+  gui.noStroke()
+  for (let b of buttons) {
+     hovered = gui.mouseX > b.x && gui.mouseX < b.x + b.w &&
+                  gui.mouseY > b.y && gui.mouseY < b.y + b.h
+    gui.fill(hovered ? gui.lerpColor(b.color, gui.color(255), 0.3) : b.color)
+    gui.rect(b.x, b.y, b.w, b.h, 6)
+    gui.fill(255)
+    gui.text(b.label, b.x + b.w / 2, b.y + b.h / 2)
+  }
+}
+//
+
+let x = 0
+let y = 0
+gui.draw= () => {
+  gui.background(20)
+  //console.log('draw')
+
+  for (let r = 0; r <13; r++) {
+    for (let c = 0; c < cols; c++) {
+       x = c * cellW
+       y = r * cellH
+      //console.log(grid[r][c] )
+      if(grid[12-r][c]) gui.fill( gui.color(100, 200, 255) )
+      else [0,2,4,7].includes((12-r)%7) ? gui.fill(gui.color(100)) : gui.fill(gui.color(50))
+      //else gui.color(50)
+      gui.stroke(180)
+      gui.rect(x, y, cellW, cellH)
+    }
+  }
+
+  if (playing && currentStep >= 0) {
+    gui.noStroke()
+    gui.fill(255, 255, 0, 60)
+    gui.rect(currentStep * cellW, 0, cellW, gui.height)
+  }
+  
+  drawButtons()
+} 
+
+let c =0;
+let r = 0
+let turningOn = 0
+let prevC=0
+let prevR=0
+let prevState = false
+gui.mousePressed = () =>{
+  //console.log('pressed', gui.mouseX, gui.mouseY)
+  if (gui.mouseY < gui.height && gui.mouseX > 0) {
+     c =Math.floor(gui.mouseX / cellW)
+     r = 12 -Math.floor(gui.mouseY / cellH)
+    console.log(r,c)
+    if (r >= 0 && r < rows && c >= 0 && c < cols) {
+       turningOn = !grid[r][c]  // will it be turned on? nah
+      grid[r][c] = turningOn
+      if (turningOn) {
+        //s.triggerAttackRelease(60,100,.1)
+      }  
+      prevState = turningOn
+    }
+    chClient.control('mouseClick', [r,c, turningOn])
+    updateSequenceFromGrid(c)
+  }
+
+  for (let b of buttons) {
+    if (gui.mouseX > b.x && gui.mouseX < b.x + b.w &&
+        gui.mouseY > b.y && gui.mouseY < b.y + b.h) 
+    {
+      b.action()
+      console.log(b.label)
+      chClient.control('buttonClick', [b.label])
+    }
+  }
+}
+//
+gui.mouseDragged = () =>{
+  //console.log('pressed', gui.mouseX, gui.mouseY)
+  if (gui.mouseY < gui.height && gui.mouseX > 0) {
+     c =Math.floor(gui.mouseX / cellW)
+     r = 12 -Math.floor(gui.mouseY / cellH)
+      if(prevC === c && prevState === true) return
+      if(prevC === c && prevR === r) return
+    prevC = c
+    prevR = r
+    console.log(r,c)
+    if (r >= 0 && r < rows && c >= 0 && c < cols) {
+      grid[r][c] = prevState
+    }
+    chClient.control('mouseClick', [r,c, prevState])
+    updateSequenceFromGrid(c)
+  }
+}
+
+gui.keyPressed = (key) => {
+  if (key === " ") {
+    if (!playing) {
+      currentStep = -1
+      playing = true
+      Tone.Transport.start()
+    } else {
+      playing = false
+      Tone.Transport.stop()
+      currentStep = -1
+    }
+  }
+}
+
+let pitches = []
+const updateSequenceFromGrid = (x)=>{
+  x = Math.floor(x) % 8
+  pitches = []
+  for(let i=0;i<13;i++){
+    if(grid[i][x] === true) pitches.push( i)
+  }
+  // console.log(pitches)
+  if( pitches.length == 0) s.seq[0].vals[x] = '.'
+  else s.seq[0].vals[x] = '[' + pitches + ']'
+}
+
+s.sequence('........', '16n')
+console.log(s.seq[0].vals)
+
+chClient.on('mouseClick', function(incoming) {
+  console.log(incoming)
+  r = incoming.values[0]
+  c = incoming.values[1]
+  if (r >= 0 && r < rows && c >= 0 && c < cols) {
+    grid[r][c] = incoming.values[2]
+    updateSequenceFromGrid(c)
+  }  
+});
+
+chClient.on('buttonClick', function(incoming) {
+  console.log('click', incoming)
+  for (let b of buttons) {
+    if (incoming.values[0] === b.label) 
+    {
+      b.action()
+      console.log(b.label)
+    }
+  }
+});

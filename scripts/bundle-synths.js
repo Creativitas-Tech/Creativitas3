@@ -26,14 +26,14 @@ async function bundleSynthDependencies() {
         'TheoryModule.js',
         'TimingManager.js',
         './midi/MidiKeyboard2.js',
-        './ui/Button.js',
-        './ui/Dial.js',
-        './ui/NexusElement.js',
-        './ui/NumberBox.js',
-        './ui/parentNexus.js',
-        './ui/RadioButton.js',
-        './ui/Slider.js',
-        './ui/Switch.js'
+        './nexus/Button.js',
+        './nexus/Dial.js',
+        './nexus/NexusElement.js',
+        './nexus/NumberBox.js',
+        './nexus/parentNexus.js',
+        './nexus/RadioButton.js',
+        './nexus/Slider.js',
+        './nexus/Switch.js'
     ]
 
     const srcDir = path.join(__dirname, '..', 'src');
