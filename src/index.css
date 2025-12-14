@@ -76,7 +76,7 @@ code {
 .flex-child {
   height: auto;
   min-width: 0;
-  border: 5px solid rgb(255, 255, 255);
+  border: 1px solid rgb(55, 55, 55);
   box-sizing: border-box;
   display: flex;
   flex: 1 1 0%;
@@ -264,6 +264,7 @@ code {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .canvas-column-header {
@@ -284,6 +285,8 @@ code {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex: 1 1 auto;           /* <-- this makes it fill remaining height */
+  min-height: 0;            /* <-- lets the inner scroller size correctly */
 }
 
 .canvas-stack {

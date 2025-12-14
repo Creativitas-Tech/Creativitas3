@@ -2967,7 +2967,7 @@ function Editor(props) {
 
     return (
         <div id="flex" className="flex-container" ref={splitContainerRef}>
-            {!codeMinimized && (
+            
                 <div className="flex-child" style={codePaneStyle} ref={codePaneRef}>
                     <span className="span-container">
                         <span className="span-container">
@@ -3035,10 +3035,6 @@ function Editor(props) {
                                 <option value="webPage">Web Page</option>
                             </select>
 
-                            {!p5Minimized &&
-                                <button className="button-container" onClick={codeMinClicked}>-</button>
-                            }
-                            <button className="button-container" onClick={canvasMinClicked}>{p5Minimized ? '<=' : '+'}</button>
                         </span>
                     </span>
                     <div id="container" >
@@ -3068,7 +3064,7 @@ function Editor(props) {
                         }
                     </div>
                 </div>
-            )}
+            
 
             {showSplitHandle && (
                 <div
@@ -3085,7 +3081,7 @@ function Editor(props) {
                 ></div>
             )}
 
-            {!p5Minimized && (
+            
                 <div
                     id="canvases"
                     className="flex-child canvas-column"
@@ -3106,24 +3102,10 @@ function Editor(props) {
                                 <Canvas key={id} id={id} onMaximize={handleMaximizeCanvas} maximized={maximized} canvasLength={canvases.length} />
                             ))}
                         </div>
-                        {showCanvasSplitHandle && (
-                            <div
-                                className={`split-handle-horizontal${isDraggingCanvasSplit ? ' split-handle-horizontal--active' : ''}`}
-                                role="separator"
-                                aria-orientation="horizontal"
-                                aria-valuemin={Math.round(dynamicCanvasMinBound)}
-                                aria-valuemax={CANVAS_STACK_PERCENT_MAX}
-                                aria-valuenow={canvasHandleValue}
-                                tabIndex={0}
-                                onPointerDown={handleCanvasSplitPointerDown}
-                                onKeyDown={handleCanvasSplitKeyDown}
-                                onDoubleClick={handleCanvasSplitDoubleClick}
-                                title="Drag to resize canvas area"
-                            ></div>
-                        )}
+                        
                     </div>
                 </div>
-            )}
+            
         </div>
 
     );
