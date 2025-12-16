@@ -32,6 +32,7 @@ import * as TheoryModule from './TheoryModule.js';
 //import ml5 from 'ml5';
 import Canvas from "./Canvas.js";
 import { TextField, Oscilloscope, Spectroscope, Spectrogram, PlotTransferFunction, MultiRowSeqGui, CircularVisualizer } from './visualizers/index.js';
+import { PianoRoll } from './visualizers/PianoRoll';
 import * as waveshapers from './synths/waveshapers.js'
 import { stepper, expr } from './Utilities.js'
 import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
@@ -234,6 +235,7 @@ function Editor(props) {
     window.plotTransferFunction = PlotTransferFunction;
     window.MultiRowSeqGui = MultiRowSeqGui;
     window.TextField = TextField
+    window.PianoRoll = PianoRoll
     window.initConsole = initConsole
     // window.CollabHub = CollabHubDisplay;
 

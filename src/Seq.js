@@ -39,7 +39,9 @@ export class Seq {
         this.guiElements["toggles"]=[]
         this.userCallback = null
         this.drawing = null
+        this.pianoRoll = null
         this.events = new Array(8)
+        this.color = '#fff'
 
         //(note, pattern=1, scalar=1, length=4)
         this.ornaments = [
@@ -138,6 +140,7 @@ export class Seq {
             //console.log('loop', time)
             
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+            this.rawIndex = this.index
             this.index = (this.index + this._rotate) % this.vals.length//ask ian if he wants offset to only be implemented for play with limited amount of loops, or as an infinite variable
             // console.log('ind ', this.index)
             if(this._offset !== null){//this makes offset an inperminent variable exceptfor infinite case
@@ -176,6 +179,11 @@ export class Seq {
 
             if(this.drawing){
                 this.updateDrawing(curBeat, time, this.index, this.num);
+            }
+            if(this.pianoRoll){
+                for (const val of event){
+                    this.updatePianoRoll(val,time,this.index,this.num)
+                }
             }
 
             //check for sequencing params
@@ -630,12 +638,29 @@ export class Seq {
         if( front.length > 0 ) front = front + ' '
         const mid = this.events.slice(curBeat,curBeat+1).join(' ') + ' '
         const end = this.events.slice(curBeat+1,8).join(' ')
-        this.drawing.cursorPosition.line = 0
-        this.drawing.cursorPosition.start = front.length
-        this.drawing.cursorPosition.end = front.length+mid.length
+
+        if( this.drawing instanceof TextField){
+            this.drawing.cursorPosition.line = 0
+            this.drawing.cursorPosition.start = front.length
+            this.drawing.cursorPosition.end = front.length+mid.length
+            
+            this.drawing.writeLine(0, front  + mid + end)
+        }
+    }
+
+    updatePianoRoll(event,time,index,num){
         
-        this.drawing.writeLine(0, front  + mid + end)
+        const globalBeat = Math.floor(Theory.ticks/Tone.Time('4n').toTicks())
+        const curBeat = Tone.Time(this.subdivision)/Tone.Time('4n') 
+        const note = event[0]
+        const subDiv = event[1]
+        const velocity = Array.isArray(this.velocity) ? this.velocity[curBeat%this.velocity.length] : this.velocity
+        const sustain = Array.isArray(this.sustain) ? this.sustain[curBeat%this.sustain.length] : this.sustain
+        //console.log(event, this.rawIndex, (curBeat),index+subDiv)
+        this.pianoRoll.place(note, curBeat*(this.rawIndex+subDiv), sustain, velocity, this.color)
+        //this.pianoRoll.advanceToBeat(globalBeat)
     }
 
 }
 
+    
