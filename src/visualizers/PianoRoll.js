@@ -1,3 +1,57 @@
+/**
+ * PianoRollDisplay
+ * ----------------
+ * A lightweight, time-windowed piano roll visualizer for sequenced MIDI-style data.
+ *
+ * CONSTRUCTOR ARGUMENTS
+ * - numBeats:        Number of beats displayed horizontally in the window.
+ * - height:          Height of the display in pixels.
+ * - color:           Base color used to draw note events.
+ * - backgroundColor: Background color of the roll.
+ *
+ * CORE METHODS
+ * - place(note, subdivision, duration, velocity)
+ *   Adds a note event at a specific time position and pitch.
+ *   The note is immediately drawn onto the main canvas (no full redraw).
+ *
+ * - clear(beatNumber = null)
+ *   Clears previously drawn notes.
+ *   If beatNumber is null, all events are cleared.
+ *   If beatNumber is provided, only notes intersecting that beat are removed.
+ *
+ * RENDERING MODEL (TWO-CANVAS APPROACH)
+ * The display uses two stacked canvases:
+ *
+ * 1) Background canvas (static)
+ *    - Cleared and redrawn by render().
+ *    - Draws the background color.
+ *    - Draws vertical grid lines at quarter-note boundaries.
+ *    - This canvas is rendereed every quarter note
+ *
+ * 2) Foreground canvas (dynamic)
+ *    - Used for cursor and transient overlays.
+ *    - renderCursor() draws the playhead every 16th note.
+ *    - Cleared and redrawn frequently without touching the background.
+ *
+ * NOTE DRAWING FLOW
+ * - Notes are drawn individually when place() is called.
+ * - Notes are rendered directly onto the main (note) canvas.
+ * - No full canvas redraw is required for new notes.
+ * - Old notes are removed by clearing beats ahead of the playhead.
+ *
+ * DESIGN INTENT
+ * - Separation of static (grid) and dynamic (cursor + notes) layers
+ *   keeps redraw cost low and timing predictable.
+ * - Beat-relative clearing ensures the playhead always advances into
+ *   empty space, avoiding stale visual artifacts.
+ * 
+ * TO DO
+ * - right now, all notes in the coming beat are drawn at the same time.
+ * - it would be nice to get timing information to delay drawing
+ *    future notes.
+ * - maybe make the notes a bit prettier?
+ */
+
 import * as Tone from 'tone';
 import { Theory  } from '../TheoryModule';
 
@@ -6,9 +60,9 @@ export class PianoRoll {
   constructor({
     target = 'Canvas',
     numBeats = 8,
-    height = 200,
+    height = 1,
     color = "#fff",
-    backgroundColor = "#111",
+    backgroundColor = "#1b1c1e",
 
     // practical defaults
     pxPerBeat = 20,
@@ -18,7 +72,7 @@ export class PianoRoll {
   } = {}) {
     this.numBeats = numBeats;
     this.beat = 0
-    this.height = height;
+    this.height = height*200;
     this.color = color;
     this.backgroundColor = backgroundColor;
 
@@ -33,12 +87,12 @@ export class PianoRoll {
     this.containerDiv = document.createElement("div");
     container.appendChild(this.containerDiv);
 
-
 	this.canvas = document.createElement("canvas");
   this.cursorCanvas = document.createElement("canvas");
+  this.gridCanvas = document.createElement("canvas");
 	this.ctx = this.canvas.getContext("2d");
   this.cursorCtx = this.cursorCanvas.getContext("2d");
-
+  this.gridCtx = this.gridCanvas.getContext("2d");
 
   this.containerDiv.style.position = "relative";
 
@@ -49,9 +103,14 @@ export class PianoRoll {
     position: "absolute", left: "0", top: "0", width: "100%", height: "100%", display: "block",
     pointerEvents: "none",
   });
+  Object.assign(this.gridCanvas.style, {
+    position: "absolute", left: "0", top: "0", width: "100%", height: "100%", display: "block",
+    pointerEvents: "none",
+  });
 
 	this.containerDiv.appendChild(this.canvas);
   this.containerDiv.appendChild(this.cursorCanvas);
+  this.containerDiv.appendChild(this.gridCanvas);
 
     this.canvas.style.display = "block";
     this.canvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
@@ -60,8 +119,11 @@ export class PianoRoll {
     this.cursorCanvas.style.display = "block";
     this.cursorCanvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
     this.cursorCanvas.style.height = `${this.height}px`;
-    
 
+    this.gridCanvas.style.display = "block";
+    this.gridCanvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.gridCanvas.style.height = `${this.height}px`;
+    
     // set backing resolution
     this._resizeBackingStore();
 
@@ -82,14 +144,28 @@ export class PianoRoll {
     backgroundColor = this.backgroundColor
   } = {}) {
     this.numBeats = numBeats;
-    this.height = height;
+    this.height = height<10 ? height*200 : this.height;
     this.color = color;
     this.backgroundColor = backgroundColor;
 
+    this.containerDiv.appendChild(this.canvas);
+    this.containerDiv.appendChild(this.cursorCanvas);
+    this.containerDiv.appendChild(this.gridCanvas);
+
+    this.canvas.style.display = "block";
     this.canvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
     this.canvas.style.height = `${this.height}px`;
+
+    this.cursorCanvas.style.display = "block";
+    this.cursorCanvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.cursorCanvas.style.height = `${this.height}px`;
+
+    this.gridCanvas.style.display = "block";
+    this.gridCanvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.gridCanvas.style.height = `${this.height}px`;
+
+    // set backing resolution
     this._resizeBackingStore();
-    this.render();
   }
 
   makeLoop(){
@@ -99,24 +175,6 @@ export class PianoRoll {
       //setTimeout(()=>this.clear(nextBeat), 200);
       this.clear(nextBeat)
       this.render()
-
-//       console.log(
-//   "base:", this.canvas.width, this.canvas.style.width, this.canvas.getBoundingClientRect().width,
-//   "cursor:", this.cursorCanvas.width, this.cursorCanvas.style.width, this.cursorCanvas.getBoundingClientRect().width,
-//   "dpr:", window.devicePixelRatio
-// );
-
-  //     const el = this.cursorCanvas;
-  // const cs = getComputedStyle(el);
-  // const r = el.getBoundingClientRect();
-  // console.log({
-  //   inlineWidth: el.style.width,
-  //   computedWidth: cs.width,
-  //   rectWidth: r.width,
-  //   attrWidth: el.width,          // backing store
-  //   dpr: window.devicePixelRatio,
-  //   parentRectWidth: el.parentElement.getBoundingClientRect().width,
-  // });
   	},'4n').start()
 
     this.cursorLoop = new Tone.Loop(()=>{
@@ -138,10 +196,19 @@ export class PianoRoll {
     // duration: in subdivisions
     // velocity: 0..1 (used for alpha)
     //console.log(note, subdivision, duration, velocity)
-    //console.log(note, subdivision)
+    console.log(note, subdivision)
   	subdivision = subdivision % this.numBeats
   	
   	if(note === '.') return
+
+    let events = []
+    events.push({
+      note,
+      subdivision,
+      duration: Math.max(0, duration),
+      velocity: Math.max(0, Math.min(1, velocity/127)),
+      color
+    });
     this.events.push({
       note,
       subdivision,
@@ -150,7 +217,115 @@ export class PianoRoll {
       color
     });
 
+    // const ctx = this.ctx;
+    // let w = this.cssW
+    // const h = this.cssH
+
+    // // notes
+    // ctx.globalAlpha = 1;
+    // const noteSpan = Math.max(1, this.noteMax - this.noteMin + 1);
+    // const rowH = h / noteSpan;
+    // const pxPerSub = (this.pxPerBeat / this.subdivPerBeat) 
+
+
+    for (const e of events) {
+      this.renderEvent(e)
+      // if (e.duration <= 0) continue;
+
+      // const x = e.subdivision * pxPerSub;
+      // const width = e.duration * pxPerSub;
+
+      // if (x > w || x + width < 0) continue;
+
+      // const noteClamped = Math.max(this.noteMin, Math.min(this.noteMax, e.note));
+      // const yIndex = (this.noteMax - noteClamped); // high notes at top
+      // const y = yIndex * rowH;
+      // const h = rowH
+      // w = width
+      // const xx = x;
+      // const yy = y + 1;
+
+      // ctx.globalAlpha = 0.2 + 0.8 * e.velocity;
+      // //ctx.fillStyle = e.color;
+      // ctx.lineWidth = 1 ;
+      // ctx.strokeStyle = "rgba(0,0,0,0.5)";
+
+      // ctx.globalAlpha = 1;
+
+      //   //e.color = {h:0, s:0, v:0.75}
+      //   const sat = e.color.s * (0.3 + 0.7 * e.velocity);
+      //   const light = 30 + 40 * e.color.v;              // stable brightness
+
+      //   ctx.globalAlpha = 1;
+      //   ctx.fillStyle = `hsl(${e.color.h}, ${sat * 100}%, ${light}%)`;
+      //   //console.log('hsv', e.color.h, sat * 100, light)
+      //   if (ctx.roundRect) {
+      //     const r = Math.min(2, h / 2, w / 2);
+      //     ctx.beginPath();
+      //     ctx.roundRect(xx, yy, w, h, r);
+      //     ctx.fill();
+      //     ctx.stroke();
+      //   } else {
+      //     ctx.fillRect(xx, yy, w, h);
+      //     ctx.strokeRect(xx + 0.5, yy + 0.5, w - 1, h - 1);
+      //   }
+    }
+
     //this.render();
+  }
+
+  renderEvent(e){
+    const ctx = this.ctx;
+    let w = this.cssW
+    let h = this.cssH
+
+    // notes
+    ctx.globalAlpha = 1;
+    const noteSpan = Math.max(1, this.noteMax - this.noteMin + 1);
+    const rowH = h / noteSpan;
+    const pxPerSub = (this.pxPerBeat / this.subdivPerBeat) 
+
+    if (e.duration <= 0) return;
+
+      const x = e.subdivision * pxPerSub;
+      const width = e.duration * pxPerSub;
+
+      if (x > w || x + width < 0) return;
+
+      const noteClamped = Math.max(this.noteMin, Math.min(this.noteMax, e.note));
+      const yIndex = (this.noteMax - noteClamped); // high notes at top
+      const y = yIndex * rowH;
+      h = rowH
+      w = width
+      const xx = x;
+      const yy = y + 1;
+
+      ctx.globalAlpha = 0.2 + 0.8 * e.velocity;
+      //ctx.fillStyle = e.color;
+      ctx.lineWidth = 1 ;
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
+
+      ctx.globalAlpha = 1;
+
+        //e.color = {h:0, s:0, v:0.75}
+        const sat = e.color.s * (0.3 + 0.7 * e.velocity);
+        const light = 30 + 40 * e.color.v;              // stable brightness
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = `hsl(${e.color.h}, ${sat * 100}%, ${light}%)`;
+        //console.log('hsv', e.color.h, sat * 100, light)
+        if (ctx.roundRect) {
+          const r = Math.min(2, h / 2, w / 2);
+          ctx.beginPath();
+          ctx.roundRect(xx, yy, w, h, r);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.fillRect(xx, yy, w, h);
+          ctx.strokeRect(xx + 0.5, yy + 0.5, w - 1, h - 1);
+        }
+    
+
   }
 
 	advanceToBeat(currentBeat) {
@@ -185,7 +360,6 @@ export class PianoRoll {
     const w = this.cssW
     const h = this.cssH
 
-
     // background
     ctx.globalAlpha = 1;
 
@@ -196,79 +370,78 @@ export class PianoRoll {
     ctx.fillStyle = this.backgroundColor;   // '#000' if black
     ctx.fillRect(start, 0, width, h);
     //ctx.fillRect(0, 0, w, h);
-    
 
-    // grid (beats + subdivisions)
-    const totalSubs = this.numBeats * this.subdivPerBeat;
-    const pxPerSub = (this.pxPerBeat / this.subdivPerBeat) 
+    // // notes drawn in place()
 
-    // beat lines
-    ctx.globalAlpha = 0.35;
-    ctx.fillStyle = '#fff';
-    for (let b = 0; b <= this.numBeats; b++) {
-      const x = Math.round(b * this.pxPerBeat);
-      ctx.fillRect(x, 0, 1, h);
-    }
-
-
-    // subdivision lines (lighter)
-    ctx.globalAlpha = 0.15;
-    for (let s = 0; s <= totalSubs; s++) {
-      const x = Math.round(s * pxPerSub);
-      ctx.fillRect(x, 0, 1, h);
-    }
-
-    // notes
-    ctx.globalAlpha = 1;
-    const noteSpan = Math.max(1, this.noteMax - this.noteMin + 1);
-    const rowH = h / noteSpan;
-
-    for (const e of this.events) {
-      if (e.duration <= 0) continue;
-
-      const x = e.subdivision * pxPerSub;
-      const width = e.duration * pxPerSub;
-
-      if (x > w || x + width < 0) continue;
-
-      const noteClamped = Math.max(this.noteMin, Math.min(this.noteMax, e.note));
-      const yIndex = (this.noteMax - noteClamped); // high notes at top
-      const y = yIndex * rowH;
-
-      ctx.globalAlpha = 0.2 + 0.8 * e.velocity;
-      ctx.fillStyle = e.color;
-      ctx.fillRect(x, y + 1, Math.max(1, width), Math.max(1, rowH - 2));
-    }
-
-    ctx.globalAlpha = 1;
   }
 
-  renderCursor(){
+  renderCursor() {
     const ctx = this.cursorCtx;
-    const w = this.cssW
-    const h = this.cssH
+    const dpr = window.devicePixelRatio || 1;
 
-    const curBeat = Math.floor(Theory.ticks / Tone.Time("16n").toTicks());
+    // clear the entire cursor backing store, regardless of transforms
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, this.cursorCanvas.width, this.cursorCanvas.height);
+    ctx.restore();
 
-    ctx.clearRect(0, 0, w, h);
+    // draw in CSS pixels
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const h = this.cssH;
+    const curStep = Math.floor(Theory.ticks / Tone.Time("16n").toTicks());
+
+    const stepW = this.pxPerBeat / 4; // 16ths
+    const x = (curStep % (this.numBeats * 4)) * stepW;
 
     ctx.globalAlpha = 0.25;
     ctx.fillStyle = "#770";
-    // ctx.fillRect(0, 0, w, h);
-
-    const stepW = (this.pxPerBeat / 4);   // scale width too
-    const x = ((curBeat-0) % (this.numBeats * 4)) * stepW;
-
     ctx.fillRect(Math.round(x), 0, Math.round(stepW), h);
-    //console.log(curBeat%32, x, this.pxPerBeat/4)
+  }
 
-    // ctx.restore();
+  renderGrid() {
+    const ctx = this.gridCtx;
+    const dpr = window.devicePixelRatio || 1;
+
+    const w = this.cssW;
+    let h = this.cssH;
+    // ctx.globalAlpha = 1;
+    // ctx.fillStyle = this.backgroundColor;
+    // ctx.fillRect(0, 0, this.cssW, this.cssH);
+
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0, 0, this.gridCanvas.width, this.gridCanvas.height);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    
+
+    h = this.cssH;
+    const subMultiplier = 2
+    const totalSubs = subMultiplier * this.numBeats * this.subdivPerBeat;
+    const pxPerSub = this.pxPerBeat / this.subdivPerBeat / subMultiplier;
+
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = "#fff";
+    for (let b = 0; b <= this.numBeats; b++) ctx.fillRect(Math.round(b * this.pxPerBeat), 0, 1, h);
+
+    ctx.globalAlpha = 0.05;
+    for (let s = 0; s <= totalSubs; s++) ctx.fillRect(Math.round(s * pxPerSub), 0, 1, h);
+  }
+
+  //only when needing to redraw everything
+  renderNotes(){
+    const ctx = this.ctx;
+    //ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = this.backgroundColor;
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    for (const e of this.events) {
+      this.renderEvent(e)
+    }
   }
 
   _resizeBackingStore() {
     const dpr = this._dpr();
-    // const cssW = this.numBeats * this.pxPerBeat;
-    // const cssH = this.height;
 
     const rect = this.containerDiv.getBoundingClientRect();
     const cssW = Math.max(1, rect.width);
@@ -276,19 +449,33 @@ export class PianoRoll {
     this.cssW = cssW
     this.cssH = cssH
 
+    this.containerDiv.style.position = "relative";
+
+    for (const [el, z] of [
+      [this.gridCanvas, 1],
+      [this.canvas, 0],       // notes
+      [this.cursorCanvas, 2],
+    ]) {
+      el.style.position = "absolute";
+      el.style.left = "0";
+      el.style.top = "0";
+      el.style.display = "block";
+      el.style.zIndex = String(z);
+      el.style.pointerEvents = "none"; // optional
+    }
+
     this.canvas.width = Math.floor(cssW * dpr);
     this.canvas.height = Math.floor(cssH * dpr);
     this.cursorCanvas.width = Math.floor(cssW * dpr);
     this.cursorCanvas.height = Math.floor(cssH * dpr);
-
-    //this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    //this.cursorCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.gridCanvas.width = Math.floor(cssW * dpr);
+    this.gridCanvas.height = Math.floor(cssH * dpr);
 
     // now pxPerBeat should be CSS pixels per beat (not derived from canvas.width)
     this.pxPerBeat = cssW / this.numBeats;
 
 
-    for (const c of [this.canvas, this.cursorCanvas]) {
+    for (const c of [this.canvas, this.cursorCanvas, this.gridCanvas]) {
       c.style.width = `${cssW}px`;
       c.style.height = `${cssH}px`;
       c.width  = Math.round(cssW * dpr);
@@ -297,19 +484,80 @@ export class PianoRoll {
 
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     this.cursorCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.gridCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    //draw background
+    this.renderGrid()
+
     const ctx = this.ctx;
-    const w = this.canvas.width;
-    const h = this.canvas.height;
+
+    const w = this.cssW;
+    let h = this.cssH;
     ctx.globalAlpha = 1;
     ctx.fillStyle = this.backgroundColor;
-    ctx.fillRect(0, 0, cssW, cssH);
+    ctx.fillRect(0, 0, this.cssW, this.cssH);
 
-
-  }
+    this.enableRangeDrag()
+ }
 
   _dpr() {
     return window.devicePixelRatio || 1;
+  }
+
+  //CLICK & DRAG
+  // Call once after canvases are created + appended
+  enableRangeDrag() {
+    const el = this.cursorCanvas; // top layer receives input
+    el.style.pointerEvents = "auto";
+
+    this._drag = {
+      active: false,
+      startY: 0,
+      startMin: this.noteMin,
+      startMax: this.noteMax,
+    };
+
+    el.addEventListener("pointerdown", (e) => {
+      el.setPointerCapture(e.pointerId);
+      this._drag.active = true;
+      this._drag.startY = e.clientY;
+      this._drag.startMin = this.noteMin;
+      this._drag.startMax = this.noteMax;
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (!this._drag.active) return;
+
+      const dy = e.clientY - this._drag.startY;
+      const span = this._drag.startMax - this._drag.startMin;
+      const pxPerNote = this.cssH / (span + 1);
+
+      // drag up => higher notes (increase min/max)
+      const deltaNotes = Math.round(-dy / pxPerNote);
+
+      this.setNoteRange(this._drag.startMin + deltaNotes, this._drag.startMax + deltaNotes);
+    });
+
+    el.addEventListener("pointerup", () => { this._drag.active = false; });
+    el.addEventListener("pointercancel", () => { this._drag.active = false; });
+  }
+
+  setNoteRange(min, max) {
+    const span = this.noteMax - this.noteMin; // preserve current span
+
+    // If caller passes both, keep them; otherwise keep span.
+    if (max == null) max = min + span;
+
+    // clamp + preserve span
+    min = Math.max(-36, Math.min(127 - span, min));
+    max = min + span;
+
+    this.noteMin = min;
+    this.noteMax = max;
+
+    // grid depends on row height, so redraw it too
+    this.renderGrid();
+    this.render();       // whatever you use to redraw notes layer
+    this.renderCursor();
+    this.renderNotes()
   }
 }

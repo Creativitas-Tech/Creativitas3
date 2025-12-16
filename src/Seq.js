@@ -376,6 +376,7 @@ export class Seq {
         this.loopInstance = new Tone.Loop(time => {
             //console.log('loop', time)
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+            this.rawIndex = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
             this.index = this.index % len
             //console.log('ind ', this.index)
             if (this.enable === 0) return;
@@ -401,12 +402,21 @@ export class Seq {
                 this.userCallback();
             }
 
+            if(this.drawing){
+                this.updateDrawing(event, time, this.index, this.num);
+            }
+            if(this.pianoRoll){
+                for (const val of event){
+                    this.updatePianoRoll(val,time,this.index,this.num)
+                }
+            }
+
             //check for sequencing params
             // try{
             // for(params in this.synth.param){
             //     if(Array.isArray(params)) this.synth.setValueAtTime
             // }}
-            console.log('len ', this.phraseLength)
+            //console.log('len ', this.phraseLength)
             this.calcNextBeat(func, len, log)
 
             //if(this.drawing){
@@ -649,16 +659,116 @@ export class Seq {
     }
 
     updatePianoRoll(event,time,index,num){
-        
+        //test this.color for hex format
+        let colorType = this.colorKind(this.color)
+        if( colorType === 'css') {
+            this.color = this.cssColorToHex(this.color)
+            colorType = 'hex'
+            //console.log('updated', this.color)
+        }if( colorType === 'hex') {
+            this.color = this.hexToRgb(this.color)
+            colorType = 'rgb'
+            //console.log('updated', this.color)
+        }if( colorType === 'rgb') {
+            this.color = this.rgbToHsv(this.color)
+            colorType = 'hsv'
+            //console.log('updated', this.color)
+        }
+
         const globalBeat = Math.floor(Theory.ticks/Tone.Time('4n').toTicks())
         const curBeat = Tone.Time(this.subdivision)/Tone.Time('4n') 
-        const note = event[0]
+        const note = Math.floor(event[0])
         const subDiv = event[1]
-        const velocity = Array.isArray(this.velocity) ? this.velocity[curBeat%this.velocity.length] : this.velocity
-        const sustain = Array.isArray(this.sustain) ? this.sustain[curBeat%this.sustain.length] : this.sustain
+        const velocity = Array.isArray(this.velocity) ? this.velocity[this.index%this.velocity.length] : this.velocity
+        const sustain = Array.isArray(this.sustain) ? this.sustain[this.index%this.sustain.length] : this.sustain
         //console.log(event, this.rawIndex, (curBeat),index+subDiv)
         this.pianoRoll.place(note, curBeat*(this.rawIndex+subDiv), sustain, velocity, this.color)
         //this.pianoRoll.advanceToBeat(globalBeat)
+    }
+
+    colorKind(c) {
+      if (typeof c === "string") return (c[0] === "#") ? "hex" : "css";
+
+      if (c && typeof c === "object") {
+        const has = (k) => Object.prototype.hasOwnProperty.call(c, k);
+
+        if (has("h") && has("s") && has("v")) return "hsv";
+        if (has("r") && has("g") && has("b")) return "rgb";
+      }
+
+      return "unknown";
+    }
+
+    hexToRgb(hex) {
+      hex = hex.replace("#", "");
+
+      if (hex.length === 3) {
+        hex = hex.split("").map(c => c + c).join("");
+      }
+
+      const num = parseInt(hex, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+
+    rgbToHsv(color) {
+      const r = color.r/255;
+      const g =  color.g/255;
+      const b = color.b/ 255;
+
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const d = max - min;
+
+      let h = 0;
+      if (d !== 0) {
+        switch (max) {
+          case r: h = ((g - b) / d) % 6; break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h *= 60;
+        if (h < 0) h += 360;
+      }
+
+      const s = max === 0 ? 0 : d / max;
+      const v = max;
+
+      return { h, s, v };
+    }
+
+    cssColorToHex(color) {
+      const ctx = document.createElement("canvas").getContext("2d");
+
+      // Let the browser parse the color
+      ctx.fillStyle = color;
+      const computed = ctx.fillStyle; // normalized string
+
+      // Now it's either rgb(...) or #rrggbb
+      if (computed.startsWith("#")) {
+        // already hex
+        if (computed.length === 4) {
+          // expand #rgb → #rrggbb
+          return "#" + [...computed.slice(1)].map(c => c + c).join("");
+        }
+        return computed;
+      }
+
+      // rgb(r, g, b) or rgba(r, g, b, a)
+      const m = computed.match(/\d+/g);
+      if (!m) return null;
+
+      const [r, g, b] = m.map(Number);
+
+      return (
+        "#" +
+        [r, g, b]
+          .map(v => v.toString(16).padStart(2, "0"))
+          .join("")
+      );
     }
 
 }

@@ -2898,7 +2898,7 @@ function Editor(props) {
                                     mode: 'javascript',
                                 }}
                                 theme={themeDef}
-                                extensions={[javascript({ jsx: true }), decorationsField, autocompletion({ override: [combinedCompleter] }), broadcastCursorLinePlugin]}
+                                extensions={[javascript({ jsx: true }), decorationsField, autocompletion({ override: [combinedCompleter] }), broadcastCursorLinePlugin, EditorView.lineWrapping]}
                                 onChange={handleCodeChange}
                                 onKeyDown={handleKeyDown}
                                 onStatistics={handleStatistics}
