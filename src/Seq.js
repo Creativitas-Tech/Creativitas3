@@ -5,6 +5,8 @@ import * as Tone from 'tone';
 import { Theory, parseStringSequence, parsePitchStringSequence, parsePitchStringBeat, getChord, pitchNameToMidi, intervalToMidi } from './TheoryModule';
 import { orn } from './Ornament';
 import { sketch } from './p5Library.js'
+import { TextField } from './visualizers/textField';
+import { PianoRoll } from './visualizers/PianoRoll';
 import * as p5 from 'p5';
 
 export class Seq {
@@ -36,6 +38,8 @@ export class Seq {
         this.guiElements["knobs"]=[]
         this.guiElements["toggles"]=[]
         this.userCallback = null
+        this.drawing = null
+        this.events = new Array(8)
 
         //(note, pattern=1, scalar=1, length=4)
         this.ornaments = [
@@ -168,6 +172,10 @@ export class Seq {
             //console.log('loop', time, event, this.callback)
             if(this.userCallback){
                 this.userCallback();
+            }
+
+            if(this.drawing){
+                this.updateDrawing(curBeat, time, this.index, this.num);
             }
 
             //check for sequencing params
@@ -390,9 +398,15 @@ export class Seq {
             // for(params in this.synth.param){
             //     if(Array.isArray(params)) this.synth.setValueAtTime
             // }}
-            //console.log('len ', this.phraseLength)
+            console.log('len ', this.phraseLength)
             this.calcNextBeat(func, len, log)
-            
+
+            //if(this.drawing){
+                this.updateDrawing(event, time, this.index, this.num);
+            //}
+
+
+
             if (this.phraseLength === 'infinite') return;
             this.phraseLength -= 1;
             if (this.phraseLength < 1) this.stop();
@@ -608,4 +622,20 @@ export class Seq {
     }
 
     updateSeqGui(){}
+
+    updateDrawing(val, time, index, num){
+        const curBeat = Math.floor(Theory.ticks/Tone.Time('4n').toTicks())%8
+        this.events[curBeat] = val
+        let front = this.events.slice(0,curBeat).join(' ')
+        if( front.length > 0 ) front = front + ' '
+        const mid = this.events.slice(curBeat,curBeat+1).join(' ') + ' '
+        const end = this.events.slice(curBeat+1,8).join(' ')
+        this.drawing.cursorPosition.line = 0
+        this.drawing.cursorPosition.start = front.length
+        this.drawing.cursorPosition.end = front.length+mid.length
+        
+        this.drawing.writeLine(0, front  + mid + end)
+    }
+
 }
+

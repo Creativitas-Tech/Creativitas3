@@ -1,4 +1,4 @@
-import * as Tone from 'tone';
+  import * as Tone from 'tone';
 
 export class TextField {
     constructor(numLines = 10, _target = 'Canvas') {
@@ -8,8 +8,14 @@ export class TextField {
       return;
     }
 
+
     this.numLines = numLines;
     this.lines = Array(numLines).fill('');
+    this.cursorPosition = {
+      'line':-1,
+      'start':-1,
+      'end':-1
+    }
     
     // Create the div
     this.div = document.createElement('div');
@@ -57,12 +63,12 @@ export class TextField {
 
     // Write text to a given line index
     writeLine(lineNum, text) {
-    // Expand the array as needed
-    while (this.lines.length <= lineNum) this.lines.push('');
-    this.lines[lineNum] = text;
-    this.trimTrailingEmptyLines();
-    this.render();
-  }
+      // Expand the array as needed
+      while (this.lines.length <= lineNum) this.lines.push('');
+      this.lines[lineNum] = text;
+      this.trimTrailingEmptyLines();
+      this.render();
+    }
 
   clearLine(lineNum) {
     if (lineNum < 0 || lineNum >= this.lines.length) return;
@@ -84,8 +90,54 @@ export class TextField {
   }
 
     // Redraw all lines
-    render() {
-    this.div.textContent = this.lines.join('\n');
+    // render() {
+    //   this.div.textContent = this.lines.join('\n');
+    // }
+  render() {
+    let highlightPos = [this.cursorPosition.start,this.cursorPosition.end]
+    let highlightLine = this.cursorPosition.line
+    this.ensureStyle()
+
+    const esc = (s) =>
+      String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    let html = "";
+    for (let i = 0; i < this.lines.length; i++) {
+      const line = String(this.lines[i] ?? "");
+      
+      if ( i === highlightLine &&
+        highlightPos[0] >= 0 &&
+        highlightPos[0] <= line.length &&
+        highlightPos[1] >= highlightPos[0]
+      ) {
+        html +=
+          esc(line.slice(0, highlightPos[0])) +
+          `<span class="seq-cursor">${esc(line.slice(highlightPos[0], highlightPos[1]))}</span>` +
+          esc(line.slice(highlightPos[1]));
+      } else {
+        html += esc(line);
+      }
+      if (i < this.lines.length - 1) html += "\n";
+    }
+    //console.log(html)
+    this.div.innerHTML = html;
+  }
+
+  ensureStyle() {
+    if (this._hasStyle) return;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      .seq-cursor {
+        background: rgba(255,255,255,0.25);
+        border-radius: 3px;
+      }
+    `;
+    document.head.appendChild(style);
+    this._hasStyle = true;
   }
  
 }

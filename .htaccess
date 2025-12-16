@@ -1,0 +1,13 @@
+RewriteEngine On
+RewriteBase /m361/
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ /m361/index.html [L,QSA]
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule LiteSpeed>
+    CacheDisable public /
+    CacheDisable private /
+</IfModule>
