@@ -1,11 +1,6 @@
-A sampler playback object based on Tone.Player.
+The **Piano Roll Visualizer** is a simple display for showing musical eventsacross a fixed window, similar in spirit to DAW piano rolls such as Ableton Live. The vertical axis is pictures and the horizontal access is beats. The default view is for eight beats, but this can be modified. 
 
-For Player, the sequencer retriggers the sample at different points within the sample
-* the sequence value determines where in the audiofile the sample is played from 
-* `divisions` determines how many chunks the audiofile is split into, and the sequencer value determines which chunk to play
-* `division = 8` and `p.sequence('0 1 2 3 4 5 6 7')` plays the whole audiofile
+To use the piano roll, first create it as a standalone object, and then assigned sequences to it using the sequencers' .pianoroll method. 
 
-Loading samples:
-* use predefined samples (call player.listSamples() for the list)
-* use a url to a file stored on a `cors compliant` website
-* call load() with no argument to upload a file from your computer
+Click and drag vertically to move the view window. Notes out of range are drawn on the bottom or top row.
+

@@ -19,20 +19,22 @@
  *   If beatNumber is null, all events are cleared.
  *   If beatNumber is provided, only notes intersecting that beat are removed.
  *
- * RENDERING MODEL (TWO-CANVAS APPROACH)
- * The display uses two stacked canvases:
- *
- * 1) Background canvas (static)
- *    - Cleared and redrawn by render().
- *    - Draws the background color.
- *    - Draws vertical grid lines at quarter-note boundaries.
- *    - This canvas is rendereed every quarter note
- *
- * 2) Foreground canvas (dynamic)
- *    - Used for cursor and transient overlays.
- *    - renderCursor() draws the playhead every 16th note.
- *    - Cleared and redrawn frequently without touching the background.
- *
+ * 
+ * 
+The visualizer uses **multiple stacked canvases**:
+
+1. **Grid Canvas**  
+   Drawn once (or when configuration changes). Renders the background color and vertical grid lines at beat and subdivision boundaries.
+
+2. **Note Canvas**  
+   Receives individual note drawings when `place()` is called. Notes persist until explicitly cleared.
+   Also clears beats on the canvas when the cursor arrives at a new beat.
+
+3. **Cursor Canvas**  
+   Updated frequently. Cleared and redrawn every subdivision (e.g. every 16th note) to show the current playhead position without disturbing the grid or notes.
+
+This separation keeps redraw costs low and ensures stable, predictable visuals during real-time playback.
+
  * NOTE DRAWING FLOW
  * - Notes are drawn individually when place() is called.
  * - Notes are rendered directly onto the main (note) canvas.

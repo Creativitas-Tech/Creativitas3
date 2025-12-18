@@ -1,20 +1,30 @@
-let audioURL = "120bpm_beat.mp3"
-let output = new Tone.Multiply(0.05).toDestination()
-const player = new Player(audioURL)
-player.connect( output )
-player.initGui()
+let s = new Polyphony(Twinkle)
+s.initGui()
+let output = new Tone.Multiply(.1).toDestination()
+s.connect(output)
 
-//run this code after previous code is loaded!
-player.playbackrate = 1 //negative is reverse!
-player.fadein = 0
-player.fadeout = 0.01
-player.divisions = 8 //divisor for time sequencing
-player.sequence('0 1 2 3 4 5 6 7', '8n')
-player.sustain = 1
-player.volume = 1
+s.sequence('-1 3 5 [.-1]', '4n', 0)
+s.sequence(expr(i=> i*2%5 -i*i/64 + 9, 32), '8n', 1)
+s.sequence('-6 . .. ..[-3 .] .', '16n', 2)
+//
+let pr = new PianoRoll()
+s.seq[0].pianoRoll = pr
+s.seq[1].pianoRoll = pr
+s.seq[2].pianoRoll = pr
+//
+pr.setConfig({
+  height: 1, 
+  numBeats:9, 
+  backgroundColor:'#002'
+})
+s.seq[0].color = '#f0f'
+s.seq[1].color = 'grey'
+s.seq[2].color = 'red'
+//
+s.sustain = [.1, .05,.05]
+s.velocity = [100,80,60,127,70,80,90]
 
-// audioURL = "kalimba.mp3"
-// audioURL = "vocal.mp3"
-// player.load( audioURL)
-// player.stop()
-// player.load()
+s.seq[0].velocity = [60,80,127]
+s.seq[1].velocity = 127
+s.seq[1].sustain = [0.01,.1,.05]
+s.seq[2].velocity = 60

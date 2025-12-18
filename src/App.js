@@ -33,7 +33,7 @@ function App() {
 
   const referenceFiles = [
     // 'DrumSampler', 'Rumble', 'Simpler',
-     'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'FM','Oscilloscope', 'Spectroscope','Spectrogram'
+     'Twinkle', 'Daisy', 'DrumSampler', 'Player', 'Rumble', 'Simpler', 'FM','Oscilloscope', 'Spectroscope','Spectrogram', 'PianoRoll'
   ];
 
   const homeStarterCode = `/*

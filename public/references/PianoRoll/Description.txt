@@ -1,21 +1,30 @@
-
 ## Constructor Parameters
 
 - **`numBeats`**  
   The number of beats displayed horizontally in the piano roll window. This defines the visible time span before notes wrap or are cleared.
 
 - **`height`**  
-  The vertical size of the piano roll in pixels. Combined with the note range, this determines the height of each pitch row.
+  The vertical size of the piano roll. The default value is 1. 
 
 - **`color`**  
   The base color used for drawing note events. Colors are internally normalized (e.g. to HSV) and may be modulated by velocity to control saturation or brightness.
 
 - **`backgroundColor`**  
-  The background color of the grid canvas. This is drawn once and remains static unless the display configuration changes.
+  The background color of the grid canvas.
 
 ---
 
 ## Core Methods
+
+- **`clear(beatNumber = null)`**  
+  Removes previously drawn notes.  
+  - If `beatNumber` is `null`, all note events are cleared.  
+  - If a beat number is provided, only notes in that beat are removed.  
+
+---
+
+## Background Methods
+
 
 - **`place(note, subdivision, duration, velocity)`**  
   Adds and draws a note event at a given pitch and time position.  
@@ -24,26 +33,3 @@
   - `duration`: Length of the note in subdivisions.  
   - `velocity`: Normalized value (0–1) used to modulate visual intensity (e.g. saturation).  
   Notes are drawn immediately onto the note canvas without requiring a full redraw.
-
-- **`clear(beatNumber = null)`**  
-  Removes previously drawn notes.  
-  - If `beatNumber` is `null`, all note events are cleared.  
-  - If a beat number is provided, only notes intersecting that beat are removed.  
-  This is commonly used to clear the beat following the playhead so the cursor always advances into empty space.
-
----
-
-## Rendering Model
-
-The visualizer uses **multiple stacked canvases**:
-
-1. **Grid Canvas**  
-   Drawn once (or when configuration changes). Renders the background color and vertical grid lines at beat and subdivision boundaries.
-
-2. **Note Canvas**  
-   Receives individual note drawings when `place()` is called. Notes persist until explicitly cleared.
-
-3. **Cursor Canvas**  
-   Updated frequently. Cleared and redrawn every subdivision (e.g. every 16th note) to show the current playhead position without disturbing the grid or notes.
-
-This separation keeps redraw costs low and ensures stable, predictable visuals during real-time playback.
