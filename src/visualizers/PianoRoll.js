@@ -170,12 +170,14 @@ export class PianoRoll {
 
   makeLoop(){
   	this.loop = new Tone.Loop(()=>{
-  		this.beat = Math.floor(Theory.ticks/Tone.Time('4n').toTicks())
-  		const nextBeat = (this.beat + 2) % this.numBeats;
-      //setTimeout(()=>this.clear(nextBeat), 200);
+  		this.beat = (Theory.ticks/Tone.Time('4n').toTicks())
+  		let nextBeat = (this.beat + 1/4) % this.numBeats;
+      //console.log('next', nextBeat)
+      nextBeat = Math.floor(nextBeat*4)/4
+      //setTimeout(()=>this.clear(nextBeat), 25);
       this.clear(nextBeat)
-      this.render()
-  	},'4n').start()
+      this.render(nextBeat)
+  	},'16n').start()
 
     this.cursorLoop = new Tone.Loop(()=>{
       this.renderCursor()
@@ -196,7 +198,7 @@ export class PianoRoll {
     // duration: in subdivisions
     // velocity: 0..1 (used for alpha)
     //console.log(note, subdivision, duration, velocity)
-    console.log(note, subdivision)
+    //console.log(note, subdivision)
   	subdivision = subdivision % this.numBeats
   	
   	if(note === '.') return
@@ -308,9 +310,10 @@ export class PianoRoll {
       ctx.globalAlpha = 1;
 
         //e.color = {h:0, s:0, v:0.75}
-        const sat = e.color.s * (0.3 + 0.7 * e.velocity);
-        const light = 30 + 40 * e.color.v;              // stable brightness
+        let sat = e.color.s * (0.1 + 0.9 * Math.pow(e.velocity,2));
+        let light = 30 + 40 * e.color.v;              // stable brightness
 
+        if( e.color.s < 0.1) light = light * (0.3 + 0.7 * e.velocity);
         ctx.globalAlpha = 1;
         ctx.fillStyle = `hsl(${e.color.h}, ${sat * 100}%, ${light}%)`;
         //console.log('hsv', e.color.h, sat * 100, light)
@@ -337,12 +340,12 @@ export class PianoRoll {
   clear(beatNumber = null) {
     if (beatNumber === null) {
       this.events.length = 0;
-      this.render();
+      //this.render();
       return;
     }
 
-    const startSub = beatNumber ;
-    const endSub = (beatNumber + 1 ) ;
+    const startSub = (beatNumber) ;
+    const endSub = (beatNumber + 1/4 ) ;
     //console.log('sub', startSub, endSub)
 
     this.events = this.events.filter(e => {
@@ -352,10 +355,10 @@ export class PianoRoll {
       return (eEnd <= startSub) || (eStart >= endSub);
     });
 
-    this.render();
+    //this.render();
   }
 
-  render() {
+  render(nextBeat) {
     const ctx = this.ctx;
     const w = this.cssW
     const h = this.cssH
@@ -363,8 +366,10 @@ export class PianoRoll {
     // background
     ctx.globalAlpha = 1;
 
-    const start = (this.beat+1) % this.numBeats * this.pxPerBeat 
-    const width = this.pxPerBeat 
+    const start = nextBeat % this.numBeats * this.pxPerBeat 
+    const width = this.pxPerBeat/4
+
+    //console.log(nextBeat, start, width)
 
     // If you want to “erase” to backgroundColor:
     ctx.fillStyle = this.backgroundColor;   // '#000' if black
@@ -527,7 +532,8 @@ export class PianoRoll {
     el.addEventListener("pointermove", (e) => {
       if (!this._drag.active) return;
 
-      const dy = e.clientY - this._drag.startY;
+      let dy = e.clientY - this._drag.startY;
+      dy = -dy
       const span = this._drag.startMax - this._drag.startMin;
       const pxPerNote = this.cssH / (span + 1);
 
