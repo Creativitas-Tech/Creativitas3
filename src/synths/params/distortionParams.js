@@ -29,7 +29,7 @@ export const paramDefinitions = (synth) => [
     default: 80,
       value: 100,
     callback: (value) => {
-      synth.highpassA.frequency.value = value;
+      //synth.highpassA.frequency.rampTo( value,.1);
     }
   },
   {
@@ -41,7 +41,7 @@ export const paramDefinitions = (synth) => [
     default: 8000,
     value: 8000,
     callback: (value) => {
-      synth.lowpassFilter.frequency.value = value;
+      //synth.lowpassFilter.frequency.rampTo( value,.1)
     }
   },
   {
@@ -53,7 +53,7 @@ export const paramDefinitions = (synth) => [
     default: 150,
     value: 150,
     callback: (value) => {
-      synth.highpassB.frequency.value = value;
+      //synth.highpassB.frequency.rampTo( value,.1)
     }
   },
   {
@@ -82,7 +82,7 @@ export const paramDefinitions = (synth) => [
         return;
       }     
       value = Math.pow(value,2)*36-24
-      synth.toneShelf.gain.rampTo( value, .3);
+      //synth.toneShelf.gain.rampTo( value,.1)
       
     }
   },

@@ -1185,6 +1185,139 @@ export class MonophonicTemplate {
         this.start(num);
     }
 
+    // cantus: array of numbers or strings (e.g. [0,1,2,'.',3])
+    // returns: array of numbers or same strings
+    counterpoint(cantus, beamWidth = 16, w = {}) {
+      const W = {
+        step: 1.0,
+        similar: 0.6,
+        contrary: -0.3,
+        oblique: 0.0,
+        ...w
+      };
+
+      const baseOffsets = [2, -5, 5, -2];
+
+      const sgn = (x) => (x === 0 ? 0 : (x > 0 ? 1 : -1));
+
+      const toIndex = (d, baseOct = 4) => {
+        if (d === "." || d === "_" || d === "?") return d;
+        const n = (typeof d === "number") ? d : Number(d);
+        if (!Number.isFinite(n)) return NaN;
+        return n + 7 * baseOct;
+      };
+
+      const propose = (cIdx, lastCp) => {
+        const out = [];
+        for (const off of baseOffsets) {
+          for (let k = -2; k <= 2; k++) out.push(cIdx + off + 7 * k);
+        }
+        if (Number.isFinite(lastCp)) out.sort((a, b) => Math.abs(a - lastCp) - Math.abs(b - lastCp));
+        return out;
+      };
+
+      // ---- rules/terms take a ctx object ----
+      // ctx = { i, cantusRaw, cIdx, cpIdx, path, W }
+
+      const hardRules = [
+        // Example: you can add more later (no-op now)
+        function ruleCandidateIsFinite(ctx) {
+          return Number.isFinite(ctx.cpIdx);
+        },
+        function ruleCandidateRepeatsNote(ctx) {
+            if( Number.isFinite(ctx.cpIdx) )
+                return ctx.cpIdx !== ctx.path.lastCp;
+            else return true
+        }
+      ];
+
+      const costTerms = [
+        function costSmallMelodicMotion(ctx) {
+          const lastCp = ctx.path.lastCp;
+          if (!Number.isFinite(lastCp)) return 0;
+          return ctx.W.step * Math.abs(ctx.cpIdx - lastCp);
+        },
+
+        function costPreferContrary(ctx) {
+          const lastCp = ctx.path.lastCp;
+          const lastC = ctx.path.lastC;
+          if (!Number.isFinite(lastCp) || !Number.isFinite(lastC)) return 0;
+
+          const cMove = sgn(ctx.cIdx - lastC);
+          const cpMove = sgn(ctx.cpIdx - lastCp);
+
+          if (cMove === 0 || cpMove === 0) return ctx.W.oblique;
+          if (cMove === cpMove) return ctx.W.similar;
+          return ctx.W.contrary;
+        }
+      ];
+
+      // ---- beam search ----
+      let beam = [{ seq: [], cost: 0, lastCp: null, lastC: null }];
+
+      for (let i = 0; i < cantus.length; i++) {
+        const cIdx = toIndex(cantus[i], 4);
+        const nextBeam = [];
+
+        for (const path of beam) {
+          // pass-through tokens: CP gets same token, no scoring
+          if (typeof cIdx === "string") {
+            nextBeam.push({
+              seq: path.seq.concat(cIdx),
+              cost: path.cost,
+              lastCp: path.lastCp,
+              lastC: path.lastC
+            });
+            continue;
+          }
+
+          // bad cantus value: mirror raw input
+          if (!Number.isFinite(cIdx)) {
+            nextBeam.push({
+              seq: path.seq.concat(cantus[i]),
+              cost: path.cost,
+              lastCp: path.lastCp,
+              lastC: path.lastC
+            });
+            continue;
+          }
+
+          const candidates = propose(cIdx, path.lastCp);
+
+          for (const cpIdx of candidates) {
+            const ctx = { i, cantusRaw: cantus[i], cIdx, cpIdx, path, W };
+
+            // hard rules
+            let ok = true;
+            for (const rule of hardRules) {
+              if (!rule(ctx)) { ok = false; break; }
+            }
+            if (!ok) continue;
+
+            // costs
+            let add = 0;
+            for (const term of costTerms) add += term(ctx);
+
+            nextBeam.push({
+              seq: path.seq.concat(cpIdx),
+              cost: path.cost + add,
+              lastCp: cpIdx,
+              lastC: cIdx
+            });
+          }
+        }
+
+        nextBeam.sort((a, b) => a.cost - b.cost);
+        beam = nextBeam.slice(0, beamWidth);
+        if (beam.length === 0) return null;
+      }
+
+      return beam[0].seq;
+    }
+
+    /************************************************/
+
+
     set velocity(val) {
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].velocity = val

@@ -1,3 +1,9 @@
+/*
+Note: latency hint is set in:
+tone/Tone/core/context/Context.ts, line 157
+tone/build/esm/core/context/Context.js, line 84
+*/
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { timingStrategyManager } from './timing/TimingStrategyManager.js';
 import { handleTimingInitialization } from './timing/TimingModalDialog.js';
@@ -53,6 +59,7 @@ import { AsciiGrid } from './AsciiGrid.js';
 import webExportHTMLContentGenerator from './webExport/WebExportGenerator.ts';
 import {MidiDevice} from './midi/MidiDevice.js';
 import {ControlSource} from './midi/ControlSource.js';
+
 
 const SPLIT_PREFERENCE_KEY = 'creativitas-editor-split-percentage';
 const CANVAS_VERTICAL_PREFERENCE_KEY = 'creativitas-canvas-height-percentage';
