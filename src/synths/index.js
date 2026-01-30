@@ -27,6 +27,7 @@ export { QuadPanner } from './Panner.js';
 export { Quadrophonic } from './Quadrophonic.js';
 export { Drummer } from './Drummer.js';
 export { Twinkle } from './Twinkle.js';
+export { Strings } from './Strings.js';
 export { Chorus } from './Chorus.js';
 export { Distortion } from './Distortion.js';
 export { Delay } from './Delay.js';

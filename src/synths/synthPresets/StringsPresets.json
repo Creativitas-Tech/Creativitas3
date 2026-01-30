@@ -1,0 +1,152 @@
+{
+  "default": {
+    "type": "square",
+    "cutoff": 2750.48799999999994,
+    "Q": 0,
+    "keyTrack": 0,
+    "envDepth": 0.5999999999976,
+    "level": 0,
+    "attack":  0.4,
+    "decay":  0.89062500000000155,
+    "sustain":  0.6,
+    "release":  1
+  },
+  "chirp": {
+    "type": "saw",
+    "cutoff": 380.278,
+    "Q": 10.44300000000001,
+    "keyTrack": 0,
+    "envDepth": 2557.399999999998,
+    "level": 0,
+    "attack":  0.01000000000000004,
+    "decay":    0.3500694444444451,
+    "sustain":    0.08999999999999969,
+    "release":    0.21777777777777863
+  },
+  "pluck": {
+    "type": "square",
+    "cutoff": 343.35200000000003,
+    "Q": 11.532000000000012,
+    "keyTrack": 0,
+    "envDepth": 1306.3999999999974,
+    "level": 0,
+    "adsr": [
+      0.01,
+      0.4,
+      0.5,
+      0.8
+    ]
+  },
+  "flute": {
+    "type": "tri",
+    "cutoff": 20,
+    "Q": 0,
+    "keyTrack": 0,
+    "envDepth": 2197.4000000000037,
+    "level": 0,
+    "adsr": [
+      0.8402777777777787,
+      1,
+      1,
+      1
+    ]
+  },
+  "drone": {
+    "type": "saw",
+    "cutoff": 435.3276799999999,
+    "Q": 14.700000000000012,
+    "keyTrack": 0,
+    "envDepth": 8.600000000001046,
+    "level": 0.5041000000000002,
+    "adsr": [
+      0.8402777777777787,
+      1,
+      1,
+      1
+    ]
+  },
+  "piano": {
+    "type": "saw",
+    "cutoff": 100,
+    "Q": 0.0,
+    "keyTrack": 1,
+    "envDepth": 1200,
+    "level": 0,
+    "attack": 0.005,
+    "decay": 0.5,
+    "sustain": 0.3,
+    "release": 0.1
+  },
+  "guitar": {
+    "type": "square",
+    "cutoff": 800,
+    "Q": 0.3,
+    "keyTrack": 0.3,
+    "envDepth": 1800,
+    "level": 0,
+    "attack": 0.002,
+    "decay": 0.7,
+    "sustain": 0.05,
+    "release": 0.1
+  },
+  "flute": {
+    "type": "tri",
+    "cutoff": 950,
+    "Q": 11,
+    "keyTrack": 1.0,
+    "envDepth": 0,
+    "level": 0,
+    "attack": 0.2,
+    "decay": 0.2,
+    "sustain": 0.9,
+    "release": 0.4
+  },
+  "brass": {
+    "type": "saw",
+    "cutoff": 600,
+    "Q": 0.5,
+    "keyTrack": 0.6,
+    "envDepth": 1300,
+    "level": 0,
+    "attack": 0.1,
+    "decay": 0.3,
+    "sustain": 0.7,
+    "release": 0.6
+  },
+  "bowedString": {
+    "type": "square",
+    "cutoff": 1100,
+    "Q": 0.1,
+    "keyTrack": 0.5,
+    "envDepth": 1000,
+    "level": 0,
+    "attack": 0.4,
+    "decay": 0.4,
+    "sustain": 0.8,
+    "release": 0.5
+  },
+  "banjo": {
+    "type": "square",
+    "cutoff": 1200,
+    "Q": 4,
+    "keyTrack": 0.4,
+    "envDepth": 3000,
+    "level": 0,
+    "attack": 0.001,
+    "decay": 0.15,
+    "sustain": 0.0,
+    "release": 0.15
+  },
+  "marimba": {
+    "type": "tri",
+    "cutoff": 400,
+    "Q": 2,
+    "keyTrack": 1,
+    "envDepth": 4000,
+    "level": 0.0,
+    "attack": 0.001,
+    "decay": 0.08,
+    "sustain": 0.0,
+    "release": 0.1
+  }
+}
