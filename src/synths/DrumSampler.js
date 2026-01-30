@@ -57,7 +57,7 @@ export class DrumSampler extends DrumTemplate{
     this.comp.connect(this.distortion)
     this.distortion.connect(this.output)
 
-    //
+    //drum voices
     this.kick = new DrumVoice()
     this.kick.output.connect(this.dry_kick)
     this.dry_kick.connect(this.output)
@@ -72,20 +72,6 @@ export class DrumSampler extends DrumTemplate{
     this.p2.output.connect(this.comp)
     this.p3 = new DrumVoice()
     this.p3.output.connect(this.comp)
-
-    //setTimeout(()=>this.loadSamples(this.kit),100)
-    this.hatDecay = .05
-    this.prevTime = 0
-
-    this.kickGhostVelocity = new Array(10).fill(.25)
-    this.snareGhostVelocity = new Array(10).fill(1/4)
-    this.kickVelocity = new Array(10).fill(1)
-    this.snareVelocity = new Array(10).fill(1)
-    this.closedVelocity = new Array(10).fill(.75)
-    this.openVelocity = new Array(10).fill(1)
-    this.p1Velocity = new Array(10).fill(1)
-    this.p2Velocity = new Array(10).fill(1)
-    this.p3Velocity = new Array(10).fill(1)
 
     for(let i=0;i<10;i++) {
         this.subdivision[i] = '16n'
@@ -283,18 +269,18 @@ export class DrumSampler extends DrumTemplate{
 
     switch(val){
       case '.': break;
-      case '0': this.kick.trigger(1*velocity,1,time); break; //just because. . . .
+      case '0': case 0: this.kick.trigger(1*velocity,1,time); break; //just because. . . .
       case 'O': this.kick.trigger(1*velocity,1,time); break;
-      case 'o': this.kick.trigger(.2*velocity,1.5,time); break;
+      case 'o': this.kick.triggerGhost(velocity,1,time); break;
       
       case 'X': this.snare.trigger(1*velocity,1,time); break;
-      case 'x': this.snare.trigger(.2*velocity,1,time); break;
+      case 'x': this.snare.triggerGhost(velocity,1,time); break;
       case '*': this.hat.triggerChoke(.75*velocity,0.1,time); break;
       case '^': this.hat.trigger(.75*velocity,1,time); break;
       
-      case '1': this.p1.trigger(1*velocity,1,time); break;
-      case '2': this.p2.trigger(1*velocity,1,time); break;
-      case '3': this.p3.trigger(1*velocity,1,time); break;
+      case '1': case 1: this.p1.trigger(1*velocity,1,time); break;
+      case '2': case 2: this.p2.trigger(1*velocity,1,time); break;
+      case '3': case 3: this.p3.trigger(1*velocity,1,time); break;
       default: console.log('triggerDrum(), no matching drum voice ', val, '\n')
     }   
   }

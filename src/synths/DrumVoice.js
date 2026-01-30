@@ -18,6 +18,9 @@ export class DrumVoice extends DrumTemplate{
     this.decayTime = 1
     this.duration = 1
     this.startPoint = 0
+    this.accent = 1.5
+    this.ghost = .3
+
     this.env = new Tone.Envelope(0.0, 1, 1, 10)
     this.vca = new Tone.Multiply()
     this.output = new Tone.Multiply(1)
@@ -95,6 +98,16 @@ export class DrumVoice extends DrumTemplate{
       this.env.release =  this.decayTime
       this.env.decay =  this.decayTime 
       this.triggerSample(amplitude, decay,time)
+    }
+    triggerAccent(amplitude, decay,time){
+      this.env.release =  this.decayTime
+      this.env.decay =  this.decayTime 
+      this.triggerSample(amplitude * this.accent.value, decay,time)
+    }
+    triggerGhost(amplitude, decay,time){
+      this.env.release =  this.decayTime
+      this.env.decay =  this.decayTime 
+      this.triggerSample(amplitude * this.ghost.value, decay,time)
     }
     triggerChoke(amplitude, decay,time){
       this.env.release =  this.decayTime * this.chokeRatio

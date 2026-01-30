@@ -45,7 +45,9 @@ export class FM4 extends MonophonicTemplate {
 
     // === Output path ===
     this.env = new Tone.Envelope();
-    this.env.connect(this.carrier.vca.factor);
+    this.env_depth = new Tone.Multiply(1);
+    this.env_depth.connect(this.carrier.vca.factor);
+    this.env.connect(this.env_depth);
     this.vca = new Tone.Multiply()
     this.env.connect(this.vca.factor);
 
@@ -63,6 +65,7 @@ export class FM4 extends MonophonicTemplate {
 
     // === Velocity and key tracking ===
     this.velocitySig = new Tone.Signal();
+    this.velocitySig.connect(this.env_depth.factor)
     this.keyTrackingAmount = new Tone.Signal();
     this.keyTracker = new Tone.Multiply(0.1);
     this.frequency.connect(this.keyTracker);

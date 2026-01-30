@@ -15,6 +15,14 @@ const paramDefinitions = (synth) => [
     name:'amp',type: 'hidden',
     min:0,max:1,curve:2,callback:x=>synth.output.factor.value = x
   },
+  {
+    name:'ghost',type: 'hidden',
+    min:0,max:1,curve:2,callback:x=>synth.ghost = x
+  },
+  {
+    name:'accent',type: 'hidden',
+    min:0,max:4,curve:2,callback:x=>synth.accent = x
+  },
 
   {
     name:'decay',type: 'param',value:1,
