@@ -1,0 +1,124 @@
+<h1>Creating an Audio Effect</h1>
+<p>This guide covers the basics of building a new audio effect using for the Creativitas site. Effects are defined using a consistent structure made up of parameter definitions, presets, a layout file, and a constructor that defines the signal path and routing.</p>
+<p>If you're creating a new effect, the easiest approach is to <strong>copy an existing effect file</strong> and simply replace the <strong>audio object definitions and routing</strong> in the constructor. Most of the system logic — parameter handling, GUI layout, and presets — stays the same and doesn't need to be touched.</p>
+<hr>
+<h2>1. Import Statements</h2>
+<p>At the top of your effect file, you'll typically include:</p>
+<pre><code class="language-js">import * as Tone from 'tone';
+import { EffectTemplate } from './EffectTemplate';
+import { Parameter } from './ParameterModule.js';
+import ChorusPresets from './synthPresets/ChorusPresets.json';
+import layout from './layouts/EffectLayout.json';
+import { paramDefinitions } from './params/ChorusParams.js';
+</code></pre>
+<p>You should change:</p>
+<ul>
+<li><code>ChorusPresets</code> → your effect's preset file</li>
+<li><code>paramDefinitions</code> import path → your effect's parameter file</li>
+<li><code>layout</code> → usually remains <code>EffectLayout.json</code>, which is shared</li>
+</ul>
+<hr>
+<h2>2. Parameter File</h2>
+<p>Each effect defines adjustable parameters in a file like <code>ChorusParams.js</code>. These describe:</p>
+<ul>
+<li>Parameter name</li>
+<li>Type (<code>&quot;input&quot;</code>,<code>&quot;param&quot;</code>, <code>&quot;output&quot;</code>, <code>&quot;none&quot;</code>)
+<ul>
+<li>The type will determine where in the GUI the objects are located.</li>
+</ul>
+</li>
+<li>Min, max, and default values
+<ul>
+<li>there are other possible values too, which are covered in the params system overview</li>
+</ul>
+</li>
+<li>A callback for applying the value to the audio engine</li>
+</ul>
+<p><strong>Example:</strong></p>
+<pre><code class="language-js">{
+  name: &quot;level&quot;,
+  type: &quot;output&quot;,
+  min: 0,
+  max: 1,
+  default: 0.3,
+  callback: (value) =&gt; synth.ouput.gain.rampTo(value,.01)
+}
+</code></pre>
+<hr>
+<h2>3. Preset File</h2>
+<p>Presets are stored in a <code>.json</code> file such as <code>ChorusPresets.json</code>, with an array of named presets.</p>
+<p><strong>Example:</strong></p>
+<pre><code class="language-json">{
+  &quot;default&quot;: {
+    &quot;delayTime&quot;: 0.3,
+    &quot;feedback&quot;: 0.5
+  },
+  &quot;Wide Echo&quot;:{
+    &quot;delayTime&quot;: 0.6,
+    &quot;feedback&quot;: 0.7
+  }
+}
+</code></pre>
+<p>Always include a <code>&quot;default&quot;</code> preset.</p>
+<hr>
+<h2>4. Layout File</h2>
+<p>Most effects use a shared layout file: <code>EffectLayout.json</code>. This defines GUI positioning, control types, and grouping. You usually don’t need to modify this unless you're building a radically different effect UI.</p>
+<hr>
+<h2>5. Constructor</h2>
+<p>The constructor is where you define:</p>
+<ul>
+<li>Audio objects (Tone.js nodes)</li>
+<li>Signal routing</li>
+<li>Background color</li>
+</ul>
+<p>You do <strong>not</strong> need to change the parameter handling boilerplate. Here’s the typical constructor format:</p>
+<pre><code class="language-js">constructor(gui = null) {
+  super();
+  this.gui = gui;
+  this.presets = ReverbPresets;
+  this.name = &quot;Reverb&quot;;
+  this.layout = layout;
+  this.backgroundColor = [0, 0, 50];
+
+  // Effect-specific variables
+  this.curDelayTime = 0.1;
+  this.curSpread = 0.1;
+
+  // Audio object definitions
+  this.input = new Tone.Gain(1);
+  this.output = new Tone.Gain(1);
+  // Connect audio path
+  this.input.connect(this.output);
+
+  // Parameter setup — DON’T MODIFY
+  this.paramDefinitions = paramDefinitions(this);
+  this.param = this.generateParameters(this.paramDefinitions);
+  this.createAccessors(this, this.param);
+  this.autocompleteList = this.paramDefinitions.map(def =&gt; def.name);
+  this.presetList = Object.keys(this.presets);
+  setTimeout(() =&gt; {
+    this.loadPreset('default');
+  }, 500);
+}
+</code></pre>
+<hr>
+<h2>6. Custom Setters (When Needed)</h2>
+<p>Only include custom methods when your parameter requires logic beyond a direct property assignment. For example:</p>
+<pre><code class="language-js">this.setDelayTime = function(value) {
+  this.curDelayTime = value
+  this.delayL.delayTime.rampTo(value * (1 - this.curSpread), 0.01);
+  this.delayR.delayTime.rampTo(value * (1 + this.curSpread), 0.01);
+}
+</code></pre>
+<p>This lets the <code>delayTime</code> and <code>this.curSpread</code> parameters work together to create stereo spread.</p>
+<hr>
+<h2>Summary</h2>
+<p>To create a new effect:</p>
+<ol>
+<li>Copy an existing effect file.</li>
+<li>Replace the audio nodes and routing in the constructor.</li>
+<li>Create a parameter file with callbacks.</li>
+<li>Create a <code>.json</code> preset file (include a <code>&quot;default&quot;</code>).</li>
+<li>Use the standard <code>EffectLayout.json</code> layout.</li>
+<li>Only define custom parameter setters when needed.</li>
+</ol>

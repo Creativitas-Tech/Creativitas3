@@ -1,0 +1,260 @@
+<h1>NexusUI Integration - Complete Guide</h1>
+<h2>Overview</h2>
+<p>The Creativitas3 editor now supports <strong>NexusUI wrapper classes</strong> for creating GUI elements in user code. These are HTML-based UI elements (not p5.js canvas drawings).</p>
+<h2>Available Wrapper Classes</h2>
+<p>All classes are available globally in user code via <code>window</code> object:</p>
+<h3>1. <strong>Button</strong> - Toggle/momentary buttons</h3>
+<pre><code class="language-javascript">const btn = new Button(x, y, width, height)
+btn.mode = 'toggle'  // or 'button' for momentary
+btn.state = false    // true/false
+btn.colorize('accent', '#AEC6CF')
+btn.colorize('fill', '#303030')
+btn.element.on('change', function(value) {
+  console.log('Button:', value)
+})
+</code></pre>
+<h3>2. <strong>Switch</strong> (Toggle) - On/off switches</h3>
+<pre><code class="language-javascript">const toggle = new Switch(x, y, width, height)
+toggle.state = false
+toggle.element.on('change', function(value) {
+  console.log('Switch:', value)
+})
+</code></pre>
+<h3>3. <strong>Dial</strong> - Rotary knobs</h3>
+<pre><code class="language-javascript">const dial = new Dial(x, y, width, height)
+dial.min = 0
+dial.max = 100
+dial.value = 50
+dial.colorize('accent', '#8200C8')
+dial.mapTo(function(value) {
+  console.log('Dial:', value)
+})
+</code></pre>
+<h3>4. <strong>Slider</strong> - Linear faders</h3>
+<pre><code class="language-javascript">const slider = new Slider(x, y, width, height)
+slider.min = 0
+slider.max = 1
+slider.value = 0.5
+slider.mapTo(function(value) {
+  console.log('Slider:', value)
+})
+</code></pre>
+<h3>5. <strong>NumberBox</strong> - Numeric input</h3>
+<pre><code class="language-javascript">const numbox = new NumberBox(x, y, width, height)
+numbox.min = 0
+numbox.max = 127
+numbox.value = 60
+numbox.mapTo(function(value) {
+  console.log('NumberBox:', value)
+})
+</code></pre>
+<h2>Container System</h2>
+<p>All NexusUI elements are created inside the <code>#Canvas</code> container:</p>
+<ul>
+<li>Elements use <strong>absolute positioning</strong></li>
+<li>Coordinates are in <strong>pixels</strong> (not p5 percentage units)</li>
+<li>Elements are <strong>responsive</strong> to window resize (via parentNexus.js)</li>
+</ul>
+<h2>Positioning Guide</h2>
+<pre><code class="language-javascript">// Grid-based layout example
+const gridOrigin = { x: 200, y: 100 }
+const gridSpacing = { x: 120, y: 80 }
+const buttonSize = { width: 80, height: 40 }
+
+// Create button at grid position [row, col]
+const btn = new Button(
+  gridOrigin.x + col * gridSpacing.x,
+  gridOrigin.y + row * gridSpacing.y,
+  buttonSize.width,
+  buttonSize.height
+)
+</code></pre>
+<h2>Adding Text Labels</h2>
+<p>Since there's no NexusUI Text element yet, use DOM elements:</p>
+<pre><code class="language-javascript">const label = document.createElement('div')
+label.textContent = 'My Label'
+label.style.cssText = `
+  position: absolute;
+  left: ${x}px;
+  top: ${y}px;
+  color: #8796EB;
+  font-family: monospace;
+  font-size: 12px;
+  pointer-events: none;
+  user-select: none;
+`
+document.getElementById('Canvas').appendChild(label)
+</code></pre>
+<h2>Color Scheme</h2>
+<p>Standard Creativitas colors:</p>
+<ul>
+<li><strong>Accent (active)</strong>: <code>#AEC6CF</code> (light blue)</li>
+<li><strong>Stop button</strong>: <code>#FF6961</code> (red)</li>
+<li><strong>Enable toggle</strong>: <code>#8200C8</code> (purple)</li>
+<li><strong>Fill (background)</strong>: <code>#303030</code> (dark gray)</li>
+<li><strong>Border</strong>: <code>#8796EB</code> (medium blue)</li>
+</ul>
+<h2>Backend Integration</h2>
+<h3>Editor.js Imports (lines 16-21)</h3>
+<pre><code class="language-javascript">// NexusUI wrappers
+import { Dial } from './ui/Dial.js';
+import { Slider } from './ui/Slider.js';
+import { NumberBox } from './ui/NumberBox.js';
+import { Button } from './ui/Button.js';
+import { Switch } from './ui/Switch.js';
+</code></pre>
+<h3>Window Object Exposure (lines 281-286)</h3>
+<pre><code class="language-javascript">// NexusUI wrapper classes (for user code)
+window.Dial = Dial;
+window.Slider = Slider;
+window.NumberBox = NumberBox;
+window.Button = Button;
+window.Switch = Switch;
+</code></pre>
+<h2>MonophonicTemplate.initGui()</h2>
+<p>The <code>initGui()</code> method in MonophonicTemplate automatically creates NexusUI elements:</p>
+<h3>Key Parameters:</h3>
+<ul>
+<li><strong>Container</strong>: <code>#Canvas</code> DOM element</li>
+<li><strong>Scaling</strong>: <code>size * 15</code> pixels (converts p5 size units to pixels)</li>
+<li><strong>Positioning</strong>: Absolute pixel coordinates from layout.boundingBox</li>
+</ul>
+<h3>Layout Structure:</h3>
+<pre><code class="language-javascript">this.layout = {
+  oscillator: {
+    groupA: ['frequency', 'detune'],
+    groupB: ['type', 'phase'],
+    controlTypeA: 'knob',      // Uses Dial
+    controlTypeB: 'fader',      // Uses Slider
+    sizeA: 1,
+    sizeB: 1,
+    boundingBox: { x: 100, y: 100, width: 400, height: 200 },
+    offsets: { x: 60, y: 60 },
+    color: '#8200C8'
+  }
+}
+</code></pre>
+<h3>createGuiElement() Method:</h3>
+<pre><code class="language-javascript">createGuiElement(param, { x, y, size, controlType, color, i }) {
+  const width = size * 15;   // Scale to pixels
+  const height = size * 15;
+  
+  if (controlType === 'knob') {
+    const dial = new Dial(x, y, width, height);
+    dial.min = param.min;
+    dial.max = param.max;
+    dial.value = param._value;
+    dial.colorize(&quot;accent&quot;, color);
+    dial.mapTo((value) =&gt; param.set(value, i, true));
+    param.guiElements.push(dial);
+  }
+  // ...similar for 'fader' -&gt; Slider
+}
+</code></pre>
+<h2>Common Patterns</h2>
+<h3>Radio Button Behavior (Exclusive Selection)</h3>
+<pre><code class="language-javascript">const buttons = []
+for (let i = 0; i &lt; 4; i++) {
+  const btn = new Button(x + i * 100, y, 80, 40)
+  btn.mode = 'toggle'
+  btn.element.on('change', function(v) {
+    if (v) {
+      // Deactivate other buttons
+      buttons.forEach((other, j) =&gt; {
+        if (j !== i) other.state = false
+      })
+      // Do action
+      console.log(`Button ${i} activated`)
+    }
+  })
+  buttons.push(btn)
+}
+</code></pre>
+<h3>Linking to Tone.js Parameters</h3>
+<pre><code class="language-javascript">const cutoffDial = new Dial(100, 100, 60, 60)
+cutoffDial.min = 50
+cutoffDial.max = 5000
+cutoffDial.value = 1000
+cutoffDial.mapTo(function(freq) {
+  vcf.frequency.value = freq
+})
+</code></pre>
+<h2>Differences from p5 GUI</h2>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>p5 GUI</th>
+<th>NexusUI Wrappers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Rendering</td>
+<td>Canvas-based circles</td>
+<td>HTML DOM elements</td>
+</tr>
+<tr>
+<td>Container</td>
+<td>p5 canvas instance</td>
+<td><code>#Canvas</code> div</td>
+</tr>
+<tr>
+<td>Positioning</td>
+<td>Percentage-based (x: 0-100)</td>
+<td>Pixel-based (absolute)</td>
+</tr>
+<tr>
+<td>Initialization</td>
+<td><code>gui = new p5(sketch, 'Canvas')</code></td>
+<td>No initialization needed</td>
+</tr>
+<tr>
+<td>Create element</td>
+<td><code>gui.Toggle({x, y, size})</code></td>
+<td><code>new Button(x, y, width, height)</code></td>
+</tr>
+<tr>
+<td>Callback</td>
+<td><code>callback: function(v)</code></td>
+<td><code>element.on('change', fn)</code></td>
+</tr>
+<tr>
+<td>Colors</td>
+<td><code>accentColor: [r,g,b]</code></td>
+<td><code>colorize('accent', '#hex')</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Troubleshooting</h2>
+<h3>Elements not appearing?</h3>
+<ol>
+<li>Check <code>#Canvas</code> container exists: <code>document.getElementById('Canvas')</code></li>
+<li>Verify positioning doesn't place elements off-screen</li>
+<li>Check console for errors about <code>window.Nexus</code></li>
+</ol>
+<h3>p5Elements.js still being called?</h3>
+<ul>
+<li>You're using old <code>gui = new p5(sketch, 'Canvas')</code> syntax</li>
+<li>Switch to <code>new Button()</code>, <code>new Dial()</code>, etc.</li>
+</ul>
+<h3>Elements overlapping code editor?</h3>
+<ul>
+<li>Increase <code>gridOrigin.x</code> (try 200px minimum)</li>
+<li>Adjust <code>gridOrigin.y</code> (try 100px minimum)</li>
+</ul>
+<h3>State not updating?</h3>
+<ul>
+<li>Use <code>.state</code> property, not <code>.value</code></li>
+<li>Access underlying NexusUI with <code>.element</code> when needed</li>
+</ul>
+<h2>Example: Complete 4-Sequence Controller</h2>
+<p>See <code>SEQUENCER_COMPLETE.js</code> for a full working example with:</p>
+<ul>
+<li>16 toggle buttons in 4x4 grid</li>
+<li>Radio button behavior per row</li>
+<li>Text labels via DOM elements</li>
+<li>Color-coded stop buttons</li>
+<li>Enable toggle switch</li>
+<li>Proper spacing and layout</li>
+</ul>

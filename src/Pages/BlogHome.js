@@ -5,7 +5,9 @@ import { marked } from 'marked';
 const blogSlugs = [
   'gettingStarted',
   'ui_layout_blog_post',
-  'GettingStarted_AudioEffect'
+  'GettingStarted_AudioEffect',
+  'Todo',
+  'array_rhythm_generation'
 ];
 
 const BlogHome = () => {

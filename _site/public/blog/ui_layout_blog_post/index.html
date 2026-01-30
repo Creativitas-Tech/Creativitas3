@@ -1,0 +1,79 @@
+<h1>Automatically Building UIs for Synth Parameters</h1>
+<p>One of the features I find most helpful — and most forgettable — is my system for generating a full GUI from just a list of parameters and a layout file. This has saved me hours of dragging sliders around by hand.</p>
+<p>Here’s a breakdown of how it works, and how to adapt it for new synths.</p>
+<hr>
+<h2>Defining Parameters</h2>
+<p>Each synth has a parameter definition file that declares:</p>
+<ul>
+<li>What each parameter is called</li>
+<li>What it controls</li>
+<li>How it should be scaled</li>
+<li>How to apply the value to the synth</li>
+</ul>
+<p>For example, in <code>twinkleParams.js</code>:</p>
+<pre><code class="language-js">{
+  name: 'cutoff', type: 'vcf',
+  min: 20, max: 10000, curve: 2,
+  callback: function(x) {
+    synth.cutoffSig.value = x;
+  }
+}
+</code></pre>
+<p>Every entry follows this format, and they’re passed into the synth like this:</p>
+<pre><code class="language-js">this.paramDefinitions = paramDefinitions(this)
+this.param = this.generateParameters(this.paramDefinitions)
+this.createAccessors(this, this.param)
+</code></pre>
+<hr>
+<h2>Creating a Layout File</h2>
+<p>Layout files are JSON files that map parameter groups (<code>vco</code>, <code>vcf</code>, <code>env</code>, <code>lfo</code>, etc.) to positions and styles on the canvas.</p>
+<p>Here’s a simplified layout block for a <code>vco</code> section:</p>
+<pre><code class="language-json">&quot;vco&quot;: {
+  &quot;color&quot;: [200, 50, 0],
+  &quot;boundingBox&quot;: { &quot;x&quot;: 10, &quot;y&quot;: 10, &quot;width&quot;: 50, &quot;height&quot;: 40 },
+  &quot;offsets&quot;: { &quot;x&quot;: 12, &quot;y&quot;: 30 },
+  &quot;groupA&quot;: [&quot;vco_mix&quot;, &quot;detune&quot;, &quot;shape1&quot;, &quot;shape2&quot;],
+  &quot;controlTypeA&quot;: &quot;knob&quot;,
+  &quot;sizeA&quot;: 0.75
+}
+</code></pre>
+<p>Each section defines:</p>
+<ul>
+<li>Visual styling (<code>color</code>)</li>
+<li>Screen position (<code>boundingBox</code>)</li>
+<li>Control layout rules (<code>groupA</code>, <code>controlTypeA</code>, <code>sizeA</code>)</li>
+</ul>
+<p>These groups correspond directly to the <code>type</code> field in your parameter definitions.</p>
+<hr>
+<h2>Using the Layout in Your Synth</h2>
+<p>To use a layout file, just import it and assign it to <code>this.layout</code> in your synth constructor.</p>
+<pre><code class="language-js">import daisyLayout from './layouts/daisyLayout.json';
+
+export class Daisy extends MonophonicTemplate {
+  constructor() {
+    super();
+    this.presets = DaisiesPresets;
+    this.name = 'Daisy';
+    this.layout = daisyLayout;
+    
+    this.paramDefinitions = paramDefinitions(this);
+    this.param = this.generateParameters(this.paramDefinitions);
+    this.createAccessors(this, this.param);
+  }
+}
+</code></pre>
+<p>That’s it — the GUI will be automatically generated using the specified layout and parameter definitions.</p>
+<hr>
+<h2>Making a New Layout</h2>
+<p>When building a new synth, just:</p>
+<ol>
+<li>Define your parameters in <code>mySynthParams.js</code></li>
+<li>Create a <code>mySynthLayout.json</code> file with matching <code>type</code> blocks</li>
+<li>Assign the layout in your synth file with:</li>
+</ol>
+<pre><code class="language-js">import myLayout from './layouts/mySynthLayout.json';
+this.layout = myLayout;
+</code></pre>
+<p>Done.</p>
+<p>This structure keeps your synth code clean, modular, and fast to iterate on. Adding a new control is as easy as updating a parameter list and layout block.</p>
+<p>Let me know if you want to dive deeper into dynamic layouts, live editing, or visual design tweaks.</p>
