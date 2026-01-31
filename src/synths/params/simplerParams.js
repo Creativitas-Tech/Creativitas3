@@ -22,14 +22,14 @@ const paramDefinitions = (synth) => [
     }
   },
   {
-    name: 'sustainTime',
+    name: 'duration ',
     type: 'input',
     value: 0.5,
     min: 0.005,
     max: 1,
     curve: 2,
     callback: function(x) {
-      synth.sustain = x;
+      synth.duration = x;
     }
   },
   {

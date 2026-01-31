@@ -355,12 +355,12 @@ export class Player extends MonophonicTemplate {
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
-        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let duration = this.getSeqParam(this.seq[num].duration, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let lag = this.getSeqParam(this.seq[num].lag, index);
         note = note+octave
-        sustain = sustain * Tone.Time(subdivision)
-        //console.log(note, velocity, sustain, time)
+        duration = duration * Tone.Time(subdivision)
+        //console.log(note, velocity, duration, time)
 
         let groove = Groove.get(subdivision,index)
         //console.log(groove)
@@ -372,11 +372,11 @@ export class Player extends MonophonicTemplate {
             this.triggerAttackRelease(
                 note,
                 velocity,
-                sustain,
+                duration,
                 time + timeOffset
             );
         } catch(e){
-            console.log('invalid note', note , velocity, sustain)
+            console.log('invalid note', note , velocity, duration)
         }
     }
 }

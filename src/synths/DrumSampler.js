@@ -247,7 +247,7 @@ export class DrumSampler extends DrumTemplate{
 
     let octave = this.getSeqParam(this.seq[num].octave, index);
     let velocity = this.getSeqParam(this.seq[num].velocity, index);
-    let sustain = this.getSeqParam(this.seq[num].sustain, index);
+    let duration = this.getSeqParam(this.seq[num].duration, index);
     let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
     let lag = this.getSeqParam(this.seq[num].lag, index);
 

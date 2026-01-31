@@ -61,7 +61,7 @@ const paramDefinitions = (synth) => [
         min: 0, max: 1, curve: 2, value: 0.1, 
         callback: function(x) { synth.env.decay = x; } },
     { 
-        name: 'sustainTime', type: 'vca', 
+        name: 'sustain', type: 'vca', 
         min: 0, max: 1, curve: 2, value: 0.5, 
         callback: function(x) { synth.env.sustain = x; } },
     { 

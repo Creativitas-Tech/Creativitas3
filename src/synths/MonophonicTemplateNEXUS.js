@@ -863,9 +863,9 @@ export class MonophonicTemplate {
         }
     }
 
-    set sustain(val) {//turn into duration
+    set duration(val) {//turn into duration
         for(let i=0;i<10;i++){
-            if(this.seq[i])this.seq[i].sustain = val
+            if(this.seq[i])this.seq[i].duration = val
         }
     }
 
@@ -918,14 +918,14 @@ export class MonophonicTemplate {
         }
     }
     //possible implementation of rotate
-    get sustain() {
+    get duration() {
         const self = this;
         return new Proxy([], {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
                     if (self.seq[index]) {
-                        self.seq[index].setSustain(value);
+                        self.seq[index].setDuration(value);
                     }
                 }
                 return true; // Indicate success
@@ -1080,7 +1080,7 @@ export class MonophonicTemplate {
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
-        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let duration = this.getSeqParam(this.seq[num].duration, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let lag = this.getSeqParam(this.seq[num].lag, index);
         //handle in the Seq class
@@ -1092,17 +1092,17 @@ export class MonophonicTemplate {
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256
-        //console.log('pa', note, octave, velocity, sustain, time, timeOffset)
+        //console.log('pa', note, octave, velocity, duration, time, timeOffset)
         try {
-            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
+            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,duration,time+timeOffset)
             this.triggerAttackRelease(
                 note + octave * Theory.scaleRatios.length,
                 velocity,
-                sustain,
+                duration,
                 time + timeOffset
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
+            console.log('invalid note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
         }
     }
 }

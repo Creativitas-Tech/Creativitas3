@@ -15,7 +15,7 @@ export class Seq {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         this._subdivision = subdivision; // Local alias
         this._octave = 0;                // Local alias
-        this._sustain = .1;             // Local alias
+        this._duration = .1;             // Local alias
         this._roll = 0.0;               // Local alias
         this._velocity = 100;            // Local alias
         this._orn = 0;            // Local alias
@@ -65,8 +65,8 @@ export class Seq {
     }
     get octave() {return this._octave; }
     set octave(val) {this._octave = val; }
-    get sustain() {return this._sustain;}
-    set sustain(val) {  this._sustain = val; }
+    get duration() {return this._duration;}
+    set duration(val) {  this._duration = val; }
     get roll() {  return this._roll; }
     set roll(val) {    this._roll = val; }
     get velocity() { return this._velocity; }
@@ -680,9 +680,9 @@ export class Seq {
         const note = Math.floor(event[0])
         const subDiv = event[1]
         const velocity = Array.isArray(this.velocity) ? this.velocity[this.index%this.velocity.length] : this.velocity
-        const sustain = Array.isArray(this.sustain) ? this.sustain[this.index%this.sustain.length] : this.sustain
+        const duration = Array.isArray(this.duration) ? this.duration[this.index%this.duration.length] : this.duration
         //console.log(event, this.rawIndex, (curBeat),index+subDiv)
-        this.pianoRoll.place(note, curBeat*(this.rawIndex+subDiv), sustain, velocity, this.color)
+        this.pianoRoll.place(note, curBeat*(this.rawIndex+subDiv), duration, velocity, this.color)
         //this.pianoRoll.advanceToBeat(globalBeat)
     }
 
