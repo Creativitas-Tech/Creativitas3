@@ -37,6 +37,8 @@ export class Vocoder extends MonophonicTemplate {
     this.carrierGain = new Tone.Gain(0.5)
     this.output = new Tone.Gain(1)
     this.carrierGain.connect(this.output)
+    this.external = new Tone.Multiply(1)
+
 
     
 
@@ -64,6 +66,7 @@ export class Vocoder extends MonophonicTemplate {
       const filter = new Tone.Filter({frequency:freq, type:"bandpass",Q:10});
       const gain = new Tone.Gain(0).connect(this.carrierGain);
       this.carrier.connect(filter);
+      this.external.connect(filter);
       this.noise.connect(filter);
       filter.connect(gain);
       follower.connect(gain.gain)

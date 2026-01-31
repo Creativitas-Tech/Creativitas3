@@ -76,18 +76,18 @@ const paramDefinitions = (synth) => [
       synth.vcfEnvDepth.factor.value = x;
     }
   }
-  // ,
-  // {
-  //   name: 'startTime',
-  //   type: 'hidden',
-  //   value: 0,
-  //   min: 0.0,
-  //   max: 1,
-  //   curve: 1,
-  //   callback: function(x) {
-  //     synth.sampler.startTime = x;
-  //   }
-  // },
+  ,
+  {
+    name: 'startTime',
+    type: 'hidden',
+    value: 0,
+    min: 0.0,
+    max: 1,
+    curve: 1,
+    callback: function(x) {
+      synth.sampler._startTime = x;
+    }
+  }
   // {
   //   name: 'endTime',
   //   type: 'hidden',
@@ -96,8 +96,9 @@ const paramDefinitions = (synth) => [
   //   max: 10,
   //   curve: 1,
   //   callback: function(x) {
-  //     synth.sampler.endTime = x;
+  //     synth.endTime = x;
   //   }
+  // }
 ];
 
 export default paramDefinitions;

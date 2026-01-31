@@ -14,66 +14,66 @@ import paramDefinitions from './params/simplerParams.js';
 class ExtendedSampler extends Tone.Sampler{
     constructor(options){
         super(options)
-        this.startTime = 0
+        this._startTime = 0
         console.log('begin')
     }
 
-    // ftomf(freq) {
-    //     return 69 + 12 * Math.log2(freq / 440);
-    // }
-    // triggerAttack(notes, time, velocity = 1) {
-    //     console.log("es.triggerAttack", notes, time, velocity);
+    ftomf(freq) {
+        return 69 + 12 * Math.log2(freq / 440);
+    }
+    triggerAttack(notes, time, velocity = 1) {
+        //console.log("es.triggerAttack", notes, time, velocity);
 
-    //     if (!Array.isArray(notes)) {
-    //         notes = [notes];
-    //     }
+        if (!Array.isArray(notes)) {
+            notes = [notes];
+        }
 
-    //     notes.forEach((note) => {
-    //         const midiFloat = this.ftomf(
-    //             new Tone.FrequencyClass(this.context, note).toFrequency()
-    //         );
-    //         const midi = Math.round(midiFloat);
-    //         const remainder = midiFloat - midi;
+        notes.forEach((note) => {
+            const midiFloat = this.ftomf(
+                new Tone.FrequencyClass(this.context, note).toFrequency()
+            );
+            const midi = Math.round(midiFloat);
+            const remainder = midiFloat - midi;
 
-    //         // find the closest note pitch
-    //         const difference = this._findClosest(midi);
-    //         const closestNote = midi - difference;
+            // find the closest note pitch
+            const difference = this._findClosest(midi);
+            const closestNote = midi - difference;
 
-    //         const buffer = this._buffers.get(closestNote);
-    //         const playbackRate = Tone.intervalToFrequencyRatio(difference + remainder);
+            const buffer = this._buffers.get(closestNote);
+            const playbackRate = Tone.intervalToFrequencyRatio(difference + remainder);
 
-    //         // play that note
-    //         const source = new Tone.ToneBufferSource({
-    //             url: buffer,
-    //             context: this.context,
-    //             curve: this.curve,
-    //             fadeIn: this.attack,
-    //             fadeOut: this.release,
-    //             playbackRate,
-    //         }).connect(this.output);
-    //         // Updated this line:
-    //         source.start(time, this.startTime, buffer.duration / playbackRate, velocity);
+            // play that note
+            const source = new Tone.ToneBufferSource({
+                url: buffer,
+                context: this.context,
+                curve: this.curve,
+                fadeIn: this.attack,
+                fadeOut: this.release,
+                playbackRate,
+            }).connect(this.output);
+            // Updated this line:
+            source.start(time, this._startTime, buffer.duration / playbackRate, velocity);
 
-    //         // add it to the active sources
-    //         if (!Array.isArray(this._activeSources.get(midi))) {
-    //             this._activeSources.set(midi, []);
-    //         }
-    //         this._activeSources.get(midi).push(source);
+            // add it to the active sources
+            if (!Array.isArray(this._activeSources.get(midi))) {
+                this._activeSources.set(midi, []);
+            }
+            this._activeSources.get(midi).push(source);
 
-    //         // remove it when it's done
-    //         source.onended = () => {
-    //             if (this._activeSources && this._activeSources.has(midi)) {
-    //                 const sources = this._activeSources.get(midi);
-    //                 const index = sources.indexOf(source);
-    //                 if (index !== -1) {
-    //                     sources.splice(index, 1);
-    //                 }
-    //             }
-    //         };
-    //     });
+            // remove it when it's done
+            source.onended = () => {
+                if (this._activeSources && this._activeSources.has(midi)) {
+                    const sources = this._activeSources.get(midi);
+                    const index = sources.indexOf(source);
+                    if (index !== -1) {
+                        sources.splice(index, 1);
+                    }
+                }
+            };
+        });
 
-    //     return this;
-    // }   
+        return this;
+    }   
 }
 
 export class Simpler extends MonophonicTemplate {
@@ -258,7 +258,7 @@ export class Simpler extends MonophonicTemplate {
                 this.filterEnv.triggerAttackRelease(dur,time)
                 this.vca.factor.setValueAtTime(amp, time)
             } else{
-                this.sampler.triggerAttackRelease(freq, dur)
+                this.sampler.triggerAttackRelease(freq, dur, Tone.now(), amp)
                 this.filterEnv.triggerAttackRelease(dur)
                 this.vca.factor.setValueAtTime(amp)
             }
