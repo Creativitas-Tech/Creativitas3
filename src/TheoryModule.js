@@ -684,42 +684,37 @@ export function parseStringSequence(str){
 }
 
 export function parsePitchStringSequence(str) {
-    //if( !Array.isArray(str)) str = [str]
-    const firstElement = str.replace(/\[/g, "")[0]
-    const usesPitchNames = /^[a-ac-zA-Z?]$/.test(firstElement);
-    //console.log(str)
+  const firstChar = str.replace(/\[/g, "")[0];
+  const usesPitchNames = /^[A-Ga-g?]$/.test(firstChar);
 
-    // Step 1: Remove all whitespace
-    if( usesPitchNames ) str = str.replace(/\s/g, "");
-    //str = str.replace(/\,/g, "");
+  if( usesPitchNames ) str = str.replace(/\s+/g, "");
 
-    // Step 2: Split into an array
-    // - Matches items inside brackets as one element
-    // - Groups numbers, 'b', and '#' with the preceding pitch
-    // - Ensures '@' and the number following it are in their own array element
-    //const regex = /\[.*?\]|[A-Ga-g][#b]?\d*|@(\d+)|./g;
-    // - Preserves periods '.' as their own array elements
-    let regex = /\[.*?\]|[A-Ga-g][#b]?\d*|@(\d+)|\.|\?/g;
+  // Tokenizers
+  const pitchRegex = /\[.*?\]|[A-Ga-g][#b]?\d*|@\d+|\.|\?|~|\*/g;
+  const numRegex   = /\[.*?\]|-?\d+|@\d+|\.|\?|~|\*/g;
 
-    if (!usesPitchNames) { // true if the first element is a number
-        regex = /\[.*?\]|-?[b#]?\d+[b#]?|@(\d+)|\.|\?/g;
+  const regex = usesPitchNames ? pitchRegex : numRegex;
+
+  let arr = str.match(regex) ?? [];
+
+  // Expand @N: repeat the previous token N-1 additional times
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i][0] === "@") {
+      const repeatCount = parseInt(arr[i].slice(1), 10) - 1;
+      const prev = arr[i - 1];
+
+      if (repeatCount > 0 && prev !== undefined) {
+        arr.splice(i, 1, ...new Array(repeatCount).fill(prev));
+        i += repeatCount - 1;
+      } else {
+        // If malformed (e.g. starts with @), just remove it
+        arr.splice(i, 1);
+        i -= 1;
+      }
     }
+  }
 
-    let arr = str.match(regex);
-
-    // Step 3: Process '@' elements
-    for (let i = 0; i < arr.length; i++) {
-        if (arr[i].startsWith("@")) {
-            const repeatCount = parseInt(arr[i].slice(1), 10)-1; // Get the number after '@'
-            const elementToRepeat = arr[i - 1]; // Get the previous element
-            const repeatedElements = new Array(repeatCount).fill(elementToRepeat); // Repeat the element
-            arr.splice(i, 1, ...repeatedElements); // Replace '@' element with the repeated elements
-            i += repeatCount - 1; // Adjust index to account for the newly inserted elements
-        }
-    }
-
-
-    return arr;
+  return arr;
 }
 
 //handles rhythm sequences
@@ -849,7 +844,7 @@ export function parsePitchStringBeat(curBeat, time){
         curBeat.forEach(arr => {
           let regex = /\[.*?\]|[A-Ga-g][#b]?\d*|@(\d+)|./g;
           if( !usesPitchNames){ //true if first element is a number
-            regex = /\[.*?\]|-?\d+[#b]?|@(\d+)|\./g;
+            regex = /\[.*?\]|-?\d+|@\d+|\.|\?|~|\*/g;
           } 
           arr = arr.match(regex)
 

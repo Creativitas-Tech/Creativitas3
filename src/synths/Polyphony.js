@@ -156,6 +156,13 @@ export class Polyphony extends MonophonicTemplate{
 		//console.log("AR ", val,dur)
 	}
 
+	releaseAll(time = null){
+		// console.log("releaseAll")
+		for( let i=0; i< this.numVoices; i++){
+			this.voice[i].triggerRelease(0,time)
+		}
+    }
+
     /** VOICE MANAGEMENT **/
 
     // Get a free voice or steal an old voice

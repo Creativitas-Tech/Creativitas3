@@ -64,11 +64,11 @@ const paramDefinitions = (synth) => [
             } else synth.vcf_env_depth.factor.value = x; } },
     { 
         name: 'level', type: 'hidden', 
-        min: 0, max: 1, curve: 2, value: 0, 
+        min: 0, max: 1, curve: 2, value: 1, 
         callback: function(x, time = null) {
             if (time) {
-                synth.vca_lvl.setValueAtTime(x, time);
-            } else  synth.vca_lvl.value = x; } },
+                synth.output.setValueAtTime(x, time);
+            } else  synth.output.value = x; } },
     { 
         name: 'attack', type: 'vca', 
         min: 0, max: 4, curve: 2, value: 0.4, 

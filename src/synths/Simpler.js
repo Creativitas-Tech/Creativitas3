@@ -265,6 +265,15 @@ export class Simpler extends MonophonicTemplate {
         }catch(e){}
     }//attackRelease
 
+    releaseAll(time = null){
+        console.log('releaseAll')
+        if(time) {
+            this.sampler.releaseAll(time)
+        } else {
+            this.sampler.releaseAll();
+        }
+    }
+
 
     //parameter setters
     setADSR(a,d,s,r){

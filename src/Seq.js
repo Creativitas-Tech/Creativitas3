@@ -20,6 +20,7 @@ export class Seq {
         this._velocity = 100;            // Local alias
         this._orn = 0;            // Local alias
         this._lag = 0;            // Local alias
+        this._pedal = 0;
         this._rotate = 0;   //actual permanent rotate amount, about the thoery.tick
         this._offset = null;   //internal variable for calculating rotation specifically for play
         this._transform = (x) => x;      // Local alias
@@ -87,10 +88,23 @@ export class Seq {
         this._transform = val;
     }
 
+    //pedaling
+    pedal(state = "full"){
+        this._pedal = state
+    }
+    star(){
+        this.synth.releaseAll()
+    }
+    clearPedal(){ 
+        this._pedal = "off"
+        this.star()
+    }
+    lift(){ this.clearPedal() }
+
 
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
-        // console.log('vals', this.vals)
+        //console.log('vals', this.vals)
         this.prevVals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
@@ -158,7 +172,7 @@ export class Seq {
 
             let event = parsePitchStringBeat(curBeat, time);
             //console.log('1', event)
-            event = this.applyOrnamentation(event)
+            //event = this.applyOrnamentation(event)
             event = event.map(([x, y]) => [this.perform_transform(x), y])
             //console.log(event)
             // Roll chords
@@ -171,7 +185,8 @@ export class Seq {
 
             //main callback for triggering notes
             //console.log(event, time, this.index, this.num)
-            for (const val of event) this.callback(val, time, this.index, this.num);
+            //if( this._pedal === "legato" ) this.synth.releaseAll()
+            for (const val of event) this.synth.parseNoteString(val, time, this.index, this.num);
             //console.log('loop', time, event, this.callback)
             if(this.userCallback){
                 this.userCallback();
@@ -312,6 +327,7 @@ export class Seq {
 
     stop() {
         this.enable = 0;
+        this.synth.releaseAll()
         //if (this.loopInstance) this.loopInstance.stop();
     }
 
@@ -396,7 +412,7 @@ export class Seq {
 
             //main callback for triggering notes
             //console.log(event, time, this.index, this.num)
-            for (const val of event) this.callback(val, time, this.index, this.num);
+            for (const val of event) this.synth.parseNoteString(val, time, this.index, this.num);
             //console.log('loop', time, event, this.callback)
             if(this.userCallback){
                 this.userCallback();

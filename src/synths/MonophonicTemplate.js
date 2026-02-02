@@ -69,6 +69,7 @@ export class MonophonicTemplate {
 
         // Sequencer related
         this.seq = []; // Array of Seq instances
+        this.prevEventTiming = 0
         this.turingMachine = null;
         this.callback = (i, time) => { }
         this.callbackLoop = new Tone.Loop((time) => {
@@ -347,6 +348,11 @@ export class MonophonicTemplate {
             this.frequency.value = Tone.Midi(val).toFrequency();
             this.env.triggerAttackRelease(dur);
         }
+    }
+
+    releaseAll(time = null){
+        // console.log("releaseAll")
+        this.env.triggerRelease(0,time)
     }
 
     generateParameters(paramDefinitions) {
@@ -1128,7 +1134,7 @@ export class MonophonicTemplate {
      */
     sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this);
         } else {
             this.seq[num].sequence(arr, subdivision, phraseLength);
         }
@@ -1169,7 +1175,7 @@ export class MonophonicTemplate {
 
     expr(func, len = 32, subdivision = '16n', num = 0) {
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
+            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this);
         }
         this.seq[num].expr(func, len, subdivision);
         this.start(num);
@@ -1536,6 +1542,26 @@ export class MonophonicTemplate {
 
     parseNoteString(val, time, index, num=null) {
        //console.log(val,time,index, num, isNaN(Number(val[0])))
+        let lag = this.getSeqParam(this.seq[num].lag, index);
+        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
+        let groove = Groove.get(subdivision,index);
+        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+        let curEventTiming = val[1] + index
+
+        if (val[0] === "~") {  return; }
+        else if (val[0] === "*") {
+            this.releaseAll(time + timeOffset)
+            return;
+        }
+
+        
+        
+
+        //handle pedaling
+        let pedal = this.seq[num]._pedal
+        if( pedal == "legato" && curEventTiming > this.prevEventTiming ) this.releaseAll(time + timeOffset)
+        if( pedal == "star" ) this.releaseAll(time + timeOffset)
+
         if (val[0] === ".") return;
         if (!val || val.length === 0 ) return '.';
 
@@ -1554,28 +1580,38 @@ export class MonophonicTemplate {
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
         let duration = this.getSeqParam(this.seq[num].duration, index);
-        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
-        let lag = this.getSeqParam(this.seq[num].lag, index);
-        //handle in the Seq class
-        //let rotate = this.getSeqParam(this.seq[num].rotate, index);
-        //let offset = this.getSeqParam(this.seq[num].offset, index);
-
-        let groove = Groove.get(subdivision,index);
         
-        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+        
+        
+        
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256
         //console.log('pa', note, octave, velocity, duration, time, timeOffset)
-        try {
-            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,duration,time+timeOffset)
-            this.triggerAttackRelease(
-                note + octave * Theory.scaleRatios.length,
-                velocity,
-                duration,
-                time + timeOffset
-            );
-        } catch (e) {
-            this.printToConsole('invalid note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
+        
+         if( pedal === "full" || pedal === "legato"){
+            try {
+                //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,duration,time+timeOffset)
+                this.triggerAttack(
+                    note + octave * Theory.scaleRatios.length,
+                    velocity,
+                    time + timeOffset
+                );
+            } catch (e) {
+                this.printToConsole('invalid pedal note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
+            }
+        } else {
+            try {
+                //console.log('trig', note + octave * 12, velocity,duration,time+timeOffset)
+                this.triggerAttackRelease(
+                    note + octave * Theory.scaleRatios.length,
+                    velocity,
+                    duration,
+                    time + timeOffset
+                );
+            } catch (e) {
+                this.printToConsole('invalid note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
+            }
         }
+        this.prevEventTiming = curEventTiming
     }
 }

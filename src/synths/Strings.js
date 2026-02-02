@@ -126,7 +126,7 @@ export class Strings extends MonophonicTemplate {
   }
   triggerAttackRelease (freq, amp, dur=0.01, time=null){
     freq = Theory.mtof(freq)
-    //console.log('f', freq)
+    //console.log('f', freq, amp, dur, time)
     amp = amp/127
     if(time){
       this.env.triggerAttackRelease(dur, time)
