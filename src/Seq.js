@@ -13,17 +13,21 @@ export class Seq {
      constructor(synth, arr = [0], subdivision = '8n', phraseLength = 'infinite', num = 0, callback = null) {
         this.synth = synth; // Reference to the synthesizer
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
-        this._subdivision = subdivision; // Local alias
-        this._octave = 0;                // Local alias
-        this._duration = .1;             // Local alias
-        this._roll = 0.0;               // Local alias
-        this._velocity = 100;            // Local alias
-        this._orn = 0;            // Local alias
-        this._lag = 0;            // Local alias
-        this._pedal = 0;
-        this._rotate = 0;   //actual permanent rotate amount, about the thoery.tick
-        this._offset = null;   //internal variable for calculating rotation specifically for play
-        this._transform = (x) => x;      // Local alias
+        //parameters
+        this._subdivision = synth._subdivision; // Local alias
+        this._octave = synth._octave;                // Local alias
+        this._duration = synth._duration;             // Local alias
+        this._roll = synth._roll;               // Local alias
+        this._velocity = synth._velocity;            // Local alias
+        this._orn = synth._orn;            // Local alias
+        this._lag = synth._lag;            // Local alias
+        this._pedal = synth._pedal;
+        this._rotate = synth._rotate;   //actual permanent rotate amount, about the thoery.tick
+        this._offset = synth._offset;   //internal variable for calculating rotation specifically for play
+        this._transform = synth._transform;      // Local alias
+        this._orn = synth._orn
+        this.pianoRoll = synth._pianoRoll
+        //internal variables
         this.phraseLength = phraseLength === 'infinite' ? 'infinite' : phraseLength * this.vals.length;
         this.enable = 1;
         this.min = 24;
@@ -40,7 +44,7 @@ export class Seq {
         this.guiElements["toggles"]=[]
         this.userCallback = null
         this.drawing = null
-        this.pianoRoll = null
+        
         this.events = new Array(8)
         this.color = '#fff'
 
@@ -172,9 +176,9 @@ export class Seq {
 
             let event = parsePitchStringBeat(curBeat, time);
             //console.log('1', event)
-            //event = this.applyOrnamentation(event)
+            event = this.applyOrnamentation(event)
             event = event.map(([x, y]) => [this.perform_transform(x), y])
-            //console.log(event)
+            console.log(event)
             // Roll chords
             const event_timings = event.map(subarray => subarray[1]);
             let roll = this.getNoteParam(this.roll, this.index);
@@ -217,14 +221,18 @@ export class Seq {
         Tone.Transport.start();
     }
 
+    //new: ornaments are arrays of modifiers to be applied
+    //to every element of a sequence.
     applyOrnamentation(event) {
         if (typeof event === 'string') return event; // e.g., '.' or 'r'
         //console.log(event)
+
+        //check if there is an array of ornaments
         let ornIndex;
-        if (Array.isArray(this._orn)) {
+        if (Array.isArray(this._orn[0])) {
             ornIndex = this._orn[this.index % this._orn.length];
         } else {
-            ornIndex = this._orn;
+            ornIndex = 0;
         }
 
         // Ensure index is valid
@@ -245,19 +253,63 @@ export class Seq {
                 //console.log('orn',pitch)
             } else {
                 // Apply ornament
-                const ornNotes = orn(pitch, pattern, scalar, length);
+                const ornNotes = this._orn;
+                const ornLength = ornNotes.length
 
                 ornNotes.forEach((ornPitch, i) => {
-                    if (ornPitch !== '.') {
-                        const timeOffset = (i * noteSpacing) / numSourceNotes;
-                        ornamentedEvent.push([ornPitch, t + timeOffset]);
-                    }
+                    const ornEvent = typeof ornPitch === 'number' ? Number(pitch)+ornPitch : ornPitch 
+
+                    const timeOffset = i / ornLength / numSourceNotes;
+                    ornamentedEvent.push([ornEvent, t + timeOffset]);
+                    
                 });
             }
         }
-
+        //console.log(ornamentedEvent)
         return ornamentedEvent;
     }
+
+    // applyOrnamentation(event) {
+    //     if (typeof event === 'string') return event; // e.g., '.' or 'r'
+    //     //console.log(event)
+    //     let ornIndex;
+    //     if (Array.isArray(this._orn)) {
+    //         ornIndex = this._orn[this.index % this._orn.length];
+    //     } else {
+    //         ornIndex = this._orn;
+    //     }
+
+    //     // Ensure index is valid
+    //     const ornament = this.ornaments[ornIndex % this.ornaments.length];
+    //     if (!ornament) return event;
+
+    //     let [pattern, scalar, length] = ornament;
+
+    //     const ornamentedEvent = [];
+
+    //     const uniqueTimeSteps = [...new Set(event.map(e => e[1]))];
+    //     const numSourceNotes = uniqueTimeSteps.length;
+    //     const noteSpacing = 1 / length;
+
+    //     for (let [pitch, t] of event) {
+    //         if (pitch === '.' || !(typeof pitch === 'number' || /^-?\d+$/.test(pitch))) {
+    //             ornamentedEvent.push([pitch, t]);
+    //             //console.log('orn',pitch)
+    //         } else {
+    //             // Apply ornament
+    //             const ornNotes = orn(pitch, pattern, scalar, length);
+
+    //             ornNotes.forEach((ornPitch, i) => {
+    //                 if (ornPitch !== '.') {
+    //                     const timeOffset = (i * noteSpacing) / numSourceNotes;
+    //                     ornamentedEvent.push([ornPitch, t + timeOffset]);
+    //                 }
+    //             });
+    //         }
+    //     }
+
+    //     return ornamentedEvent;
+    // }
 
     checkForRandomElement(curBeat) {
         if (typeof curBeat === 'number') {

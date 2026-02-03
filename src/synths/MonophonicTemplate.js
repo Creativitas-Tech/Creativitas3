@@ -76,6 +76,19 @@ export class MonophonicTemplate {
             this.index = Math.floor(Theory.ticks / Tone.Time('16n').toTicks());
             this.callback(this.index, time = null)
         }, '16n').start()
+        // Sequencer parameters
+        this._subdivision = '8n'; // Local alias
+        this._octave = 0;                // Local alias
+        this._duration = .1;             // Local alias
+        this._roll = 0.0;               // Local alias
+        this._velocity = 100;            // Local alias
+        this._orn =[0];            // Local alias
+        this._lag = 0;            // Local alias
+        this._pedal = 0;
+        this._rotate = 0;   //actual permanent rotate amount, about the thoery.tick
+        this._offset = null;   //internal variable for calculating rotation specifically for play
+        this._transform = (x) => x;      // Local alias
+        this.pianoRoll = null
 
         // Drawing
         this.seqToDraw = 0;
@@ -352,7 +365,7 @@ export class MonophonicTemplate {
 
     releaseAll(time = null){
         // console.log("releaseAll")
-        this.env.triggerRelease(0,time)
+        if(this.env) this.env.triggerRelease(0,time)
     }
 
     generateParameters(paramDefinitions) {
@@ -1325,36 +1338,42 @@ export class MonophonicTemplate {
 
 
     set velocity(val) {
+        this._velocity = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].velocity = val
         }
     }
 
     set orn(val) {
+        this._orn = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].orn = val
         }
     }
 
     set octave(val) {
+        this._octave = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].octave = val
         }
     }
 
     set duration(val) {//turn into duration
+        this._duration = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].duration = val
         }
     }
 
     set subdivision(val) {
+        this._subdivision = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].subdivision = val
         }
     }
 
     set transform(val) {
+        this._transform = val
         if (typeof val !== 'function') {
             console.warn(`Transform must be a function. Received: ${typeof val}`);
             return;
@@ -1365,20 +1384,30 @@ export class MonophonicTemplate {
     }
 //roll already exists in seq
     set roll(val) {
+        this._roll = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].roll = val
         }
     }
 
     set rotate(val) {
+        this._rotate = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].rotate = val
         }
     }
 
     set offset(val) {
+        this._offset = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].offset = val
+        }
+    }
+
+    set pianoRoll(val) {
+        this._pianoRoll = val
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].pianoRoll = this._pianoRoll
         }
     }
 
@@ -1396,7 +1425,26 @@ export class MonophonicTemplate {
             if (this.seq[num]) this.seq[num].setTransform(transform);
         }
     }
-    //possible implementation of rotate
+
+    //pedaling
+    pedal(state = "full"){
+        this._pedal = state
+        for (let seq of this.seq) {
+                if (seq) seq.pedal(state);
+            }
+    }
+    star(){
+        this.synth.releaseAll()
+    }
+    clearPedal(){ 
+        this._pedal = "off"
+        this.star()
+        for (let seq of this.seq) {
+                if (seq) seq.clearPedal();
+            }
+    }
+    lift(){ this.clearPedal() }
+
     get duration() {
         const self = this;
         return new Proxy([], {

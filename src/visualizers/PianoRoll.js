@@ -173,7 +173,7 @@ export class PianoRoll {
   makeLoop(){
   	this.loop = new Tone.Loop(()=>{
   		this.beat = (Theory.ticks/Tone.Time('4n').toTicks())
-  		let nextBeat = (this.beat + 1/4) % this.numBeats;
+  		let nextBeat = (this.beat + 1/4 + 1) % this.numBeats;
       //console.log('next', nextBeat)
       nextBeat = Math.floor(nextBeat*4)/4
       //setTimeout(()=>this.clear(nextBeat), 25);
