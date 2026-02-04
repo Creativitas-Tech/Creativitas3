@@ -2,12 +2,8 @@
 SYSTEM NAME: 4-SEQUENCE CONTROLLER (NexusUI Version)
 CONVERTED FROM: p5 GUI format
 DATE: NOV 18, 2025
+Edited Feb 3, 2026
 **/
-
-/*
-  Alt(option)-Enter: Evaluate Line
-  Alt(option)-Shift-Enter: Evaluate Block
-*/
 
 initCollab()
 chClient.username = 'Change name'
@@ -31,9 +27,9 @@ const seq4 = new Player('PintoBass.wav')
 
 // ROUTING
 seq1.connect(output)
-seq2.connect(vca)
-seq3.connect(vca)
-seq4.connect(vca)
+seq2.connect(output)
+seq3.connect(output)
+seq4.connect(output)
 
 Theory.tempo = 90
 

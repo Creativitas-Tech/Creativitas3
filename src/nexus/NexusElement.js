@@ -1,3 +1,5 @@
+//this file may not be used
+//nexusElement is also defined in parentNexus
 import Nexus from 'nexusui';
 import { Parameter } from '../synths/ParameterModule.js';
 

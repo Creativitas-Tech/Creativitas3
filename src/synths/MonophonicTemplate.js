@@ -7,10 +7,10 @@ import { Seq } from '../Seq'
 import { TuringMachine } from '../Turing'
 import { ArrayVisualizer } from '../visualizers/VisualizeArray';
 import { Parameter } from './ParameterModule.js'
-import { Dial } from '../nexus/Dial.js'
-import { Slider } from '../nexus/Slider.js'
-import { NumberBox } from '../nexus/NumberBox.js'
-import { RadioButton } from '../nexus/RadioButton.js'
+import { NexusDial } from '../nexus/Dial.js'
+import { NexusSlider } from '../nexus/Slider.js'
+import { NexusNumberBox } from '../nexus/NumberBox.js'
+import { NexusRadioButton } from '../nexus/RadioButton.js'
 import { sketch } from '../p5Library.js'
 import basicLayout from './layouts/basicLayout.json';
 import Groove from '../Groove.js'
@@ -883,7 +883,7 @@ export class MonophonicTemplate {
         };
         
         if (controlType === 'knob') {
-            const dial = new Dial(pixelX, pixelY, width, height, showValue);
+            const dial = new NexusDial(pixelX, pixelY, width, height, showValue);
             
             // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
             dial.min = param.min || 0;
@@ -927,7 +927,7 @@ export class MonophonicTemplate {
             const sliderWidth = width * 0.5;
             const sliderHeight = width * 2;
             
-            const slider = new Slider(pixelX, pixelY, sliderWidth, sliderHeight);
+            const slider = new NexusSlider(pixelX, pixelY, sliderWidth, sliderHeight);
             
             // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
             slider.min = param.min || 0;
@@ -973,7 +973,7 @@ export class MonophonicTemplate {
             const buttonWidth = orientation === 'vertical' ? 55 : Math.max(40, width);
             const buttonHeight = 22;
             
-            const radioBtn = new RadioButton(pixelX, pixelY, options, {
+            const radioBtn = new NexusRadioButton(pixelX, pixelY, options, {
                 buttonWidth,
                 buttonHeight,
                 orientation: orientation,  // Use layout orientation
@@ -1043,7 +1043,7 @@ export class MonophonicTemplate {
         const pixelX = ((x + (this.x || 0)) / 100) * containerWidth;
         const pixelY = ((y + (this.y || 0)) / 100) * containerHeight;
         
-        const dial = new Dial(pixelX, pixelY, size, size);
+        const dial = new NexusDial(pixelX, pixelY, size, size);
         dial.min = min;
         dial.max = max;
         

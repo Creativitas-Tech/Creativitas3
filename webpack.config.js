@@ -20,7 +20,8 @@ module.exports = {
   externals: {
     'tone': 'Tone',
     'p5': 'p5',
-    'socket.io-client': 'io'
+    'socket.io-client': 'io',
+    'nexusui': 'Nexus'
   },
   module: {
     rules: [

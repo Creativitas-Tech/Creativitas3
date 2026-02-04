@@ -6,9 +6,9 @@ import { Seq } from '../Seq.js'
 import { TuringMachine } from '../Turing.js'
 import { ArrayVisualizer } from '../visualizers/VisualizeArray.js';
 import { Parameter } from './ParameterModule.js'
-import { Dial } from '../ui/Dial.js'
-import { Slider } from '../ui/Slider.js'
-import { NumberBox } from '../ui/NumberBox.js'
+import { NexusDial } from '../nexus/Dial.js'
+import { NexusSlider } from '../nexus/Slider.js'
+import { NexusNumberBox } from '../nexus/NumberBox.js'
 import basicLayout from './layouts/basicLayout.json';
 import Groove from '../Groove.js'
 

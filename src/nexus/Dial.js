@@ -1,6 +1,6 @@
 import { NexusElement } from './parentNexus.js';
 
-export class Dial extends NexusElement {
+export class NexusDial extends NexusElement {
     constructor(x = 0, y = 0, width = 100, height = 100, showValue = false) {
         // Pass the type "Dial" to the parent constructor
         super('Dial', x, y, width, height);

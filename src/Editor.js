@@ -20,11 +20,11 @@ import './Editor-Initalizer.js';
 import { Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 // NexusUI wrappers
-import { Dial } from './nexus/Dial.js';
-import { Slider } from './nexus/Slider.js';
-import { NumberBox } from './nexus/NumberBox.js';
-import { Button } from './nexus/Button.js';
-import { Switch } from './nexus/Switch.js';
+import { NexusDial } from './nexus/Dial.js';
+import { NexusSlider } from './nexus/Slider.js';
+import { NexusNumberBox } from './nexus/NumberBox.js';
+import { NexusButton } from './nexus/Button.js';
+import { NexusSwitch } from './nexus/Switch.js';
 
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
@@ -335,11 +335,11 @@ function Editor(props) {
     window.MarkovChain = MarkovChain;
 
     // NexusUI wrapper classes (for user code)
-    window.Dial = Dial;
-    window.Slider = Slider;
-    window.NumberBox = NumberBox;
-    window.Button = Button;
-    window.Switch = Switch;
+    window.NexusDial = NexusDial;
+    window.NexusSlider = NexusSlider;
+    window.NexusNumberBox = NexusNumberBox;
+    window.NexusButton = NexusButton;
+    window.NexusSwitch = NexusSwitch;
 
     // Collab and GUI initialization functions
     window.initCollab = initCollab;

@@ -60,6 +60,7 @@ export * from '../src/synths/Sympathy.js';
 export * from '../src/synths/ToneWood.js';
 export * from '../src/synths/Twinkle.js';
 export * from '../src/synths/waveshapers.js';
+export * from '../src/synths/Vocoder.js';
 
 // Visualizers
 export * from '../src/visualizers/Oscilloscope.js';
@@ -68,6 +69,16 @@ export * from '../src/visualizers/Spectrogram.js';
 export * from '../src/visualizers/PlotTransferFunction.js';
 export * from '../src/visualizers/VisualizeArray.js';
 export * from '../src/visualizers/CircularVisualizer.js';
+
+// Nexus
+export * from '../src/nexus/Button.js';
+export * from '../src/nexus/Dial.js';
+export * from '../src/nexus/NexusElement.js';
+export * from '../src/nexus/NumberBox.js';
+export * from '../src/nexus/parentNexus.js';
+export * from '../src/nexus/RadioButton.js';
+export * from '../src/nexus/Slider.js';
+export * from '../src/nexus/Switch.js';
 
 // Generators
 export * from '../src/generators/MarkovChain.js';

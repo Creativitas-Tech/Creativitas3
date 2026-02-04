@@ -14,7 +14,7 @@ import { NexusElement, initNexusCanvas } from './parentNexus.js';
  * @param {boolean} config.showLabel - Whether to show parameter label (default false)
  * @param {string} config.label - Label text if showLabel is true
  */
-export class RadioButton {
+export class NexusRadioButton {
     constructor(x = 0, y = 0, options = ['A', 'B', 'C'], config = {}) {
         // Handle legacy 4th parameter as string (orientation)
         const normalizedConfig = typeof config === 'string' 

@@ -3208,42 +3208,37 @@ function parseStringSequence(str){
 }
 
 function parsePitchStringSequence(str) {
-    //if( !Array.isArray(str)) str = [str]
-    const firstElement = str.replace(/\[/g, "")[0]
-    const usesPitchNames = /^[a-ac-zA-Z?]$/.test(firstElement);
-    //console.log(str)
+  const firstChar = str.replace(/\[/g, "")[0];
+  const usesPitchNames = /^[A-Ga-g?]$/.test(firstChar);
 
-    // Step 1: Remove all whitespace
-    if( usesPitchNames ) str = str.replace(/\s/g, "");
-    //str = str.replace(/\,/g, "");
+  if( usesPitchNames ) str = str.replace(/\s+/g, "");
 
-    // Step 2: Split into an array
-    // - Matches items inside brackets as one element
-    // - Groups numbers, 'b', and '#' with the preceding pitch
-    // - Ensures '@' and the number following it are in their own array element
-    //const regex = /\[.*?\]|[A-Ga-g][#b]?\d*|@(\d+)|./g;
-    // - Preserves periods '.' as their own array elements
-    let regex = /\[.*?\]|[A-Ga-g][#b]?\d*|@(\d+)|\.|\?/g;
+  // Tokenizers
+  const pitchRegex = /\[.*?\]|[A-Ga-g][#b]?\d*|@\d+|\.|\?|~|\*/g;
+  const numRegex   = /\[.*?\]|-?\d+|@\d+|\.|\?|~|\*/g;
 
-    if (!usesPitchNames) { // true if the first element is a number
-        regex = /\[.*?\]|-?[b#]?\d+[b#]?|@(\d+)|\.|\?/g;
+  const regex = usesPitchNames ? pitchRegex : numRegex;
+
+  let arr = str.match(regex) ?? [];
+
+  // Expand @N: repeat the previous token N-1 additional times
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i][0] === "@") {
+      const repeatCount = parseInt(arr[i].slice(1), 10) - 1;
+      const prev = arr[i - 1];
+
+      if (repeatCount > 0 && prev !== undefined) {
+        arr.splice(i, 1, ...new Array(repeatCount).fill(prev));
+        i += repeatCount - 1;
+      } else {
+        // If malformed (e.g. starts with @), just remove it
+        arr.splice(i, 1);
+        i -= 1;
+      }
     }
+  }
 
-    let arr = str.match(regex);
-
-    // Step 3: Process '@' elements
-    for (let i = 0; i < arr.length; i++) {
-        if (arr[i].startsWith("@")) {
-            const repeatCount = parseInt(arr[i].slice(1), 10)-1; // Get the number after '@'
-            const elementToRepeat = arr[i - 1]; // Get the previous element
-            const repeatedElements = new Array(repeatCount).fill(elementToRepeat); // Repeat the element
-            arr.splice(i, 1, ...repeatedElements); // Replace '@' element with the repeated elements
-            i += repeatCount - 1; // Adjust index to account for the newly inserted elements
-        }
-    }
-
-
-    return arr;
+  return arr;
 }
 
 //handles rhythm sequences
@@ -3373,7 +3368,7 @@ function parsePitchStringBeat(curBeat, time){
         curBeat.forEach(arr => {
           let regex = /\[.*?\]|[A-Ga-g][#b]?\d*|@(\d+)|./g;
           if( !usesPitchNames){ //true if first element is a number
-            regex = /\[.*?\]|-?\d+[#b]?|@(\d+)|\./g;
+            regex = /\[.*?\]|-?\d+|@\d+|\.|\?|~|\*/g;
           } 
           arr = arr.match(regex)
 
@@ -3658,7 +3653,6 @@ let canvasInitialized = false;
  * @param {string} backgroundColor - Optional background color (default: '#1a1a2e')
  */
 function initNexusCanvas(backgroundColor = '#1a1a2e') {
-    console.log('init')
     const container = document.getElementById('Canvas');
     if (!container) {
         console.error('initNexusCanvas: #Canvas container not found!');
@@ -3681,8 +3675,6 @@ function initNexusCanvas(backgroundColor = '#1a1a2e') {
 class NexusElement{
     constructor(element_type, x = 0, y = 0, width = 100, height = 100) {
         this.element_type = element_type;
-        console.log("two")
-        return
 
         // Get the Canvas container - this is where NexusUI elements should appear
         const container = document.getElementById('Canvas');
@@ -3695,8 +3687,6 @@ class NexusElement{
         if (!canvasInitialized) {
             initNexusCanvas();
         }
-
-        return
 
         // Initialize the Nexus element - NexusUI will create its own wrapper
         const Nexus = window.Nexus;
@@ -3872,7 +3862,7 @@ class NexusElement{
 
 ;
 
-class Button extends NexusElement {
+class NexusButton extends NexusElement {
     constructor(x = 0, y = 0, width = 150, height = 300) {
         // Pass the type "Dial" to the parent constructor
         super('Button', x, y, width, height);
@@ -3913,7 +3903,7 @@ class Button extends NexusElement {
 
 ;
 
-class Dial extends NexusElement {
+class NexusDial extends NexusElement {
     constructor(x = 0, y = 0, width = 100, height = 100, showValue = false) {
         // Pass the type "Dial" to the parent constructor
         super('Dial', x, y, width, height);
@@ -4096,6 +4086,723 @@ window.basicLayout = {
   
 };;
 
+  ;
+
+class TextField {
+    constructor(numLines = 10, _target = 'Canvas') {
+    const container = document.getElementById(_target);
+    if (!container) {
+      console.error(`No element found with id "${_target}"`);
+      return;
+    }
+
+
+    this.numLines = numLines;
+    this.lines = Array(numLines).fill('');
+    this.cursorPosition = {
+      'line':-1,
+      'start':-1,
+      'end':-1
+    }
+    
+    // Create the div
+    this.div = document.createElement('div');
+    Object.assign(this.div.style, {
+      //position: 'absolute',
+      //bottom: '0',
+      //left: '0',
+      //width: '100%',
+      background: 'rgba(0,0,0,0.6)',
+      color: '#0f0',
+      fontFamily: 'Courier New, monospace',
+      fontSize: '14px',
+      lineHeight: '18px',
+      whiteSpace: 'pre',
+      overflow: 'hidden',
+      padding: '4px',
+      //boxSizing: 'border-box',
+      pointerEvents: 'none',
+    });
+
+    container.appendChild(this.div);
+
+        this.lineHeight = 20;
+        this.lines = [];
+
+        this._color =  [
+            '#FF5733',  // Base orange
+            '#33A1FF',  // Light blue (complementary)
+            '#FF33B1',  // Magenta (opposite on color wheel)
+            '#33FF57',  // Bright green (vibrant contrast)
+            '#5733FF',  // Purple (contrasting tone)
+            '#FFBD33',  // Warm yellow (vibrant and complementary)
+            '#33FFBD',  // Mint green (cool contrast)
+            '#FF3380'   // Pink (near complementary)
+        ];
+
+        this._backgroundColor = '#3C3D37'
+        this._activeColor = '#ECDFCC'; // Default color
+
+        this.div.style.fontFamily = 'Consolas, monospace';
+        this.div.style.fontSize = '18px';
+        this.div.style.color = '#ffcc00';
+        this.div.style.backgroundColor = '#000';
+    }
+
+    // Write text to a given line index
+    writeLine(lineNum, text) {
+      // Expand the array as needed
+      while (this.lines.length <= lineNum) this.lines.push('');
+      this.lines[lineNum] = text;
+      this.trimTrailingEmptyLines();
+      this.render();
+    }
+
+  clearLine(lineNum) {
+    if (lineNum < 0 || lineNum >= this.lines.length) return;
+    this.lines[lineNum] = '';
+    this.trimTrailingEmptyLines();
+    this.render();
+  }
+
+  clear() {
+    this.lines = [];
+    this.render();
+  }
+
+  trimTrailingEmptyLines() {
+    // Remove undefined or empty lines at the end
+    while (this.lines.length > 0 && !this.lines[this.lines.length - 1]) {
+      this.lines.pop();
+    }
+  }
+
+    // Redraw all lines
+    // render() {
+    //   this.div.textContent = this.lines.join('\n');
+    // }
+  render() {
+    let highlightPos = [this.cursorPosition.start,this.cursorPosition.end]
+    let highlightLine = this.cursorPosition.line
+    this.ensureStyle()
+
+    const esc = (s) =>
+      String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    let html = "";
+    for (let i = 0; i < this.lines.length; i++) {
+      const line = String(this.lines[i] ?? "");
+      
+      if ( i === highlightLine &&
+        highlightPos[0] >= 0 &&
+        highlightPos[0] <= line.length &&
+        highlightPos[1] >= highlightPos[0]
+      ) {
+        html +=
+          esc(line.slice(0, highlightPos[0])) +
+          `<span class="seq-cursor">${esc(line.slice(highlightPos[0], highlightPos[1]))}</span>` +
+          esc(line.slice(highlightPos[1]));
+      } else {
+        html += esc(line);
+      }
+      if (i < this.lines.length - 1) html += "\n";
+    }
+    //console.log(html)
+    this.div.innerHTML = html;
+  }
+
+  ensureStyle() {
+    if (this._hasStyle) return;
+
+    const style = document.createElement("style");
+    style.textContent = `
+      .seq-cursor {
+        background: rgba(255,255,255,0.25);
+        border-radius: 3px;
+      }
+    `;
+    document.head.appendChild(style);
+    this._hasStyle = true;
+  }
+ 
+}
+
+
+/**
+ * PianoRollDisplay
+ * ----------------
+ * A lightweight, time-windowed piano roll visualizer for sequenced MIDI-style data.
+ *
+ * CONSTRUCTOR ARGUMENTS
+ * - numBeats:        Number of beats displayed horizontally in the window.
+ * - height:          Height of the display in pixels.
+ * - color:           Base color used to draw note events.
+ * - backgroundColor: Background color of the roll.
+ *
+ * CORE METHODS
+ * - place(note, subdivision, duration, velocity)
+ *   Adds a note event at a specific time position and pitch.
+ *   The note is immediately drawn onto the main canvas (no full redraw).
+ *
+ * - clear(beatNumber = null)
+ *   Clears previously drawn notes.
+ *   If beatNumber is null, all events are cleared.
+ *   If beatNumber is provided, only notes intersecting that beat are removed.
+ *
+ * 
+ * 
+The visualizer uses **multiple stacked canvases**:
+
+1. **Grid Canvas**  
+   Drawn once (or when configuration changes). Renders the background color and vertical grid lines at beat and subdivision boundaries.
+
+2. **Note Canvas**  
+   Receives individual note drawings when `place()` is called. Notes persist until explicitly cleared.
+   Also clears beats on the canvas when the cursor arrives at a new beat.
+
+3. **Cursor Canvas**  
+   Updated frequently. Cleared and redrawn every subdivision (e.g. every 16th note) to show the current playhead position without disturbing the grid or notes.
+
+This separation keeps redraw costs low and ensures stable, predictable visuals during real-time playback.
+
+ * NOTE DRAWING FLOW
+ * - Notes are drawn individually when place() is called.
+ * - Notes are rendered directly onto the main (note) canvas.
+ * - No full canvas redraw is required for new notes.
+ * - Old notes are removed by clearing beats ahead of the playhead.
+ *
+ * DESIGN INTENT
+ * - Separation of static (grid) and dynamic (cursor + notes) layers
+ *   keeps redraw cost low and timing predictable.
+ * - Beat-relative clearing ensures the playhead always advances into
+ *   empty space, avoiding stale visual artifacts.
+ * 
+ * TO DO
+ * - right now, all notes in the coming beat are drawn at the same time.
+ * - it would be nice to get timing information to delay drawing
+ *    future notes.
+ * - maybe make the notes a bit prettier?
+ */
+
+;
+;
+
+
+class PianoRoll {
+  constructor({
+    target = 'Canvas',
+    numBeats = 8,
+    height = 1,
+    color = "#fff",
+    backgroundColor = "#1b1c1e",
+
+    // practical defaults
+    pxPerBeat = 20,
+    subdivPerBeat = 1,   // 4 = 16ths, 8 = 32nds, etc.
+    noteMin = -7,        // C2
+    noteMax = 7         // C6
+  } = {}) {
+    this.numBeats = numBeats;
+    this.beat = 0
+    this.height = height*200;
+    this.color = color;
+    this.backgroundColor = backgroundColor;
+
+    this.pxPerBeat = pxPerBeat;
+    this.subdivPerBeat = subdivPerBeat;
+    this.noteMin = noteMin;
+    this.noteMax = noteMax;
+
+    this.events = [];
+
+    const container = document.getElementById(target);
+    this.containerDiv = document.createElement("div");
+    container.appendChild(this.containerDiv);
+
+	this.canvas = document.createElement("canvas");
+  this.cursorCanvas = document.createElement("canvas");
+  this.gridCanvas = document.createElement("canvas");
+	this.ctx = this.canvas.getContext("2d");
+  this.cursorCtx = this.cursorCanvas.getContext("2d");
+  this.gridCtx = this.gridCanvas.getContext("2d");
+
+  this.containerDiv.style.position = "relative";
+
+  Object.assign(this.canvas.style, {
+    position: "absolute", left: "0", top: "0", width: "100%", height: "100%", display: "block",
+  });
+  Object.assign(this.cursorCanvas.style, {
+    position: "absolute", left: "0", top: "0", width: "100%", height: "100%", display: "block",
+    pointerEvents: "none",
+  });
+  Object.assign(this.gridCanvas.style, {
+    position: "absolute", left: "0", top: "0", width: "100%", height: "100%", display: "block",
+    pointerEvents: "none",
+  });
+
+	this.containerDiv.appendChild(this.canvas);
+  this.containerDiv.appendChild(this.cursorCanvas);
+  this.containerDiv.appendChild(this.gridCanvas);
+
+    this.canvas.style.display = "block";
+    this.canvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.canvas.style.height = `${this.height}px`;
+
+    this.cursorCanvas.style.display = "block";
+    this.cursorCanvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.cursorCanvas.style.height = `${this.height}px`;
+
+    this.gridCanvas.style.display = "block";
+    this.gridCanvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.gridCanvas.style.height = `${this.height}px`;
+    
+    // set backing resolution
+    this._resizeBackingStore();
+
+    this.makeLoop()
+
+    this._ro = new ResizeObserver(() => {
+      this._resizeBackingStore();
+      //this.redrawBase();
+      //this.redrawCursor();
+    });
+    this._ro.observe(this.containerDiv);
+  }
+
+  setConfig({
+    numBeats = this.numBeats,
+    height = this.height,
+    color = this.color,
+    backgroundColor = this.backgroundColor
+  } = {}) {
+    this.numBeats = numBeats;
+    this.height = height<10 ? height*200 : this.height;
+    this.color = color;
+    this.backgroundColor = backgroundColor;
+
+    this.containerDiv.appendChild(this.canvas);
+    this.containerDiv.appendChild(this.cursorCanvas);
+    this.containerDiv.appendChild(this.gridCanvas);
+
+    this.canvas.style.display = "block";
+    this.canvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.canvas.style.height = `${this.height}px`;
+
+    this.cursorCanvas.style.display = "block";
+    this.cursorCanvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.cursorCanvas.style.height = `${this.height}px`;
+
+    this.gridCanvas.style.display = "block";
+    this.gridCanvas.style.width = `${this.numBeats * this.pxPerBeat}px`;
+    this.gridCanvas.style.height = `${this.height}px`;
+
+    // set backing resolution
+    this._resizeBackingStore();
+  }
+
+  makeLoop(){
+  	this.loop = new Tone.Loop(()=>{
+  		this.beat = (Theory.ticks/Tone.Time('4n').toTicks())
+  		let nextBeat = (this.beat + 1/4 + 1) % this.numBeats;
+      //console.log('next', nextBeat)
+      nextBeat = Math.floor(nextBeat*4)/4
+      //setTimeout(()=>this.clear(nextBeat), 25);
+      this.clear(nextBeat)
+      this.render(nextBeat)
+  	},'16n').start()
+
+    this.cursorLoop = new Tone.Loop(()=>{
+      this.renderCursor()
+    },'16n').start()
+  }
+
+  setBeatColor(r = 255, g = 255, b = 255) {
+	  this.color =
+	    "#" +
+	    [r, g, b]
+	      .map(v => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0"))
+	      .join("");
+	}
+
+  place(note, subdivision, duration=.5, velocity = 127, color = '#fff') {
+    // note: MIDI number
+    // subdivision: position in "subdivisions" from start of window (0..numBeats*subdivPerBeat)
+    // duration: in subdivisions
+    // velocity: 0..1 (used for alpha)
+    //console.log(note, subdivision, duration, velocity)
+    //console.log(note, subdivision)
+  	subdivision = subdivision % this.numBeats
+  	
+  	if(note === '.') return
+
+    let events = []
+    events.push({
+      note,
+      subdivision,
+      duration: Math.max(0, duration),
+      velocity: Math.max(0, Math.min(1, velocity/127)),
+      color
+    });
+    this.events.push({
+      note,
+      subdivision,
+      duration: Math.max(0, duration),
+      velocity: Math.max(0, Math.min(1, velocity/127)),
+      color
+    });
+
+    // const ctx = this.ctx;
+    // let w = this.cssW
+    // const h = this.cssH
+
+    // // notes
+    // ctx.globalAlpha = 1;
+    // const noteSpan = Math.max(1, this.noteMax - this.noteMin + 1);
+    // const rowH = h / noteSpan;
+    // const pxPerSub = (this.pxPerBeat / this.subdivPerBeat) 
+
+
+    for (const e of events) {
+      this.renderEvent(e)
+      // if (e.duration <= 0) continue;
+
+      // const x = e.subdivision * pxPerSub;
+      // const width = e.duration * pxPerSub;
+
+      // if (x > w || x + width < 0) continue;
+
+      // const noteClamped = Math.max(this.noteMin, Math.min(this.noteMax, e.note));
+      // const yIndex = (this.noteMax - noteClamped); // high notes at top
+      // const y = yIndex * rowH;
+      // const h = rowH
+      // w = width
+      // const xx = x;
+      // const yy = y + 1;
+
+      // ctx.globalAlpha = 0.2 + 0.8 * e.velocity;
+      // //ctx.fillStyle = e.color;
+      // ctx.lineWidth = 1 ;
+      // ctx.strokeStyle = "rgba(0,0,0,0.5)";
+
+      // ctx.globalAlpha = 1;
+
+      //   //e.color = {h:0, s:0, v:0.75}
+      //   const sat = e.color.s * (0.3 + 0.7 * e.velocity);
+      //   const light = 30 + 40 * e.color.v;              // stable brightness
+
+      //   ctx.globalAlpha = 1;
+      //   ctx.fillStyle = `hsl(${e.color.h}, ${sat * 100}%, ${light}%)`;
+      //   //console.log('hsv', e.color.h, sat * 100, light)
+      //   if (ctx.roundRect) {
+      //     const r = Math.min(2, h / 2, w / 2);
+      //     ctx.beginPath();
+      //     ctx.roundRect(xx, yy, w, h, r);
+      //     ctx.fill();
+      //     ctx.stroke();
+      //   } else {
+      //     ctx.fillRect(xx, yy, w, h);
+      //     ctx.strokeRect(xx + 0.5, yy + 0.5, w - 1, h - 1);
+      //   }
+    }
+
+    //this.render();
+  }
+
+  renderEvent(e){
+    const ctx = this.ctx;
+    let w = this.cssW
+    let h = this.cssH
+
+    // notes
+    ctx.globalAlpha = 1;
+    const noteSpan = Math.max(1, this.noteMax - this.noteMin + 1);
+    const rowH = h / noteSpan;
+    const pxPerSub = (this.pxPerBeat / this.subdivPerBeat) 
+
+    if (e.duration <= 0) return;
+
+      const x = e.subdivision * pxPerSub;
+      const width = e.duration * pxPerSub;
+
+      if (x > w || x + width < 0) return;
+
+      const noteClamped = Math.max(this.noteMin, Math.min(this.noteMax, e.note));
+      const yIndex = (this.noteMax - noteClamped); // high notes at top
+      const y = yIndex * rowH;
+      h = rowH
+      w = width
+      const xx = x;
+      const yy = y + 1;
+
+      ctx.globalAlpha = 0.2 + 0.8 * e.velocity;
+      //ctx.fillStyle = e.color;
+      ctx.lineWidth = 1 ;
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
+
+      ctx.globalAlpha = 1;
+
+        //e.color = {h:0, s:0, v:0.75}
+        let sat = e.color.s * (0.1 + 0.9 * Math.pow(e.velocity,2));
+        let light = 30 + 40 * e.color.v;              // stable brightness
+
+        if( e.color.s < 0.1) light = light * (0.3 + 0.7 * e.velocity);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = `hsl(${e.color.h}, ${sat * 100}%, ${light}%)`;
+        //console.log('hsv', e.color.h, sat * 100, light)
+        if (ctx.roundRect) {
+          const r = Math.min(2, h / 2, w / 2);
+          ctx.beginPath();
+          ctx.roundRect(xx, yy, w, h, r);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          ctx.fillRect(xx, yy, w, h);
+          ctx.strokeRect(xx + 0.5, yy + 0.5, w - 1, h - 1);
+        }
+    
+
+  }
+
+	advanceToBeat(currentBeat) {
+	  const nextBeat = (currentBeat + 1) % this.numBeats;
+	  this.clear(nextBeat);
+	  //console.log('beat', currentBeat, nextBeat)
+	}
+
+  clear(beatNumber = null) {
+    if (beatNumber === null) {
+      this.events.length = 0;
+      //this.render();
+      return;
+    }
+
+    const startSub = (beatNumber) ;
+    const endSub = (beatNumber + 1/4 ) ;
+    //console.log('sub', startSub, endSub)
+
+    this.events = this.events.filter(e => {
+      const eStart = e.subdivision;
+      const eEnd = e.subdivision + e.duration;
+      // keep events that do NOT intersect that beat
+      return (eEnd <= startSub) || (eStart >= endSub);
+    });
+
+    //this.render();
+  }
+
+  render(nextBeat) {
+    const ctx = this.ctx;
+    const w = this.cssW
+    const h = this.cssH
+
+    // background
+    ctx.globalAlpha = 1;
+
+    const start = nextBeat % this.numBeats * this.pxPerBeat 
+    const width = this.pxPerBeat/4
+
+    //console.log(nextBeat, start, width)
+
+    // If you want to “erase” to backgroundColor:
+    ctx.fillStyle = this.backgroundColor;   // '#000' if black
+    ctx.fillRect(start, 0, width, h);
+    //ctx.fillRect(0, 0, w, h);
+
+    // // notes drawn in place()
+
+  }
+
+  renderCursor() {
+    const ctx = this.cursorCtx;
+    const dpr = window.devicePixelRatio || 1;
+
+    // clear the entire cursor backing store, regardless of transforms
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, this.cursorCanvas.width, this.cursorCanvas.height);
+    ctx.restore();
+
+    // draw in CSS pixels
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const h = this.cssH;
+    const curStep = Math.floor(Theory.ticks / Tone.Time("16n").toTicks());
+
+    const stepW = this.pxPerBeat / 4; // 16ths
+    const x = (curStep % (this.numBeats * 4)) * stepW;
+
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = "#770";
+    ctx.fillRect(Math.round(x), 0, Math.round(stepW), h);
+  }
+
+  renderGrid() {
+    const ctx = this.gridCtx;
+    const dpr = window.devicePixelRatio || 1;
+
+    const w = this.cssW;
+    let h = this.cssH;
+    // ctx.globalAlpha = 1;
+    // ctx.fillStyle = this.backgroundColor;
+    // ctx.fillRect(0, 0, this.cssW, this.cssH);
+
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0, 0, this.gridCanvas.width, this.gridCanvas.height);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    
+
+    h = this.cssH;
+    const subMultiplier = 2
+    const totalSubs = subMultiplier * this.numBeats * this.subdivPerBeat;
+    const pxPerSub = this.pxPerBeat / this.subdivPerBeat / subMultiplier;
+
+    ctx.globalAlpha = 0.15;
+    ctx.fillStyle = "#fff";
+    for (let b = 0; b <= this.numBeats; b++) ctx.fillRect(Math.round(b * this.pxPerBeat), 0, 1, h);
+
+    ctx.globalAlpha = 0.05;
+    for (let s = 0; s <= totalSubs; s++) ctx.fillRect(Math.round(s * pxPerSub), 0, 1, h);
+  }
+
+  //only when needing to redraw everything
+  renderNotes(){
+    const ctx = this.ctx;
+    //ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = this.backgroundColor;
+    ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    
+    for (const e of this.events) {
+      this.renderEvent(e)
+    }
+  }
+
+  _resizeBackingStore() {
+    const dpr = this._dpr();
+
+    const rect = this.containerDiv.getBoundingClientRect();
+    const cssW = Math.max(1, rect.width);
+    const cssH = Math.max(1, this.height); // or use this.height if you want fixed height
+    this.cssW = cssW
+    this.cssH = cssH
+
+    this.containerDiv.style.position = "relative";
+
+    for (const [el, z] of [
+      [this.gridCanvas, 1],
+      [this.canvas, 0],       // notes
+      [this.cursorCanvas, 2],
+    ]) {
+      el.style.position = "absolute";
+      el.style.left = "0";
+      el.style.top = "0";
+      el.style.display = "block";
+      el.style.zIndex = String(z);
+      el.style.pointerEvents = "none"; // optional
+    }
+
+    this.canvas.width = Math.floor(cssW * dpr);
+    this.canvas.height = Math.floor(cssH * dpr);
+    this.cursorCanvas.width = Math.floor(cssW * dpr);
+    this.cursorCanvas.height = Math.floor(cssH * dpr);
+    this.gridCanvas.width = Math.floor(cssW * dpr);
+    this.gridCanvas.height = Math.floor(cssH * dpr);
+
+    // now pxPerBeat should be CSS pixels per beat (not derived from canvas.width)
+    this.pxPerBeat = cssW / this.numBeats;
+
+
+    for (const c of [this.canvas, this.cursorCanvas, this.gridCanvas]) {
+      c.style.width = `${cssW}px`;
+      c.style.height = `${cssH}px`;
+      c.width  = Math.round(cssW * dpr);
+      c.height = Math.round(cssH * dpr);
+    }
+
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.cursorCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.gridCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    this.renderGrid()
+
+    const ctx = this.ctx;
+
+    const w = this.cssW;
+    let h = this.cssH;
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = this.backgroundColor;
+    ctx.fillRect(0, 0, this.cssW, this.cssH);
+
+    this.enableRangeDrag()
+ }
+
+  _dpr() {
+    return window.devicePixelRatio || 1;
+  }
+
+  //CLICK & DRAG
+  // Call once after canvases are created + appended
+  enableRangeDrag() {
+    const el = this.cursorCanvas; // top layer receives input
+    el.style.pointerEvents = "auto";
+
+    this._drag = {
+      active: false,
+      startY: 0,
+      startMin: this.noteMin,
+      startMax: this.noteMax,
+    };
+
+    el.addEventListener("pointerdown", (e) => {
+      el.setPointerCapture(e.pointerId);
+      this._drag.active = true;
+      this._drag.startY = e.clientY;
+      this._drag.startMin = this.noteMin;
+      this._drag.startMax = this.noteMax;
+    });
+
+    el.addEventListener("pointermove", (e) => {
+      if (!this._drag.active) return;
+
+      let dy = e.clientY - this._drag.startY;
+      dy = -dy
+      const span = this._drag.startMax - this._drag.startMin;
+      const pxPerNote = this.cssH / (span + 1);
+
+      // drag up => higher notes (increase min/max)
+      const deltaNotes = Math.round(-dy / pxPerNote);
+
+      this.setNoteRange(this._drag.startMin + deltaNotes, this._drag.startMax + deltaNotes);
+    });
+
+    el.addEventListener("pointerup", () => { this._drag.active = false; });
+    el.addEventListener("pointercancel", () => { this._drag.active = false; });
+  }
+
+  setNoteRange(min, max) {
+    const span = this.noteMax - this.noteMin; // preserve current span
+
+    // If caller passes both, keep them; otherwise keep span.
+    if (max == null) max = min + span;
+
+    // clamp + preserve span
+    min = Math.max(-36, Math.min(127 - span, min));
+    max = min + span;
+
+    this.noteMin = min;
+    this.noteMax = max;
+
+    // grid depends on row height, so redraw it too
+    this.renderGrid();
+    this.render();       // whatever you use to redraw notes layer
+    this.renderCursor();
+    this.renderNotes()
+  }
+}
+
 // Seq.js
 //current sequencer module feb 2025
 
@@ -4104,21 +4811,28 @@ window.basicLayout = {
 ;
 
 ;
+;
+;
 
 class Seq {
      constructor(synth, arr = [0], subdivision = '8n', phraseLength = 'infinite', num = 0, callback = null) {
         this.synth = synth; // Reference to the synthesizer
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
-        this._subdivision = subdivision; // Local alias
-        this._octave = 0;                // Local alias
-        this._sustain = .1;             // Local alias
-        this._roll = 0.0;               // Local alias
-        this._velocity = 100;            // Local alias
-        this._orn = 0;            // Local alias
-        this._lag = 0;            // Local alias
-        this._rotate = 0;   //actual permanent rotate amount, about the thoery.tick
-        this._offset = null;   //internal variable for calculating rotation specifically for play
-        this._transform = (x) => x;      // Local alias
+        //parameters
+        this._subdivision = synth._subdivision; // Local alias
+        this._octave = synth._octave;                // Local alias
+        this._duration = synth._duration;             // Local alias
+        this._roll = synth._roll;               // Local alias
+        this._velocity = synth._velocity;            // Local alias
+        this._orn = synth._orn;            // Local alias
+        this._lag = synth._lag;            // Local alias
+        this._pedal = synth._pedal;
+        this._rotate = synth._rotate;   //actual permanent rotate amount, about the thoery.tick
+        this._offset = synth._offset;   //internal variable for calculating rotation specifically for play
+        this._transform = synth._transform;      // Local alias
+        this._orn = synth._orn
+        this.pianoRoll = synth._pianoRoll
+        //internal variables
         this.phraseLength = phraseLength === 'infinite' ? 'infinite' : phraseLength * this.vals.length;
         this.enable = 1;
         this.min = 24;
@@ -4134,6 +4848,10 @@ class Seq {
         this.guiElements["knobs"]=[]
         this.guiElements["toggles"]=[]
         this.userCallback = null
+        this.drawing = null
+        
+        this.events = new Array(8)
+        this.color = '#fff'
 
         //(note, pattern=1, scalar=1, length=4)
         this.ornaments = [
@@ -4157,8 +4875,8 @@ class Seq {
     }
     get octave() {return this._octave; }
     set octave(val) {this._octave = val; }
-    get sustain() {return this._sustain;}
-    set sustain(val) {  this._sustain = val; }
+    get duration() {return this._duration;}
+    set duration(val) {  this._duration = val; }
     get roll() {  return this._roll; }
     set roll(val) {    this._roll = val; }
     get velocity() { return this._velocity; }
@@ -4179,10 +4897,23 @@ class Seq {
         this._transform = val;
     }
 
+    //pedaling
+    pedal(state = "full"){
+        this._pedal = state
+    }
+    star(){
+        this.synth.releaseAll()
+    }
+    clearPedal(){ 
+        this._pedal = "off"
+        this.star()
+    }
+    lift(){ this.clearPedal() }
+
 
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
-        // console.log('vals', this.vals)
+        //console.log('vals', this.vals)
         this.prevVals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
@@ -4232,6 +4963,7 @@ class Seq {
             //console.log('loop', time)
             
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+            this.rawIndex = this.index
             this.index = (this.index + this._rotate) % this.vals.length//ask ian if he wants offset to only be implemented for play with limited amount of loops, or as an infinite variable
             // console.log('ind ', this.index)
             if(this._offset !== null){//this makes offset an inperminent variable exceptfor infinite case
@@ -4251,7 +4983,7 @@ class Seq {
             //console.log('1', event)
             event = this.applyOrnamentation(event)
             event = event.map(([x, y]) => [this.perform_transform(x), y])
-            //console.log(event)
+            console.log(event)
             // Roll chords
             const event_timings = event.map(subarray => subarray[1]);
             let roll = this.getNoteParam(this.roll, this.index);
@@ -4262,10 +4994,20 @@ class Seq {
 
             //main callback for triggering notes
             //console.log(event, time, this.index, this.num)
-            for (const val of event) this.callback(val, time, this.index, this.num);
+            //if( this._pedal === "legato" ) this.synth.releaseAll()
+            for (const val of event) this.synth.parseNoteString(val, time, this.index, this.num);
             //console.log('loop', time, event, this.callback)
             if(this.userCallback){
                 this.userCallback();
+            }
+
+            if(this.drawing){
+                this.updateDrawing(curBeat, time, this.index, this.num);
+            }
+            if(this.pianoRoll){
+                for (const val of event){
+                    this.updatePianoRoll(val,time,this.index,this.num)
+                }
             }
 
             //check for sequencing params
@@ -4284,14 +5026,18 @@ class Seq {
         Tone.Transport.start();
     }
 
+    //new: ornaments are arrays of modifiers to be applied
+    //to every element of a sequence.
     applyOrnamentation(event) {
         if (typeof event === 'string') return event; // e.g., '.' or 'r'
         //console.log(event)
+
+        //check if there is an array of ornaments
         let ornIndex;
-        if (Array.isArray(this._orn)) {
+        if (Array.isArray(this._orn[0])) {
             ornIndex = this._orn[this.index % this._orn.length];
         } else {
-            ornIndex = this._orn;
+            ornIndex = 0;
         }
 
         // Ensure index is valid
@@ -4312,19 +5058,63 @@ class Seq {
                 //console.log('orn',pitch)
             } else {
                 // Apply ornament
-                const ornNotes = orn(pitch, pattern, scalar, length);
+                const ornNotes = this._orn;
+                const ornLength = ornNotes.length
 
                 ornNotes.forEach((ornPitch, i) => {
-                    if (ornPitch !== '.') {
-                        const timeOffset = (i * noteSpacing) / numSourceNotes;
-                        ornamentedEvent.push([ornPitch, t + timeOffset]);
-                    }
+                    const ornEvent = typeof ornPitch === 'number' ? Number(pitch)+ornPitch : ornPitch 
+
+                    const timeOffset = i / ornLength / numSourceNotes;
+                    ornamentedEvent.push([ornEvent, t + timeOffset]);
+                    
                 });
             }
         }
-
+        //console.log(ornamentedEvent)
         return ornamentedEvent;
     }
+
+    // applyOrnamentation(event) {
+    //     if (typeof event === 'string') return event; // e.g., '.' or 'r'
+    //     //console.log(event)
+    //     let ornIndex;
+    //     if (Array.isArray(this._orn)) {
+    //         ornIndex = this._orn[this.index % this._orn.length];
+    //     } else {
+    //         ornIndex = this._orn;
+    //     }
+
+    //     // Ensure index is valid
+    //     const ornament = this.ornaments[ornIndex % this.ornaments.length];
+    //     if (!ornament) return event;
+
+    //     let [pattern, scalar, length] = ornament;
+
+    //     const ornamentedEvent = [];
+
+    //     const uniqueTimeSteps = [...new Set(event.map(e => e[1]))];
+    //     const numSourceNotes = uniqueTimeSteps.length;
+    //     const noteSpacing = 1 / length;
+
+    //     for (let [pitch, t] of event) {
+    //         if (pitch === '.' || !(typeof pitch === 'number' || /^-?\d+$/.test(pitch))) {
+    //             ornamentedEvent.push([pitch, t]);
+    //             //console.log('orn',pitch)
+    //         } else {
+    //             // Apply ornament
+    //             const ornNotes = orn(pitch, pattern, scalar, length);
+
+    //             ornNotes.forEach((ornPitch, i) => {
+    //                 if (ornPitch !== '.') {
+    //                     const timeOffset = (i * noteSpacing) / numSourceNotes;
+    //                     ornamentedEvent.push([ornPitch, t + timeOffset]);
+    //                 }
+    //             });
+    //         }
+    //     }
+
+    //     return ornamentedEvent;
+    // }
 
     checkForRandomElement(curBeat) {
         if (typeof curBeat === 'number') {
@@ -4394,6 +5184,7 @@ class Seq {
 
     stop() {
         this.enable = 0;
+        this.synth.releaseAll()
         //if (this.loopInstance) this.loopInstance.stop();
     }
 
@@ -4458,6 +5249,7 @@ class Seq {
         this.loopInstance = new Tone.Loop(time => {
             //console.log('loop', time)
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+            this.rawIndex = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
             this.index = this.index % len
             //console.log('ind ', this.index)
             if (this.enable === 0) return;
@@ -4477,10 +5269,19 @@ class Seq {
 
             //main callback for triggering notes
             //console.log(event, time, this.index, this.num)
-            for (const val of event) this.callback(val, time, this.index, this.num);
+            for (const val of event) this.synth.parseNoteString(val, time, this.index, this.num);
             //console.log('loop', time, event, this.callback)
             if(this.userCallback){
                 this.userCallback();
+            }
+
+            if(this.drawing){
+                this.updateDrawing(event, time, this.index, this.num);
+            }
+            if(this.pianoRoll){
+                for (const val of event){
+                    this.updatePianoRoll(val,time,this.index,this.num)
+                }
             }
 
             //check for sequencing params
@@ -4490,7 +5291,13 @@ class Seq {
             // }}
             //console.log('len ', this.phraseLength)
             this.calcNextBeat(func, len, log)
-            
+
+            //if(this.drawing){
+                this.updateDrawing(event, time, this.index, this.num);
+            //}
+
+
+
             if (this.phraseLength === 'infinite') return;
             this.phraseLength -= 1;
             if (this.phraseLength < 1) this.stop();
@@ -4706,8 +5513,140 @@ class Seq {
     }
 
     updateSeqGui(){}
+
+    updateDrawing(val, time, index, num){
+        const curBeat = Math.floor(Theory.ticks/Tone.Time('4n').toTicks())%8
+        this.events[curBeat] = val
+        let front = this.events.slice(0,curBeat).join(' ')
+        if( front.length > 0 ) front = front + ' '
+        const mid = this.events.slice(curBeat,curBeat+1).join(' ') + ' '
+        const end = this.events.slice(curBeat+1,8).join(' ')
+
+        if( this.drawing instanceof TextField){
+            this.drawing.cursorPosition.line = 0
+            this.drawing.cursorPosition.start = front.length
+            this.drawing.cursorPosition.end = front.length+mid.length
+            
+            this.drawing.writeLine(0, front  + mid + end)
+        }
+    }
+
+    updatePianoRoll(event,time,index,num){
+        //test this.color for hex format
+        let colorType = this.colorKind(this.color)
+        if( colorType === 'css') {
+            this.color = this.cssColorToHex(this.color)
+            colorType = 'hex'
+            //console.log('updated', this.color)
+        }if( colorType === 'hex') {
+            this.color = this.hexToRgb(this.color)
+            colorType = 'rgb'
+            //console.log('updated', this.color)
+        }if( colorType === 'rgb') {
+            this.color = this.rgbToHsv(this.color)
+            colorType = 'hsv'
+            //console.log('updated', this.color)
+        }
+
+        const globalBeat = Math.floor(Theory.ticks/Tone.Time('4n').toTicks())
+        const curBeat = Tone.Time(this.subdivision)/Tone.Time('4n') 
+        const note = Math.floor(event[0])
+        const subDiv = event[1]
+        const velocity = Array.isArray(this.velocity) ? this.velocity[this.index%this.velocity.length] : this.velocity
+        const duration = Array.isArray(this.duration) ? this.duration[this.index%this.duration.length] : this.duration
+        //console.log(event, this.rawIndex, (curBeat),index+subDiv)
+        this.pianoRoll.place(note, curBeat*(this.rawIndex+subDiv), duration, velocity, this.color)
+        //this.pianoRoll.advanceToBeat(globalBeat)
+    }
+
+    colorKind(c) {
+      if (typeof c === "string") return (c[0] === "#") ? "hex" : "css";
+
+      if (c && typeof c === "object") {
+        const has = (k) => Object.prototype.hasOwnProperty.call(c, k);
+
+        if (has("h") && has("s") && has("v")) return "hsv";
+        if (has("r") && has("g") && has("b")) return "rgb";
+      }
+
+      return "unknown";
+    }
+
+    hexToRgb(hex) {
+      hex = hex.replace("#", "");
+
+      if (hex.length === 3) {
+        hex = hex.split("").map(c => c + c).join("");
+      }
+
+      const num = parseInt(hex, 16);
+      return {
+        r: (num >> 16) & 255,
+        g: (num >> 8) & 255,
+        b: num & 255
+      };
+    }
+
+    rgbToHsv(color) {
+      const r = color.r/255;
+      const g =  color.g/255;
+      const b = color.b/ 255;
+
+      const max = Math.max(r, g, b);
+      const min = Math.min(r, g, b);
+      const d = max - min;
+
+      let h = 0;
+      if (d !== 0) {
+        switch (max) {
+          case r: h = ((g - b) / d) % 6; break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h *= 60;
+        if (h < 0) h += 360;
+      }
+
+      const s = max === 0 ? 0 : d / max;
+      const v = max;
+
+      return { h, s, v };
+    }
+
+    cssColorToHex(color) {
+      const ctx = document.createElement("canvas").getContext("2d");
+
+      // Let the browser parse the color
+      ctx.fillStyle = color;
+      const computed = ctx.fillStyle; // normalized string
+
+      // Now it's either rgb(...) or #rrggbb
+      if (computed.startsWith("#")) {
+        // already hex
+        if (computed.length === 4) {
+          // expand #rgb → #rrggbb
+          return "#" + [...computed.slice(1)].map(c => c + c).join("");
+        }
+        return computed;
+      }
+
+      // rgb(r, g, b) or rgba(r, g, b, a)
+      const m = computed.match(/\d+/g);
+      if (!m) return null;
+
+      const [r, g, b] = m.map(Number);
+
+      return (
+        "#" +
+        [r, g, b]
+          .map(v => v.toString(16).padStart(2, "0"))
+          .join("")
+      );
+    }
+
 }
 
+    
 
 /*
 */
@@ -4954,21 +5893,22 @@ class Parameter {
 }
 
 
+//this file may not be used
+//nexusElement is also defined in parentNexus
 ;
 ;
 
 class NexusElement{
     constructor(element_type, x = 0, y = 0, width = 100, height = 100) {
         this.element_type = element_type;
-        console.log('buy')
-        /*
+
         // Initialize the Nexus element
         // Access Nexus object provided by module import
         if (!Nexus || !Nexus[this.element_type]) {
             console.error(`NexusUI interface "${this.element_type}" is not available.`);
             return;
         }
-        
+
         this.element = new Nexus[this.element_type]("#nexus", {
             size: [width, height]
         });
@@ -4982,8 +5922,6 @@ class NexusElement{
         this.heightPercent = height / window.innerHeight;
 
         this.updatePositionAndSize();
-        */
-        console.log('df')
         //window.addEventListener("resize", () => this.updatePositionAndSize());
     }
 
@@ -5118,7 +6056,7 @@ NexusElement;
 
 ;
 
-class NumberBox extends NexusElement {
+class NexusNumberBox extends NexusElement {
     constructor(x = 0, y = 0, width = 75, height = 25) {
         // Pass the type "Dial" to the parent constructor
         super('Number', x, y, width, height);
@@ -5171,7 +6109,7 @@ class NumberBox extends NexusElement {
  * @param {boolean} config.showLabel - Whether to show parameter label (default false)
  * @param {string} config.label - Label text if showLabel is true
  */
-class RadioButton {
+class NexusRadioButton {
     constructor(x = 0, y = 0, options = ['A', 'B', 'C'], config = {}) {
         // Handle legacy 4th parameter as string (orientation)
         const normalizedConfig = typeof config === 'string' 
@@ -5428,7 +6366,7 @@ class RadioButton {
 
 ;
 
-class Slider extends NexusElement {
+class NexusSlider extends NexusElement {
     constructor(x = 0, y = 0, width = 200, height = 50) {
         super('Slider', x, y, width, height);
     }
@@ -5493,7 +6431,7 @@ class Slider extends NexusElement {
 
 ;
 
-class Switch extends NexusElement {
+class NexusSwitch extends NexusElement {
     constructor(x = 0, y = 0, width = 75, height = 25) {
         // Pass the type "Dial" to the parent constructor
         super('Toggle', x, y, width, height);
@@ -7367,12 +8305,26 @@ class MonophonicTemplate {
 
         // Sequencer related
         this.seq = []; // Array of Seq instances
+        this.prevEventTiming = 0
         this.turingMachine = null;
         this.callback = (i, time) => { }
         this.callbackLoop = new Tone.Loop((time) => {
             this.index = Math.floor(Theory.ticks / Tone.Time('16n').toTicks());
             this.callback(this.index, time = null)
         }, '16n').start()
+        // Sequencer parameters
+        this._subdivision = '8n'; // Local alias
+        this._octave = 0;                // Local alias
+        this._duration = .1;             // Local alias
+        this._roll = 0.0;               // Local alias
+        this._velocity = 100;            // Local alias
+        this._orn =[0];            // Local alias
+        this._lag = 0;            // Local alias
+        this._pedal = 0;
+        this._rotate = 0;   //actual permanent rotate amount, about the thoery.tick
+        this._offset = null;   //internal variable for calculating rotation specifically for play
+        this._transform = (x) => x;      // Local alias
+        this.pianoRoll = null
 
         // Drawing
         this.seqToDraw = 0;
@@ -7647,6 +8599,11 @@ class MonophonicTemplate {
         }
     }
 
+    releaseAll(time = null){
+        // console.log("releaseAll")
+        if(this.env) this.env.triggerRelease(0,time)
+    }
+
     generateParameters(paramDefinitions) {
         // console.log(paramDefinitions)
         const params = {};
@@ -7820,9 +8777,8 @@ class MonophonicTemplate {
      */
     initGui(gui = null) {
         this.guiContainer = document.getElementById('Canvas');
-        //this.guiHeight = 1
-        //console.log(this.guiContainer, this.guiHeight)
-        const sketchWithSize = (p) => sketchImpl(p, { height: this.guiHeight });
+        const sketchWithSize = (p) => sketch(p, { height: this.guiHeight });
+        //console.log(this.guiHeight)
         this.gui = new p5(sketchWithSize, this.guiContainer);
         const layout = this.layout;
         //console.log(layout);
@@ -8163,7 +9119,7 @@ class MonophonicTemplate {
         };
         
         if (controlType === 'knob') {
-            const dial = new Dial(pixelX, pixelY, width, height, showValue);
+            const dial = new NexusDial(pixelX, pixelY, width, height, showValue);
             
             // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
             dial.min = param.min || 0;
@@ -8207,7 +9163,7 @@ class MonophonicTemplate {
             const sliderWidth = width * 0.5;
             const sliderHeight = width * 2;
             
-            const slider = new Slider(pixelX, pixelY, sliderWidth, sliderHeight);
+            const slider = new NexusSlider(pixelX, pixelY, sliderWidth, sliderHeight);
             
             // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
             slider.min = param.min || 0;
@@ -8253,7 +9209,7 @@ class MonophonicTemplate {
             const buttonWidth = orientation === 'vertical' ? 55 : Math.max(40, width);
             const buttonHeight = 22;
             
-            const radioBtn = new RadioButton(pixelX, pixelY, options, {
+            const radioBtn = new NexusRadioButton(pixelX, pixelY, options, {
                 buttonWidth,
                 buttonHeight,
                 orientation: orientation,  // Use layout orientation
@@ -8323,7 +9279,7 @@ class MonophonicTemplate {
         const pixelX = ((x + (this.x || 0)) / 100) * containerWidth;
         const pixelY = ((y + (this.y || 0)) / 100) * containerHeight;
         
-        const dial = new Dial(pixelX, pixelY, size, size);
+        const dial = new NexusDial(pixelX, pixelY, size, size);
         dial.min = min;
         dial.max = max;
         
@@ -8427,7 +9383,7 @@ class MonophonicTemplate {
      */
     sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this);
         } else {
             this.seq[num].sequence(arr, subdivision, phraseLength);
         }
@@ -8468,7 +9424,7 @@ class MonophonicTemplate {
 
     expr(func, len = 32, subdivision = '16n', num = 0) {
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
+            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this);
         }
         this.seq[num].expr(func, len, subdivision);
         this.start(num);
@@ -8484,37 +9440,176 @@ class MonophonicTemplate {
         this.start(num);
     }
 
+    // cantus: array of numbers or strings (e.g. [0,1,2,'.',3])
+    // returns: array of numbers or same strings
+    counterpoint(cantus, beamWidth = 16, w = {}) {
+      const W = {
+        step: 1.0,
+        similar: 0.6,
+        contrary: -0.3,
+        oblique: 0.0,
+        ...w
+      };
+
+      const baseOffsets = [2, -5, 5, -2];
+
+      const sgn = (x) => (x === 0 ? 0 : (x > 0 ? 1 : -1));
+
+      const toIndex = (d, baseOct = 4) => {
+        if (d === "." || d === "_" || d === "?") return d;
+        const n = (typeof d === "number") ? d : Number(d);
+        if (!Number.isFinite(n)) return NaN;
+        return n + 7 * baseOct;
+      };
+
+      const propose = (cIdx, lastCp) => {
+        const out = [];
+        for (const off of baseOffsets) {
+          for (let k = -2; k <= 2; k++) out.push(cIdx + off + 7 * k);
+        }
+        if (Number.isFinite(lastCp)) out.sort((a, b) => Math.abs(a - lastCp) - Math.abs(b - lastCp));
+        return out;
+      };
+
+      // ---- rules/terms take a ctx object ----
+      // ctx = { i, cantusRaw, cIdx, cpIdx, path, W }
+
+      const hardRules = [
+        // Example: you can add more later (no-op now)
+        function ruleCandidateIsFinite(ctx) {
+          return Number.isFinite(ctx.cpIdx);
+        },
+        function ruleCandidateRepeatsNote(ctx) {
+            if( Number.isFinite(ctx.cpIdx) )
+                return ctx.cpIdx !== ctx.path.lastCp;
+            else return true
+        }
+      ];
+
+      const costTerms = [
+        function costSmallMelodicMotion(ctx) {
+          const lastCp = ctx.path.lastCp;
+          if (!Number.isFinite(lastCp)) return 0;
+          return ctx.W.step * Math.abs(ctx.cpIdx - lastCp);
+        },
+
+        function costPreferContrary(ctx) {
+          const lastCp = ctx.path.lastCp;
+          const lastC = ctx.path.lastC;
+          if (!Number.isFinite(lastCp) || !Number.isFinite(lastC)) return 0;
+
+          const cMove = sgn(ctx.cIdx - lastC);
+          const cpMove = sgn(ctx.cpIdx - lastCp);
+
+          if (cMove === 0 || cpMove === 0) return ctx.W.oblique;
+          if (cMove === cpMove) return ctx.W.similar;
+          return ctx.W.contrary;
+        }
+      ];
+
+      // ---- beam search ----
+      let beam = [{ seq: [], cost: 0, lastCp: null, lastC: null }];
+
+      for (let i = 0; i < cantus.length; i++) {
+        const cIdx = toIndex(cantus[i], 4);
+        const nextBeam = [];
+
+        for (const path of beam) {
+          // pass-through tokens: CP gets same token, no scoring
+          if (typeof cIdx === "string") {
+            nextBeam.push({
+              seq: path.seq.concat(cIdx),
+              cost: path.cost,
+              lastCp: path.lastCp,
+              lastC: path.lastC
+            });
+            continue;
+          }
+
+          // bad cantus value: mirror raw input
+          if (!Number.isFinite(cIdx)) {
+            nextBeam.push({
+              seq: path.seq.concat(cantus[i]),
+              cost: path.cost,
+              lastCp: path.lastCp,
+              lastC: path.lastC
+            });
+            continue;
+          }
+
+          const candidates = propose(cIdx, path.lastCp);
+
+          for (const cpIdx of candidates) {
+            const ctx = { i, cantusRaw: cantus[i], cIdx, cpIdx, path, W };
+
+            // hard rules
+            let ok = true;
+            for (const rule of hardRules) {
+              if (!rule(ctx)) { ok = false; break; }
+            }
+            if (!ok) continue;
+
+            // costs
+            let add = 0;
+            for (const term of costTerms) add += term(ctx);
+
+            nextBeam.push({
+              seq: path.seq.concat(cpIdx),
+              cost: path.cost + add,
+              lastCp: cpIdx,
+              lastC: cIdx
+            });
+          }
+        }
+
+        nextBeam.sort((a, b) => a.cost - b.cost);
+        beam = nextBeam.slice(0, beamWidth);
+        if (beam.length === 0) return null;
+      }
+
+      return beam[0].seq;
+    }
+
+    /************************************************/
+
+
     set velocity(val) {
+        this._velocity = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].velocity = val
         }
     }
 
     set orn(val) {
+        this._orn = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].orn = val
         }
     }
 
     set octave(val) {
+        this._octave = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].octave = val
         }
     }
 
-    set sustain(val) {//turn into duration
+    set duration(val) {//turn into duration
+        this._duration = val
         for(let i=0;i<10;i++){
-            if(this.seq[i])this.seq[i].sustain = val
+            if(this.seq[i])this.seq[i].duration = val
         }
     }
 
     set subdivision(val) {
+        this._subdivision = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].subdivision = val
         }
     }
 
     set transform(val) {
+        this._transform = val
         if (typeof val !== 'function') {
             console.warn(`Transform must be a function. Received: ${typeof val}`);
             return;
@@ -8525,20 +9620,30 @@ class MonophonicTemplate {
     }
 //roll already exists in seq
     set roll(val) {
+        this._roll = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].roll = val
         }
     }
 
     set rotate(val) {
+        this._rotate = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].rotate = val
         }
     }
 
     set offset(val) {
+        this._offset = val
         for(let i=0;i<10;i++){
             if(this.seq[i])this.seq[i].offset = val
+        }
+    }
+
+    set pianoRoll(val) {
+        this._pianoRoll = val
+        for(let i=0;i<10;i++){
+            if(this.seq[i])this.seq[i].pianoRoll = this._pianoRoll
         }
     }
 
@@ -8556,15 +9661,34 @@ class MonophonicTemplate {
             if (this.seq[num]) this.seq[num].setTransform(transform);
         }
     }
-    //possible implementation of rotate
-    get sustain() {
+
+    //pedaling
+    pedal(state = "full"){
+        this._pedal = state
+        for (let seq of this.seq) {
+                if (seq) seq.pedal(state);
+            }
+    }
+    star(){
+        this.synth.releaseAll()
+    }
+    clearPedal(){ 
+        this._pedal = "off"
+        this.star()
+        for (let seq of this.seq) {
+                if (seq) seq.clearPedal();
+            }
+    }
+    lift(){ this.clearPedal() }
+
+    get duration() {
         const self = this;
         return new Proxy([], {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
                     if (self.seq[index]) {
-                        self.seq[index].setSustain(value);
+                        self.seq[index].setDuration(value);
                     }
                 }
                 return true; // Indicate success
@@ -8702,6 +9826,26 @@ class MonophonicTemplate {
 
     parseNoteString(val, time, index, num=null) {
        //console.log(val,time,index, num, isNaN(Number(val[0])))
+        let lag = this.getSeqParam(this.seq[num].lag, index);
+        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
+        let groove = Groove.get(subdivision,index);
+        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+        let curEventTiming = val[1] + index
+
+        if (val[0] === "~") {  return; }
+        else if (val[0] === "*") {
+            this.releaseAll(time + timeOffset)
+            return;
+        }
+
+        
+        
+
+        //handle pedaling
+        let pedal = this.seq[num]._pedal
+        if( pedal == "legato" && curEventTiming > this.prevEventTiming ) this.releaseAll(time + timeOffset)
+        if( pedal == "star" ) this.releaseAll(time + timeOffset)
+
         if (val[0] === ".") return;
         if (!val || val.length === 0 ) return '.';
 
@@ -8719,30 +9863,40 @@ class MonophonicTemplate {
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
-        let sustain = this.getSeqParam(this.seq[num].sustain, index);
-        let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
-        let lag = this.getSeqParam(this.seq[num].lag, index);
-        //handle in the Seq class
-        //let rotate = this.getSeqParam(this.seq[num].rotate, index);
-        //let offset = this.getSeqParam(this.seq[num].offset, index);
-
-        let groove = Groove.get(subdivision,index);
+        let duration = this.getSeqParam(this.seq[num].duration, index);
         
-        const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
+        
+        
+        
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256
-        //console.log('pa', note, octave, velocity, sustain, time, timeOffset)
-        try {
-            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
-            this.triggerAttackRelease(
-                note + octave * Theory.scaleRatios.length,
-                velocity,
-                sustain,
-                time + timeOffset
-            );
-        } catch (e) {
-            this.printToConsole('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
+        //console.log('pa', note, octave, velocity, duration, time, timeOffset)
+        
+         if( pedal === "full" || pedal === "legato"){
+            try {
+                //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,duration,time+timeOffset)
+                this.triggerAttack(
+                    note + octave * Theory.scaleRatios.length,
+                    velocity,
+                    time + timeOffset
+                );
+            } catch (e) {
+                this.printToConsole('invalid pedal note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
+            }
+        } else {
+            try {
+                //console.log('trig', note + octave * 12, velocity,duration,time+timeOffset)
+                this.triggerAttackRelease(
+                    note + octave * Theory.scaleRatios.length,
+                    velocity,
+                    duration,
+                    time + timeOffset
+                );
+            } catch (e) {
+                this.printToConsole('invalid note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
+            }
         }
+        this.prevEventTiming = curEventTiming
     }
 }
 
@@ -10983,7 +12137,7 @@ const paramDefinitions = (synth) => [
     default: 80,
       value: 100,
     callback: (value) => {
-      synth.highpassA.frequency.value = value;
+      //synth.highpassA.frequency.rampTo( value,.1);
     }
   },
   {
@@ -10995,7 +12149,7 @@ const paramDefinitions = (synth) => [
     default: 8000,
     value: 8000,
     callback: (value) => {
-      synth.lowpassFilter.frequency.value = value;
+      //synth.lowpassFilter.frequency.rampTo( value,.1)
     }
   },
   {
@@ -11007,7 +12161,7 @@ const paramDefinitions = (synth) => [
     default: 150,
     value: 150,
     callback: (value) => {
-      synth.highpassB.frequency.value = value;
+      //synth.highpassB.frequency.rampTo( value,.1)
     }
   },
   {
@@ -11036,7 +12190,7 @@ const paramDefinitions = (synth) => [
         return;
       }     
       value = Math.pow(value,2)*36-24
-      synth.toneShelf.gain.rampTo( value, .3);
+      //synth.toneShelf.gain.rampTo( value,.1)
       
     }
   },
@@ -11425,6 +12579,14 @@ const paramDefinitions = (synth) => [
     name:'amp',type: 'hidden',
     min:0,max:1,curve:2,callback:x=>synth.output.factor.value = x
   },
+  {
+    name:'ghost',type: 'hidden',
+    min:0,max:1,curve:2,callback:x=>synth.ghost = x
+  },
+  {
+    name:'accent',type: 'hidden',
+    min:0,max:4,curve:2,callback:x=>synth.accent = x
+  },
 
   {
     name:'decay',type: 'param',value:1,
@@ -11469,6 +12631,9 @@ class DrumVoice extends DrumTemplate{
     this.decayTime = 1
     this.duration = 1
     this.startPoint = 0
+    this.accent = 1.5
+    this.ghost = .3
+
     this.env = new Tone.Envelope(0.0, 1, 1, 10)
     this.vca = new Tone.Multiply()
     this.output = new Tone.Multiply(1)
@@ -11546,6 +12711,16 @@ class DrumVoice extends DrumTemplate{
       this.env.release =  this.decayTime
       this.env.decay =  this.decayTime 
       this.triggerSample(amplitude, decay,time)
+    }
+    triggerAccent(amplitude, decay,time){
+      this.env.release =  this.decayTime
+      this.env.decay =  this.decayTime 
+      this.triggerSample(amplitude * this.accent.value, decay,time)
+    }
+    triggerGhost(amplitude, decay,time){
+      this.env.release =  this.decayTime
+      this.env.decay =  this.decayTime 
+      this.triggerSample(amplitude * this.ghost.value, decay,time)
     }
     triggerChoke(amplitude, decay,time){
       this.env.release =  this.decayTime * this.chokeRatio
@@ -11980,7 +13155,7 @@ class DrumSampler extends DrumTemplate{
     this.comp.connect(this.distortion)
     this.distortion.connect(this.output)
 
-    //
+    //drum voices
     this.kick = new DrumVoice()
     this.kick.output.connect(this.dry_kick)
     this.dry_kick.connect(this.output)
@@ -11995,20 +13170,6 @@ class DrumSampler extends DrumTemplate{
     this.p2.output.connect(this.comp)
     this.p3 = new DrumVoice()
     this.p3.output.connect(this.comp)
-
-    //setTimeout(()=>this.loadSamples(this.kit),100)
-    this.hatDecay = .05
-    this.prevTime = 0
-
-    this.kickGhostVelocity = new Array(10).fill(.25)
-    this.snareGhostVelocity = new Array(10).fill(1/4)
-    this.kickVelocity = new Array(10).fill(1)
-    this.snareVelocity = new Array(10).fill(1)
-    this.closedVelocity = new Array(10).fill(.75)
-    this.openVelocity = new Array(10).fill(1)
-    this.p1Velocity = new Array(10).fill(1)
-    this.p2Velocity = new Array(10).fill(1)
-    this.p3Velocity = new Array(10).fill(1)
 
     for(let i=0;i<10;i++) {
         this.subdivision[i] = '16n'
@@ -12184,7 +13345,7 @@ class DrumSampler extends DrumTemplate{
 
     let octave = this.getSeqParam(this.seq[num].octave, index);
     let velocity = this.getSeqParam(this.seq[num].velocity, index);
-    let sustain = this.getSeqParam(this.seq[num].sustain, index);
+    let duration = this.getSeqParam(this.seq[num].duration, index);
     let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
     let lag = this.getSeqParam(this.seq[num].lag, index);
 
@@ -12206,18 +13367,18 @@ class DrumSampler extends DrumTemplate{
 
     switch(val){
       case '.': break;
-      case '0': this.kick.trigger(1*velocity,1,time); break; //just because. . . .
+      case '0': case 0: this.kick.trigger(1*velocity,1,time); break; //just because. . . .
       case 'O': this.kick.trigger(1*velocity,1,time); break;
-      case 'o': this.kick.trigger(.2*velocity,1.5,time); break;
+      case 'o': this.kick.triggerGhost(velocity,1,time); break;
       
       case 'X': this.snare.trigger(1*velocity,1,time); break;
-      case 'x': this.snare.trigger(.2*velocity,1,time); break;
+      case 'x': this.snare.triggerGhost(velocity,1,time); break;
       case '*': this.hat.triggerChoke(.75*velocity,0.1,time); break;
       case '^': this.hat.trigger(.75*velocity,1,time); break;
       
-      case '1': this.p1.trigger(1*velocity,1,time); break;
-      case '2': this.p2.trigger(1*velocity,1,time); break;
-      case '3': this.p3.trigger(1*velocity,1,time); break;
+      case '1': case 1: this.p1.trigger(1*velocity,1,time); break;
+      case '2': case 2: this.p2.trigger(1*velocity,1,time); break;
+      case '3': case 3: this.p3.trigger(1*velocity,1,time); break;
       default: console.log('triggerDrum(), no matching drum voice ', val, '\n')
     }   
   }
@@ -14593,7 +15754,9 @@ class FM4 extends MonophonicTemplate {
 
     // === Output path ===
     this.env = new Tone.Envelope();
-    this.env.connect(this.carrier.vca.factor);
+    this.env_depth = new Tone.Multiply(1);
+    this.env_depth.connect(this.carrier.vca.factor);
+    this.env.connect(this.env_depth);
     this.vca = new Tone.Multiply()
     this.env.connect(this.vca.factor);
 
@@ -14611,6 +15774,7 @@ class FM4 extends MonophonicTemplate {
 
     // === Velocity and key tracking ===
     this.velocitySig = new Tone.Signal();
+    this.velocitySig.connect(this.env_depth.factor)
     this.keyTrackingAmount = new Tone.Signal();
     this.keyTracker = new Tone.Multiply(0.1);
     this.frequency.connect(this.keyTracker);
@@ -16894,9 +18058,9 @@ class MonophonicTemplate {
         }
     }
 
-    set sustain(val) {//turn into duration
+    set duration(val) {//turn into duration
         for(let i=0;i<10;i++){
-            if(this.seq[i])this.seq[i].sustain = val
+            if(this.seq[i])this.seq[i].duration = val
         }
     }
 
@@ -16949,14 +18113,14 @@ class MonophonicTemplate {
         }
     }
     //possible implementation of rotate
-    get sustain() {
+    get duration() {
         const self = this;
         return new Proxy([], {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
                     if (self.seq[index]) {
-                        self.seq[index].setSustain(value);
+                        self.seq[index].setduration(value);
                     }
                 }
                 return true; // Indicate success
@@ -17111,7 +18275,7 @@ class MonophonicTemplate {
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
-        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let duration = this.getSeqParam(this.seq[num].duration, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let lag = this.getSeqParam(this.seq[num].lag, index);
         //handle in the Seq class
@@ -17123,17 +18287,17 @@ class MonophonicTemplate {
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256
-        //console.log('pa', note, octave, velocity, sustain, time, timeOffset)
+        //console.log('pa', note, octave, velocity, duration, time, timeOffset)
         try {
-            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
+            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,duration,time+timeOffset)
             this.triggerAttackRelease(
                 note + octave * Theory.scaleRatios.length,
                 velocity,
-                sustain,
+                duration,
                 time + timeOffset
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
+            console.log('invalid note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
         }
     }
 }
@@ -18004,9 +19168,9 @@ class MonophonicTemplate {
         }
     }
 
-    set sustain(val) {//turn into duration
+    set duration(val) {//turn into duration
         for(let i=0;i<10;i++){
-            if(this.seq[i])this.seq[i].sustain = val
+            if(this.seq[i])this.seq[i].duration = val
         }
     }
 
@@ -18059,14 +19223,14 @@ class MonophonicTemplate {
         }
     }
     //possible implementation of rotate
-    get sustain() {
+    get duration() {
         const self = this;
         return new Proxy([], {
             set(target, prop, value) {
                 const index = parseInt(prop);
                 if (!isNaN(index)) {
                     if (self.seq[index]) {
-                        self.seq[index].setSustain(value);
+                        self.seq[index].setDuration(value);
                     }
                 }
                 return true; // Indicate success
@@ -18221,7 +19385,7 @@ class MonophonicTemplate {
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
-        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let duration = this.getSeqParam(this.seq[num].duration, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let lag = this.getSeqParam(this.seq[num].lag, index);
         //handle in the Seq class
@@ -18233,17 +19397,17 @@ class MonophonicTemplate {
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         velocity = velocity * groove.velocity
         if( Math.abs(velocity)>256) velocity = 256
-        //console.log('pa', note, octave, velocity, sustain, time, timeOffset)
+        //console.log('pa', note, octave, velocity, duration, time, timeOffset)
         try {
-            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,sustain,time+timeOffset)
+            //console.log('trig', this.triggerAttackRelease, note + octave * 12, velocity,duration,time+timeOffset)
             this.triggerAttackRelease(
                 note + octave * Theory.scaleRatios.length,
                 velocity,
-                sustain,
+                duration,
                 time + timeOffset
             );
         } catch (e) {
-            console.log('invalid note', note + octave * 12, velocity, sustain, time + val[1] * Tone.Time(subdivision) + lag);
+            console.log('invalid note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
         }
     }
 }
@@ -19342,12 +20506,12 @@ class Player extends MonophonicTemplate {
 
         let octave = this.getSeqParam(this.seq[num].octave, index);
         let velocity = this.getSeqParam(this.seq[num].velocity, index);
-        let sustain = this.getSeqParam(this.seq[num].sustain, index);
+        let duration = this.getSeqParam(this.seq[num].duration, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let lag = this.getSeqParam(this.seq[num].lag, index);
         note = note+octave
-        sustain = sustain * Tone.Time(subdivision)
-        //console.log(note, velocity, sustain, time)
+        duration = duration * Tone.Time(subdivision)
+        //console.log(note, velocity, duration, time)
 
         let groove = Groove.get(subdivision,index)
         //console.log(groove)
@@ -19359,11 +20523,11 @@ class Player extends MonophonicTemplate {
             this.triggerAttackRelease(
                 note,
                 velocity,
-                sustain,
+                duration,
                 time + timeOffset
             );
         } catch(e){
-            console.log('invalid note', note , velocity, sustain)
+            console.log('invalid note', note , velocity, duration)
         }
     }
 }
@@ -19525,6 +20689,13 @@ class Polyphony extends MonophonicTemplate{
 		}
 		//console.log("AR ", val,dur)
 	}
+
+	releaseAll(time = null){
+		// console.log("releaseAll")
+		for( let i=0; i< this.numVoices; i++){
+			this.voice[i].triggerRelease(0,time)
+		}
+    }
 
     /** VOICE MANAGEMENT **/
 
@@ -21007,7 +22178,6 @@ class Rumble extends MonophonicTemplate {
     this.isGlide = false
     this.name = "Rumble"
     this.layout = tightLayout
-    this.guiHeight = 1
 
     // Initialize the main frequency control
     this.frequency = new Tone.Signal();
@@ -21312,14 +22482,14 @@ const paramDefinitions = (synth) => [
     }
   },
   {
-    name: 'sustainTime',
+    name: 'duration ',
     type: 'input',
     value: 0.5,
     min: 0.005,
     max: 1,
     curve: 2,
     callback: function(x) {
-      synth.sustain = x;
+      synth.duration = x;
     }
   },
   {
@@ -21366,18 +22536,18 @@ const paramDefinitions = (synth) => [
       synth.vcfEnvDepth.factor.value = x;
     }
   }
-  // ,
-  // {
-  //   name: 'startTime',
-  //   type: 'hidden',
-  //   value: 0,
-  //   min: 0.0,
-  //   max: 1,
-  //   curve: 1,
-  //   callback: function(x) {
-  //     synth.sampler.startTime = x;
-  //   }
-  // },
+  ,
+  {
+    name: 'startTime',
+    type: 'hidden',
+    value: 0,
+    min: 0.0,
+    max: 1,
+    curve: 1,
+    callback: function(x) {
+      synth.sampler._startTime = x;
+    }
+  }
   // {
   //   name: 'endTime',
   //   type: 'hidden',
@@ -21386,8 +22556,9 @@ const paramDefinitions = (synth) => [
   //   max: 10,
   //   curve: 1,
   //   callback: function(x) {
-  //     synth.sampler.endTime = x;
+  //     synth.endTime = x;
   //   }
+  // }
 ];
 
 paramDefinitions;
@@ -21408,66 +22579,66 @@ paramDefinitions;
 class ExtendedSampler extends Tone.Sampler{
     constructor(options){
         super(options)
-        this.startTime = 0
+        this._startTime = 0
         console.log('begin')
     }
 
-    // ftomf(freq) {
-    //     return 69 + 12 * Math.log2(freq / 440);
-    // }
-    // triggerAttack(notes, time, velocity = 1) {
-    //     console.log("es.triggerAttack", notes, time, velocity);
+    ftomf(freq) {
+        return 69 + 12 * Math.log2(freq / 440);
+    }
+    triggerAttack(notes, time, velocity = 1) {
+        //console.log("es.triggerAttack", notes, time, velocity);
 
-    //     if (!Array.isArray(notes)) {
-    //         notes = [notes];
-    //     }
+        if (!Array.isArray(notes)) {
+            notes = [notes];
+        }
 
-    //     notes.forEach((note) => {
-    //         const midiFloat = this.ftomf(
-    //             new Tone.FrequencyClass(this.context, note).toFrequency()
-    //         );
-    //         const midi = Math.round(midiFloat);
-    //         const remainder = midiFloat - midi;
+        notes.forEach((note) => {
+            const midiFloat = this.ftomf(
+                new Tone.FrequencyClass(this.context, note).toFrequency()
+            );
+            const midi = Math.round(midiFloat);
+            const remainder = midiFloat - midi;
 
-    //         // find the closest note pitch
-    //         const difference = this._findClosest(midi);
-    //         const closestNote = midi - difference;
+            // find the closest note pitch
+            const difference = this._findClosest(midi);
+            const closestNote = midi - difference;
 
-    //         const buffer = this._buffers.get(closestNote);
-    //         const playbackRate = Tone.intervalToFrequencyRatio(difference + remainder);
+            const buffer = this._buffers.get(closestNote);
+            const playbackRate = Tone.intervalToFrequencyRatio(difference + remainder);
 
-    //         // play that note
-    //         const source = new Tone.ToneBufferSource({
-    //             url: buffer,
-    //             context: this.context,
-    //             curve: this.curve,
-    //             fadeIn: this.attack,
-    //             fadeOut: this.release,
-    //             playbackRate,
-    //         }).connect(this.output);
-    //         // Updated this line:
-    //         source.start(time, this.startTime, buffer.duration / playbackRate, velocity);
+            // play that note
+            const source = new Tone.ToneBufferSource({
+                url: buffer,
+                context: this.context,
+                curve: this.curve,
+                fadeIn: this.attack,
+                fadeOut: this.release,
+                playbackRate,
+            }).connect(this.output);
+            // Updated this line:
+            source.start(time, this._startTime, buffer.duration / playbackRate, velocity);
 
-    //         // add it to the active sources
-    //         if (!Array.isArray(this._activeSources.get(midi))) {
-    //             this._activeSources.set(midi, []);
-    //         }
-    //         this._activeSources.get(midi).push(source);
+            // add it to the active sources
+            if (!Array.isArray(this._activeSources.get(midi))) {
+                this._activeSources.set(midi, []);
+            }
+            this._activeSources.get(midi).push(source);
 
-    //         // remove it when it's done
-    //         source.onended = () => {
-    //             if (this._activeSources && this._activeSources.has(midi)) {
-    //                 const sources = this._activeSources.get(midi);
-    //                 const index = sources.indexOf(source);
-    //                 if (index !== -1) {
-    //                     sources.splice(index, 1);
-    //                 }
-    //             }
-    //         };
-    //     });
+            // remove it when it's done
+            source.onended = () => {
+                if (this._activeSources && this._activeSources.has(midi)) {
+                    const sources = this._activeSources.get(midi);
+                    const index = sources.indexOf(source);
+                    if (index !== -1) {
+                        sources.splice(index, 1);
+                    }
+                }
+            };
+        });
 
-    //     return this;
-    // }   
+        return this;
+    }   
 }
 
 class Simpler extends MonophonicTemplate {
@@ -21652,12 +22823,21 @@ class Simpler extends MonophonicTemplate {
                 this.filterEnv.triggerAttackRelease(dur,time)
                 this.vca.factor.setValueAtTime(amp, time)
             } else{
-                this.sampler.triggerAttackRelease(freq, dur)
+                this.sampler.triggerAttackRelease(freq, dur, Tone.now(), amp)
                 this.filterEnv.triggerAttackRelease(dur)
                 this.vca.factor.setValueAtTime(amp)
             }
         }catch(e){}
     }//attackRelease
+
+    releaseAll(time = null){
+        console.log('releaseAll')
+        if(time) {
+            this.sampler.releaseAll(time)
+        } else {
+            this.sampler.releaseAll();
+        }
+    }
 
 
     //parameter setters
@@ -21781,6 +22961,429 @@ class Snare {
         // this.ratEnvelope.triggerAttackRelease(0.01), this.headsEnvelope.triggerAttackRelease(0.01)
     }
     
+
+window.StringsPresets = {
+  "default": {
+    "type": "square",
+    "cutoff": 2750.48799999999994,
+    "Q": 0,
+    "keyTrack": 0,
+    "envDepth": 0.5999999999976,
+    "level": 0,
+    "attack":  0.4,
+    "decay":  0.89062500000000155,
+    "sustain":  0.6,
+    "release":  1
+  },
+  "chirp": {
+    "type": "saw",
+    "cutoff": 380.278,
+    "Q": 10.44300000000001,
+    "keyTrack": 0,
+    "envDepth": 2557.399999999998,
+    "level": 0,
+    "attack":  0.01000000000000004,
+    "decay":    0.3500694444444451,
+    "sustain":    0.08999999999999969,
+    "release":    0.21777777777777863
+  },
+  "pluck": {
+    "type": "square",
+    "cutoff": 343.35200000000003,
+    "Q": 11.532000000000012,
+    "keyTrack": 0,
+    "envDepth": 1306.3999999999974,
+    "level": 0,
+    "adsr": [
+      0.01,
+      0.4,
+      0.5,
+      0.8
+    ]
+  },
+  "flute": {
+    "type": "tri",
+    "cutoff": 20,
+    "Q": 0,
+    "keyTrack": 0,
+    "envDepth": 2197.4000000000037,
+    "level": 0,
+    "adsr": [
+      0.8402777777777787,
+      1,
+      1,
+      1
+    ]
+  },
+  "drone": {
+    "type": "saw",
+    "cutoff": 435.3276799999999,
+    "Q": 14.700000000000012,
+    "keyTrack": 0,
+    "envDepth": 8.600000000001046,
+    "level": 0.5041000000000002,
+    "adsr": [
+      0.8402777777777787,
+      1,
+      1,
+      1
+    ]
+  },
+  "piano": {
+    "type": "saw",
+    "cutoff": 100,
+    "Q": 0.0,
+    "keyTrack": 1,
+    "envDepth": 1200,
+    "level": 0,
+    "attack": 0.005,
+    "decay": 0.5,
+    "sustain": 0.3,
+    "release": 0.1
+  },
+  "guitar": {
+    "type": "square",
+    "cutoff": 800,
+    "Q": 0.3,
+    "keyTrack": 0.3,
+    "envDepth": 1800,
+    "level": 0,
+    "attack": 0.002,
+    "decay": 0.7,
+    "sustain": 0.05,
+    "release": 0.1
+  },
+  "flute": {
+    "type": "tri",
+    "cutoff": 950,
+    "Q": 11,
+    "keyTrack": 1.0,
+    "envDepth": 0,
+    "level": 0,
+    "attack": 0.2,
+    "decay": 0.2,
+    "sustain": 0.9,
+    "release": 0.4
+  },
+  "brass": {
+    "type": "saw",
+    "cutoff": 600,
+    "Q": 0.5,
+    "keyTrack": 0.6,
+    "envDepth": 1300,
+    "level": 0,
+    "attack": 0.1,
+    "decay": 0.3,
+    "sustain": 0.7,
+    "release": 0.6
+  },
+  "bowedString": {
+    "type": "square",
+    "cutoff": 1100,
+    "Q": 0.1,
+    "keyTrack": 0.5,
+    "envDepth": 1000,
+    "level": 0,
+    "attack": 0.4,
+    "decay": 0.4,
+    "sustain": 0.8,
+    "release": 0.5
+  },
+  "banjo": {
+    "type": "square",
+    "cutoff": 1200,
+    "Q": 4,
+    "keyTrack": 0.4,
+    "envDepth": 3000,
+    "level": 0,
+    "attack": 0.001,
+    "decay": 0.15,
+    "sustain": 0.0,
+    "release": 0.15
+  },
+  "marimba": {
+    "type": "tri",
+    "cutoff": 400,
+    "Q": 2,
+    "keyTrack": 1,
+    "envDepth": 4000,
+    "level": 0.0,
+    "attack": 0.001,
+    "decay": 0.08,
+    "sustain": 0.0,
+    "release": 0.1
+  }
+};;
+
+const paramDefinitions = (synth) => [
+
+    { 
+        name: 'shape', type: 'vco', 
+        min: 0, max: .95, curve: 1, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth._pulseWidthMain.setValueAtTime(x, time);
+            } else  synth._pulseWidthMain.value = x; } 
+    },
+
+    { 
+        name: 'rate', type: 'vcf', 
+        min: 0, max: 20, curve: 2, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth._lfo.frequency.setValueAtTime(x, time);
+            } else  synth._lfo.frequency.value = x; } 
+    },
+
+    { 
+        name: 'depth', type: 'vcf', 
+        min: 0, max: .95, curve: 1, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth._lfo.amplitude.setValueAtTime(x, time);
+            } else  synth._lfo.amplitude.value = x; } 
+    },
+
+    { 
+        name: 'cutoff', type: 'vcf', 
+        min: 20, max: 10000, curve: 2,
+        isSignal: 'true', connectTo: synth=>synth.cutoffSig, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth.cutoffSig.setValueAtTime(x, time);
+            } else {
+                synth.cutoffSig.value = x;
+            }
+        }
+    },
+    { 
+        name: 'Q', type: 'vcf', 
+        min: 0, max: 30, curve: 2, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth.vcf.Q.setValueAtTime(x, time);
+            } else  synth.vcf.Q.value = x; } 
+    },
+
+    { 
+        name: 'keyTrack', type: 'vcf', 
+        min: 0, max: 2, curve: 1, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth.keyTracker.factor.setValueAtTime(x, time);
+            } else  synth.keyTracker.factor.value = x; } },
+    { 
+        name: 'envDepth', type: 'hidden', 
+        min: -1000, max: 5000, curve: 2, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth.vcf_env_depth.factor.setValueAtTime(x, time);
+            } else synth.vcf_env_depth.factor.value = x; } },
+    { 
+        name: 'level', type: 'hidden', 
+        min: 0, max: 1, curve: 2, value: 1, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth.output.setValueAtTime(x, time);
+            } else  synth.output.value = x; } },
+    { 
+        name: 'attack', type: 'vca', 
+        min: 0, max: 4, curve: 2, value: 0.4, 
+        callback: function(x) { synth.env.attack = x; } },
+    { 
+        name: 'decay', type: 'hidden', 
+        min: 0, max: 1, curve: 2, value: 0.1, 
+        callback: function(x) { synth.env.decay = x; } },
+    { 
+        name: 'sustainTime', type: 'hidden', 
+        min: 0, max: 1, curve: 2, value: 1, 
+        callback: function(x) { synth.env.sustain = x; } },
+    { 
+        name: 'release', type: 'vca', 
+        min: 0, max: 10, curve: 2, value: 1, 
+        callback: function(x) { synth.env.release = x; } }
+];
+
+paramDefinitions;
+
+/*
+Twinkle
+
+Single vco monosynth
+* vco->vcf->vca->output
+
+*/
+
+;
+;
+;
+
+;
+;
+
+ 
+class Strings extends MonophonicTemplate {
+  constructor (gui = null) {
+    super()
+    this.gui = gui
+		this.presets = presets
+		this.synthPresetName = "StringsPresets"
+		//this.accessPreset()
+    this.isGlide = false
+    this.name = "Strings"
+    this.guiHeight = 0.5
+    this.layout = basicLayout
+    //console.log(this.name, " loaded, available preset: ", this.presets)
+
+    // Initialize the main frequency control
+    this.frequency = new Tone.Signal(200);
+
+    // VCOs
+    this.vco = new Tone.Oscillator({ type:'triangle'}).start();
+    this.frequency.connect(this.vco.frequency)
+    this._vcoMain = new Tone.Oscillator().start();
+    this.frequency.connect(this._vcoMain.frequency)
+
+    //WAVESHAPER
+    this._waveShaper = new Tone.WaveShaper()
+    this.vco.connect(this._waveShaper);
+    this._waveShaperMain = new Tone.WaveShaper()
+    this._vcoMain.connect(this._waveShaperMain);
+    this._waveShaper.setMap( x=> Math.tanh(x*15))
+    this._waveShaperMain.setMap( x=> Math.tanh(x*15))
+
+    //PWM
+    this._lfo = new Tone.LFO({type:'triangle'}).start()
+    this._lfo.connect(this._waveShaper)
+    this._lfo.amplitude.value = 0.2
+    this._pulseWidthMain = new Tone.Signal()
+    this._pulseWidthMod = new Tone.Signal()
+    this._pulseWidthMain.connect(this._waveShaperMain)
+    this._pulseWidthMod.connect(this._waveShaper)
+
+    // VCF
+    this.vcf = new Tone.Filter({type:"lowpass", rolloff:-12});
+    this._waveShaper.connect(this.vcf);
+    this._waveShaperMain.connect(this.vcf)
+
+    // VCF, VCA, output
+    this.vca = new Tone.Multiply()
+    this.vcf.connect(this.vca)
+    this.output = new Tone.Multiply(1)
+    this.vcf.connect(this.vca)
+    this.vca.connect(this.output)
+
+    // VCA control
+    this.vca_lvl = new Tone.Signal();
+    this.vca_lvl.connect(this.vca.factor)
+    this.env = new Tone.Envelope();
+    this.env.attackCurve = 'linear'
+    this.env.releaseCurve = 'linear'
+    this.env.decayCurve = 'exponential'
+    this.env_depth = new Tone.Multiply()
+    this.env.connect(this.env_depth)
+    this.env_depth.connect(this.vca.factor)
+    this.velocitySig = new Tone.Signal(1)
+    this.velocitySig.connect(this.env_depth.factor)
+
+    //vcf control
+    this.cutoffSig = new Tone.Signal(1000);
+    this.cutoff_cv = new Tone.Signal(0);
+    this.vcf_env_depth = new Tone.Multiply(500);
+    this.keyTracker = new Tone.Multiply(0)
+    this.env.connect(this.vcf_env_depth)
+    this.vcf_env_depth.connect(this.vcf.frequency)
+    this.cutoffSig.connect(this.vcf.frequency)
+    this.cutoff_cv.connect(this.vcf.frequency)
+    this.frequency.connect(this.keyTracker)
+    this.keyTracker.connect(this.vcf.frequency)
+
+    // Bind parameters with this instance
+    this.paramDefinitions = paramDefinitions(this)
+    //console.log(this.paramDefinitions)
+    this.param = this.generateParameters(this.paramDefinitions)
+    this.createAccessors(this, this.param);
+
+    //for autocomplete
+    this.autocompleteList = this.paramDefinitions.map(def => def.name);;
+    //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
+    setTimeout(()=>{this.loadPreset('default')}, 500);
+  }//constructor
+
+  //envelopes
+  triggerAttack (freq, amp, time=null){
+    freq = Theory.mtof(freq)
+    amp = amp/127
+    if(time){
+      this.env.triggerAttack(time)
+      this.frequency.setValueAtTime(freq, time)
+      this.velocitySig.linearRampToValueAtTime(amp, time + 0.01);
+    } else {
+      this.env.triggerAttack()
+      this.frequency.value = freq
+      this.velocitySig.rampTo(amp,.03)
+    }
+  }
+  triggerRelease (time=null){
+    if(time) {
+    	this.env.triggerRelease(time)
+    }
+    else {
+      this.env.triggerRelease()
+    }
+  }
+  triggerAttackRelease (freq, amp, dur=0.01, time=null){
+    freq = Theory.mtof(freq)
+    //console.log('f', freq, amp, dur, time)
+    amp = amp/127
+    if(time){
+      this.env.triggerAttackRelease(dur, time)
+      this.frequency.setValueAtTime(freq, time)
+      //this.velocitySig.cancelScheduledValues(time);
+      this.velocitySig.setTargetAtTime(amp, time, 0.005); // 0.03s time constant for smoother fade
+      //this.velocitySig.linearRampToValueAtTime(amp, time + 0.005);
+    } else{
+      this.env.triggerAttackRelease(dur)
+      this.frequency.value = freq
+      this.velocitySig.rampTo(amp,.03)
+    }
+  }//attackRelease
+
+  triggerRawAttack (freq, amp=1, time=null){
+    if(amp > 1) amp = 1
+    if(time){
+      this.env.triggerAttack(time)
+      this.frequency.setValueAtTime(freq, time)
+      this.velocitySig.linearRampToValueAtTime(amp, time + 0.01);
+    } else {
+      this.env.triggerAttack()
+      this.frequency.value = freq
+      this.velocitySig.rampTo(amp,.03)
+    }
+  }
+  triggerRawRelease (time=null){
+    if(time) {
+      this.env.triggerRelease(time)
+    }
+    else {
+      this.env.triggerRelease()
+    }
+  }
+  triggerRawAttackRelease (freq, amp=1, dur=0.01, time=null){
+    if(amp > 1) amp = 1
+    if(time){
+      this.env.triggerAttackRelease(dur, time)
+      this.frequency.setValueAtTime(freq, time)
+      //this.velocitySig.cancelScheduledValues(time);
+      this.velocitySig.setTargetAtTime(amp, time, 0.005); // 0.03s time constant for smoother fade
+      //this.velocitySig.linearRampToValueAtTime(amp, time + 0.005);
+    } else{
+      this.env.triggerAttackRelease(dur)
+      this.frequency.value = freq
+      this.velocitySig.rampTo(amp,.03)
+    }
+  }//attackRelease
+}
 
 /*
 Stripe.js
@@ -22455,7 +24058,7 @@ const paramDefinitions = (synth) => [
         min: 0, max: 1, curve: 2, value: 0.1, 
         callback: function(x) { synth.env.decay = x; } },
     { 
-        name: 'sustainTime', type: 'vca', 
+        name: 'sustain', type: 'vca', 
         min: 0, max: 1, curve: 2, value: 0.5, 
         callback: function(x) { synth.env.sustain = x; } },
     { 
@@ -22672,8 +24275,7 @@ class Vocoder extends MonophonicTemplate {
     this.carrierGain = new Tone.Gain(0.5)
     this.output = new Tone.Gain(1)
     this.carrierGain.connect(this.output)
-
-    
+    this.external = new Tone.Multiply(1)
 
     // Use a set of bandpass filters and VCAs to reconstruct the signal
     this.numBands = 16;
@@ -22699,6 +24301,7 @@ class Vocoder extends MonophonicTemplate {
       const filter = new Tone.Filter({frequency:freq, type:"bandpass",Q:10});
       const gain = new Tone.Gain(0).connect(this.carrierGain);
       this.carrier.connect(filter);
+      this.external.connect(filter);
       this.noise.connect(filter);
       filter.connect(gain);
       follower.connect(gain.gain)
@@ -22782,6 +24385,7 @@ class Vocoder extends MonophonicTemplate {
 ;
 ;
 //* from './waveshapers.js';
+;
 ;
 ;
 ;
@@ -24620,96 +26224,3 @@ const Spectroscope = function( ratio = 1, _target= 'Canvas') {
 ;
 ;
 ;
-
-
-;
-
-class TextField {
-    constructor(numLines = 10, _target = 'Canvas') {
-    const container = document.getElementById(_target);
-    if (!container) {
-      console.error(`No element found with id "${_target}"`);
-      return;
-    }
-
-    this.numLines = numLines;
-    this.lines = Array(numLines).fill('');
-    
-    // Create the div
-    this.div = document.createElement('div');
-    Object.assign(this.div.style, {
-      //position: 'absolute',
-      //bottom: '0',
-      //left: '0',
-      //width: '100%',
-      background: 'rgba(0,0,0,0.6)',
-      color: '#0f0',
-      fontFamily: 'Courier New, monospace',
-      fontSize: '14px',
-      lineHeight: '18px',
-      whiteSpace: 'pre',
-      overflow: 'hidden',
-      padding: '4px',
-      //boxSizing: 'border-box',
-      pointerEvents: 'none',
-    });
-
-    container.appendChild(this.div);
-
-        this.lineHeight = 20;
-        this.lines = [];
-
-        this._color =  [
-            '#FF5733',  // Base orange
-            '#33A1FF',  // Light blue (complementary)
-            '#FF33B1',  // Magenta (opposite on color wheel)
-            '#33FF57',  // Bright green (vibrant contrast)
-            '#5733FF',  // Purple (contrasting tone)
-            '#FFBD33',  // Warm yellow (vibrant and complementary)
-            '#33FFBD',  // Mint green (cool contrast)
-            '#FF3380'   // Pink (near complementary)
-        ];
-
-        this._backgroundColor = '#3C3D37'
-        this._activeColor = '#ECDFCC'; // Default color
-
-        this.div.style.fontFamily = 'Consolas, monospace';
-        this.div.style.fontSize = '18px';
-        this.div.style.color = '#ffcc00';
-        this.div.style.backgroundColor = '#000';
-    }
-
-    // Write text to a given line index
-    writeLine(lineNum, text) {
-    // Expand the array as needed
-    while (this.lines.length <= lineNum) this.lines.push('');
-    this.lines[lineNum] = text;
-    this.trimTrailingEmptyLines();
-    this.render();
-  }
-
-  clearLine(lineNum) {
-    if (lineNum < 0 || lineNum >= this.lines.length) return;
-    this.lines[lineNum] = '';
-    this.trimTrailingEmptyLines();
-    this.render();
-  }
-
-  clear() {
-    this.lines = [];
-    this.render();
-  }
-
-  trimTrailingEmptyLines() {
-    // Remove undefined or empty lines at the end
-    while (this.lines.length > 0 && !this.lines[this.lines.length - 1]) {
-      this.lines.pop();
-    }
-  }
-
-    // Redraw all lines
-    render() {
-    this.div.textContent = this.lines.join('\n');
-  }
- 
-}

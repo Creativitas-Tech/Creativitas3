@@ -39,9 +39,6 @@ export class Vocoder extends MonophonicTemplate {
     this.carrierGain.connect(this.output)
     this.external = new Tone.Multiply(1)
 
-
-    
-
     // Use a set of bandpass filters and VCAs to reconstruct the signal
     this.numBands = 16;
     this.analysisBands = []
