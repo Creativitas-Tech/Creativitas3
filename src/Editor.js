@@ -679,7 +679,7 @@ function Editor(props) {
       
       // Helper to create button with toggle behavior
       function createButton(col, row, seqName, action, accentColor) {
-        const btn = new Button(
+        const btn = new NexusButton(
           gridOrigin.x + col * gridSpacing.x,
           gridOrigin.y + row * gridSpacing.y,
           buttonSize.width,
@@ -787,7 +787,7 @@ function Editor(props) {
       const toggleX = gridCenterX - (toggleWidth / 2);
       const toggleY = startY - (h * 0.10);
 
-      const enable_toggle = new Switch(toggleX, toggleY, toggleWidth, toggleHeight);
+      const enable_toggle = new NexusSwitch(toggleX, toggleY, toggleWidth, toggleHeight);
       
       const enable_label = document.createElement('div');
       enable_label.textContent = 'enable';
