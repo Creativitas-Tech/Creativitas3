@@ -16,7 +16,7 @@ export class DrumVoice extends DrumTemplate{
 
     this.chokeRatio = .1
     this.decayTime = 1
-    this.duration = 1
+    this.buffer_duration = 1
     this.startPoint = 0
     this.accent = 1.5
     this.ghost = .3
@@ -45,7 +45,7 @@ export class DrumVoice extends DrumTemplate{
   load(sampleName){
     const match = sampleName.match(/^([a-zA-Z]+)(\d+)$/);
     if (!match){
-        console.log('Error: drum voice, incorrent name. Should be `kick0` or similar')
+        console.log('Error: drum voice, incorrect name. Should be `kick0` or similar')
         return
     }
 
@@ -73,11 +73,11 @@ export class DrumVoice extends DrumTemplate{
     } catch(e){
       console.log('unable to load sample - try calling load(`kick0`)')
     }
-    this.duration = this.voice.buffer.duration
+    setTimeout( ()=>{this.buffer_duration = this.voice.buffer.duration},5000)
   }
 
     setDecayTime(decay=null, choke=null){
-        if (decay != null) this.decayTime = decay * this.duration
+        if (decay != null) this.decayTime = decay * this.buffer_duration
         if (choke != null) this.chokeRatio = choke
         this.env.release = this.decayTime*this.chokeRatio
     }
@@ -91,7 +91,7 @@ export class DrumVoice extends DrumTemplate{
       //this.voice.start()
       this.env.triggerAttackRelease(0.001, time)
     } catch(e){
-        //console.log('time error', e)
+        console.log('time error', e)
     }
   }
     trigger(amplitude, decay,time){

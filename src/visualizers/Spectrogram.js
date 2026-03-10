@@ -14,8 +14,10 @@ import * as Tone from 'tone';
  */
 
 export const Spectrogram = function( ratio = 1, _target= 'Canvas') {
-    this.target = document.getElementById(_target);
-
+    this.parent = document.getElementById(_target);
+    this.target = document.createElement("div");
+    this.parent.appendChild(this.target);
+    
     // Canvas setup
     this.canvas = document.createElement('canvas');
     this.context = this.canvas.getContext('2d');

@@ -4,7 +4,9 @@ export class ArrayVisualizer {
     constructor(parent, array, _target = 'Canvas', ratio = 4 / 10) {
         this.parent = parent
         this._array = array;
-        this._target = document.getElementById(_target);
+        this.parent = document.getElementById(_target);
+        this._target = document.createElement("div");
+        this.parent.appendChild(this._target);
         this._ratio = ratio;
         this._type = 'horizontal'; // Default type
         this._color =  [
