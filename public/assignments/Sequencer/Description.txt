@@ -1,0 +1,4 @@
+The sequencer class lets us pass in an array of notes to play and keeps track of the current note itself. However, if you want to change the sequence while it is playing you will need to keep track of the index yourself. See the *sequencer GUI* example for more on this.
+* Make sure the value for index doesn't exceed the length of your note array! 
+
+Note: here we are setting notes as MIDI values, and using the method `Tone.Midi(note).toFrequency()` to convert to Hertz.

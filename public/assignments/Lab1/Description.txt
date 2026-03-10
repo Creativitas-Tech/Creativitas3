@@ -1,0 +1,104 @@
+# The 21M.080 framework
+
+The live coding environment you are using is meant to provide a set of objects to make exploring web audio easy.
+* this environment builds on and uses the tone.js and p5.js libraries. 
+* everything you need to know for this course is described in the code we provide.
+* but you can also include any functions from tone.js, p5.js, or practically any standard javascript code
+
+This framework has been tested in Google Chrome, and should work in Firefox, Edge, or other browsers based on Chrome. It sadly won’t work on Safari on either MacOS or iOS.
+
+### References
+There are lots of ways to get more info, and to debug:
+1. The site’s table of contents lists examples demonstrating techniques, and references for individual objects. These were written to only show the most important information you need. Make a habit of taking a look at the references when you aren’t sure how something works. There will always be examples in each document’s starter code.
+2. Sometimes references will include links to more complete documentation, such as the Tone.js API. 
+3. The javascript console can be helpful to see if there are problems with you code, e.g. if you have a typo or something just isn’t running write. 
+   1. Firefox: Menu Bar > Tools > Web Developer > Web Console
+   2. Chrome: View> Developer>Developer Tools
+
+## Working with the codebox
+
+The codebox above is where you will type and enter code. There are two main modes:
+* by default, the codebox is in 'Live' mode, where you can type and enter type line by line
+* optionally, you can click 'Play' to run all of the code in the codebox at once. 
+  * this is kind of like saving the code in a separate script, and then just running that script
+* you can also click ‘Stop’ to mute the running code
+  * note this does not actually STOP the code from running
+* It is not a bad idea to occasionally refresh your browser page to actually force a hard-reset of the code
+  * especially if it is not acting like you would expect
+  * when live coding, it is easy to lose track of what objects are created and running. . . .
+
+You can enter code line-by-line or in blocks.
+Try using shift -alt(windows)/option(mac)-enter to run the first block of code above. You should hear a sinewave coming from your computer.
+* If you don’t hear anything, check your computers audio settings.
+* The sound coming from our framework is just regular web browser sound, so if you can hear a youtube video you should be able to hear our web audio
+* note the vco.stop() method isn’t executed, because it is in a separate block of code. Try executing it to see what happens!
+
+Notice we set the frequency of the vco on line 4. Try changing it to another value, and see what happens.
+* use alt/option-enter to execute a single line within a block.
+* if you execute the whole block again, what happens?
+* if you find sound is running that you can’t control, just refresh the page
+  * your code should be saved in your browser cache
+  * but make a practice of saving your code in a text editor (just copy-paste) so you don’t lose it!
+
+## Working with web audio objects
+Tone.js provides a wide range of audio objects. These are built on top of the Web Audio API, a special javascript API designed to allow for working with audio in the browser. 
+
+Audio code is different from regular code in several key ways:
+* audio objects need to continuously make or process audio samples, generally 48000 samples per second.
+* for this reason, audio objects need to be connected together in clearly defined ways.
+
+### Connecting audio objects
+It is easy to create and connect audio objects - in the code above, we already created an oscillator, and connected it to our computer’s output. A few things to remember:
+* when you create a Tone.js object it will always be in the form `name = new Tone.Object()`
+* note the keyword new, and the capitalization of Tone and the name of the object
+
+All audio objects have *methods* (basically specialized functions for that object). The connect and disconnect method are used to connect audio objects together.
+* generally, you can think of objects running in order. To send the output of an object to the input of another object just write:
+  `audioFROM.connect( audioTO )`
+* you can also disconnect in the same way, e.g. `audioFROM.disconnect( audioTO )`
+* you can send audio from an object TO multiple objects
+* and you can generally send audio TO an object FROM multiple objects
+
+### Setting object parameters
+All audio objects also have *parameters*, which are values which define how the object works. Above we changed the frequency parameter of our VCO by calling `vco.frequency.value`. There are a few things to think about here
+* if we just want to set the value directly (like we did with frequency) - you generally call the parameterName.value
+* but if we want to control an audio object’s parameter with ANOTHER audio signal we just connect to the parameter directly.
+
+Let's take a look at the following codeblock:
+```
+let vco = new Tone.Oscillator(200).start()
+let lfo = new Tone.Oscillator(1).start()
+let vca = new Tone.Multiply(1)
+let output = new Tone.Multiply(0.05).toDestination()
+vco.connect( vca ), vca.connect( output )
+```
+
+Enter this code in the codebox, and execute the block. (You might want to refresh if you already have the previous code running).
+* notice we set the frequency of our two oscillators - one to an audio frequency, and one to a sub-audio frequency. 
+* we called this sub-audio oscillator an LFO, e.g. low-frequency-oscillator
+* we also created a VCA, or voltage-controlled-amplifier. We will use this to scale the amplitude of our signal.
+
+The Multiply() object does exactly what it sounds like - scales an audio signal by a factor.
+* We actually use a Multiply() object when creating the output - to make sure our audio signal isn’t too loud. Notice the argument 0.05 to the output’s Multiply object - this scales the amplitude of our audio signal to 1/20 of the raw audio!
+* We can set the factor of our Multiply object like any other audio parameter
+* Try executing `vca.factor.value = 0.5`. How does this affect the sound?
+
+While vca.factor.value let’s us set the output directly, we can also connect our LFO to control the vca factor:
+* Try adding the line and then executing it: 
+  `lfo.connect( vca.factor )`
+* How does this change the sound?
+
+### Visualizing audio
+As a final step, lets create an oscilloscope so we can see our waveform. Copy and paste this code, and then add it to your codebox and execute it.
+* note: if you are using the codebox in this assignment, the second line will be correct
+* if you run this code in another page you will need to change ‘Lab1’ to the name of a visual canvas
+
+```
+let scope = new Oscilloscope( ‘Lab1’ )
+vca.connect( scope.analyserNode )
+scope.start()
+```
+
+Now, notice that the waveform is much bigger than the scope can draw - this is because our scope is limited to displaying -1 to 1! Our audio is so loud it is actually clipping.
+
+How might you modify our audio so it doesn’t clip?

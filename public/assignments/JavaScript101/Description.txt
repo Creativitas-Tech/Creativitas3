@@ -1,0 +1,91 @@
+
+## Syntax Primer
+* Javascript is spelling and capitalization sensitive.
+* Javascript ignores whitespace, e.g. tabs and spaces
+* It used to be common to end lines with semi-colons, `;`. Nowadays that is optional, and lines just end when you to the next line by hitting return.
+* The `=` operator assigns the object/value on the right to the variable name on the left. E.g.  Colloquially, we might say `vco = new Tone.Oscillator()` means ‘vco is an oscillator’. 
+  * BUT `=` explicitly does NOT mean `equal to`, as in testing to see if two things are equivalent. To do that you have to use `==` (or even `===`)! You’ll run into this when you want to use `if` statements - but we won’t worry about that here.
+  * The `new` keyword is generally used when creating an object. Just observe how the examples create objects to see how this works.
+* Using dots generally lets you access an object’s parameters or methods, e.g. `vco.frequency.value` or `vco.start()`
+* Comments can be useful! `//` or `/***/` will create comments, which will show up in red.
+## A: Variables, values, and objects
+JavaScript is an ‘object-oriented’ language. You can think of an object as a bundle of code with its own properties. The classic metaphor is a `person` object. In this case, the person has properties: [age, height, hair color] - and the person also has capabilities, which we call methods - [walking, talking, eating]. 
+### A1: Variables
+Since we are working with objects, it is helpful to be able to store and refer to them. A `variable` is just a container for an object of some type. Three common types of variables are `var`, `let`, and `const`. We use them to store objects like this:
+
+`let vco = new Tone.Oscillator().start()`
+
+Notice that `vco` is the name of the variable, which contains a new Oscillator() object. `.start()` is one of the Oscillator() object’s methods. 
+* Why are there different types of variables? `var` and `let` help set the scope of an object, meaning what parts of the code can access that variable
+* `const` tells JavaScript that the contents of the variable cannot be changed. 
+* For the most part, `let` will work for everything you need to do. The rest are details you don’t need to worry about.
+
+Variables can also store values, like numbers or strings:
+
+`let val = 100`
+
+`let msg = ‘hello’`
+
+Note: before referring to an object or value, you MUST assign it to a variable. 
+### A2: Working with objects vs values
+Once you have an object defined, you will interact with it by setting its parameters and calling its methods (see below). You generally will NOT redefine objects (in fact, doing so can make things difficult). So with the `vco` definition above we can do the following:
+
+`vco.frequency.value = 100`
+
+`vco.start()`
+
+But we WON’T change what vco refers to, e.g.:
+
+`vco = ’some new object' //now vco doesn't 'contain' the oscillator object anymore!`
+
+Values, on the other hand, can be changed as you need them, e.g. 
+`val = 101`
+
+## B: Executing and debugging code
+In our environment we can work with code in two ways: 
+* Live mode (default)
+* Run all of the code block by hitting the run button
+  * note that enabling the ‘live’ button lets you live code after hitting run. This might be the default (TBD)
+
+In Live mode, you execute code by:
+* put the cursor on a line, and then hit alt-enter (windows) or option-return (mac)
+* execute a block of code:
+  * put the cursor in the code block (e.g. multiple lines of code with a blank line above and below)
+  * hit shift-alt/option-enter/return
+### B1: Debugging
+Fixing errors is a regular part of coding. The hardest part is when you code something and then execute it, and then nothing happens. There are several ways of checking this. 
+
+In general, the javascript console is very helpful - I almost always have it open. [https://www.webucator.com/article/how-to-open-google-chromes-javascript-console/](https://www.webucator.com/article/how-to-open-google-chromes-javascript-console/)- if this isn’t useful, search and you’ll find lots of other tuturials for other operating systems / browsers, etc. It’s normal and easy to do.
+
+If you make a type or syntax error you’ll often get an error in the console. This lets you know something is wrong so you can fix it. Generally, I recommend executing your code line by line, and checking the console each time to make sure there isn’t an error.
+
+Even if things aren’t making errors, it can still be nice to check that your code is doing what you want it to. `console.log( variable to check )` is your friend here - put any variable in the parentheses and the console will tell you what is stored in that variable If it is an object, you can also look to see what its properties and methods are! This is a great way to make your code is setting the values you expect it to.
+## C: Functions and Methods
+We already talked about how objects have methods, which you can think of as actions the object can take. A function is similar, except we can define a function to do anything we want. 
+
+In general, you will execute a function or method by typing the name followed by parentheses, e.g.
+`vco.start()` or `console.log()` 
+
+The parentheses let us put optional `arguments` into the method - for example, what we want the console object to log for us. Arguments are often times optional, and you probably need to look at a reference to see what they are supposed to be. In general, any argument you need to use will be documented in the reference files of this website, or else just be so standard that you’ll see it over and over again.
+### C1: property or method?
+So a property is just a value representing a characteristic of an object, and a method is an action that object can take. Remember, when you see:
+
+`vco.frequency.value = 100`,  the `=` tells you you are setting the value of a property. Methods will always have parentheses, e.g. `vco.start()`. Note we are not changing anything about the vco, just telling it to take the action ‘start’.
+### C2: defining functions
+Functions are great - they are neatly encapsulated actions that we can define and then easily execute. It turns out  [functions are first-class citizens in JavaScript](https://www.geeksforgeeks.org/what-is-the-first-class-function-in-javascript/), e.g. functions are just another kind of object. In practice, what this means is that you can store a function in a variable - and that is what we are going to do.
+
+* Note: there are a few different ways of defining functions in javascript - the way we will talk about works while live coding, which might not be true for other ways of defining functions. 
+* 
+To create a function, we will assign it to a variable and then use the general syntax for a function, e.g
+```
+let myFunction = function(myArgument){
+  vco.frequency.value = myArgument
+  vco.start()
+}
+```
+
+Let’s go over each element:
+* `let myFunction` - create a variable a named myFunction. Once the function is created, we call the function by executing `myFunction(val)`
+* `function(myArgument)`  You will always use the keyword `function` - this tells JavaScript to create a function. `myArgument` on the other hand, can be any word you want to refer to a value passed into the function. You can have as many arguments as you want, just separate them with commas, e.g. `function( valA, valB, valC)`
+* the curly braces `{ }` contain the body of the function, i.e. the code that will run when the function is called. You can put any valid code in the braces.
+  * notice we use `myArgument` to pass the argument into the body of the function. This lets us use the same function with different values, e.g. myFunction(100) sets the vco frequency to 100, or myFunction(200) sets the vco frequency to 200, or. . . 

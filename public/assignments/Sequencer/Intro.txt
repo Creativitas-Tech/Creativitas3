@@ -1,0 +1,5 @@
+It turns out getting a sequencer to play with accurate timing isn't 100% obvious. This example shows how to do this using Tone's *Sequencer* class. In particular, we are going to use the *time* parameter, a native Tone variable which helps our sequencer know when to schedule events.
+
+Pay close attention to:
+* updating frequencies using `.setValueAtTime( value, time)`
+* triggering envelopes with the *time* parameter as the second variable

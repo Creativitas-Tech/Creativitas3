@@ -1,0 +1,6 @@
+[<img src="./assignments/WaveFolder/Transfer_function.png" alt="Transfer function diagram" style="width:50%">](./WaveFolder/Transfer_function.png)
+
+The actual audio graph for this example is extremely simple, just vco->shaperInputGain->waveshaper->vca. One good idea would be to use an envelope (with depth control) to set `shaperInput.factor`. This will let you change the timbre of the sound the same as with a filter or FM index.
+
+The transfer function below shows the use of a sine wave as a wave folder. At low input amplitudes, the output is basically linear. But as the input amplitude increases past the peak of the sine wave, the output value will be folded over. The more peaks the input signal passes, the more folds there will be. Note you can set how many sine wave cycles there are in the sineFolder function!
+[<img src="./assignments/WaveFolder/sineFolder.png" alt="Waveshaper using a sine wave" style="width:50%">](./WaveFolder/sineFolder.png)

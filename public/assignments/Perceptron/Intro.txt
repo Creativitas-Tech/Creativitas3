@@ -1,0 +1,7 @@
+Instructions:
+* 'run' the code
+* save input and output values by:
+	* setting synth parameters in top gui
+	* click in bottom gui - this saves a pair of input/output values
+* after adding several pairs of input/output data, click the 'train' button and close the training window when it is done
+* move the mouse to change parameters

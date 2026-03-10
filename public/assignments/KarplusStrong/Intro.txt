@@ -1,0 +1,3 @@
+The Karplus Strong technique is a very simple physical model of a vibrating string. It uses a delay line with high feedback, where the length of the delay line is tuned to a desired frequency.
+
+This example uses noise to create an impulse, with the ability to filter the impulse and apply different envelope shapes. It also includes a *resonator* to simulate the body of an acoustic stringed instrument.
