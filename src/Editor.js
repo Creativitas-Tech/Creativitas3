@@ -21,6 +21,7 @@ import { Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distort
 
 // NexusUI wrappers
 import { NexusDial } from './nexus/Dial.js';
+import { NexusPiano } from './nexus/NexusPiano.js';
 import { NexusSlider } from './nexus/Slider.js';
 import { NexusNumberBox } from './nexus/NumberBox.js';
 import { NexusButton } from './nexus/Button.js';
@@ -336,6 +337,7 @@ function Editor(props) {
 
     // NexusUI wrapper classes (for user code)
     window.NexusDial = NexusDial;
+    window.NexusPiano = NexusPiano;
     window.NexusSlider = NexusSlider;
     window.NexusNumberBox = NexusNumberBox;
     window.NexusButton = NexusButton;
