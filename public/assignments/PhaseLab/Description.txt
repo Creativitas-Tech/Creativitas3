@@ -1,0 +1,25 @@
+## Phase lab components
+
+### Part 1: Constructive/destructive interference
+Start the vco, and then explore delay times which are in the same range as the period of the oscillator
+* remember, we can calculate the period in seconds: period = 1/frequency
+* Use the javascript console to monitor the delay time
+* try setting coarse delay time to 5, feedback to 0, and delay level to 1
+* look at the oscilloscope to see what happens
+* stop the vco when you are done
+
+### Part 2: Comb filtering
+Start the noise, and then explore very short delay times
+* set the coarse delay time to 1 and listen to changes through the range of the fine delay times
+* also look at the spectrum to see what happens
+* stop the noise when you are done
+
+### Part 3: Phase and audio signals
+For this section we are going to load audio files and play them through the delay
+* uncomment and execute player.start()
+* a drum loop is loaded by default. Notice the effect of comb filtering with the same settings as above
+* try also exploring long delay times. When does the delay stop being a comb filter and become just a regular delay?
+* try turning the feedback up to 0.9 and coarse delay time to 10. What happens?
+* try loading the rhodes (let audioURL = "audio/rhodes.mp3"). With a coarse delay time of 1, try sweeping the fine delay time and listen to what happens.
+* you can also explore the other audio files to see what they sound like
+* stop the player when you are done

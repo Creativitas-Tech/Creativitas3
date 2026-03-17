@@ -1,0 +1,5 @@
+[<img src="./assignments/VCOMixer/VCOMixer_diagram.png" alt="VCO Mixer diagram" style="width:50%">](./VCOMixer/VCOMixer_diagram.png)
+
+This example is pretty heavily influenced by the MiniMoog. The frequency of each oscillator is a combination of the octave control and the detune control. Notice that this requires using callbacks to query the value of both knobs every time.
+
+The range of each oscillators octave and detune knobs are different, which is typical. Getting the sweep and range of knobs right can be an artform! I'm not 100% happy about this implementation, but it can get lots of nice sounds!

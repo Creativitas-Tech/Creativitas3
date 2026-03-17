@@ -6,6 +6,7 @@ created by Kayli Requenez F23
 import p5 from 'p5';
 import themes from './p5Themes.json';
 
+
 let activeTheme = themes['default']; // Default theme preset
 
 
@@ -56,12 +57,17 @@ export function initialize(p, div, height) {
     p.width = div.offsetWidth;
     p.height = div.offsetWidth * .4 * height;
     p.elements = {};
+    let divID = Math.floor(Math.random()*1000)
+    //console.log('init', div.id)
+
 
     if (div && div.id) {
         const registerOnView = (view) => {
             if (!view) {
                 return;
             }
+            //console.log("REGISTERING ON VIEW:", view);
+    //console.log("IS WINDOW?", view === window);
             if (!view.__creativitasCanvasRegistry) {
                 Object.defineProperty(view, '__creativitasCanvasRegistry', {
                     value: {},
@@ -127,7 +133,8 @@ export function divResized(p, maxClicked, canvasLength) {
     const doc = (p && p.canvas && p.canvas.ownerDocument) || document;
     p.resizeCanvas(0, 0);
 
-    const canvasesCont = doc.getElementById("canvases") || p.div;
+    const canvasesCont = p.div;
+    console.log("resize")
     const controlsCont = doc.getElementById("controls");
     const flexCont = doc.getElementById('flex') || (canvasesCont && canvasesCont.parentElement) || (p.div && p.div.parentElement);
 

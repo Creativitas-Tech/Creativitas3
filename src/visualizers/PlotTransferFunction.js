@@ -11,12 +11,14 @@ plotTransferFunction
  * @param {string} _target - The ID of the HTML element where the transfer function will be plotted.
  */
 export const PlotTransferFunction = function(myFunction, _target = 'Canvas', ratio= 4/10) {
-    const target = document.getElementById(_target);
+    this.parent = document.getElementById(_target);
+    this.target = document.createElement("div");
+    this.parent.appendChild(this.target);
 
     // Check if an existing SVG is present and remove it if it is
-    const existingSVG = target.querySelector('svg.transfer-function-svg');
+    const existingSVG = this.target.querySelector('svg.transfer-function-svg');
     if (existingSVG) {
-        target.removeChild(existingSVG);
+        this.target.removeChild(existingSVG);
     }
 
     if(myFunction === 'stop'){
@@ -24,8 +26,8 @@ export const PlotTransferFunction = function(myFunction, _target = 'Canvas', rat
         return
     }
     // Set the dimensions based on the target container
-    const width = target.offsetWidth; 
-    const height = target.offsetWidth*ratio;
+    const width = this.target.offsetWidth; 
+    const height = this.target.offsetWidth*ratio;
     const graph_size = height - 10
 
     
@@ -52,7 +54,7 @@ export const PlotTransferFunction = function(myFunction, _target = 'Canvas', rat
     svg.appendChild(path);
 
     // Append the SVG element to the target container
-    target.appendChild(svg);
+    this.target.appendChild(svg);
 
     // Function to draw the transfer function
     var _path = 'M';

@@ -178,7 +178,7 @@ export class Seq {
             //console.log('1', event)
             event = this.applyOrnamentation(event)
             event = event.map(([x, y]) => [this.perform_transform(x), y])
-            console.log(event)
+            //console.log(event)
             // Roll chords
             const event_timings = event.map(subarray => subarray[1]);
             let roll = this.getNoteParam(this.roll, this.index);

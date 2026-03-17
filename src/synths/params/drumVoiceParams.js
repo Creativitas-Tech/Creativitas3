@@ -26,8 +26,8 @@ const paramDefinitions = (synth) => [
 
   {
     name:'decay',type: 'param',value:1,
-    min:0.0,max:1,curve:3,callback:x=> {
-      synth.decayTime = x * synth.duration
+    min:0.001,max:1,curve:3,callback:x=> {
+      synth.decayTime = x * synth.buffer_duration
       synth.setDecayTime()
     }
   },

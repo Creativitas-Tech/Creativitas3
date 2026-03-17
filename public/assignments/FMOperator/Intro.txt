@@ -1,0 +1,3 @@
+The Yamaha DX7 is the most famous FM synthesizer, and implement FM using the concept of *operators*. An operator is simply a combination of an oscillator, envelope, and vca. The idea is that you can use operators for either carriers or modulators interchangeably.
+
+The example presents an operator design using a *class definition*. Classes let you create reusable objects (in fact, Tone.js uses classes for all of its objects).

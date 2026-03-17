@@ -43,6 +43,7 @@ export class NexusElement{
         // Auto-initialize Canvas if not already done
         if (!canvasInitialized) {
             initNexusCanvas();
+            console.log("canvas")
         }
 
         // Initialize the Nexus element - NexusUI will create its own wrapper

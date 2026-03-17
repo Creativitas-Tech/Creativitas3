@@ -1,0 +1,9 @@
+### Getting started with Tone.js and the 21M.080 framework
+
+In this first lab we are just going to get acquainted with our framework, learn how to execute code and use the various objects, and start making sound.
+* If this is your first time working with javascript, see the "javasc-wha?" example file
+
+The accompanying video tutorial for this lab is available at:
+https://youtu.be/-wt6XbDQodQ
+
+The body of the lab is the text box at the bottom of this page.

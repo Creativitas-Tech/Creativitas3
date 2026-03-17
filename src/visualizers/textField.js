@@ -20,20 +20,16 @@ export class TextField {
     // Create the div
     this.div = document.createElement('div');
     Object.assign(this.div.style, {
-      //position: 'absolute',
-      //bottom: '0',
-      //left: '0',
-      //width: '100%',
-      background: 'rgba(0,0,0,0.6)',
-      color: '#0f0',
-      fontFamily: 'Courier New, monospace',
-      fontSize: '14px',
-      lineHeight: '18px',
-      whiteSpace: 'pre',
-      overflow: 'hidden',
-      padding: '4px',
-      //boxSizing: 'border-box',
-      pointerEvents: 'none',
+      background: "rgba(0,0,0,0.6)",
+      color: "#0f0",
+      fontFamily: "Courier New, monospace",
+      fontSize: "14px",
+      lineHeight: "18px",
+      whiteSpace: "pre",
+      padding: "4px",
+      overflowY: "auto",
+      maxHeight: "100%",
+      pointerEvents: "auto"
     });
 
     container.appendChild(this.div);
@@ -124,6 +120,11 @@ export class TextField {
     }
     //console.log(html)
     this.div.innerHTML = html;
+    this.scrollToBottom()
+  }
+
+  scrollToBottom() {
+    this.div.scrollTop = this.div.scrollHeight;
   }
 
   ensureStyle() {

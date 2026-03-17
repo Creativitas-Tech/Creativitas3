@@ -72,6 +72,10 @@ export class PianoRoll {
     noteMin = -7,        // C2
     noteMax = 7         // C6
   } = {}) {
+    this.parent = document.getElementById(target);
+    this.target = document.createElement("div");
+    this.parent.appendChild(this.target);
+
     this.numBeats = numBeats;
     this.beat = 0
     this.height = height*200;

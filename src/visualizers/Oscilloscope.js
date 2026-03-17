@@ -22,7 +22,11 @@ import * as Tone from 'tone';
  */
 export const Oscilloscope = function( ratio = 1, _target= 'Canvas') {
     // Get the target DOM element and set dimensions based on the provided ratio
-    this.target = document.getElementById(_target);
+    this.parent = document.getElementById(_target);
+
+    this.target = document.createElement("div");
+    this.parent.appendChild(this.target);
+
     this.width = this.target.offsetWidth;
     this.height = this.width * ratio * 4/10;
 

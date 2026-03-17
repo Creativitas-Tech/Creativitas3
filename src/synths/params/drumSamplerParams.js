@@ -45,7 +45,7 @@ const paramDefinitions = (synth) => [
   },
   {
     name: 'kick_decay', type: 'kick', min: 0, max: 1, value: 1, curve: 2,
-    callback: x => synth.kick.decay = x *  synth.kick.duration
+    callback: x => synth.kick.decay = x 
   },
   {
     name: 'snare_rate', type: 'snare', min: 0, max: 2, value: 1, curve: 1,
@@ -53,7 +53,7 @@ const paramDefinitions = (synth) => [
   },
   {
     name: 'snare_decay', type: 'snare', min: 0.01, max: 1, value: 1, curve: 2,
-    callback: x => synth.snare.decay = x * synth.snare.duration
+    callback: x => synth.snare.decay = x 
   },
   
   {
@@ -70,7 +70,7 @@ const paramDefinitions = (synth) => [
   },
   {
     name: 'open_decay', type: 'hihat', min: 0.01, max: 1, value: 1, curve: 2,
-    callback: x => synth.hat.decay = x  * synth.snare.duration
+    callback: x => synth.hat.decay = x  
   },
   {
     name: 'tom1_rate', type: 'toms', min: 0, max: 2, value: 1, curve: 1,
@@ -87,9 +87,9 @@ const paramDefinitions = (synth) => [
   {
     name: 'toms_decay', type: 'toms', min: 0.01, max: 1, value: 1, curve: 2,
     callback: x => {
-      synth.p1.decay = x * synth.p1.duration;
-      synth.p2.decay = x * synth.p2.duration;
-      synth.p3.decay = x * synth.p3.duration;
+      synth.p1.decay = x 
+      synth.p2.decay = x 
+      synth.p3.decay = x 
     }
   },
 

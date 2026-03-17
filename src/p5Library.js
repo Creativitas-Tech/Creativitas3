@@ -10,7 +10,7 @@ export const sketch = (p, config = {}) => {
     p.setColor = setColor;
     p.setFont = setFont;
     p.debug = debug
-    p.backgroundColor = [0,0,0]
+    p.backgroundColor = [255,255,255]
 
     //theme functions
     p.setTheme = setp5Theme
@@ -23,11 +23,16 @@ export const sketch = (p, config = {}) => {
 
     p.Debug = function(){ p.debug(); }
 
-    p.setup = function () {
-        let divID = p.canvas.parentElement.id;
-        let div = document.getElementById(p.canvas.parentElement.id);
+p.setup = function () {
+
+        let parent = p._userNode;
+        div = document.createElement("div");
+        div.id = "Canvas" + Math.floor(Math.random()*1000)
+        parent.appendChild(div);
+
         if( config.height === undefined) config.height = 1
         let dim =  p.initialize(div, config.height)
+
 
         p.activeTheme = themes['dark']
         p.width = dim[0]
@@ -37,6 +42,35 @@ export const sketch = (p, config = {}) => {
         p.x = 0
         p.y = 0
         p.capture = null
+
+// let lastWidth = div.offsetWidth;
+// let lastHeight = div.offsetHeight;
+// let resizePending = false;
+
+// const observer = new ResizeObserver(entries => {
+
+//     const rect = entries[0].contentRect;
+
+//     const w = Math.round(rect.width);
+//     const h = Math.round(rect.height);
+
+//     if (w === lastWidth && h === lastHeight) return;
+
+//     lastWidth = w;
+//     lastHeight = h;
+
+//     if (!resizePending) {
+//         resizePending = true;
+
+//         requestAnimationFrame(() => {
+//             resizePending = false;
+//             p.resizeCanvas(w, h, true);
+//         });
+//     }
+
+// });
+
+//         observer.observe(p._userNode);
     };
 
     p.draw = function () {
@@ -102,6 +136,7 @@ export const sketch = (p, config = {}) => {
     }
 
     p.windowResized = function () {
+        console.log('foo')
         //p.divResized();
     };
 

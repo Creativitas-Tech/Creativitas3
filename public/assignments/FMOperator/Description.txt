@@ -1,0 +1,29 @@
+[<img src="./assignments/FMOperator/FMOperator_diagram.png" alt="Alt text" style="width:50%">](./FMOperator/FMOperator_diagram.png)
+
+# Controls and connections 
+
+The main controls for each operator are what you'd expect:
+* the main frequency goes to the input of harmonicity (e.g. .harmonicity)
+* set the harmonicity value using harmonicity.factor
+* set the index using index.factor
+* ADSR envelope parameters
+* index_env_depth.factor lets the envelope add to the index
+
+## output 
+Each operator has an output vca, used to connect to other operators or to external Tone objects.
+
+# Notes 
+
+Notice that operators identified as carriers are slightly different:
+* they won't have an index or index envelope
+* they use an amplitude.value to set their amplitude
+
+## Algorithms
+DX7 style algorithms let you chain operators together. The algorithm in the example has the operators in series, with two modulators and one carrier:
+* mod2 -> mod1 -> carrier
+
+In this arrangement, any DC offset in mod1 will create a noticeable pitch sweep in the carrier. A DC offset is simply when a waveform spends more time above the zero centerline (or alternatively, below the centerline). This kind of waveform can occasionally be created using FM. 
+
+One simple fix is to add a highpass filter between the oscillator and the output, with the filter's frequency being the same as the oscillator (e.g. harmonicity.connect( filter.frequency)).
+This can happen when the waveform created by mod2 modulating mod1
+

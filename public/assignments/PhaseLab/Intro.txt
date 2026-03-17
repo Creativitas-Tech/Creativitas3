@@ -1,0 +1,3 @@
+Phase can have a profound effect on audio. The typical way that phase shifts are created is by adding an audio signal with a delayed version of the same signal. In the physical world delays are created by reflections in the environment. In the computer, we can manually create delays (and be aware that delays can be created by latency and parallel processing. . . )
+
+In this lab, the output you hear (and see on the oscilloscope) is a combination of the dry (or direct) signal, and the wet signal (the same signal passed through an audio delay). 

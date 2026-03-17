@@ -21,6 +21,7 @@ import { Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distort
 
 // NexusUI wrappers
 import { NexusDial } from './nexus/Dial.js';
+import { NexusPiano } from './nexus/NexusPiano.js';
 import { NexusSlider } from './nexus/Slider.js';
 import { NexusNumberBox } from './nexus/NumberBox.js';
 import { NexusButton } from './nexus/Button.js';
@@ -336,6 +337,7 @@ function Editor(props) {
 
     // NexusUI wrapper classes (for user code)
     window.NexusDial = NexusDial;
+    window.NexusPiano = NexusPiano;
     window.NexusSlider = NexusSlider;
     window.NexusNumberBox = NexusNumberBox;
     window.NexusButton = NexusButton;
@@ -374,7 +376,7 @@ function Editor(props) {
             },
             configurable: true
         });
-        console.log('t is defined')
+        //console.log('t is defined')
     } else { }//console.log('tght is already defined')}
 
 
@@ -399,7 +401,9 @@ function Editor(props) {
      *
      *************************************************/
     // Save history in browser
-    const serializedState = localStorage.getItem(`${props.page}EditorState`);
+    const STORAGE_PREFIX = "mysite";
+
+    const serializedState = localStorage.getItem(`${STORAGE_PREFIX}-${props.page}EditorState`);
 
     //console.log(serializedState)
     // Decoding the URL and reloading the page
@@ -416,7 +420,7 @@ function Editor(props) {
             // while (encodedContent.length % 4 !== 0) {
             //     encodedContent += '=';
             // }
-            localStorage.setItem(`${props.page}Value`, encodedContent);
+            localStorage.setItem(`${STORAGE_PREFIX}-${props.page}Value`, encodedContent);
             const url = window.location.origin + window.location.pathname;
             window.location.assign(url);
         }
@@ -424,7 +428,7 @@ function Editor(props) {
 
     urlDecode();
     //console.log('test')
-    const value = localStorage.getItem(`${props.page}Value`) || props.starterCode;
+    const value = localStorage.getItem(`${STORAGE_PREFIX}-${props.page}Value`) || props.starterCode;
 
     function create_sequencer_gui(gui) {
         let num_pads = 8
@@ -679,7 +683,7 @@ function Editor(props) {
       
       // Helper to create button with toggle behavior
       function createButton(col, row, seqName, action, accentColor) {
-        const btn = new Button(
+        const btn = new NexusButton(
           gridOrigin.x + col * gridSpacing.x,
           gridOrigin.y + row * gridSpacing.y,
           buttonSize.width,
@@ -787,7 +791,7 @@ function Editor(props) {
       const toggleX = gridCenterX - (toggleWidth / 2);
       const toggleY = startY - (h * 0.10);
 
-      const enable_toggle = new Switch(toggleX, toggleY, toggleWidth, toggleHeight);
+      const enable_toggle = new NexusSwitch(toggleX, toggleY, toggleWidth, toggleHeight);
       
       const enable_label = document.createElement('div');
       enable_label.textContent = 'enable';
@@ -1103,64 +1107,53 @@ function Editor(props) {
         const ownerView = splitContainerRef.current?.ownerDocument?.defaultView || window;
         const requestFrame = ownerView?.requestAnimationFrame?.bind(ownerView) || window.requestAnimationFrame?.bind(window);
 
-        const triggerResizeNow = () => {
-            for (const id of canvases) {
-                const contexts = [];
-                const seen = new Set();
+ const triggerResizeNow = () => {
+    for (const id of canvases) {
 
-                const pushContext = (candidate) => {
-                    if (!candidate || typeof candidate.divResized !== 'function') {
-                        return;
-                    }
-                    if (seen.has(candidate)) {
-                        return;
-                    }
-                    seen.add(candidate);
-                    contexts.push(candidate);
-                };
+        const contexts = [];
+        const seen = new Set();
 
-                const collectFromRegistry = (view) => {
-                    if (!view) {
-                        return;
-                    }
-                    const registry = view.__creativitasCanvasRegistry;
-                    if (registry && Object.prototype.hasOwnProperty.call(registry, id)) {
-                        pushContext(registry[id]);
-                    }
-                };
+        const pushContext = (candidate) => {
+            //console.log(candidate)
+            if (!candidate || typeof candidate.divResized !== 'function') return;
+            if (seen.has(candidate)) return;
+            seen.add(candidate);
+            contexts.push(candidate);
+        };
 
-                collectFromRegistry(ownerView);
-                if (typeof document !== 'undefined') {
-                    const element = document.getElementById(id);
-                    const elementView = element?.ownerDocument?.defaultView;
-                    if (elementView && elementView !== ownerView) {
-                        collectFromRegistry(elementView);
-                    }
-                }
-                collectFromRegistry(window);
+        const collectFromRegistry = (view) => {
 
-                // Fallback to globals exposed by window or other views (legacy behaviour)
-                if (ownerView && ownerView !== window) {
-                    pushContext(ownerView[id]);
-                }
-                if (typeof document !== 'undefined') {
-                    const element = document.getElementById(id);
-                    const elementView = element?.ownerDocument?.defaultView;
-                    if (elementView && elementView !== ownerView && elementView !== window) {
-                        pushContext(elementView[id]);
-                    }
-                }
-                pushContext(window[id]);
+            if (!view) return;
 
-                for (const context of contexts) {
-                    try {
-                        context.divResized();
-                    } catch (error) {
-                        console.log(error);
-                    }
-                }
+            const registry = view.__creativitasCanvasRegistry;
+            //console.log('v', registry, id)
+            if (registry && registry[id]) {
+                pushContext(registry[id]);
             }
         };
+
+        // collect from known views
+        collectFromRegistry(ownerView);
+        collectFromRegistry(window);
+
+        if (typeof document !== 'undefined') {
+            const element = document.getElementById(id);
+            const elementView = element?.ownerDocument?.defaultView;
+
+            if (elementView) {
+                collectFromRegistry(elementView);
+            }
+        }
+        //console.log(contexts)
+        for (const context of contexts) {
+            try {
+                context.divResized();
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    }
+};
 
         // Kick off a synchronous resize so p5 instances react right away.
         triggerResizeNow();
@@ -1183,6 +1176,21 @@ function Editor(props) {
     }, [canvases]);
 
     useEffect(() => {
+        //rerouting console log
+          // const originals = {
+          //   log: console.log,
+          //   warn: console.warn,
+          //   error: console.error
+          // };
+
+          // Object.entries(originals).forEach(([type, original]) => {
+          //   console[type] = (...args) => {
+          //     original(...args);
+          //     addToInternalConsole({ type, args });
+          //   };
+          // });
+
+
         return () => {
             if (typeof window === 'undefined') {
                 return;
@@ -1200,8 +1208,68 @@ function Editor(props) {
                 cancelFrame(pendingCanvasResizeRafRef.current.inner);
                 pendingCanvasResizeRafRef.current.inner = null;
             }
+
+            //console logs
+            // Object.entries(originals).forEach(([type, original]) => {
+            //   console[type] = original;
+            // });
         };
     }, []);
+
+    // const textConsoleRef = useRef(null);
+    // const consoleLinesRef = useRef([]);
+
+    // window.openConsole = () => {
+    //   if (textConsoleRef.current) {
+    //     return textConsoleRef.current;
+    //   }
+
+    //   const tc = new window.TextField();
+    //   textConsoleRef.current = tc;
+
+    //   consoleLinesRef.current.forEach(line => {
+    //     tc.writeLine(line);
+    //   });
+
+    //   return tc;
+    // };
+
+    // const addToInternalConsole = (entry) => {
+    //   let type = "log";
+    //   let args = [];
+
+    //   // Normalize input
+    //   if (Array.isArray(entry)) {
+    //     args = entry;
+    //   } else if (entry && typeof entry === "object") {
+    //     type = entry.type || "log";
+    //     args = Array.isArray(entry.args) ? entry.args : [entry.args];
+    //   } else {
+    //     args = [entry];
+    //   }
+
+    //   const line = args
+    //     .map(v => {
+    //       if (typeof v === "string") return v;
+    //       try {
+    //         return JSON.stringify(v, null, 2);
+    //       } catch {
+    //         return String(v);
+    //       }
+    //     })
+    //     .join(" ");
+
+    //   consoleLinesRef.current.push({ type, line });
+
+    //   if (textConsoleRef.current) {
+    //     textConsoleRef.current.writeLine(
+    //       type === "error" ? `[error] ${line}` :
+    //       type === "warn"  ? `[warn] ${line}`  :
+    //                          line
+    //     );
+    //   }
+    // };
+
 
     //remote users
     const [userColors, setUserColors] = useState({});
@@ -1705,11 +1773,11 @@ function Editor(props) {
             //console.log(currentDoc);
         }
 
-        localStorage.setItem(`${props.page}Value`, value);
+        localStorage.setItem(`${STORAGE_PREFIX}-${props.page}Value`, value);
         setCode(value);
         //viewUpdate.view.dom.clientHeight = document.getElementById('main').clientHeight;
         const state = viewUpdate.state.toJSON(stateFields);
-        localStorage.setItem(`${props.page}EditorState`, JSON.stringify(state));
+        localStorage.setItem(`${STORAGE_PREFIX}-${props.page}EditorState`, JSON.stringify(state));
 
         if (viewUpdate.changes) {
           try {
@@ -1783,7 +1851,7 @@ function Editor(props) {
     //Handle refresh/max/min buttons
     const refreshClicked = () => {
         setRefresh(true);
-        localStorage.setItem(`${props.page}Value`, props.starterCode);
+        localStorage.setItem(`${STORAGE_PREFIX}-${props.page}Value`, props.starterCode);
     }
 
     /************************************************
@@ -1792,7 +1860,7 @@ function Editor(props) {
      *
      *************************************************/
 
-    const usefulCompletions = ["frequency", "factor", "Oscillator", "Filter", "Tone", "value"];
+    const usefulCompletions = ["frequency", "factor", "Oscillator", "Filter", "Tone", "value", "Multiply"];
     const [useAutoComplete, setUseAutoComplete] = useState(true);
 
     function getClassMethods(obj) {
@@ -1912,10 +1980,9 @@ function Editor(props) {
         return (
             tryGetSuggestions(objectName) ||
             tryGetSuggestions(objectName.split(" ").pop()) ||
-            tryGetSuggestions(objectName.split("(").pop()) ||
-            (console.debug("Unable to autocomplete"), null)
-        );
-    }//object function completer
+            tryGetSuggestions(objectName.split("(").pop())
+            // || (console.debug("Unable to autocomplete"), null));
+    )}//object function completer
 
     function presetNameCompleter(context) {
       if (!useAutoComplete) return null;
@@ -1934,7 +2001,7 @@ function Editor(props) {
         if (!synth?.presets) return null;
         presetKeys = Object.keys(synth.presets);
       } catch (e) {
-        console.warn(`Unable to evaluate object '${objectName}' for preset completion:`, e);
+        //console.warn(`Unable to evaluate object '${objectName}' for preset completion:`, e);
         return null;
       }
 
@@ -2033,7 +2100,7 @@ function Editor(props) {
                 if (loadInEditor) {
                     // Load into editor - replace with starter template
                     const starterTemplate = `/*\n  Alt(option)-Enter: Evaluate Line\n  Alt(option)-Shift-Enter: Evaluate Block\n*/\n\n${text}`;
-                    localStorage.setItem(`${props.page}Value`, starterTemplate);
+                    localStorage.setItem(`${STORAGE_PREFIX}-${props.page}Value`, starterTemplate);
                     setCode(starterTemplate);
                     setRefresh(!refresh);
                     console.log(`✓ Loaded ${file.name} into editor`);
@@ -2181,12 +2248,12 @@ function Editor(props) {
     }
 
     function exportAsLink(code) {
-        const liveCode = localStorage.getItem(`${props.page}Value`);
+        const liveCode = localStorage.getItem(`${STORAGE_PREFIX}-${props.page}Value`);
         const compressedCode = LZString.compressToEncodedURIComponent(liveCode)
         // .replace(/\+/g, '-')
         // .replace(/\//g, '_')
         // .replace(/=+$/, ''); // Removes padding
-        const url = `https://ianhattwick.com/creativitas/?code=${compressedCode}`;
+        const url = `https://ianhattwick.com/m080/?code=${compressedCode}`;
         //const url = `http://localhost:3000/m361/?code=${compressedCode}`;
         navigator.clipboard.writeText(url);
         console.log('URL copied to clipboard');
@@ -2194,12 +2261,12 @@ function Editor(props) {
 
     //Export webpage code
     const exportAsTextFile = () => {
-        const blob = new Blob([localStorage.getItem(`${props.page}Value`)], { type: 'text/plain' });
+        const blob = new Blob([localStorage.getItem(`${STORAGE_PREFIX}-${props.page}Value`)], { type: 'text/plain' });
         let filename = prompt('Enter the filename:', 'mySynth.txt');
         if (!filename) {
             filename = 'mySynth.txt';  // Default filename if the user cancels the prompt
         }
-        console.log(localStorage.getItem(`${props.page}Value`))
+        console.log(localStorage.getItem(`${STORAGE_PREFIX}-${props.page}Value`))
 
         const url = URL.createObjectURL(blob);
         // Create an invisible anchor element
@@ -2224,7 +2291,7 @@ function Editor(props) {
     //end export dialog support
 
     async function exportAsWebPage() {
-        const code = localStorage.getItem(`${props.page}Value`);
+        const code = localStorage.getItem(`${STORAGE_PREFIX}-${props.page}Value`);
 
         // Create HTML template with required dependencies
         const htmlContent = await webExportHTMLContentGenerator(code);
@@ -2236,7 +2303,7 @@ function Editor(props) {
         // Create a link element and trigger download
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'creativitas-export.html';
+        a.download = 'm080-export.html';
         document.body.appendChild(a);
         a.click();
 
@@ -2828,25 +2895,7 @@ function Editor(props) {
 
                             {/* Timing Controls */}
                             <div className="timing-controls">
-                                {/* Timing Strategy Selector */}
-                                <select
-                                    className="timing-strategy-selector"
-                                    onChange={async (e) => {
-                                        const strategy = e.target.value;
-                                        if (strategy === 'tone_js') {
-                                            window.useToneJsTiming();
-                                        } else if (strategy === 'timing_object') {
-                                            await window.useTimingObjectTiming();
-                                        } else if (strategy === 'midi_clock') {
-                                            window.useMidiClockTiming();
-                                        }
-                                    }}
-                                    defaultValue={timingStrategyManager.getActiveStrategy()}
-                                >
-                                    <option value="tone_js">Tone.js Timing</option>
-                                    <option value="timing_object">Timing Object</option>
-                                    <option value="midi_clock">MIDI Clock</option>
-                                </select>
+                                
 
                                 {/* Start/Stop Buttons */}
                                 <button

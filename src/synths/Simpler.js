@@ -266,7 +266,7 @@ export class Simpler extends MonophonicTemplate {
     }//attackRelease
 
     releaseAll(time = null){
-        console.log('releaseAll')
+        //console.log('releaseAll')
         if(time) {
             this.sampler.releaseAll(time)
         } else {

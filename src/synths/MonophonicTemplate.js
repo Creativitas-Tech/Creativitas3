@@ -1434,7 +1434,8 @@ export class MonophonicTemplate {
             }
     }
     star(){
-        this.synth.releaseAll()
+        if(this.synth.releaseAll) this.synth.releaseAll()
+        else this.releaseAll()
     }
     clearPedal(){ 
         this._pedal = "off"
@@ -1602,6 +1603,8 @@ export class MonophonicTemplate {
             return;
         }
 
+        if (val[0] === ".") return;
+        if (!val || val.length === 0 ) return '.';
         
         
 
@@ -1610,8 +1613,7 @@ export class MonophonicTemplate {
         if( pedal == "legato" && curEventTiming > this.prevEventTiming ) this.releaseAll(time + timeOffset)
         if( pedal == "star" ) this.releaseAll(time + timeOffset)
 
-        if (val[0] === ".") return;
-        if (!val || val.length === 0 ) return '.';
+        
 
         const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
         //console.log(usesPitchNames, val[0])

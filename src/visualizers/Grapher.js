@@ -2,7 +2,10 @@ import * as Tone from 'tone';
 
 export class GraphVisualizer {
     constructor(size = 64, ratio = 1, color = 0,  _target = 'Canvas',) {
-        this._target = document.getElementById(_target);
+        this.parent = document.getElementById(_target);
+        this.target = document.createElement("div");
+        this.parent.appendChild(this.target);
+    
         this._array = new Array(size).fill(0);
         this._index = 0
         this._ratio = ratio * .4;

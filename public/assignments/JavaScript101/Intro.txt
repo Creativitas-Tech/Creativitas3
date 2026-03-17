@@ -1,0 +1,12 @@
+The default language for coding on the web tends to be JavaScript. While it is possible to get pretty deep with JavaScript, for our purposes we don’t really need to do anything complicated. Still, if this is your first time coding, or coding with JavaScript, it is helpful to know a few things.
+
+This document will cover pretty much all the coding you will need to do to work with basic Web Audio. We will cover:
+* A syntax primer
+* variables, values, and objects
+* executing and debugging code
+* functions and methods
+
+A few general words of advice before we get started:
+* Spelling, capitalization, and syntax are crucial. Pay attention as you code, and when you have problems check here first.
+* Don’t worry about what you don’t know. JavaScript has lots of built-in features, functions, and objects. We will use a small selection of these - just accept them as they are and don’t worry about learning ‘all the options’.
+* Start simple, and find ways to check everything is working one step at a time. Making errors is normal, and debugging is a great way to learn!
