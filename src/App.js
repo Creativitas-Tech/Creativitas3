@@ -20,7 +20,7 @@ function App() {
   const [markdownContent, setMarkdownContent] = useState("");
 
   const exampleFiles = [
-    'Theory','Sequencing','Debugging','Arpeggiator', 'Breakbeats!', 'Effects','SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain', 'Euclid','Expr'
+    'Theory','Sequencing','Debugging','Arpeggiator', 'Breakbeats!', 'Effects','SequencingParams', 'Temperaments','MIDI','FreqRatios','SamplerRatio', 'MarkovChain', 'Euclid','Expr', 'BeatSurfer', 'BeatSurferNexus'
   ];
   const assignmentFiles = [
     'Sequencing Basics', 'Subtractive Synthesis', 'Grids1', 'MarkovChains' //,'Working with MIDI Notes', 'Triggering Envelopes',
