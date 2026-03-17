@@ -27,6 +27,9 @@ import { NexusNumberBox } from './nexus/NumberBox.js';
 import { NexusButton } from './nexus/Button.js';
 import { NexusSwitch } from './nexus/Switch.js';
 
+// Game class
+import { Game } from './Games/GameClass.js';
+
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
 import p5 from 'p5';
@@ -342,6 +345,8 @@ function Editor(props) {
     window.NexusNumberBox = NexusNumberBox;
     window.NexusButton = NexusButton;
     window.NexusSwitch = NexusSwitch;
+
+    window.Game = Game
 
     // Collab and GUI initialization functions
     window.initCollab = initCollab;
