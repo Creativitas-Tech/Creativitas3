@@ -7,7 +7,7 @@
 
   window.BeatSurferNexusConfig = Object.freeze({
     DEFAULT_BPM: 80,
-    DRUM_TRACK: '[O*]*[OX*]*[O*]*[OX*]*',
+    DRUM_TRACK: '[O*][X*]',
 
     PLAYER_MAX: 20,
     TARGET_LEN: 4,
