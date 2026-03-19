@@ -33,7 +33,8 @@ async function bundleSynthDependencies() {
         './nexus/parentNexus.js',
         './nexus/RadioButton.js',
         './nexus/Slider.js',
-        './nexus/Switch.js'
+        './nexus/Switch.js',
+        './Games/GameClass.js'
     ]
 
     const srcDir = path.join(__dirname, '..', 'src');

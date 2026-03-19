@@ -80,6 +80,9 @@ export * from '../src/nexus/RadioButton.js';
 export * from '../src/nexus/Slider.js';
 export * from '../src/nexus/Switch.js';
 
+// Games
+export * from '../src/Games/GameClass.js';
+
 // Generators
 export * from '../src/generators/MarkovChain.js';
 

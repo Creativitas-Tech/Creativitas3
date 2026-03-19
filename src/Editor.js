@@ -28,7 +28,8 @@ import { NexusButton } from './nexus/Button.js';
 import { NexusSwitch } from './nexus/Switch.js';
 
 // Game class
-import { Game } from './Games/GameClass.js';
+import { Game } from './Games/GameClass.js'
+// import {BeatSurfer} from ''''''
 
 import { drumPatterns } from './lib/drumPatterns.js';
 import { MultiVCO } from './MultiVCO.js'
