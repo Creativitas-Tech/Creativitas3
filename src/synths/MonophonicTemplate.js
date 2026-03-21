@@ -221,28 +221,68 @@ export class MonophonicTemplate {
         this.printToConsole(`Preset deleted  under ${this.name}/${name}`);
     };
 
-    async downloadAllPresets() {
-    try {
-        const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/download_presets');
-        if (!response.ok) {
-            console.error('Failed to download presets:', response.status, response.statusText);
-            return;
-        }
+    downloadPresets ()  {
+        this.presetsData = this.presets;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.presetsData, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", `${this.name}Presets.json`);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'synth_presets.zip'; // The filename the user will see
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url); // Clean up the object URL
-        this.printToConsole('Presets folder downloaded successfully.');
-    } catch (error) {
-        console.error('Error downloading presets:', error);
+    uploadPresets() {
+      // 1. Create a hidden file input
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json'; // Ensure only JSON files are selectable
+
+      fileInput.onchange = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedData = JSON.parse(e.target.result);
+            
+            this.presets = importedData;
+        
+            console.log('Presets updated successfully:', this.presets);
+          } catch (err) {
+            console.error("Error parsing JSON:", err);
+            alert("Invalid JSON file. Please check the file format.");
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      fileInput.click();
     }
-}
+
+    async downloadAllPresets() {
+        try {
+            const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/download_presets');
+            if (!response.ok) {
+                console.error('Failed to download presets:', response.status, response.statusText);
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'synth_presets.zip'; // The filename the user will see
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url); // Clean up the object URL
+            this.printToConsole('Presets folder downloaded successfully.');
+        } catch (error) {
+            console.error('Error downloading presets:', error);
+        }
+    }
 
     /**
      * Load a preset by name
@@ -307,6 +347,7 @@ export class MonophonicTemplate {
      */
     listPresets() {
         this.printToConsole("Synth presets", this.presets);
+        console.log(this.presets)
     }
 
     /**

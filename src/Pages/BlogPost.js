@@ -16,13 +16,13 @@ const BlogPost = () => {
 
   return (
     <div style={{
-      backgroundColor: '#fff8f0',
+      backgroundColor: '#212121',
       padding: '3rem 1rem',
     }}>
       <div style={{
         maxWidth: '800px',
         margin: '0 auto',
-        color: '#2c2c2c',
+        color: '#E0E0E0',
         fontFamily: `'Georgia', serif`,
         lineHeight: '1.6',
       }}>
@@ -39,23 +39,25 @@ const BlogPost = () => {
         }
 
         code {
-          background: #f1eae3;
+          background: #E0E0E0; /* Note: Removed the extra '#' from your snippet */
+          color: #1A1A1A;      /* Deep charcoal for high contrast */
           padding: 0.2rem 0.4rem;
           border-radius: 4px;
           font-family: 'Courier New', monospace;
+          font-weight: 600;    /* Optional: slightly bolder helps monospace stand out */
         }
 
         h1, h2, h3 {
-          color: #47322d;
+          color: ##E0E0E0;
         }
 
         a {
-          color: #8b4513;
+          color: ##E0E0E0;
           text-decoration: underline;
         }
 
         blockquote {
-          border-left: 4px solid #e0c4a8;
+          border-left: 4px solid ##E0E0E0;
           padding-left: 1rem;
           color: #6a4e3d;
           font-style: italic;

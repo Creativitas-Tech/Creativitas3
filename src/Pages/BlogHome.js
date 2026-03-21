@@ -4,6 +4,7 @@ import { marked } from 'marked';
 
 const blogSlugs = [
   'gettingStarted',
+  'PresetManagement',
   'ui_layout_blog_post',
   'GettingStarted_AudioEffect',
   'Todo',
@@ -41,14 +42,14 @@ const BlogHome = () => {
 
   return (
   <div style={{
-    backgroundColor: '#fff8f0',
+    backgroundColor: '#212121',
     minHeight: '100vh',
     padding: '3rem 1rem',
   }}>
     <div style={{
       maxWidth: '1000px',
       margin: '0 auto',
-      color: '#2c2c2c',
+      color: '#E0E0E0',
       fontFamily: `'Georgia', serif`,
       lineHeight: '1.6',
     }}>

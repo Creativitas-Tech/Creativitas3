@@ -42,7 +42,7 @@ export class Game{
 		const t = TheoryModule.Theory.now+.2
 		this.curBeat = Math.floor(t)%4
 		this.curBar = Math.floor(t/4)
-		console.log("bar ",this.curBar, " beat ", this.curBeat)
+		//console.log("bar ",this.curBar, " beat ", this.curBeat)
 	}
 
 	reset(){}
