@@ -844,6 +844,7 @@ created by Kayli Requenez F23
 ;
 ;
 
+
 let activeTheme = themes['default']; // Default theme preset
 
 
@@ -894,12 +895,17 @@ function initialize(p, div, height) {
     p.width = div.offsetWidth;
     p.height = div.offsetWidth * .4 * height;
     p.elements = {};
+    let divID = Math.floor(Math.random()*1000)
+    //console.log('init', div.id)
+
 
     if (div && div.id) {
         const registerOnView = (view) => {
             if (!view) {
                 return;
             }
+            //console.log("REGISTERING ON VIEW:", view);
+    //console.log("IS WINDOW?", view === window);
             if (!view.__creativitasCanvasRegistry) {
                 Object.defineProperty(view, '__creativitasCanvasRegistry', {
                     value: {},
@@ -965,7 +971,8 @@ function divResized(p, maxClicked, canvasLength) {
     const doc = (p && p.canvas && p.canvas.ownerDocument) || document;
     p.resizeCanvas(0, 0);
 
-    const canvasesCont = doc.getElementById("canvases") || p.div;
+    const canvasesCont = p.div;
+    console.log("resize")
     const controlsCont = doc.getElementById("controls");
     const flexCont = doc.getElementById('flex') || (canvasesCont && canvasesCont.parentElement) || (p.div && p.div.parentElement);
 
@@ -2389,7 +2396,7 @@ const sketch = (p, config = {}) => {
     p.setColor = setColor;
     p.setFont = setFont;
     p.debug = debug
-    p.backgroundColor = [0,0,0]
+    p.backgroundColor = [255,255,255]
 
     //theme functions
     p.setTheme = setp5Theme
@@ -2402,11 +2409,16 @@ const sketch = (p, config = {}) => {
 
     p.Debug = function(){ p.debug(); }
 
-    p.setup = function () {
-        let divID = p.canvas.parentElement.id;
-        let div = document.getElementById(p.canvas.parentElement.id);
+p.setup = function () {
+
+        let parent = p._userNode;
+        div = document.createElement("div");
+        div.id = "Canvas" + Math.floor(Math.random()*1000)
+        parent.appendChild(div);
+
         if( config.height === undefined) config.height = 1
         let dim =  p.initialize(div, config.height)
+
 
         p.activeTheme = themes['dark']
         p.width = dim[0]
@@ -2416,6 +2428,35 @@ const sketch = (p, config = {}) => {
         p.x = 0
         p.y = 0
         p.capture = null
+
+// let lastWidth = div.offsetWidth;
+// let lastHeight = div.offsetHeight;
+// let resizePending = false;
+
+// const observer = new ResizeObserver(entries => {
+
+//     const rect = entries[0].contentRect;
+
+//     const w = Math.round(rect.width);
+//     const h = Math.round(rect.height);
+
+//     if (w === lastWidth && h === lastHeight) return;
+
+//     lastWidth = w;
+//     lastHeight = h;
+
+//     if (!resizePending) {
+//         resizePending = true;
+
+//         requestAnimationFrame(() => {
+//             resizePending = false;
+//             p.resizeCanvas(w, h, true);
+//         });
+//     }
+
+// });
+
+//         observer.observe(p._userNode);
     };
 
     p.draw = function () {
@@ -2481,6 +2522,7 @@ const sketch = (p, config = {}) => {
     }
 
     p.windowResized = function () {
+        console.log('foo')
         //p.divResized();
     };
 
@@ -3663,10 +3705,13 @@ function initNexusCanvas(backgroundColor = '#1a1a2e') {
     container.style.backgroundColor = backgroundColor;
     container.style.margin = '0';
     container.style.padding = '0';
-    container.style.width = '100%';
-    container.style.height = '100%';
+    // Add this to your initNexusCanvas function
+    container.style.minHeight = '100vh'; // Or '100vh' for full screen
+    container.style.display = 'block';
     container.style.position = 'relative';
     container.style.overflow = 'hidden';
+    container.style.zIndex = '100';
+    container.style.pointerEvents = 'auto'; // Ensures you can actually touch the GUI
     
     canvasInitialized = true;
     return container;
@@ -3675,6 +3720,7 @@ function initNexusCanvas(backgroundColor = '#1a1a2e') {
 class NexusElement{
     constructor(element_type, x = 0, y = 0, width = 100, height = 100) {
         this.element_type = element_type;
+        console.log('el', element_type)
 
         // Get the Canvas container - this is where NexusUI elements should appear
         const container = document.getElementById('Canvas');
@@ -3686,6 +3732,7 @@ class NexusElement{
         // Auto-initialize Canvas if not already done
         if (!canvasInitialized) {
             initNexusCanvas();
+            console.log("canvas")
         }
 
         // Initialize the Nexus element - NexusUI will create its own wrapper
@@ -3707,14 +3754,14 @@ class NexusElement{
         this.container = container;
         this.elementContainer = elementContainer;
 
-        const containerWidth = container.clientWidth || window.innerWidth;
-        const containerHeight = container.clientHeight || window.innerHeight;
+        this.containerWidth = container.clientWidth || window.innerWidth;
+        this.containerHeight = this.containerWidth * 0.8
 
         // Store position as percentages for responsive resizing
-        this.xPercent = x / containerWidth;
-        this.yPercent = y / containerHeight;
-        this.widthPercent = width / containerWidth;
-        this.heightPercent = height / containerHeight;
+        this.xPercent = x / this.containerWidth;
+        this.yPercent = y / this.containerHeight;
+        this.widthPercent = width / this.containerWidth;
+        this.heightPercent = height / this.containerHeight;
 
         // Apply initial position (already set, but ensures consistency)
         this.updatePositionAndSize();
@@ -3746,21 +3793,21 @@ class NexusElement{
         // Update pixel values based on percentages and current container size
         const container = this.container || document.getElementById('Canvas');
         if (!container) return;
-        
-        const newWidth = container.clientWidth || window.innerWidth;
-        const newHeight = container.clientHeight || window.innerHeight;
+
+        this.containerWidth = container.clientWidth || window.innerWidth;
+        this.containerHeight = this.containerWidth * 0.8
 
         // Position our wrapper container
         if (this.elementContainer) {
-            this.elementContainer.style.left = (this.xPercent * newWidth) + "px";
-            this.elementContainer.style.top = (this.yPercent * newHeight) + "px";
+            this.elementContainer.style.left = (this.xPercent * this.containerWidth) + "px";
+            this.elementContainer.style.top = (this.yPercent * this.containerHeight) + "px";
         }
         
         // Resize the NexusUI element
         if (this.element && this.element.resize) {
             this.element.resize(
-                this.widthPercent * newWidth,
-                this.heightPercent * newHeight
+                this.widthPercent * this.containerWidth,
+                this.heightPercent * this.containerHeight
             );
         }
     }
@@ -3788,75 +3835,197 @@ class NexusElement{
         //Dynamic sizing and positioning
 
         set x(value) {
-            const container = this.container || document.getElementById('Canvas');
-            const containerWidth = container ? container.clientWidth : window.innerWidth;
-            this.xPercent = value / containerWidth;
+            this.xPercent = value /// this.containerWidth;
             this.updatePositionAndSize();
         }
     
         set y(value) {
-            const container = this.container || document.getElementById('Canvas');
-            const containerHeight = container ? container.clientHeight : window.innerHeight;
-            this.yPercent = value / containerHeight;
+            this.yPercent = value /// this.containerHeight;
             this.updatePositionAndSize();
         }
     
         set width(value) {
-            const container = this.container || document.getElementById('Canvas');
-            const containerWidth = container ? container.clientWidth : window.innerWidth;
-            this.widthPercent = value / containerWidth;
+            this.widthPercent = value / this.containerWidth;
             this.updatePositionAndSize();
         }
     
         set height(value) {
-            const container = this.container || document.getElementById('Canvas');
-            const containerHeight = container ? container.clientHeight : window.innerHeight;
-            this.heightPercent = value / containerHeight;
+            this.heightPercent = value / this.containerHeight;
             this.updatePositionAndSize();
         }
     
         // Getters for convenience
         get x() {
-            const container = this.container || document.getElementById('Canvas');
-            const containerWidth = container ? container.clientWidth : window.innerWidth;
-            return this.xPercent * containerWidth;
+            return this.xPercent * this.containerWidth;
         }
     
         get y() {
-            const container = this.container || document.getElementById('Canvas');
-            const containerHeight = container ? container.clientHeight : window.innerHeight;
-            return this.yPercent * containerHeight;
+            return this.yPercent * this.containerHeight;
         }
     
         get width() {
-            const container = this.container || document.getElementById('Canvas');
-            const containerWidth = container ? container.clientWidth : window.innerWidth;
-            return this.widthPercent * containerWidth;
+            return this.widthPercent * this.containerWidth;
         }
     
         get height() {
-            const container = this.container || document.getElementById('Canvas');
-            const containerHeight = container ? container.clientHeight : window.innerHeight;
-            return this.heightPercent * containerHeight;
+            return this.heightPercent * this.containerHeight;
         }
 
         set size([newWidth, newHeight]) {
-            const container = this.container || document.getElementById('Canvas');
-            const containerWidth = container ? container.clientWidth : window.innerWidth;
-            const containerHeight = container ? container.clientHeight : window.innerHeight;
-            this.widthPercent = newWidth / containerWidth;
-            this.heightPercent = newHeight / containerHeight;
+            this.widthPercent = newWidth / this.containerWidth;
+            this.heightPercent = newHeight / this.containerHeight;
             this.updatePositionAndSize();
         }
     
         get size() {
-            const container = this.container || document.getElementById('Canvas');
-            const containerWidth = container ? container.clientWidth : window.innerWidth;
-            const containerHeight = container ? container.clientHeight : window.innerHeight;
-            return [
-                this.widthPercent * containerWidth,
-                this.heightPercent * containerHeight
+           return [
+                this.widthPercent * this.containerWidth,
+                this.heightPercent * this.containerHeight
             ];
+        }
+        set accentColor(value) {
+            value = (Array.isArray(value) && value.length === 3) 
+                ? value 
+                : [value, value, value];
+            this.colorize('accent', value)
+        }
+        set accentColor(value) {
+            value = (Array.isArray(value) && value.length === 3) 
+                ? value 
+                : [value, value, value];
+            this.colorize('accent', value)
+        }
+
+        /* --- Range & Value Logic --- */
+
+        set min(value) {
+            this.element.min = value;
+        }
+        get min() {
+            return this.element.min;
+        }
+
+        set max(value) {
+            this.element.max = value;
+        }
+        get max() {
+            return this.element.max;
+        }
+
+        set step(value) {
+            this.element.step = value;
+        }
+        get step() {
+            return this.element.step;
+        }
+
+        set curve(value) {
+            // NexusUI typically uses 'linear' or 'exponential'
+            this.element.curve = value;
+        }
+        get curve() {
+            return this.element.curve;
+        }
+
+        /* --- State Logic --- */
+
+        set isInt(value) {
+            // If true, forces steps to 1
+            this.element.step = value ? 1 : 0;
+        }
+        get isInt() {
+            return this.element.step >= 1;
+        }
+
+        set bipolar(value) {
+            // Primarily for Dial or Slider; shifts range from [0,1] to [-1,1]
+            if (value) {
+                this.min = -1;
+                this.max = 1;
+            } else {
+                this.min = 0;
+                this.max = 1;
+            }
+        }
+
+        /* --- Labeling --- */
+
+        set label(value) {
+            this._labelText = value;
+            // Assuming you have a method to render a text overlay
+            this.renderLabel(); 
+        }
+        get label() {
+            return this._labelText;
+        }
+
+        /* --- Visuals & Orientation --- */
+
+        set orientation(value) {
+            // 'horizontal' or 'vertical'
+            this.element.orientation = value;
+        }
+        get orientation() {
+            return this.element.orientation;
+        }
+
+        /* --- Cosmetics (Colors & Borders) --- */
+
+        set border(value) {
+            // Usually a boolean in NexusUI or a pixel width
+            this.element.borderWidth = value;
+        }
+        get border() {
+            return this.element.borderWidth;
+        }
+
+        set borderColor(value) {
+            this.colorize('border', value);
+        }
+
+        set accentColor(value) {
+            const color = (Array.isArray(value) && value.length === 3) 
+                ? value 
+                : [value, value, value];
+            this.colorize('accent', color);
+        }
+
+        set textColor(value) {
+            // Note: NexusUI uses 'fill' for text/foreground in many widgets
+            this.colorize('fill', value);
+        }
+
+        /* --- Visibility Flags --- */
+
+        set showLabel(value) {
+            this._showLabel = !!value;
+            this.renderLabel();
+        }
+        get showLabel() {
+            return this._showLabel;
+        }
+
+        set showValue(value) {
+            // Some NexusUI elements have a 'value' display built in
+            this._showValue = !!value;
+        }
+        get showValue() {
+            return this._showValue;
+        }
+
+        /* --- Mapping & Interaction --- */
+
+        set mapto(func) {
+            // Useful for linking to a specific synth parameter
+            this._destination = func;
+        }
+
+        set callback(func) {
+            // Standard NexusUI event listener
+            this.element.on('change', (v) => {
+                if (this._destination) this._destination(v);
+                func(v);
+            });
         }
     }
 
@@ -4108,20 +4277,16 @@ class TextField {
     // Create the div
     this.div = document.createElement('div');
     Object.assign(this.div.style, {
-      //position: 'absolute',
-      //bottom: '0',
-      //left: '0',
-      //width: '100%',
-      background: 'rgba(0,0,0,0.6)',
-      color: '#0f0',
-      fontFamily: 'Courier New, monospace',
-      fontSize: '14px',
-      lineHeight: '18px',
-      whiteSpace: 'pre',
-      overflow: 'hidden',
-      padding: '4px',
-      //boxSizing: 'border-box',
-      pointerEvents: 'none',
+      background: "rgba(0,0,0,0.6)",
+      color: "#0f0",
+      fontFamily: "Courier New, monospace",
+      fontSize: "14px",
+      lineHeight: "18px",
+      whiteSpace: "pre",
+      padding: "4px",
+      overflowY: "auto",
+      maxHeight: "100%",
+      pointerEvents: "auto"
     });
 
     container.appendChild(this.div);
@@ -4212,6 +4377,11 @@ class TextField {
     }
     //console.log(html)
     this.div.innerHTML = html;
+    this.scrollToBottom()
+  }
+
+  scrollToBottom() {
+    this.div.scrollTop = this.div.scrollHeight;
   }
 
   ensureStyle() {
@@ -4305,6 +4475,10 @@ class PianoRoll {
     noteMin = -7,        // C2
     noteMax = 7         // C6
   } = {}) {
+    this.parent = document.getElementById(target);
+    this.target = document.createElement("div");
+    this.parent.appendChild(this.target);
+
     this.numBeats = numBeats;
     this.beat = 0
     this.height = height*200;
@@ -4983,7 +5157,7 @@ class Seq {
             //console.log('1', event)
             event = this.applyOrnamentation(event)
             event = event.map(([x, y]) => [this.perform_transform(x), y])
-            console.log(event)
+            //console.log(event)
             // Roll chords
             const event_timings = event.map(subarray => subarray[1]);
             let roll = this.getNoteParam(this.roll, this.index);
@@ -5184,7 +5358,7 @@ class Seq {
 
     stop() {
         this.enable = 0;
-        this.synth.releaseAll()
+        //this.synth.releaseAll()
         //if (this.loopInstance) this.loopInstance.stop();
     }
 
@@ -6450,6 +6624,87 @@ class NexusSwitch extends NexusElement {
         this.element.state = flipped
     }
 }
+
+;
+;
+
+class Game{
+	constructor(){
+		this.level_number = 0
+		this.started = false
+		this.loop = null
+		this.tempo = 90
+		this.loopDivision = '4n'
+		this.curBeat = 0
+		this.curBar = 0
+		this.chord = 0
+		this.targets = []
+		this.played = []
+		this.missed = 0
+		this.updateRate = 4
+	}
+
+	init(){
+		if( !this.started){
+			this.audio = this.makeSynth()
+			this.gui = this.makeDisplay()
+			this.loop = new Tone.Loop(time=> {
+				this.onBeat(time)
+				if(this.curBeat == 0) this.onBar(time)
+			}, this.loopDivision).start()	
+			this.counterLoop = new Tone.Loop(time=> this.countBeats(time-.1), this.loopDivision).start()	
+		}
+		this.started = true
+	}
+
+	makeSynth(){}
+
+	makeDisplay(){}
+
+	loadLevel(){}
+
+	inputHandler(){}
+
+	updateDisplay(){}
+
+	onBar(time){
+
+	}
+	onBeat(time){
+
+	}
+
+	countBeats(time){
+		const t = TheoryModule.Theory.now+.2
+		this.curBeat = Math.floor(t)%4
+		this.curBar = Math.floor(t/4)
+		// console.log("bar ", this.curBar, " beat ", this.curBeat)
+	}
+
+	updateTarget(){}
+
+	reset(){}
+
+	gameOver(){
+		this.stop()
+		console.log('Game over')
+	}
+
+	start(){}
+
+	stop(){
+		this.loop.stop()
+		this.counterLoop.stop()
+		this.started = false
+		for(let synth in this.audio) {
+			try{
+				this.audio[synth].stop()
+			}catch(e){console.log(e)}
+		}
+	}
+}
+
+
 
 /*
 This class mimics the midi keyboard react component.
@@ -7773,7 +8028,9 @@ class ArrayVisualizer {
     constructor(parent, array, _target = 'Canvas', ratio = 4 / 10) {
         this.parent = parent
         this._array = array;
-        this._target = document.getElementById(_target);
+        this.parent = document.getElementById(_target);
+        this._target = document.createElement("div");
+        this.parent.appendChild(this._target);
         this._ratio = ratio;
         this._type = 'horizontal'; // Default type
         this._color =  [
@@ -8457,28 +8714,68 @@ class MonophonicTemplate {
         this.printToConsole(`Preset deleted  under ${this.name}/${name}`);
     };
 
-    async downloadAllPresets() {
-    try {
-        const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/download_presets');
-        if (!response.ok) {
-            console.error('Failed to download presets:', response.status, response.statusText);
-            return;
-        }
+    downloadPresets ()  {
+        this.presetsData = this.presets;
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(this.presetsData, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", `${this.name}Presets.json`);
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    };
 
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'synth_presets.zip'; // The filename the user will see
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url); // Clean up the object URL
-        this.printToConsole('Presets folder downloaded successfully.');
-    } catch (error) {
-        console.error('Error downloading presets:', error);
+    uploadPresets() {
+      // 1. Create a hidden file input
+      const fileInput = document.createElement('input');
+      fileInput.type = 'file';
+      fileInput.accept = '.json'; // Ensure only JSON files are selectable
+
+      fileInput.onchange = (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const importedData = JSON.parse(e.target.result);
+            
+            this.presets = importedData;
+        
+            console.log('Presets updated successfully:', this.presets);
+          } catch (err) {
+            console.error("Error parsing JSON:", err);
+            alert("Invalid JSON file. Please check the file format.");
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      fileInput.click();
     }
-}
+
+    async downloadAllPresets() {
+        try {
+            const response = await fetch('http://collabhub-server-90d79b565c8f.herokuapp.com/download_presets');
+            if (!response.ok) {
+                console.error('Failed to download presets:', response.status, response.statusText);
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'synth_presets.zip'; // The filename the user will see
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url); // Clean up the object URL
+            this.printToConsole('Presets folder downloaded successfully.');
+        } catch (error) {
+            console.error('Error downloading presets:', error);
+        }
+    }
 
     /**
      * Load a preset by name
@@ -8543,6 +8840,7 @@ class MonophonicTemplate {
      */
     listPresets() {
         this.printToConsole("Synth presets", this.presets);
+        console.log(this.presets)
     }
 
     /**
@@ -9670,7 +9968,8 @@ class MonophonicTemplate {
             }
     }
     star(){
-        this.synth.releaseAll()
+        if(this.synth.releaseAll) this.synth.releaseAll()
+        else this.releaseAll()
     }
     clearPedal(){ 
         this._pedal = "off"
@@ -9838,6 +10137,8 @@ class MonophonicTemplate {
             return;
         }
 
+        if (val[0] === ".") return;
+        if (!val || val.length === 0 ) return '.';
         
         
 
@@ -9846,8 +10147,7 @@ class MonophonicTemplate {
         if( pedal == "legato" && curEventTiming > this.prevEventTiming ) this.releaseAll(time + timeOffset)
         if( pedal == "star" ) this.releaseAll(time + timeOffset)
 
-        if (val[0] === ".") return;
-        if (!val || val.length === 0 ) return '.';
+        
 
         const usesPitchNames = /^[a-gA-G]/.test(val[0][0]);
         //console.log(usesPitchNames, val[0])
@@ -12590,8 +12890,8 @@ const paramDefinitions = (synth) => [
 
   {
     name:'decay',type: 'param',value:1,
-    min:0.0,max:1,curve:3,callback:x=> {
-      synth.decayTime = x * synth.duration
+    min:0.001,max:1,curve:3,callback:x=> {
+      synth.decayTime = x * synth.buffer_duration
       synth.setDecayTime()
     }
   },
@@ -12629,7 +12929,7 @@ class DrumVoice extends DrumTemplate{
 
     this.chokeRatio = .1
     this.decayTime = 1
-    this.duration = 1
+    this.buffer_duration = 1
     this.startPoint = 0
     this.accent = 1.5
     this.ghost = .3
@@ -12658,7 +12958,7 @@ class DrumVoice extends DrumTemplate{
   load(sampleName){
     const match = sampleName.match(/^([a-zA-Z]+)(\d+)$/);
     if (!match){
-        console.log('Error: drum voice, incorrent name. Should be `kick0` or similar')
+        console.log('Error: drum voice, incorrect name. Should be `kick0` or similar')
         return
     }
 
@@ -12686,11 +12986,11 @@ class DrumVoice extends DrumTemplate{
     } catch(e){
       console.log('unable to load sample - try calling load(`kick0`)')
     }
-    this.duration = this.voice.buffer.duration
+    setTimeout( ()=>{this.buffer_duration = this.voice.buffer.duration},5000)
   }
 
     setDecayTime(decay=null, choke=null){
-        if (decay != null) this.decayTime = decay * this.duration
+        if (decay != null) this.decayTime = decay * this.buffer_duration
         if (choke != null) this.chokeRatio = choke
         this.env.release = this.decayTime*this.chokeRatio
     }
@@ -12704,7 +13004,7 @@ class DrumVoice extends DrumTemplate{
       //this.voice.start()
       this.env.triggerAttackRelease(0.001, time)
     } catch(e){
-        //console.log('time error', e)
+        console.log('time error', e)
     }
   }
     trigger(amplitude, decay,time){
@@ -12956,7 +13256,7 @@ const paramDefinitions = (synth) => [
   },
   {
     name: 'kick_decay', type: 'kick', min: 0, max: 1, value: 1, curve: 2,
-    callback: x => synth.kick.decay = x *  synth.kick.duration
+    callback: x => synth.kick.decay = x 
   },
   {
     name: 'snare_rate', type: 'snare', min: 0, max: 2, value: 1, curve: 1,
@@ -12964,7 +13264,7 @@ const paramDefinitions = (synth) => [
   },
   {
     name: 'snare_decay', type: 'snare', min: 0.01, max: 1, value: 1, curve: 2,
-    callback: x => synth.snare.decay = x * synth.snare.duration
+    callback: x => synth.snare.decay = x 
   },
   
   {
@@ -12981,7 +13281,7 @@ const paramDefinitions = (synth) => [
   },
   {
     name: 'open_decay', type: 'hihat', min: 0.01, max: 1, value: 1, curve: 2,
-    callback: x => synth.hat.decay = x  * synth.snare.duration
+    callback: x => synth.hat.decay = x  
   },
   {
     name: 'tom1_rate', type: 'toms', min: 0, max: 2, value: 1, curve: 1,
@@ -12998,9 +13298,9 @@ const paramDefinitions = (synth) => [
   {
     name: 'toms_decay', type: 'toms', min: 0.01, max: 1, value: 1, curve: 2,
     callback: x => {
-      synth.p1.decay = x * synth.p1.duration;
-      synth.p2.decay = x * synth.p2.duration;
-      synth.p3.decay = x * synth.p3.duration;
+      synth.p1.decay = x 
+      synth.p2.decay = x 
+      synth.p3.decay = x 
     }
   },
 
@@ -22831,7 +23131,7 @@ class Simpler extends MonophonicTemplate {
     }//attackRelease
 
     releaseAll(time = null){
-        console.log('releaseAll')
+        //console.log('releaseAll')
         if(time) {
             this.sampler.releaseAll(time)
         } else {
@@ -24699,7 +24999,10 @@ class CircularVisualizer {
 
 class GraphVisualizer {
     constructor(size = 64, ratio = 1, color = 0,  _target = 'Canvas',) {
-        this._target = document.getElementById(_target);
+        this.parent = document.getElementById(_target);
+        this.target = document.createElement("div");
+        this.parent.appendChild(this.target);
+    
         this._array = new Array(size).fill(0);
         this._index = 0
         this._ratio = ratio * .4;
@@ -25509,7 +25812,11 @@ OSCILLOSCOPE
  */
 const Oscilloscope = function( ratio = 1, _target= 'Canvas') {
     // Get the target DOM element and set dimensions based on the provided ratio
-    this.target = document.getElementById(_target);
+    this.parent = document.getElementById(_target);
+
+    this.target = document.createElement("div");
+    this.parent.appendChild(this.target);
+
     this.width = this.target.offsetWidth;
     this.height = this.width * ratio * 4/10;
 
@@ -25727,12 +26034,14 @@ plotTransferFunction
  * @param {string} _target - The ID of the HTML element where the transfer function will be plotted.
  */
 const PlotTransferFunction = function(myFunction, _target = 'Canvas', ratio= 4/10) {
-    const target = document.getElementById(_target);
+    this.parent = document.getElementById(_target);
+    this.target = document.createElement("div");
+    this.parent.appendChild(this.target);
 
     // Check if an existing SVG is present and remove it if it is
-    const existingSVG = target.querySelector('svg.transfer-function-svg');
+    const existingSVG = this.target.querySelector('svg.transfer-function-svg');
     if (existingSVG) {
-        target.removeChild(existingSVG);
+        this.target.removeChild(existingSVG);
     }
 
     if(myFunction === 'stop'){
@@ -25740,8 +26049,8 @@ const PlotTransferFunction = function(myFunction, _target = 'Canvas', ratio= 4/1
         return
     }
     // Set the dimensions based on the target container
-    const width = target.offsetWidth; 
-    const height = target.offsetWidth*ratio;
+    const width = this.target.offsetWidth; 
+    const height = this.target.offsetWidth*ratio;
     const graph_size = height - 10
 
     
@@ -25768,7 +26077,7 @@ const PlotTransferFunction = function(myFunction, _target = 'Canvas', ratio= 4/1
     svg.appendChild(path);
 
     // Append the SVG element to the target container
-    target.appendChild(svg);
+    this.target.appendChild(svg);
 
     // Function to draw the transfer function
     var _path = 'M';
@@ -25848,8 +26157,10 @@ SPECTROGRAM
  */
 
 const Spectrogram = function( ratio = 1, _target= 'Canvas') {
-    this.target = document.getElementById(_target);
-
+    this.parent = document.getElementById(_target);
+    this.target = document.createElement("div");
+    this.parent.appendChild(this.target);
+    
     // Canvas setup
     this.canvas = document.createElement('canvas');
     this.context = this.canvas.getContext('2d');

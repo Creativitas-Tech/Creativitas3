@@ -379,7 +379,7 @@ export class Seq {
 
     stop() {
         this.enable = 0;
-        this.synth.releaseAll()
+        //this.synth.releaseAll()
         //if (this.loopInstance) this.loopInstance.stop();
     }
 
