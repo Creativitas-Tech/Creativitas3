@@ -1,1 +1,0 @@
-Beat Surfer (Nexus UI) — Same game as Beat Surfer but with NexusUI buttons and controls instead of p5. Match the target 4-note sequence on the beat; keys 1–4 or the four Nexus buttons. Health and Boring work the same. Use this example to experiment with Nexus UI layout and styling.
