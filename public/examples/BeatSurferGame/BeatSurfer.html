@@ -15,9 +15,46 @@
     <!-- Styles -->
     <style>
 
-    body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+    body.beat-surfer-page { margin: 0; padding: 12px; font-family: Arial, sans-serif; box-sizing: border-box; min-height: 100vh; display: flex; flex-direction: column; }
+    #controls { flex: 0 0 auto; }
+    #beatSurferSplitRoot {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .player-pane {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    .player-pane-inner {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0 clamp(8px, 2vw, 16px);
+    }
+    .player-pane--flipped .player-pane-inner {
+      transform: rotate(180deg);
+      transform-origin: center center;
+      touch-action: manipulation;
+    }
     canvas { display: block; margin-bottom: 10px; }
-    .canvas-container { margin-bottom: 20px; }
+    .canvas-container {
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
     .span-container {
         display: flex;
         align-items: center;
@@ -70,7 +107,7 @@
     </style>
 </head>
 
-<body>
+<body class="beat-surfer-page">
 
 <div id="controls">
     <div>
@@ -154,7 +191,18 @@
     </div>
 </div>
 
-    <div class="canvas-container" id="Canvas"></div>
+    <div id="beatSurferSplitRoot">
+      <div class="player-pane player-pane--flipped" id="playerPaneP2">
+        <div class="player-pane-inner">
+          <div class="canvas-container" id="CanvasP2"></div>
+        </div>
+      </div>
+      <div class="player-pane" id="playerPaneP1">
+        <div class="player-pane-inner">
+          <div class="canvas-container" id="Canvas"></div>
+        </div>
+      </div>
+    </div>
 
 <div id="volumeWarning">
     <div style="background: white; padding: 20px; border-radius: 8px; text-align: center;">
@@ -370,8 +418,9 @@
             Tone.Transport.stop();
             Tone.Transport.cancel();
 
-            // Clear all previous canvases
-            Canvas.innerHTML = "";
+            // Clear all previous canvases (split-screen: P1 #Canvas + P2 #CanvasP2)
+            if (window.Canvas) window.Canvas.innerHTML = ''
+            if (window.CanvasP2) window.CanvasP2.innerHTML = ''
 
             // Get the user code from the non-executable script tag
             const userCodeElement = document.getElementById('userCode');
@@ -517,11 +566,13 @@
   await window.loadCode(base + 'beatSurferSequenceGrid.js', true)
   await window.loadCode(base + 'BeatSurferGame.js', true)
 
-  function runLoaded(instanceId) {
+  function runLoaded(instanceId, canvasEl, opts) {
+    opts = opts || {}
     instanceId = instanceId || ''
+    const splitRole = opts.splitRole || null
     const pfx = 'beatSurfer' + instanceId
 
-    const canvasHost = typeof Canvas !== 'undefined' ? Canvas : document.getElementById('Canvas')
+    const canvasHost = canvasEl || (typeof Canvas !== 'undefined' ? Canvas : document.getElementById('Canvas'))
     let gridRow = document.getElementById(pfx + 'GridRow')
     let gridMount = document.getElementById(pfx + 'GridMount')
     let statBarsHost = document.getElementById(pfx + 'StatBars')
@@ -530,16 +581,16 @@
       gridRow = document.createElement('div')
       gridRow.id = pfx + 'GridRow'
       gridRow.style.cssText =
-        'display:flex;flex-direction:row;align-items:stretch;gap:14px;margin:12px 0;width:100%;max-width:680px;'
+        'display:flex;flex-direction:row;align-items:stretch;gap:clamp(8px,2vw,14px);margin:12px 0;width:100%;max-width:100%;box-sizing:border-box;'
 
       if (gridMount && gridMount.parentNode) {
         gridMount.parentNode.insertBefore(gridRow, gridMount)
-        gridMount.style.cssText = 'flex:1 1 auto;min-width:0;margin:0;max-width:520px;'
+        gridMount.style.cssText = 'flex:1 1 50%;min-width:0;margin:0;width:100%;'
         gridRow.appendChild(gridMount)
       } else {
         gridMount = document.createElement('div')
         gridMount.id = pfx + 'GridMount'
-        gridMount.style.cssText = 'flex:1 1 auto;min-width:0;margin:0;max-width:520px;'
+        gridMount.style.cssText = 'flex:1 1 50%;min-width:0;margin:0;width:100%;'
         if (canvasHost.nextSibling) canvasHost.parentNode.insertBefore(gridRow, canvasHost.nextSibling)
         else canvasHost.parentNode.appendChild(gridRow)
         gridRow.appendChild(gridMount)
@@ -548,13 +599,13 @@
       statBarsHost = document.createElement('div')
       statBarsHost.id = pfx + 'StatBars'
       statBarsHost.style.cssText =
-        'flex:0 0 auto;display:flex;flex-direction:row;align-items:flex-end;gap:12px;padding-bottom:2px;'
+        'flex:1 1 50%;min-width:0;display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;gap:clamp(8px,2vw,16px);padding-bottom:2px;box-sizing:border-box;'
       gridRow.appendChild(statBarsHost)
     } else if (gridRow && !statBarsHost) {
       statBarsHost = document.createElement('div')
       statBarsHost.id = pfx + 'StatBars'
       statBarsHost.style.cssText =
-        'flex:0 0 auto;display:flex;flex-direction:row;align-items:flex-end;gap:12px;padding-bottom:2px;'
+        'flex:1 1 50%;min-width:0;display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;gap:clamp(8px,2vw,16px);padding-bottom:2px;box-sizing:border-box;'
       gridRow.appendChild(statBarsHost)
     }
 
@@ -568,7 +619,7 @@
       : null
 
     const game = new window.BeatSurferGame({
-      Canvas,
+      Canvas: canvasHost,
       Tone,
       Theory,
       DrumSampler,
@@ -581,18 +632,37 @@
       ui,
       sequenceGrid,
       instanceId,
+      splitRole,
     })
 
     game.init()
 
-    window.beatSurferGameInstance = game
-    window.startGame = () => game.start()
-    window.stopGame = () => game.stop('manual')
+    window.beatSurferGames = window.beatSurferGames || {}
+    window.beatSurferGames[instanceId] = game
+    if (instanceId === 'P1') window.beatSurferGameInstance = game
 
     return game
   }
 
-  runLoaded('')
+  window.beatSurferGames = {}
+  runLoaded('P1', document.getElementById('Canvas'), { splitRole: 'primary' })
+  runLoaded('P2', document.getElementById('CanvasP2'), { splitRole: 'secondary' })
+
+  window.beatSurferGameInstance = window.beatSurferGames.P1
+  window.startGame = () => {
+    const g = window.beatSurferGames
+    if (g.P1 && g.P2) {
+      g.P1.start()
+      g.P2.start()
+    }
+  }
+  window.stopGame = () => {
+    const g = window.beatSurferGames
+    if (g.P1 && g.P2) {
+      g.P1.stop('manual')
+      g.P2.stop('manual')
+    }
+  }
 })().catch((e) => {
   console.error('BeatSurferGame loader failed:', e)
 })

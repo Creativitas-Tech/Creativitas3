@@ -1,16 +1,17 @@
 /**
- * BeatSurferUI — Instance-based UI factory.
- * Call createBeatSurferUI(instanceId) to get an independent
- * UI object whose DOM elements are scoped by instanceId prefix.
+ * BeatSurferUI — DOM factory per game instance. Element ids use prefix `beatSurfer` + instanceId
+ * (e.g. beatSurferP1GridRow). Layout: LeftCol = p5 mount + Nexus row; StatBars = Health/Boring.
+ * Exposes createGridButtons, flashButton, updateDisplay (wired by BeatSurferGame).
  */
 (() => {
   'use strict'
 
   const DEFAULT_NOTE_COLORS = [
     '#2563eb', '#16a34a', '#ea580c', '#9333ea',
-    '#dc2626', '#0891b2', '#ca8a04', '#db2777',
+    '#dc2626', '#0891b2',
   ]
 
+  /** Used for countdown palette tints. */
   function hexToRgba(hex, alpha) {
     const n = parseInt(hex.slice(1), 16)
     const r = (n >> 16) & 255
@@ -23,6 +24,7 @@
     return config.NOTE_COLORS || DEFAULT_NOTE_COLORS
   }
 
+  /** HTML fragment for count-in column (number + label). */
   function formatCountdownColumn(shown, countColor) {
     return (
       '<div style="font-size:12px;color:#9ca3af;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px">Countdown</div>' +
@@ -31,33 +33,46 @@
   }
 
   const NUM_GRID_BUTTONS = 6
-  const GRID_BUTTON_H = 64
-  const STAT_TRACK_PX = 248
+  const DEFAULT_NEXUS_BUTTON_W = 96
+  const DEFAULT_NEXUS_BUTTON_H = 80
 
   function createBeatSurferUI(instanceId) {
     const pfx = 'beatSurfer' + (instanceId || '')
 
+    /** Tint on correct/wrong feedback: full viewport in single-player; one split half when Canvas is inside .player-pane. */
     function flashButton({ buttons, Canvas, config }, i, feedback) {
       const flashMs = feedback === 'correct' ? 100 : 150
       const bg = feedback === 'correct'
         ? 'rgba(34,197,94,0.35)'
         : 'rgba(239,68,68,0.35)'
       const overlay = document.createElement('div')
-      overlay.style.cssText =
-        'position:fixed;top:0;left:0;width:100%;height:100%;' +
-        'background:' + bg + ';pointer-events:none;z-index:2147483646;'
-      document.body.appendChild(overlay)
+      const pane = Canvas && typeof Canvas.closest === 'function'
+        ? Canvas.closest('.player-pane')
+        : null
+      if (pane) {
+        overlay.style.cssText =
+          'position:absolute;top:0;left:0;right:0;bottom:0;width:100%;height:100%;' +
+          'background:' + bg + ';pointer-events:none;z-index:2147483646;'
+        pane.appendChild(overlay)
+      } else {
+        overlay.style.cssText =
+          'position:fixed;top:0;left:0;width:100%;height:100%;' +
+          'background:' + bg + ';pointer-events:none;z-index:2147483646;'
+        document.body.appendChild(overlay)
+      }
       setTimeout(function () {
         if (overlay.parentNode) overlay.parentNode.removeChild(overlay)
       }, flashMs)
     }
 
+    /** HUD text + Play again; inserted before the instance canvas host. */
     function ensureDisplay({ Canvas, onPlayAgain }) {
       let el = document.getElementById(pfx + 'Display')
       if (!el) {
         el = document.createElement('div')
         el.id = pfx + 'Display'
-        el.style.cssText = 'margin: 10px 0; font-family: monospace; font-size: 14px;'
+        el.style.cssText =
+          'margin: 10px 0; font-family: monospace; font-size: 14px; width: 100%; max-width: 100%; box-sizing: border-box;'
         const container = (Canvas && Canvas.parentNode) ? Canvas.parentNode : document.getElementById('Canvas')
         if (container) {
           if (Canvas && container.contains && container.contains(Canvas)) container.insertBefore(el, Canvas)
@@ -92,6 +107,7 @@
       return { el, textSpan }
     }
 
+    /** Corner overlay for phrase hints (hidden in current flow via syncPhrasePreview). */
     function ensurePhrasePreview(Canvas) {
       let p = document.getElementById(pfx + 'PhrasePreview')
       const cornerStyle =
@@ -117,6 +133,7 @@
       return p
     }
 
+    /** Clears phrase preview overlay. */
     function syncPhrasePreview({ Canvas }) {
       const p = ensurePhrasePreview(Canvas)
       if (!p) return
@@ -124,6 +141,7 @@
       p.style.display = 'none'
     }
 
+    /** Big countdown during countIn; lives above LeftCol or before GridRow. */
     function ensureCountdownEl() {
       let el = document.getElementById(pfx + 'Countdown')
       if (el) return el
@@ -143,21 +161,29 @@
       return el
     }
 
-    function createGridButtons({ gridRow, config, onPress, NexusButton }) {
+    /** Builds LeftCol + NexusButton strip; pads reparent from global #Canvas into GridButtons. */
+    function createGridButtons({ gridRow, config, onGridChange, NexusButton }) {
       if (!gridRow) return []
 
       const gridMount = document.getElementById(pfx + 'GridMount')
       if (!gridMount) return []
 
-      gridRow.style.alignItems = 'flex-end'
+      gridRow.style.width = '100%'
+      gridRow.style.maxWidth = '100%'
+      gridRow.style.boxSizing = 'border-box'
+      gridRow.style.alignItems = 'stretch'
 
       let leftCol = document.getElementById(pfx + 'LeftCol')
       if (!leftCol) {
         leftCol = document.createElement('div')
         leftCol.id = pfx + 'LeftCol'
-        leftCol.style.cssText = 'display:flex;flex-direction:column;flex:1 1 auto;min-width:0;max-width:520px;gap:6px;'
+        leftCol.style.cssText =
+          'display:flex;flex-direction:column;flex:1 1 50%;min-width:0;width:100%;gap:6px;box-sizing:border-box;'
         gridRow.insertBefore(leftCol, gridMount)
         leftCol.appendChild(gridMount)
+      } else {
+        leftCol.style.cssText =
+          'display:flex;flex-direction:column;flex:1 1 50%;min-width:0;width:100%;gap:6px;box-sizing:border-box;'
       }
 
       let wrap = document.getElementById(pfx + 'GridButtons')
@@ -170,10 +196,12 @@
       leftCol.appendChild(wrap)
 
       const count = (config && config.GRID_BUTTON_COUNT) || NUM_GRID_BUTTONS
+      const nx = (config && config.NEXUS_BUTTON_WIDTH) || DEFAULT_NEXUS_BUTTON_W
+      const ny = (config && config.NEXUS_BUTTON_HEIGHT) || DEFAULT_NEXUS_BUTTON_H
       const buttons = []
       const colors = config.NOTE_COLORS || DEFAULT_NOTE_COLORS
       for (let i = 0; i < count; i++) {
-        const btn = new NexusButton(0, 0, 80, GRID_BUTTON_H)
+        const btn = new NexusButton(0, 0, nx, ny)
         if (typeof btn.colorize === 'function') {
           btn.colorize('accent', colors[i] || DEFAULT_NOTE_COLORS[i % DEFAULT_NOTE_COLORS.length])
           btn.colorize('fill', '#1a1a24')
@@ -184,44 +212,62 @@
           btn.elementContainer.style.position = 'relative'
           btn.elementContainer.style.flex = '1 1 0'
           btn.elementContainer.style.minWidth = '0'
+          // Center the Nexus canvas in the flex cell so the drawn circle matches the overlay.
+          btn.elementContainer.style.display = 'flex'
+          btn.elementContainer.style.alignItems = 'center'
+          btn.elementContainer.style.justifyContent = 'center'
           wrap.appendChild(btn.elementContainer)
           const label = document.createElement('div')
           label.setAttribute('data-bsnp-grid-label', '1')
           label.textContent = String(i + 1)
           label.style.cssText =
-            'position:absolute;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;' +
-            'pointer-events:none;font-size:26px;font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);line-height:1;'
+            'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;padding:0;' +
+            'pointer-events:none;z-index:1;white-space:nowrap;' +
+            'font-size:clamp(28px,4vw,30px);font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);line-height:1;'
           btn.elementContainer.appendChild(label)
         }
         if (btn.resizeObserver) btn.resizeObserver.disconnect()
         const noteIndex = i
-        btn.mapTo((v) => {
-          if (!v) return
-          try {
-            onPress(noteIndex)
-          } catch (err) {
-            console.error('[BeatSurfer] grid button press error:', err)
-            throw err
-          }
-        })
+        if (btn.element && typeof btn.element.on === 'function') {
+          btn.element.on('change', (v) => {
+            try {
+              onGridChange(noteIndex, v)
+            } catch (err) {
+              console.error('[BeatSurfer] grid button change error:', err)
+              throw err
+            }
+          })
+        } else if (typeof btn.mapTo === 'function') {
+          btn.mapTo((v) => {
+            if (!v) return
+            try {
+              onGridChange(noteIndex, { state: true })
+            } catch (err) {
+              console.error('[BeatSurfer] grid button press error:', err)
+              throw err
+            }
+          })
+        }
         buttons.push(btn)
       }
       return buttons
     }
 
+    /** One vertical meter: label + track; fill height is v% from syncStatBars. */
     function buildOneStatBar(title, idBase, fillColor, textColor) {
       const col = document.createElement('div')
-      col.style.cssText = 'display:flex;flex-direction:column;align-items:center;width:48px;'
+      col.style.cssText =
+        'display:flex;flex-direction:column;align-items:center;flex:1 1 0;min-width:0;width:50%;box-sizing:border-box;'
       const lab = document.createElement('div')
       lab.textContent = title
       lab.style.cssText =
-        'font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:6px;' +
-        'text-align:center;line-height:1.1;max-width:48px;'
+        'font-size:clamp(9px, 1.8vw, 11px);font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:6px;' +
+        'text-align:center;line-height:1.1;max-width:100%;'
       const track = document.createElement('div')
       track.setAttribute('data-bsnp-stat-track', idBase)
       track.style.cssText =
-        'position:relative;width:42px;height:' + STAT_TRACK_PX + 'px;background:#1a1a1f;border:2px solid #3d3d48;border-radius:8px;' +
-        'overflow:hidden;box-sizing:border-box;'
+        'position:relative;width:100%;max-width:100%;height:clamp(140px, 28dvh, 360px);min-height:120px;' +
+        'background:#1a1a1f;border:2px solid #3d3d48;border-radius:8px;overflow:hidden;box-sizing:border-box;'
       const fill = document.createElement('div')
       fill.id = pfx + idBase + 'Fill'
       fill.style.cssText =
@@ -245,6 +291,7 @@
       return col
     }
 
+    /** One-time build into #StatBars (guarded by data-bsnp-statbars-built). */
     function ensureStatBars() {
       const host = document.getElementById(pfx + 'StatBars')
       if (!host) return null
@@ -256,6 +303,7 @@
       return host
     }
 
+    /** Maps 0–100 health/boring to fill height % on each track. */
     function syncStatBars(health, boring) {
       ensureStatBars()
       const max = 100
@@ -286,6 +334,7 @@
       syncOne('Boring', b)
     }
 
+    /** countIn: countdown + stat bars; otherwise clears countdown, updates stats. */
     function updateDisplay({ state, config, util }) {
       const {
         Canvas, gameState, countInBeatsLeft, targetSequence, playerSequence,

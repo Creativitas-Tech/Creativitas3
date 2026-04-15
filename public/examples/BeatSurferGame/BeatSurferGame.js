@@ -1,25 +1,17 @@
 /**
- * BeatSurferGame
+ * BeatSurferGame — rhythm game: phrase targets, health/boring meters, drums + melody.
  *
- * OOP layout (matches UROP Game Class sketch):
- *   constructor()  — wire deps, resetState, key handler
- *   init()         — audio graph, UI buttons, Transport, then start()
- *   resetState()   — default field values before a run
- *   generateTarget() / primeTargetPair() — "generate level" (phrase targets)
- *   onInput(i)     — input handler: note index from Nexus / keys 1–8
- *   onEighth(time) — transport tick each eighth ("onBeat" at 8th-note rate)
- *   updateDisplay()— push state to UI + sequence grid
- *   start()        — count-in, Tone.Loop, drum track
- *   stop(reason)   — game over / teardown (alias mental model: gameOver)
+ * Flow: constructor → init() (audio graph, Nexus grid, start()) → onEighth + onInput loop.
+ * Split tablet: splitRole 'primary' (drums + Transport) vs 'secondary' (melody; q–i keys).
  *
- *   laneEighthGlobal — monotonic eighth counter for the sequence grid only (never wraps at
- *     phrase boundaries); eighthIndexInPhrase still wraps for gameplay / expectedNote.
+ * Phrase: eighthIndexInPhrase wraps each phrase; laneEighthGlobal only increases (sequence UI).
  */
 (() => {
   'use strict'
 
   class BeatSurferGame {
-    constructor({ Canvas, Tone, Theory, DrumSampler, Polyphony, Daisy, Reverb, NexusButton, config, util, ui, sequenceGrid, instanceId }) {
+    constructor({ Canvas, Tone, Theory, DrumSampler, Polyphony, Daisy, Reverb, NexusButton, config, util, ui, sequenceGrid, instanceId, splitRole }) {
+      // Host element for HUD placement; per-instance in split-screen.
       this.Canvas = Canvas
       this.Tone = Tone
       this.Theory = Theory
@@ -30,29 +22,42 @@
       this.NexusButton = NexusButton
 
       this.instanceId = instanceId || ''
+      /** 'primary' | 'secondary' | null — split tablet: one shared Transport; secondary has no drums and must not clear/stop Transport on game over. */
+      this.splitRole = splitRole || null
       this.config = config
       this.util = util
       this.ui = ui
       this.sequenceGrid = sequenceGrid || null
 
-      this.output = null
+      this.output = null // master gain
       this.verb = null
-      this.d = null
-      this.s = null
+      this.d = null // DrumSampler; null for split secondary
+      this.s = null // Polyphony melody
 
-      this.loop = null
-      this.displayInterval = null
+      this.loop = null // Tone.Loop → onEighth
+      this.displayInterval = null // UI refresh timer
       this.gridButtons = []
 
       this.resetState('idle')
 
+      // P1: 1–6. P2 split: q–y → indices 0–5 (matches GRID_ROWS / pads).
       this._onKeyDown = (e) => {
         if (e.repeat) return
         if (this.gameState !== 'playing') return
-        const k = e.key
-        if (k >= '1' && k <= '8') {
+        const nPads = (this.config && this.config.GRID_BUTTON_COUNT) || 6
+        const maxDigit = String.fromCharCode(48 + nPads)
+        let idx = -1
+        if (this.splitRole === 'secondary') {
+          const map = { q: 0, w: 1, e: 2, r: 3, t: 4, y: 5 }
+          const ch = e.key.length === 1 ? e.key.toLowerCase() : ''
+          if (ch && Object.prototype.hasOwnProperty.call(map, ch)) idx = map[ch]
+        } else {
+          const k = e.key
+          if (k >= '1' && k <= maxDigit) idx = k.charCodeAt(0) - 49
+        }
+        if (idx >= 0) {
           e.preventDefault()
-          this.onInput(k.charCodeAt(0) - 49)
+          this.onInput(idx)
         }
       }
     }
@@ -85,21 +90,27 @@
       this._drumTier = 'good'
     }
 
-    /** Build audio + UI; register keys; begin first round. */
+    /** Build audio graph, create Nexus pads in #beatSurfer{instanceId}GridRow, register keys, start(). */
     init() {
       const { DEFAULT_BPM } = this.config
 
       if (typeof this.Theory !== 'undefined') this.Theory.tempo = DEFAULT_BPM
       if (typeof this.Tone !== 'undefined') this.Tone.Transport.bpm.value = DEFAULT_BPM
 
+      // Gain → destination; drums + dry melody; melody also → reverb → out.
       this.output = new this.Tone.Multiply(.1).toDestination()
       this.verb = new this.Reverb()
-      this.d = new this.DrumSampler()
-      this.d.loadPreset('breakbeat')
+      const ownsDrums = this.splitRole !== 'secondary'
+      if (ownsDrums) {
+        this.d = new this.DrumSampler()
+        this.d.loadPreset('breakbeat')
+        this.d.connect(this.output)
+      } else {
+        this.d = null
+      }
 
       this.s = new this.Polyphony(this.Daisy)
 
-      this.d.connect(this.output)
       this.s.connect(this.output)
       this.s.connect(this.verb)
       this.verb.connect(this.output)
@@ -109,11 +120,11 @@
         this.gridButtons = this.ui.createGridButtons({
           gridRow,
           config: this.config,
-          onPress: (i) => {
+          onGridChange: (i, v) => {
             try {
-              if (this.gameState === 'playing') this.onInput(i)
+              this.onGridChange(i, v)
             } catch (err) {
-              console.error('[BeatSurfer] onPress/onInput error:', err)
+              console.error('[BeatSurfer] onGridChange error:', err)
               throw err
             }
           },
@@ -130,16 +141,14 @@
       this.start()
     }
 
-    /** Random or preset phrase; indices limited by TARGET_NOTE_COUNT (e.g. notes 1–4). */
+    /** Procedural random phrase or PREDEFINED[songSection] when useProcedural is false. */
     generateTarget() {
       if (this.useProcedural) {
         const seq = []
         let prev = -1
         const cap = this.config.TARGET_NOTE_COUNT != null ? this.config.TARGET_NOTE_COUNT : 4
-        const numNotes = Math.min(
-          cap,
-          (this.config.MELODY_DEGREES && this.config.MELODY_DEGREES.length) || 8
-        )
+        const degLen = (this.config.MELODY_DEGREES && this.config.MELODY_DEGREES.length) || this.config.GRID_ROWS || 6
+        const numNotes = Math.min(cap, degLen)
         for (let i = 0; i < this.config.TARGET_LEN; i++) {
           let n = Math.floor(Math.random() * numNotes)
           if (n === prev && i > 0 && Math.random() < 0.5) n = (n + 1) % numNotes
@@ -151,6 +160,7 @@
       return [...this.PREDEFINED[this.songSection % 4]]
     }
 
+    /** Next phrase when not using procedural targets (cycles PREDEFINED). */
     peekNextPredefinedTarget() {
       return [...this.PREDEFINED[(this.songSection + 1) % 4]]
     }
@@ -166,6 +176,7 @@
       }
     }
 
+    /** Eighth-note steps in one full phrase (laps × lap length). */
     phraseTotalEighths() {
       return this.config.LAP_EIGHTHS * this.config.PHRASE_LAPS
     }
@@ -210,11 +221,38 @@
       return false
     }
 
+    /** MIDI note number for grid index i (middle C anchor). */
+    midiForNoteIndex(i) {
+      const d = this.config.MELODY_DEGREES[i]
+      return (d != null ? d : 0) + 60
+    }
+
     /**
-     * Player input while playing.
-     *
-     * "Played correctly" = there is an expected note this eighth, timing is on, and pitch matches.
-     * Any other press while playing is handled as follows:
+     * Nexus grid: full change payload (advisor pattern — branch on v.state).
+     */
+    onGridChange(i, v) {
+      const pressed = v && typeof v === 'object' && v !== null && 'state' in v
+        ? !!v.state
+        : !!v
+      if (pressed) this.onGridPress(i)
+      else this.onGridRelease(i)
+    }
+
+    /** Pad down: legato attack then same rules as onInput (no extra one-shot note). */
+    onGridPress(i) {
+      if (this.gameState !== 'playing') return
+      this.s.triggerAttack(this.midiForNoteIndex(i), 100, this.Tone.immediate())
+      this.onInput(i, { fromGrid: true })
+    }
+
+    /** Pad up: release envelope only. */
+    onGridRelease(i) {
+      if (this.gameState !== 'playing') return
+      this.s.triggerRelease(this.midiForNoteIndex(i))
+    }
+
+    /**
+     * Keyboard / pad input while playing. Correct = expected note exists, on-time, matching pitch.
      *
      * | Situation | Health | Boring | Sound |
      * |-----------|--------|--------|--------|
@@ -222,8 +260,13 @@
      * | Wrong pitch but on-time (`register` && wrong key) | − failed | − variety | dissonant |
      * | Expected note exists but not on-time (late/early) | − failed | — | melody |
      * | No expected note this eighth (odd eighth / rest) | — | — | melody (free play) |
+     *
+     * @param {number} i - note index
+     * @param {{ fromGrid?: boolean }} [opts] - grid uses attack/release; skip one-shot synth here
      */
-    onInput(i) {
+    onInput(i, opts) {
+      opts = opts || {}
+      const fromGrid = opts.fromGrid === true
       if (this.gameState !== 'playing') return
 
       const exp = this.expectedNote()
@@ -231,8 +274,10 @@
       const register = exp !== undefined && onTime
 
       if (register && i === exp) {
-        this.s.triggerAttackRelease(this.config.MELODY_DEGREES[i]+60, 100, 0.1, Tone.immediate())
-        console.log(this.config.MELODY_DEGREES[i]+60, Tone.immediate())
+        if (!fromGrid) {
+          this.s.triggerAttackRelease(this.config.MELODY_DEGREES[i] + 60, 100, 0.1, Tone.immediate())
+          console.log(this.config.MELODY_DEGREES[i] + 60, Tone.immediate())
+        }
         // this.s.play([this.config.MELODY_DEGREES[i]], '16n')
         this.health = Math.min(100, this.health + this.config.HEALTH_PER_CORRECT_NOTE)
         this.boring = Math.min(100, this.boring + this.config.BORING_UP_ON_CORRECT_NOTE)
@@ -250,10 +295,12 @@
 
       if (failedAttempt && this.applyHealthLossForFailedAttempt()) return
 
-      if (wrongPitchInWindow) {
-        this.s.play([this.config.MELODY_DEGREES[i] + 7], '32n')
-      } else {
-        this.s.play([this.config.MELODY_DEGREES[i]], '32n')
+      if (!fromGrid) {
+        if (wrongPitchInWindow) {
+          this.s.play([this.config.MELODY_DEGREES[i] + 7], '32n')
+        } else {
+          this.s.play([this.config.MELODY_DEGREES[i]], '32n')
+        }
       }
 
       if (onTime) {
@@ -289,7 +336,7 @@
           this._skipNextPhraseAdvance = true
           this.sequenceBeatsLeft = this.config.LAP_EIGHTHS * this.config.PHRASE_LAPS
           this._drumTier = 'good'
-          this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
+          if (this.d) this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
         }
         this.updateDisplay()
         return
@@ -297,12 +344,13 @@
 
       if (this.gameState !== 'playing') return
 
+      // Passive drain; drum pattern tier follows health bands.
       this.health = Math.max(0, this.health - this.config.HEALTH_DECAY_PER_EIGHTH)
 
       const tier = this.health > this.config.DRUM_HEALTH_MID_THRESHOLD ? 'good'
         : this.health > this.config.DRUM_HEALTH_BAD_THRESHOLD ? 'mid'
         : 'bad'
-      if (tier !== this._drumTier) {
+      if (this.d && tier !== this._drumTier) {
         this._drumTier = tier
         const pattern = tier === 'good' ? this.config.DRUM_TRACK_GOOD
           : tier === 'mid' ? this.config.DRUM_TRACK_MID
@@ -313,6 +361,7 @@
       this.beat = (this.beat + 1) % this.config.BEATS_PER_BAR
 
       const total = this.phraseTotalEighths()
+      // Skip one advance on the first playing eighth after count-in.
       if (this._skipNextPhraseAdvance) {
         this._skipNextPhraseAdvance = false
       } else {
@@ -399,11 +448,15 @@
 
       this.Theory.tempo = this.config.DEFAULT_BPM
       this.Tone.Transport.bpm.value = this.config.DEFAULT_BPM
-      this.Tone.Transport.clear()
+      // Split-screen: one shared Tone.Transport; never clear() (would drop the other player's Tone.Loop). Single-player: clear for a clean restart.
+      const split = this.splitRole === 'primary' || this.splitRole === 'secondary'
+      if (!split) {
+        this.Tone.Transport.clear()
+      }
       this.Tone.Transport.start()
 
       this._drumTier = 'good'
-      this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
+      if (this.d) this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
 
       if (this.loop) this.loop.stop()
       this.loop = new this.Tone.Loop((time) => this.onEighth(time), '8n')
@@ -412,10 +465,14 @@
       this.updateDisplay()
 
       if (this.displayInterval) clearInterval(this.displayInterval)
+      // Redundant with onEighth but keeps HUD smooth if Transport glitches.
       this.displayInterval = setInterval(() => this.updateDisplay(), 100)
     }
 
-    /** End round: game over UI, stop audio loop + Transport. */
+    /**
+     * Game over: stop this instance’s loop; play sting. Single-player stops Transport + drums.
+     * Split: only primary stops Transport on manual stop; primary always stops drums when present.
+     */
     stop(reason) {
       this.gameOverReason = reason
       this.gameState = 'gameOver'
@@ -424,9 +481,19 @@
       if (this.loop) this.loop.stop()
       if (this.displayInterval) clearInterval(this.displayInterval)
 
-      this.Tone.Transport.stop(this.Tone.now() + 2)
       this.s.play('7 4 2 0')
-      setTimeout(() => this.d.stop(), 500)
+
+      const split = this.splitRole === 'primary' || this.splitRole === 'secondary'
+      if (!split) {
+        this.Tone.Transport.stop(this.Tone.now() + 2)
+        if (this.d) setTimeout(() => this.d.stop(), 500)
+        return
+      }
+
+      if (this.splitRole === 'primary') {
+        if (reason === 'manual') this.Tone.Transport.stop(this.Tone.now() + 2)
+        if (this.d) setTimeout(() => this.d.stop(), 500)
+      }
     }
   }
 

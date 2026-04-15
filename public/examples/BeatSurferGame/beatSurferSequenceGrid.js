@@ -1,17 +1,26 @@
 /**
- * Piano-roll grid: scroll driven by laneEighthGlobal (continuous across phrases).
- * Game passes eighthIndexInPhrase for playhead; target vs next phrase for lookahead.
+ * p5 “piano roll” for Beat Surfer: scrolls horizontally with laneEighthGlobal (never wraps).
+ * Columns map to phrase steps; rows to note rows. Yellow column = current phrase playhead.
+ * Synced from BeatSurferGame.updateDisplay; resizes with window + ResizeObserver on container.
  */
 (() => {
   'use strict'
 
   const SCROLL_LERP = 0.18
 
+  /**
+   * Piano-roll canvas height drives row thickness: rowH = height / GRID_ROWS (see draw()).
+   * Tuned here only (not in beatSurferConfig): larger multiplier and/or max height = taller rows.
+   */
+  const SEQUENCE_GRID_HEIGHT_SCALE = 1.55
+  const SEQUENCE_GRID_MAX_HEIGHT_PX = 360
+
   function createSequenceGrid({ config, container }) {
     const rows = config.GRID_ROWS
     const cols = config.GRID_COLS
     const rgb = config.NOTE_COLORS_RGB || []
 
+    // Mutable mirror of game phrase state for draw(); updated only via sync().
     const view = {
       targetSequence: [],
       nextTargetSequence: [],
@@ -30,6 +39,7 @@
       }
     }
 
+    /** Which phrase’s target array applies to global column index c. */
     function sequenceForGlobalColumn(c, phraseEighths, currentPhraseIdx) {
       const p = Math.floor(c / phraseEighths)
       if (p === currentPhraseIdx) return view.targetSequence
@@ -37,10 +47,21 @@
       return null
     }
 
+    /** Matches setup / windowResized; width from container; height → thicker rows via constants above. */
+    function canvasSizeFromContainer() {
+      const raw = container.clientWidth
+      const w = raw > 0 ? Math.max(1, Math.floor(raw)) : 400
+      const colW = w / cols
+      const h = Math.min(
+        SEQUENCE_GRID_MAX_HEIGHT_PX,
+        Math.round(colW * (rows / cols) * SEQUENCE_GRID_HEIGHT_SCALE)
+      )
+      return { w, h }
+    }
+
     const sketch = (gui) => {
       gui.setup = () => {
-        const w = Math.max(320, container.clientWidth || 400)
-        const h = Math.min(280, Math.round((w / cols) * (rows / cols) * 1.2))
+        const { w, h } = canvasSizeFromContainer()
         gui.createCanvas(w, h).parent(container)
       }
 
@@ -55,6 +76,7 @@
         const eighth = Math.max(0, view.eighthIndexInPhrase)
         const currentPhraseIdx = Math.floor(lane / phraseEighths)
 
+        // Smooth scroll toward lane * colW while playing.
         if (!playing) {
           view.scrollX = 0
         } else {
@@ -102,6 +124,7 @@
 
         gui.pop()
 
+        // First-column highlight: current phrase beat (local eighth index).
         if (playing && eighth >= 0 && eighth < phraseEighths) {
           gui.noStroke()
           gui.fill(255, 255, 0, 70)
@@ -110,15 +133,30 @@
       }
 
       gui.windowResized = () => {
-        const w = Math.max(320, container.clientWidth || gui.width)
-        const h = Math.min(280, Math.round((w / cols) * (rows / cols) * 1.2))
+        const { w, h } = canvasSizeFromContainer()
         gui.resizeCanvas(w, h)
       }
     }
 
     const instance = new p5(sketch, container)
 
+    // Flex layout can resize container without a window resize event.
+    let resizeObserver = null
+    if (typeof ResizeObserver !== 'undefined') {
+      let debounceTimer = null
+      resizeObserver = new ResizeObserver(() => {
+        if (debounceTimer) clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => {
+          debounceTimer = null
+          const { w, h } = canvasSizeFromContainer()
+          instance.resizeCanvas(w, h)
+        }, 80)
+      })
+      resizeObserver.observe(container)
+    }
+
     return {
+      /** Push latest phrase + playhead state from the game each frame tick. */
       sync(state) {
         view.targetSequence = state.targetSequence ? state.targetSequence.slice() : []
         view.nextTargetSequence = state.nextTargetSequence ? state.nextTargetSequence.slice() : []
@@ -128,7 +166,12 @@
         if (typeof state.phraseEighths === 'number') view.phraseEighths = state.phraseEighths
         if (typeof state.lapEighths === 'number') view.lapEighths = state.lapEighths
       },
+      /** Disconnect ResizeObserver and tear down p5. */
       remove() {
+        if (resizeObserver) {
+          resizeObserver.disconnect()
+          resizeObserver = null
+        }
         if (instance && typeof instance.remove === 'function') instance.remove()
       },
     }

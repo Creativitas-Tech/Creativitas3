@@ -1,8 +1,7 @@
 /**
- * Entry: loads Config, Util, UI, SequenceGrid, Game; mounts grid + stat bars.
- * Route: /creativitas/BeatSurferGame
+ * Embedded entry (Creativitas host): sequential script load, then runLoaded() for a single
+ * instance (empty instanceId). For split-screen two-player, use BeatSurfer.html userCode instead.
  */
-// BeatSurferGame — /BeatSurferGame
 (async () => {
   'use strict'
 
@@ -17,6 +16,7 @@
   await window.loadCode(base + 'beatSurferSequenceGrid.js', true)
   await window.loadCode(base + 'BeatSurferGame.js', true)
 
+  /** Inserts grid row next to #Canvas, builds UI + sequence grid + BeatSurferGame, calls init(). */
   function runLoaded() {
     const canvasHost = typeof Canvas !== 'undefined' ? Canvas : document.getElementById('Canvas')
     let gridRow = document.getElementById('beatSurferGridRow')
