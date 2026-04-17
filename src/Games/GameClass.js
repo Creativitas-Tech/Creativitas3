@@ -63,7 +63,13 @@ export class Game{
 		console.log('Game over')
 	}
 
-	start(){}
+	start(){
+		this.loop.start()
+		this.counterLoop.start()
+		this.missed = 0
+		this.level_number = 0
+		this.started = false
+	}
 
 	stop(){
 		this.loop.stop()

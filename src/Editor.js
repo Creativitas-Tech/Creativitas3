@@ -26,6 +26,7 @@ import { NexusSlider } from './nexus/Slider.js';
 import { NexusNumberBox } from './nexus/NumberBox.js';
 import { NexusButton } from './nexus/Button.js';
 import { NexusSwitch } from './nexus/Switch.js';
+import { NexusText } from './nexus/NexusText.js';
 
 // Game class
 import { Game } from './Games/GameClass.js'
@@ -346,6 +347,8 @@ function Editor(props) {
     window.NexusNumberBox = NexusNumberBox;
     window.NexusButton = NexusButton;
     window.NexusSwitch = NexusSwitch;
+    window.NexusText = NexusText;
+    
 
     window.Game = Game
 

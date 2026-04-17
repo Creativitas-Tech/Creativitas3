@@ -59,11 +59,25 @@ export class NexusElement{
         elementContainer.style.left = x + 'px';
         elementContainer.style.top = y + 'px';
         container.appendChild(elementContainer);
+
+        elementContainer.style.cssText = `
+            background: transparent;
+            position: absolute;
+            left: ${x}px;
+            top: ${y}px;
+            display: flex;           /* Use flexbox */
+            flex-direction: column;  /* Stack children vertically */
+            align-items: center;     /* Center the label and widget horizontally */
+            gap: 4px;                /* Space between label and widget */
+        `;
         
-        // Create the NexusUI element inside our positioned container
-        this.element = new Nexus[this.element_type](elementContainer, {
-            size: [width, height]
-        });
+    
+        if(this.element_type !== 'text'){
+            // Create the NexusUI element inside our positioned container
+            this.element = new Nexus[this.element_type](elementContainer, {
+                size: [width, height]
+            });
+        }
         
         // Store reference to our container for cleanup
         this.container = container;
@@ -131,6 +145,10 @@ export class NexusElement{
         if (this.element && this.element.colorize) {
             this.element.colorize(property, color);
         }
+    }
+
+    renderLabel(){
+        this.labelContainer.textContent = this._labelText
     }
 
     // Destroy the element and clean up
@@ -267,6 +285,19 @@ export class NexusElement{
 
         set label(value) {
             this._labelText = value;
+            const label = document.createElement('div');
+            label.innerText = this._labelText; // Your custom label text
+            label.style.cssText = `
+                margin-bottom: -25px;
+                background: none !important; /* Forces transparency */
+                pointer-events: none;
+                color: #8796EB;
+                font-family: monospace;
+                font-size: 12px;
+                white-space: nowrap; /* Prevents text from wrapping */
+            `;
+            this.labelContainer = label
+            this.elementContainer.appendChild(this.labelContainer);
             // Assuming you have a method to render a text overlay
             this.renderLabel(); 
         }

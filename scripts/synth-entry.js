@@ -79,6 +79,7 @@ export * from '../src/nexus/parentNexus.js';
 export * from '../src/nexus/RadioButton.js';
 export * from '../src/nexus/Slider.js';
 export * from '../src/nexus/Switch.js';
+export * from '../src/nexus/NexusText.js';
 
 // Games
 export * from '../src/Games/GameClass.js';

@@ -3744,11 +3744,24 @@ class NexusElement{
         elementContainer.style.left = x + 'px';
         elementContainer.style.top = y + 'px';
         container.appendChild(elementContainer);
+
+        elementContainer.style.cssText = `
+            position: absolute;
+            left: ${x}px;
+            top: ${y}px;
+            display: flex;           /* Use flexbox */
+            flex-direction: column;  /* Stack children vertically */
+            align-items: center;     /* Center the label and widget horizontally */
+            gap: 4px;                /* Space between label and widget */
+        `;
         
-        // Create the NexusUI element inside our positioned container
-        this.element = new Nexus[this.element_type](elementContainer, {
-            size: [width, height]
-        });
+    
+        if(this.element_type !== 'text'){
+            // Create the NexusUI element inside our positioned container
+            this.element = new Nexus[this.element_type](elementContainer, {
+                size: [width, height]
+            });
+        }
         
         // Store reference to our container for cleanup
         this.container = container;
@@ -3816,6 +3829,10 @@ class NexusElement{
         if (this.element && this.element.colorize) {
             this.element.colorize(property, color);
         }
+    }
+
+    renderLabel(){
+        this.elementContainer.label.textContent = this._labelText
     }
 
     // Destroy the element and clean up
@@ -3952,6 +3969,16 @@ class NexusElement{
 
         set label(value) {
             this._labelText = value;
+            const label = document.createElement('div');
+            label.innerText = this._labelText; // Your custom label text
+            label.style.cssText = `
+                color: #8796EB;
+                font-family: monospace;
+                font-size: 12px;
+                pointer-events: none;
+                user-select: none;
+            `;
+            this.elementContainer.appendChild(label);
             // Assuming you have a method to render a text overlay
             this.renderLabel(); 
         }
@@ -6626,6 +6653,24 @@ class NexusSwitch extends NexusElement {
 }
 
 ;
+
+class NexusText extends NexusElement {
+    constructor(text = 'text', x = 0, y = 0) {
+        // Pass the type "Dial" to the parent constructor
+        super('text', x, y);
+        this.curText = text
+
+        this.elementContainer.textContent = this.curText
+    }
+
+    set text(value) {
+        this.text = value
+        this.elementContainer.textContent = this.curText
+    }
+
+}
+
+;
 ;
 
 class Game{
@@ -6690,7 +6735,13 @@ class Game{
 		console.log('Game over')
 	}
 
-	start(){}
+	start(){
+		this.loop.start()
+		this.counterLoop.start()
+		this.missed = 0
+		this.level_number = 0
+		this.started = false
+	}
 
 	stop(){
 		this.loop.stop()
