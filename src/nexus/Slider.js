@@ -1,8 +1,8 @@
 import { NexusElement } from './parentNexus.js';
 
 export class NexusSlider extends NexusElement {
-    constructor(x = 0, y = 0, width = 200, height = 50) {
-        super('Slider', x, y, width, height);
+    constructor(options = {}) {
+        super('Slider', options);
     }
 
     // ccSet is called by Parameter.set() to update the GUI without triggering callback

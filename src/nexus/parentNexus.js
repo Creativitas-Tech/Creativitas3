@@ -32,10 +32,105 @@ export function initNexusCanvas(backgroundColor = '#1a1a2e') {
     return container;
 }
 
+const scaleOutput = function (input, inLow, inHigh, outLow, outHigh, curve) {
+    if (curve === undefined) curve = 1;
+    let val = (input - inLow) * (1 / (inHigh - inLow));
+    val = Math.pow(val, curve);
+    return val * (outHigh - outLow) + outLow;
+}
+
+const unScaleOutput = function (input, outLow, outHigh, inLow, inHigh, curve) {
+    if (curve === undefined) curve = 1;
+    else curve = 1 / curve;
+    let val = (input - inLow) * (1 / (inHigh - inLow));
+    val = Math.pow(val, curve);
+    return val * (outHigh - outLow) + outLow;
+}
+
+let elementXPosition = 0;
+let elementYPosition = 25;
+let prevElementSize = 0;
+let prevYElementSize = 0;
+
 export class NexusElement{
-    constructor(element_type, x = 0, y = 0, width = 100, height = 100) {
+    constructor(element_type, options = {}) {
         this.element_type = element_type;
         console.log('el', element_type)
+        
+        // this.label = options.label || "myElement";
+        // this.style = options.style || 1;
+        // this.size = options.size || 1;
+        // this.textSize = options.textSize || 1;
+        // this.border = options.border || 'theme' || 6;
+        // this.borderColor = options.borderColor || 'border';
+        // this.accentColor = options.accentColor || 'accent';
+        // this.borderRadius = options.borderRadius || 0;
+
+        //text
+        // this.textColor = options.textColor || 'text';
+        // this.showLabel = typeof (options.showLabel) === 'undefined' ? true : options.showLabel; //|| activeTheme.showLabel
+        // this.showValue = typeof (options.showValue) === 'undefined' ? true : options.showValue; //|| activeTheme.showValue
+        // this.labelFont = options.labelFont || 'label'
+        // this.valueFont = options.valueFont || 'value'
+        // this.mainFont = options.mainFont || 'text'
+        // this.labelX = options.labelX || 0
+        // this.labelY = options.labelY || 0
+        // this.valueX = options.valueX || 0
+        // this.valueY = options.valueY || 0
+        // this.textX = options.textX || 0
+        // this.textY = options.textY || 0
+
+        //position
+        // let currentGap = (prevElementSize + this.size) / 2
+        // elementXPosition += (8 * currentGap + 5);
+        // if (elementXPosition > (100 - this.size * 8)) {
+        //     elementXPosition = this.size / 2 * 8 + 5
+        //     elementYPosition += (20 * prevYElementSize + 10)
+        //     prevYElementSize = this.size
+        // }
+        this.x = options.x || elementXPosition;
+        this.y = options.y || elementYPosition;
+        // prevElementSize = this.size
+        // prevYElementSize = this.size > prevYElementSize ? this.size : prevYElementSize;
+        this.width = options.width || 80;
+        this.height = options.height || 80;
+        // this.cur_x = (this.x / 100) * this.width
+
+        // this.cur_y = (this.y / 100) * this.height
+        // this.cur_size = (this.size / 6) * this.width
+        // this.x_box = this.cur_size;
+        // this.y_box = this.cur_size;
+
+        //parameter values
+        // this.active = 0;
+        // this.isInteger = options.isInteger || false;
+        // this.min = options.min || 0;
+        // this.max = options.max || 1;
+        // this.curve = options.curve || 1;
+        // if (typeof (options.mapto) == 'string') this.mapto = eval(options.mapto)
+        // else this.mapto = options.mapto || null;
+        // this.callback = options.callback || null;
+        // if (this.mapto || this.callback) this.maptoDefined = 'true'
+        // else this.maptoDefined = 'false'
+        // this.value = options.value != undefined ? options.value : scaleOutput(0.5, 0, 1, this.min, this.max, this.curve);
+        // this.prevValue = this.value
+        // this.rawValue = unScaleOutput(this.value, 0, 1, this.min, this.max, this.curve);
+        
+
+        // //collab-hub sharing values
+        // this.linkName = typeof options.link === 'string' ? options.link : null; // share params iff link is defined
+        // this.linkFunc = typeof options.link === 'function' ? options.link : null;
+
+        // // set listener for updates from collab-hub (for linkName only)
+        // if (this.linkName) {
+        //     this.ch.on(this.linkName, (incoming) => {
+        //         this.forceSet(incoming.values);
+        //     })
+        // }
+
+        // this.mapValue(this.value, this.mapto);
+        // this.runCallBack()
+
 
         // Get the Canvas container - this is where NexusUI elements should appear
         const container = document.getElementById('Canvas');
@@ -56,15 +151,15 @@ export class NexusElement{
         // Create a unique container div for this element inside Canvas
         const elementContainer = document.createElement('div');
         elementContainer.style.position = 'absolute';
-        elementContainer.style.left = x + 'px';
-        elementContainer.style.top = y + 'px';
+        elementContainer.style.left = this.x + 'px';
+        elementContainer.style.top = this.y + 'px';
         container.appendChild(elementContainer);
 
         elementContainer.style.cssText = `
             background: transparent;
             position: absolute;
-            left: ${x}px;
-            top: ${y}px;
+            left: ${this.x}px;
+            top: ${this.y}px;
             display: flex;           /* Use flexbox */
             flex-direction: column;  /* Stack children vertically */
             align-items: center;     /* Center the label and widget horizontally */
@@ -75,7 +170,7 @@ export class NexusElement{
         if(this.element_type !== 'text'){
             // Create the NexusUI element inside our positioned container
             this.element = new Nexus[this.element_type](elementContainer, {
-                size: [width, height]
+                size: [this.width, this.height]
             });
         }
         
@@ -87,10 +182,10 @@ export class NexusElement{
         this.containerHeight = this.containerWidth * 0.8
 
         // Store position as percentages for responsive resizing
-        this.xPercent = x / this.containerWidth;
-        this.yPercent = y / this.containerHeight;
-        this.widthPercent = width / this.containerWidth;
-        this.heightPercent = height / this.containerHeight;
+        this.xPercent = this.x / this.containerWidth;
+        this.yPercent = this.y / this.containerHeight;
+        this.widthPercent = this.width / this.containerWidth;
+        this.heightPercent = this.height / this.containerHeight;
 
         // Apply initial position (already set, but ensures consistency)
         this.updatePositionAndSize();
