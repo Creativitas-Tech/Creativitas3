@@ -405,8 +405,9 @@ export class MonophonicTemplate {
     }
 
     releaseAll(time = null){
-        // console.log("releaseAll")
-        if(this.env) this.env.triggerRelease(0,time)
+        //console.log("releaseAll", this.env, time, Tone.now())
+        if(this.env && time) this.env.triggerRelease(time)
+        else if(this.env) this.env.triggerRelease()
     }
 
     generateParameters(paramDefinitions) {

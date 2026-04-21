@@ -27,6 +27,10 @@ import { NexusNumberBox } from './nexus/NumberBox.js';
 import { NexusButton } from './nexus/Button.js';
 import { NexusSwitch } from './nexus/Switch.js';
 import { NexusText } from './nexus/NexusText.js';
+import { NexusTextButton } from './nexus/NexusTextButton.js';
+import { NexusBackground } from './nexus/NexusBackground.js';
+
+
 
 // Game class
 import { Game } from './Games/GameClass.js'
@@ -348,6 +352,9 @@ function Editor(props) {
     window.NexusButton = NexusButton;
     window.NexusSwitch = NexusSwitch;
     window.NexusText = NexusText;
+    window.NexusTextButton = NexusTextButton;
+    window.NexusBackground = NexusBackground;
+    
     
 
     window.Game = Game
@@ -1004,7 +1011,7 @@ function Editor(props) {
             content: lineText
           };
           window.chClient.control("sharedCode", message);
-          console.log("sharedCode", message.content)
+          //console.log("sharedCode", message.content)
         }
       }
 

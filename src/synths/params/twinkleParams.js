@@ -50,8 +50,8 @@ const paramDefinitions = (synth) => [
         min: 0, max: 1, curve: 2, value: 0, 
         callback: function(x, time = null) {
             if (time) {
-                synth.vca_lvl.setValueAtTime(x, time);
-            } else  synth.vca_lvl.value = x; } },
+                synth.output.factor.setValueAtTime(x, time);
+            } else  synth.output.factor.value = x; } },
     { 
         name: 'attack', type: 'vca', 
         min: 0, max: 1, curve: 2, value: 0.01, 

@@ -11,9 +11,14 @@ let mysynth = (val)=>{
 myGame.makeSynth = ()=> mysynth()
 
 myGame.numPlayers = 4
+myGame.color = {
+  'default':'#FEC6CF'
+}
 myGame.playerColors = ['#F00', '#0F0', '#00F', '#0FF']
 myGame.curPlayer = 0
 myGame.points = [0,0,0,0]
+startB.colorize('accent', '#FEC6CF')
+     startB.colorize('fill', '#3F3030')
 
 //
 let mydisplay = ()=>{

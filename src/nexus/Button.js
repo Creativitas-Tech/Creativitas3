@@ -1,9 +1,8 @@
 import { NexusElement } from './parentNexus.js';
 
 export class NexusButton extends NexusElement {
-    constructor(x = 0, y = 0, width = 150, height = 300) {
-        // Pass the type "Dial" to the parent constructor
-        super('Button', x, y, width, height);
+    constructor(options = {}) {
+        super('Button', options);
     }
 
     flip(){

@@ -4,6 +4,8 @@
 // Static flag to track if Canvas has been initialized
 let canvasInitialized = false;
 
+
+
 /**
  * Initialize the Canvas container for NexusUI elements
  * Call this once before creating NexusUI elements, or it will be called automatically
@@ -29,6 +31,24 @@ export function initNexusCanvas(backgroundColor = '#1a1a2e') {
     container.style.pointerEvents = 'auto'; // Ensures you can actually touch the GUI
     
     canvasInitialized = true;
+
+    let colors = [
+      "#ddd7c8",
+      "#800039",
+      "#75523f",
+      "#e9b74c",
+      "#3e6918"
+    ]
+
+    const Nexus = window.Nexus;
+    Nexus.colors['background'] = colors[0]
+    Nexus.colors["border"] = colors[1]
+    Nexus.colors["mid"] = colors[2]
+    Nexus.colors["accent"] = colors[3]
+    Nexus.colors["text"] = colors[4]
+
+
+    container.style.backgroundColor = Nexus.colors['background']
     return container;
 }
 
@@ -47,38 +67,98 @@ const unScaleOutput = function (input, outLow, outHigh, inLow, inHigh, curve) {
     return val * (outHigh - outLow) + outLow;
 }
 
-let elementXPosition = 0;
-let elementYPosition = 25;
-let prevElementSize = 0;
-let prevYElementSize = 0;
-
 export class NexusElement{
     constructor(element_type, options = {}) {
-        this.element_type = element_type;
-        console.log('el', element_type)
+        this.element_type = element_type; 
+        this.initialized = false 
+
+         // Get the Canvas container - this is where NexusUI elements should appear
+        const container = document.getElementById('Canvas');
+        if (!container) {
+            console.error('NexusElement: #Canvas container not found!');
+            return;
+        }
+        this.container = container;
+        this.containerWidth = container.clientWidth ?? window.innerWidth;
+        this.containerRatio = 3/4
+        this.containerHeight = Math.floor(this.containerWidth * this.containerRatio)
+
+        // Auto-initialize Canvas if not already done
+        if (!canvasInitialized) {
+            initNexusCanvas();
+            console.log("canvas")
+        }
+
+        // Create a unique container div for this element inside Canvas
+        const elementContainer = document.createElement('div');
+        elementContainer.style.position = 'absolute';
+        this.container.appendChild(elementContainer);
+        this.elementContainer = elementContainer;
+
+        //OBJECT PARAMETERS
         
-        // this.label = options.label || "myElement";
-        // this.style = options.style || 1;
-        // this.size = options.size || 1;
-        // this.textSize = options.textSize || 1;
-        // this.border = options.border || 'theme' || 6;
-        // this.borderColor = options.borderColor || 'border';
-        // this.accentColor = options.accentColor || 'accent';
-        // this.borderRadius = options.borderRadius || 0;
+        this.colors = {
+            'border': "#000",
+            'accent': "#F00",
+            'text': "#F00"
+        }
+
+        
+        if(['NexusBackground', 'text'].includes(this.element_type)) return
+            // Create the NexusUI element inside our positioned container
+        
+        const Nexus = window.Nexus;    
+        this.element = new Nexus[this.element_type](elementContainer);
+        console.log('el', element_type, options)
+
+        this.label = options.label ?? "myElement";
+        this.baseSize = 50
+        this.size = options.size ?? 1;
+        this.x = options.x ?? .5;
+        this.y = options.y ?? .5;
+        this.width = options.width ?? 1;
+        this.height = options.height ?? 1;
+        this.orientation = options.orientation ?? 'horizontal'
+
+        this.value = options.value ?? 0
+        this.isInteger = options.isInteger ?? 0
+        this.min = options.min ?? 0
+        this.max  = options.max ?? 1
+        this.curve = options.curve ?? 1
+        this.options = options.options ?? []
+        
+        this.style = options.style ?? "default"
+        this.accentColor = options.accentColor ?? this.colors.accent
+        this.borderColor = options.borderColor ?? this.colors.border
+        this.textColor = options.textColor ?? this.colors.text
+
+        if( options.callback) this.callback = options.callback
+        // Store position as percentages for responsive resizing
+        // this.xPercent = this.x;
+        // this.yPercent = this.y;
+        // this.widthPercent = this.width;
+        // this.heightPercent = this.height;
+
+        // this.textSize = options.textSize ?? 1;
+        // this.border = options.border ?? 'theme' ?? 6;
+        // this.borderColor = options.borderColor ?? 'border';
+        // this.accentColor = options.accentColor ?? 'accent';
+        // this.borderRadius = options.borderRadius ?? 0;
+        // this.style = options.style ?? 1;
 
         //text
-        // this.textColor = options.textColor || 'text';
-        // this.showLabel = typeof (options.showLabel) === 'undefined' ? true : options.showLabel; //|| activeTheme.showLabel
-        // this.showValue = typeof (options.showValue) === 'undefined' ? true : options.showValue; //|| activeTheme.showValue
-        // this.labelFont = options.labelFont || 'label'
-        // this.valueFont = options.valueFont || 'value'
-        // this.mainFont = options.mainFont || 'text'
-        // this.labelX = options.labelX || 0
-        // this.labelY = options.labelY || 0
-        // this.valueX = options.valueX || 0
-        // this.valueY = options.valueY || 0
-        // this.textX = options.textX || 0
-        // this.textY = options.textY || 0
+        // this.textColor = options.textColor ?? 'text';
+        // this.showLabel = typeof (options.showLabel) === 'undefined' ? true : options.showLabel; //?? activeTheme.showLabel
+        // this.showValue = typeof (options.showValue) === 'undefined' ? true : options.showValue; //?? activeTheme.showValue
+        // this.labelFont = options.labelFont ?? 'label'
+        // this.valueFont = options.valueFont ?? 'value'
+        // this.mainFont = options.mainFont ?? 'text'
+        // this.labelX = options.labelX ?? 0
+        // this.labelY = options.labelY ?? 0
+        // this.valueX = options.valueX ?? 0
+        // this.valueY = options.valueY ?? 0
+        // this.textX = options.textX ?? 0
+        // this.textY = options.textY ?? 0
 
         //position
         // let currentGap = (prevElementSize + this.size) / 2
@@ -88,12 +168,7 @@ export class NexusElement{
         //     elementYPosition += (20 * prevYElementSize + 10)
         //     prevYElementSize = this.size
         // }
-        this.x = options.x || elementXPosition;
-        this.y = options.y || elementYPosition;
-        // prevElementSize = this.size
-        // prevYElementSize = this.size > prevYElementSize ? this.size : prevYElementSize;
-        this.width = options.width || 80;
-        this.height = options.height || 80;
+        
         // this.cur_x = (this.x / 100) * this.width
 
         // this.cur_y = (this.y / 100) * this.height
@@ -103,14 +178,14 @@ export class NexusElement{
 
         //parameter values
         // this.active = 0;
-        // this.isInteger = options.isInteger || false;
-        // this.min = options.min || 0;
-        // this.max = options.max || 1;
-        // this.curve = options.curve || 1;
+        // this.isInteger = options.isInteger ?? false;
+        // this.min = options.min ?? 0;
+        // this.max = options.max ?? 1;
+        // this.curve = options.curve ?? 1;
         // if (typeof (options.mapto) == 'string') this.mapto = eval(options.mapto)
-        // else this.mapto = options.mapto || null;
-        // this.callback = options.callback || null;
-        // if (this.mapto || this.callback) this.maptoDefined = 'true'
+        // else this.mapto = options.mapto ?? null;
+        // this.callback = options.callback ?? null;
+        // if (this.mapto ?? this.callback) this.maptoDefined = 'true'
         // else this.maptoDefined = 'false'
         // this.value = options.value != undefined ? options.value : scaleOutput(0.5, 0, 1, this.min, this.max, this.curve);
         // this.prevValue = this.value
@@ -131,30 +206,6 @@ export class NexusElement{
         // this.mapValue(this.value, this.mapto);
         // this.runCallBack()
 
-
-        // Get the Canvas container - this is where NexusUI elements should appear
-        const container = document.getElementById('Canvas');
-        if (!container) {
-            console.error('NexusElement: #Canvas container not found!');
-            return;
-        }
-        
-        // Auto-initialize Canvas if not already done
-        if (!canvasInitialized) {
-            initNexusCanvas();
-            console.log("canvas")
-        }
-
-        // Initialize the Nexus element - NexusUI will create its own wrapper
-        const Nexus = window.Nexus;
-        
-        // Create a unique container div for this element inside Canvas
-        const elementContainer = document.createElement('div');
-        elementContainer.style.position = 'absolute';
-        elementContainer.style.left = this.x + 'px';
-        elementContainer.style.top = this.y + 'px';
-        container.appendChild(elementContainer);
-
         elementContainer.style.cssText = `
             background: transparent;
             position: absolute;
@@ -166,35 +217,17 @@ export class NexusElement{
             gap: 4px;                /* Space between label and widget */
         `;
         
-    
-        if(this.element_type !== 'text'){
-            // Create the NexusUI element inside our positioned container
-            this.element = new Nexus[this.element_type](elementContainer, {
-                size: [this.width, this.height]
-            });
-        }
+        this.initialized = true
         
-        // Store reference to our container for cleanup
-        this.container = container;
-        this.elementContainer = elementContainer;
-
-        this.containerWidth = container.clientWidth || window.innerWidth;
-        this.containerHeight = this.containerWidth * 0.8
-
-        // Store position as percentages for responsive resizing
-        this.xPercent = this.x / this.containerWidth;
-        this.yPercent = this.y / this.containerHeight;
-        this.widthPercent = this.width / this.containerWidth;
-        this.heightPercent = this.height / this.containerHeight;
-
         // Apply initial position (already set, but ensures consistency)
-        this.updatePositionAndSize();
+        this.updatePositionAndSize()
+        this.updateColors()
         
         // Use ResizeObserver to handle container resizing (e.g. split pane drag)
         if (container) {
             this.resizeObserver = new ResizeObserver(() => {
                 window.requestAnimationFrame(() => {
-                    if (!this.element || !this.element.element || !document.body.contains(this.element.element)) {
+                    if (!this.element ?? !this.element.element ?? !document.body.contains(this.element.element)) {
                         if (this.resizeObserver) this.resizeObserver.disconnect();
                         return;
                     }
@@ -214,32 +247,41 @@ export class NexusElement{
     }
 
     updatePositionAndSize() {
+        if(!this.initialized) return
         // Update pixel values based on percentages and current container size
-        const container = this.container || document.getElementById('Canvas');
+        const container = this.container ?? document.getElementById('Canvas');
         if (!container) return;
 
-        this.containerWidth = container.clientWidth || window.innerWidth;
-        this.containerHeight = this.containerWidth * 0.8
+        this.containerWidth = (container.clientWidth ?? window.innerWidth);
+        this.containerHeight = Math.floor(this.containerWidth * this.containerRatio)
 
+        let elementWidth = this.baseSize * this._size * this.widthPercent
+        let elementHeight = this.baseSize * this._size * this.heightPercent
+        
         // Position our wrapper container
         if (this.elementContainer) {
-            this.elementContainer.style.left = (this.xPercent * this.containerWidth) + "px";
-            this.elementContainer.style.top = (this.yPercent * this.containerHeight) + "px";
+            this.elementContainer.style.left = (this.xPercent * (this.containerWidth- elementWidth)) + "px";
+            this.elementContainer.style.top = (this.yPercent * (this.containerHeight- elementHeight)) + "px";
         }
         
         // Resize the NexusUI element
         if (this.element && this.element.resize) {
-            this.element.resize(
-                this.widthPercent * this.containerWidth,
-                this.heightPercent * this.containerHeight
-            );
+            this.element.resize(   elementWidth, elementHeight );
         }
     }
 
     colorize(property, color) {
+        //if(!this.initialized) return 
         if (this.element && this.element.colorize) {
             this.element.colorize(property, color);
         }
+    }
+
+    updateColors(){
+        console.log(window.Nexus.colors)
+        this.colorize('fill', this.colors.border)
+        this.colorize('accent', this.colors.accent)
+        this.colorize('dark', this.colors.text)
     }
 
     renderLabel(){
@@ -273,44 +315,40 @@ export class NexusElement{
         }
     
         set width(value) {
-            this.widthPercent = value / this.containerWidth;
+            this.widthPercent = value;
             this.updatePositionAndSize();
         }
     
         set height(value) {
-            this.heightPercent = value / this.containerHeight;
+            this.heightPercent = value;
             this.updatePositionAndSize();
         }
     
         // Getters for convenience
         get x() {
-            return this.xPercent * this.containerWidth;
+            return this.xPercent;
         }
     
         get y() {
-            return this.yPercent * this.containerHeight;
+            return this.yPercent
         }
     
         get width() {
-            return this.widthPercent * this.containerWidth;
+            return this.widthPercent;
         }
     
         get height() {
-            return this.heightPercent * this.containerHeight;
+            return this.heightPercent;
         }
 
-        set size([newWidth, newHeight]) {
-            this.widthPercent = newWidth / this.containerWidth;
-            this.heightPercent = newHeight / this.containerHeight;
+        set size(val) {
+            this._size = val
             this.updatePositionAndSize();
         }
-    
         get size() {
-           return [
-                this.widthPercent * this.containerWidth,
-                this.heightPercent * this.containerHeight
-            ];
+           return this._size;
         }
+
         set accentColor(value) {
             value = (Array.isArray(value) && value.length === 3) 
                 ? value 
@@ -348,7 +386,6 @@ export class NexusElement{
         }
 
         set curve(value) {
-            // NexusUI typically uses 'linear' or 'exponential'
             this.element.curve = value;
         }
         get curve() {
@@ -380,21 +417,21 @@ export class NexusElement{
 
         set label(value) {
             this._labelText = value;
-            const label = document.createElement('div');
-            label.innerText = this._labelText; // Your custom label text
-            label.style.cssText = `
-                margin-bottom: -25px;
-                background: none !important; /* Forces transparency */
-                pointer-events: none;
-                color: #8796EB;
-                font-family: monospace;
-                font-size: 12px;
-                white-space: nowrap; /* Prevents text from wrapping */
-            `;
-            this.labelContainer = label
-            this.elementContainer.appendChild(this.labelContainer);
-            // Assuming you have a method to render a text overlay
-            this.renderLabel(); 
+            // const label = document.createElement('div');
+            // label.innerText = this._labelText; // Your custom label text
+            // label.style.cssText = `
+            //     margin-bottom: -25px;
+            //     background: none !important; /* Forces transparency */
+            //     pointer-events: none;
+            //     color: #8796EB;
+            //     font-family: monospace;
+            //     font-size: 12px;
+            //     white-space: nowrap; /* Prevents text from wrapping */
+            // `;
+            // this.labelContainer = label
+            // this.elementContainer.appendChild(this.labelContainer);
+            // // Assuming you have a method to render a text overlay
+            // this.renderLabel(); 
         }
         get label() {
             return this._labelText;
@@ -421,14 +458,13 @@ export class NexusElement{
         }
 
         set borderColor(value) {
-            this.colorize('border', value);
+            this.colors['border'] = value
+            this.colorize('fill', value);
         }
 
         set accentColor(value) {
-            const color = (Array.isArray(value) && value.length === 3) 
-                ? value 
-                : [value, value, value];
-            this.colorize('accent', color);
+            this.colors['accent'] = value
+            this.colorize('accent', value);
         }
 
         set textColor(value) {
@@ -466,6 +502,7 @@ export class NexusElement{
             this.element.on('change', (v) => {
                 if (this._destination) this._destination(v);
                 func(v);
+                //console.log(v)
             });
         }
     }

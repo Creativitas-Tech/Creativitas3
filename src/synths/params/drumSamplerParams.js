@@ -106,7 +106,7 @@ const paramDefinitions = (synth) => [
     callback: x => synth.distortion.distortion = x
   },
   {
-    name: 'output_gain', type: 'output', min: 0, max: 4, value: 1, curve: 1,
+    name: 'level', type: 'output', min: 0, max: 4, value: 2, curve: 1,
     callback: x => synth.output.factor.value = x
   },
   // {
