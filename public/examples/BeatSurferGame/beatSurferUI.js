@@ -8,7 +8,7 @@
 
   const DEFAULT_NOTE_COLORS = [
     '#2563eb', '#16a34a', '#ea580c', '#9333ea',
-    '#dc2626', '#0891b2',
+    '#dc2626', '#0891b2', '#ca8a04',
   ]
 
   /** Used for countdown palette tints. */
@@ -32,8 +32,8 @@
     )
   }
 
-  const NUM_GRID_BUTTONS = 6
-  const DEFAULT_NEXUS_BUTTON_W = 96
+  const NUM_GRID_BUTTONS = 7
+  const DEFAULT_NEXUS_BUTTON_W = 88
   const DEFAULT_NEXUS_BUTTON_H = 80
 
   function createBeatSurferUI(instanceId) {
@@ -161,6 +161,33 @@
       return el
     }
 
+    /** Match Health/Boring columns to piano-roll canvas top/height (same overlay host as StarterCode). */
+    function syncStatBarsLayoutToGrid() {
+      const host = document.getElementById(pfx + 'StatBars')
+      const mount = document.getElementById(pfx + 'GridMount')
+      if (!host || !mount) return
+      const canvas = mount.querySelector('canvas')
+      if (!canvas || canvas.offsetHeight <= 0) return
+      const hostRect = host.getBoundingClientRect()
+      const canvasRect = canvas.getBoundingClientRect()
+      const topPx = Math.round(canvasRect.top - hostRect.top)
+      const hPx = Math.round(canvasRect.height)
+      const cols = host.querySelectorAll('[data-bsnp-stat-col]')
+      for (let ci = 0; ci < cols.length; ci++) {
+        const col = cols[ci]
+        col.style.top = topPx + 'px'
+        col.style.height = hPx + 'px'
+        col.style.bottom = 'auto'
+        col.style.justifyContent = 'flex-start'
+      }
+      const tracks = host.querySelectorAll('[data-bsnp-stat-track]')
+      for (let ti = 0; ti < tracks.length; ti++) {
+        tracks[ti].style.flex = '0 0 auto'
+        tracks[ti].style.minHeight = '0'
+        tracks[ti].style.height = '100%'
+      }
+    }
+
     /** Builds LeftCol + NexusButton strip; pads reparent from global #Canvas into GridButtons. */
     function createGridButtons({ gridRow, config, onGridChange, NexusButton }) {
       if (!gridRow) return []
@@ -171,19 +198,19 @@
       gridRow.style.width = '100%'
       gridRow.style.maxWidth = '100%'
       gridRow.style.boxSizing = 'border-box'
-      gridRow.style.alignItems = 'stretch'
+      gridRow.style.minHeight = 'clamp(180px,32dvh,420px)'
 
       let leftCol = document.getElementById(pfx + 'LeftCol')
       if (!leftCol) {
         leftCol = document.createElement('div')
         leftCol.id = pfx + 'LeftCol'
         leftCol.style.cssText =
-          'display:flex;flex-direction:column;flex:1 1 50%;min-width:0;width:100%;gap:6px;box-sizing:border-box;'
+          'display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;max-width:100%;margin:0;gap:6px;box-sizing:border-box;'
         gridRow.insertBefore(leftCol, gridMount)
         leftCol.appendChild(gridMount)
       } else {
         leftCol.style.cssText =
-          'display:flex;flex-direction:column;flex:1 1 50%;min-width:0;width:100%;gap:6px;box-sizing:border-box;'
+          'display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;max-width:100%;margin:0;gap:6px;box-sizing:border-box;'
       }
 
       let wrap = document.getElementById(pfx + 'GridButtons')
@@ -192,8 +219,59 @@
       wrap = document.createElement('div')
       wrap.id = pfx + 'GridButtons'
       wrap.style.cssText =
-        'display:flex;flex-direction:row;align-items:stretch;gap:6px;width:100%;box-sizing:border-box;'
+        'display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:0;' +
+        'width:100%;max-width:100%;margin:0 auto;flex-shrink:0;box-sizing:border-box;'
       leftCol.appendChild(wrap)
+
+      if (leftCol._bsStripResizeObserver) {
+        try {
+          leftCol._bsStripResizeObserver.disconnect()
+        } catch (e) { /* ignore */ }
+        leftCol._bsStripResizeObserver = null
+        const prevMount = document.getElementById(pfx + 'GridMount')
+        const prevCv = prevMount && prevMount.querySelector('canvas')
+        if (prevCv) prevCv.removeAttribute('data-bs-strip-ro')
+      }
+
+      function syncGridButtonStripToCanvas() {
+        const mount = document.getElementById(pfx + 'GridMount')
+        const strip = document.getElementById(pfx + 'GridButtons')
+        if (!mount || !strip) return
+        const canvas = mount.querySelector('canvas')
+        if (canvas && leftCol._bsStripResizeObserver && !canvas.getAttribute('data-bs-strip-ro')) {
+          canvas.setAttribute('data-bs-strip-ro', '1')
+          try {
+            leftCol._bsStripResizeObserver.observe(canvas)
+          } catch (e) { /* ignore */ }
+        }
+        const cw = canvas && canvas.offsetWidth > 0 ? canvas.offsetWidth : 0
+        const nPads = (config && config.GRID_BUTTON_COUNT) || NUM_GRID_BUTTONS
+        const padW = (config && config.NEXUS_BUTTON_WIDTH) || DEFAULT_NEXUS_BUTTON_W
+        if (cw > 0 && nPads > 0 && padW > 0) {
+          strip.style.width = cw + 'px'
+          strip.style.maxWidth = cw + 'px'
+          strip.style.marginLeft = 'auto'
+          strip.style.marginRight = 'auto'
+          const totalPad = nPads * padW
+          const gapPx = nPads > 1 ? Math.max(0, Math.floor((cw - totalPad) / (nPads - 1))) : 0
+          strip.style.gap = gapPx + 'px'
+        } else {
+          strip.style.width = ''
+          strip.style.maxWidth = ''
+          strip.style.marginLeft = 'auto'
+          strip.style.marginRight = 'auto'
+          strip.style.gap = '0'
+        }
+      }
+
+      if (gridMount && typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(function () {
+          syncGridButtonStripToCanvas()
+          syncStatBarsLayoutToGrid()
+        })
+        ro.observe(gridMount)
+        leftCol._bsStripResizeObserver = ro
+      }
 
       const count = (config && config.GRID_BUTTON_COUNT) || NUM_GRID_BUTTONS
       const nx = (config && config.NEXUS_BUTTON_WIDTH) || DEFAULT_NEXUS_BUTTON_W
@@ -210,9 +288,10 @@
           btn.elementContainer.style.left = ''
           btn.elementContainer.style.top = ''
           btn.elementContainer.style.position = 'relative'
-          btn.elementContainer.style.flex = '1 1 0'
-          btn.elementContainer.style.minWidth = '0'
-          // Center the Nexus canvas in the flex cell so the drawn circle matches the overlay.
+          btn.elementContainer.style.flex = '0 0 auto'
+          btn.elementContainer.style.width = nx + 'px'
+          btn.elementContainer.style.minWidth = nx + 'px'
+          btn.elementContainer.style.maxWidth = nx + 'px'
           btn.elementContainer.style.display = 'flex'
           btn.elementContainer.style.alignItems = 'center'
           btn.elementContainer.style.justifyContent = 'center'
@@ -223,7 +302,7 @@
           label.style.cssText =
             'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;padding:0;' +
             'pointer-events:none;z-index:1;white-space:nowrap;' +
-            'font-size:clamp(28px,4vw,30px);font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);line-height:1;'
+            'font-size:clamp(22px,3.4vw,28px);font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);line-height:1;'
           btn.elementContainer.appendChild(label)
         }
         if (btn.resizeObserver) btn.resizeObserver.disconnect()
@@ -250,23 +329,54 @@
         }
         buttons.push(btn)
       }
+
+      function scheduleStripSync() {
+        syncGridButtonStripToCanvas()
+        syncStatBarsLayoutToGrid()
+        if (typeof requestAnimationFrame === 'function') {
+          requestAnimationFrame(function () {
+            syncGridButtonStripToCanvas()
+            syncStatBarsLayoutToGrid()
+          })
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () {
+              syncGridButtonStripToCanvas()
+              syncStatBarsLayoutToGrid()
+            })
+          })
+        } else {
+          setTimeout(function () {
+            syncGridButtonStripToCanvas()
+            syncStatBarsLayoutToGrid()
+          }, 0)
+          setTimeout(function () {
+            syncGridButtonStripToCanvas()
+            syncStatBarsLayoutToGrid()
+          }, 120)
+        }
+      }
+      scheduleStripSync()
+
       return buttons
     }
 
     /** One vertical meter: label + track; fill height is v% from syncStatBars. */
     function buildOneStatBar(title, idBase, fillColor, textColor) {
       const col = document.createElement('div')
+      col.setAttribute('data-bsnp-stat-col', idBase)
       col.style.cssText =
-        'display:flex;flex-direction:column;align-items:center;flex:1 1 0;min-width:0;width:50%;box-sizing:border-box;'
+        'position:relative;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;' +
+        'width:clamp(69px,8vw,96px);min-width:69px;box-sizing:border-box;'
       const lab = document.createElement('div')
       lab.textContent = title
       lab.style.cssText =
-        'font-size:clamp(9px, 1.8vw, 11px);font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.03em;margin-bottom:6px;' +
-        'text-align:center;line-height:1.1;max-width:100%;'
+        'position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:6px;white-space:nowrap;' +
+        'font-size:clamp(9px, 1.8vw, 11px);font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.03em;' +
+        'text-align:center;line-height:1.1;'
       const track = document.createElement('div')
       track.setAttribute('data-bsnp-stat-track', idBase)
       track.style.cssText =
-        'position:relative;width:100%;max-width:100%;height:clamp(140px, 28dvh, 360px);min-height:120px;' +
+        'position:relative;flex:0 0 auto;width:100%;max-width:100%;height:100%;min-height:0;' +
         'background:#1a1a1f;border:2px solid #3d3d48;border-radius:8px;overflow:hidden;box-sizing:border-box;'
       const fill = document.createElement('div')
       fill.id = pfx + idBase + 'Fill'
@@ -297,9 +407,24 @@
       if (!host) return null
       if (host.getAttribute('data-bsnp-statbars-built')) return host
       host.setAttribute('data-bsnp-statbars-built', '1')
+      host.style.cssText =
+        'position:absolute;inset:0;z-index:2;pointer-events:none;'
       host.innerHTML = ''
-      host.appendChild(buildOneStatBar('Health', 'Health', 'linear-gradient(180deg,#b71c1c 0%,#e53935 100%)', '#ffebee'))
-      host.appendChild(buildOneStatBar('Boring', 'Boring', 'linear-gradient(180deg,#5c5c5c 0%,#9e9e9e 100%)', '#fafafa'))
+      const healthCol = buildOneStatBar('Health', 'Health', 'linear-gradient(180deg,#b71c1c 0%,#e53935 100%)', '#ffebee')
+      healthCol.style.position = 'absolute'
+      healthCol.style.left = 'clamp(8px,2vw,24px)'
+      healthCol.style.zIndex = '2'
+      const boringCol = buildOneStatBar('Boring', 'Boring', 'linear-gradient(180deg,#5c5c5c 0%,#9e9e9e 100%)', '#fafafa')
+      boringCol.style.position = 'absolute'
+      boringCol.style.right = 'clamp(8px,2vw,24px)'
+      boringCol.style.zIndex = '2'
+      host.appendChild(healthCol)
+      host.appendChild(boringCol)
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(syncStatBarsLayoutToGrid)
+      } else {
+        setTimeout(syncStatBarsLayoutToGrid, 0)
+      }
       return host
     }
 
@@ -332,6 +457,7 @@
 
       syncOne('Health', h)
       syncOne('Boring', b)
+      syncStatBarsLayoutToGrid()
     }
 
     /** countIn: countdown + stat bars; otherwise clears countdown, updates stats. */

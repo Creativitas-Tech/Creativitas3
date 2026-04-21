@@ -7,6 +7,13 @@
   'use strict'
 
   const SCROLL_LERP = 0.18
+  const SEQUENCE_GRID_SCALE_MULTIPLIER = 3
+
+  /** 1 = full mount width; lower = narrower columns (same GRID_COLS); height still uses fullW below. */
+  const SEQUENCE_GRID_WIDTH_RATIO = 0.82
+
+  /** Applied after all height scaling; 0.5 = half the previous grid height. */
+  const SEQUENCE_GRID_HEIGHT_RATIO = 0.5
 
   /**
    * Piano-roll canvas height drives row thickness: rowH = height / GRID_ROWS (see draw()).
@@ -50,19 +57,34 @@
     /** Matches setup / windowResized; width from container; height → thicker rows via constants above. */
     function canvasSizeFromContainer() {
       const raw = container.clientWidth
-      const w = raw > 0 ? Math.max(1, Math.floor(raw)) : 400
-      const colW = w / cols
-      const h = Math.min(
+      const baseW = raw > 0 ? Math.max(1, Math.floor(raw)) : 400
+      const expandedW = Math.max(1, Math.round(baseW * SEQUENCE_GRID_SCALE_MULTIPLIER))
+      const viewportMaxW = typeof window !== 'undefined'
+        ? Math.max(320, window.innerWidth - 24)
+        : expandedW
+      const fullW = Math.max(1, Math.min(expandedW, viewportMaxW, baseW))
+      const w = Math.max(1, Math.floor(fullW * SEQUENCE_GRID_WIDTH_RATIO))
+      const colWForHeight = fullW / cols
+      const baseH = Math.min(
         SEQUENCE_GRID_MAX_HEIGHT_PX,
-        Math.round(colW * (rows / cols) * SEQUENCE_GRID_HEIGHT_SCALE)
+        Math.round(colWForHeight * (rows / cols) * SEQUENCE_GRID_HEIGHT_SCALE)
       )
+      const expandedH = Math.max(1, Math.round(baseH * SEQUENCE_GRID_SCALE_MULTIPLIER))
+      const viewportMaxH = typeof window !== 'undefined'
+        ? Math.max(180, window.innerHeight - 220)
+        : expandedH
+      const hRaw = Math.max(1, Math.min(expandedH, viewportMaxH))
+      const h = Math.max(1, Math.round(hRaw * SEQUENCE_GRID_HEIGHT_RATIO))
       return { w, h }
     }
 
     const sketch = (gui) => {
       gui.setup = () => {
         const { w, h } = canvasSizeFromContainer()
-        gui.createCanvas(w, h).parent(container)
+        const canvas = gui.createCanvas(w, h)
+        canvas.parent(container)
+        canvas.style('display', 'block')
+        canvas.style('margin', '0 auto')
       }
 
       gui.draw = () => {
