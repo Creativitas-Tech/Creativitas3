@@ -1,29 +1,47 @@
-import { NexusElement } from './parentNexus.js';
+export class NexusBackground {
+    constructor(options = {}) {
+        const container = document.getElementById('Canvas');
+        if (!container) {
+            console.error('NexusElement: #Canvas container not found!');
+            return;
+        }
+        
+        this.container = container;
+        
+        // 1. Calculate dimensions
+        this.containerWidth = container.clientWidth || window.innerWidth;
+        this.containerRatio = 3/4;
+        this.containerHeight = Math.floor(this.containerWidth * this.containerRatio);
 
-export class NexusBackground extends NexusElement {
-    constructor(options) {
-        // Pass the type "Dial" to the parent constructor
-        super('NexusBackground', options);
+        // 2. Create and style the elementContainer
+        const elementContainer = document.createElement('div');
+        elementContainer.style.position = 'absolute';
+        elementContainer.style.top = '0';
+        elementContainer.style.left = '0';
+        
+        // 3. Apply the calculated size (don't forget the 'px'!)
+        elementContainer.style.width = `${this.containerWidth}px`;
+        elementContainer.style.height = `${this.containerHeight}px`;
+        
+        // Ensure it sits behind other elements if necessary
+        elementContainer.style.zIndex = "-1"; 
+        elementContainer.style.pointerEvents = "none";
 
-        // this.label = options.label ?? "myElement";
-        // this.baseSize = 50
-        // this.size = options.size ?? 1;
-        // this.x = options.x ?? .5;
-        // this.y = options.y ?? .5;
-        // this.width = options.width ?? 1;
-        // this.height = options.height ?? 1;
+        this.container.appendChild(elementContainer);
+        this.elementContainer = elementContainer;
 
-        this.style = options.style ?? "default"
-        this.accentColor = options.accentColor ?? this.colors.accent
-        this.borderColor = options.borderColor ?? this.colors.border
-        this.textColor = options.textColor ?? this.colors.text
+        // Colors setup
+        this.colors = {
+            'background': "#000",
+            'accent': "#F00",
+            'text': "#F00",
+        };
 
-        this.elementContainer.style.pointerEvents = "none";
-
+        this.backgroundColor = options.backgroundColor ?? this.colors['background'];
+        this.updateColors();
     }
 
-    set text(value) {
-        this.element.text = value
+    updateColors() {
+        this.elementContainer.style.backgroundColor = this.backgroundColor;
     }
-
 }

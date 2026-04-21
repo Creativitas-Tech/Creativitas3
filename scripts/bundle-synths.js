@@ -35,6 +35,7 @@ async function bundleSynthDependencies() {
         './nexus/Slider.js',
         './nexus/Switch.js',
         './nexus/NexusText.js',
+        './nexus/NexusTextButton.js',
         './Games/GameClass.js'
     ]
 

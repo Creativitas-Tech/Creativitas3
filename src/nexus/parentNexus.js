@@ -47,8 +47,84 @@ export function initNexusCanvas(backgroundColor = '#1a1a2e') {
     Nexus.colors["accent"] = colors[3]
     Nexus.colors["text"] = colors[4]
 
+    // 1. Calculate dimensions (Width of canvas, Height is 3/4 of width)
+    const canvasWidth = container.clientWidth || window.innerWidth;
+    const bgHeight = Math.floor(canvasWidth * 0.5);
+
+    // 2. Create the GUI Background layer
+    const guiBackground = document.createElement('div');
+    guiBackground.id = 'nexus-gui-background'; // Helpful for debugging
+    
+    // 3. Apply Styles
+    Object.assign(guiBackground.style, {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',            // Matches the canvas width
+        height: `${bgHeight}px`,  // Matches the 3/4 ratio
+        backgroundColor: '#222',  // Or use one of your colors array
+        zIndex: '0',              // Ensure it's the bottom layer
+        pointerEvents: 'none'     // Don't block clicks to the UI elements
+    });
+
+    // 4. Add it to the container
+    container.appendChild(guiBackground);
+
+    // Setter for Background Color
+    Object.defineProperty(Nexus, 'backgroundColor', {
+        set: (color) => {
+            guiBackground.style.backgroundColor = color;
+            guiBackground.style.backgroundImage = 'none'; // Clear image if color is set
+        }
+    });
+
+    // Function for Background Image
+    Nexus.backgroundImage = (url) => {
+        guiBackground.style.backgroundImage = `url('${url}')`;
+    };
+
+    // Initialize with your default
+    Nexus.backgroundColor = backgroundColor;
+
+    const svgns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgns, "svg");
+    Object.assign(svg.style, {
+        position: 'absolute',
+        top: '0',
+        left: '0',
+        width: '100%',
+        height: '100%'
+    });
+    // Set viewBox to 0 0 1 1 so coordinates are always 0.0 to 1.0
+    svg.setAttributeNS(null, "viewBox", "0 0 1 1");
+    svg.setAttributeNS(null, "preserveAspectRatio", "none");
+
+    guiBackground.appendChild(svg);
+    Nexus.svgLayer = svg; // Store for the draw function
+
+
+    Nexus.drawLine = function(v1 = [0, 0], v2 = [1, 1], color = '#F00', thickness = 0.01) {
+        const svgns = "http://www.w3.org/2000/svg";
+        const line = document.createElementNS(svgns, "line");
+        
+        line.setAttributeNS(null, "x1", v1[0]);
+        line.setAttributeNS(null, "y1", v1[1]);
+        line.setAttributeNS(null, "x2", v2[0]);
+        line.setAttributeNS(null, "y2", v2[1]);
+        
+        line.setAttributeNS(null, "stroke", color);
+        line.setAttributeNS(null, "stroke-width", thickness);
+        line.setAttributeNS(null, "stroke-linecap", "round");
+
+        Nexus.svgLayer.appendChild(line);
+        return line; // Return it so you can remove or move it later
+    };
+
 
     container.style.backgroundColor = Nexus.colors['background']
+    
+    
+
     return container;
 }
 
@@ -80,7 +156,7 @@ export class NexusElement{
         }
         this.container = container;
         this.containerWidth = container.clientWidth ?? window.innerWidth;
-        this.containerRatio = 3/4
+        this.containerRatio = 2/4
         this.containerHeight = Math.floor(this.containerWidth * this.containerRatio)
 
         // Auto-initialize Canvas if not already done
@@ -112,7 +188,7 @@ export class NexusElement{
         console.log('el', element_type, options)
 
         this.label = options.label ?? "myElement";
-        this.baseSize = 50
+        this.baseSize = this.containerWidth/10
         this.size = options.size ?? 1;
         this.x = options.x ?? .5;
         this.y = options.y ?? .5;
