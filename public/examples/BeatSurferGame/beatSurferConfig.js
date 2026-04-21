@@ -7,11 +7,11 @@
 
   const NOTE_COLORS = [
     '#2563eb', '#16a34a', '#ea580c', '#9333ea',
-    '#dc2626', '#0891b2',
+    '#dc2626', '#0891b2', '#ca8a04',
   ]
   const NOTE_COLORS_RGB = [
     [37, 99, 235], [22, 163, 74], [234, 88, 12], [147, 51, 234],
-    [220, 38, 38], [8, 145, 178],
+    [220, 38, 38], [8, 145, 178], [202, 138, 4],
   ]
 
   window.BeatSurferConfig = Object.freeze({
@@ -26,14 +26,14 @@
 
     // Phrase content: random length TARGET_LEN, note pool TARGET_NOTE_COUNT; bar length for UI.
     PLAYER_MAX: 20,
-    TARGET_LEN: 4,
-    /** Pool size for random targets: 4 => notes 1-4 (indices 0-3). */
-    TARGET_NOTE_COUNT: 4,
+    TARGET_LEN: 7,
+    /** Pool size for random targets: 7 => notes 1-7 (indices 0-6). */
+    TARGET_NOTE_COUNT: 7,
     BEATS_PER_BAR: 8,
 
-    // One phrase = LAP_EIGHTHS * PHRASE_LAPS eighth notes (see phraseTotalEighths).
-    LAP_EIGHTHS: 8,
-    PHRASE_LAPS: 2,
+    // One phrase = 14 eighths (7 downbeats) to fit 7-note targets.
+    LAP_EIGHTHS: 14,
+    PHRASE_LAPS: 1,
 
     COUNT_IN_EIGHTHS: 8,
 
@@ -49,12 +49,12 @@
     TIMING_WINDOW_MS: 400,
 
     /** Scale degrees for grid row indices 0..GRID_ROWS-1 (melody + MIDI). */
-    MELODY_DEGREES: [0, 2, 4, 5, 7, 9],
+    MELODY_DEGREES: [0, 2, 4, 5, 7, 9, 11],
 
     // p5 piano-roll rows; GRID_BUTTON_COUNT matches playable pads / rows.
-    GRID_ROWS: 6,
+    GRID_ROWS: 7,
     GRID_COLS: 8,
-    GRID_BUTTON_COUNT: 6,
+    GRID_BUTTON_COUNT: 7,
     /** Nexus circular pad pixel size (createGridButtons). */
     NEXUS_BUTTON_WIDTH: 96,
     NEXUS_BUTTON_HEIGHT: 80,
