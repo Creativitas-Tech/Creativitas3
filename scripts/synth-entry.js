@@ -80,6 +80,7 @@ export * from '../src/nexus/RadioButton.js';
 export * from '../src/nexus/Slider.js';
 export * from '../src/nexus/Switch.js';
 export * from '../src/nexus/NexusText.js';
+export * from '../src/nexus/NexusTextButton.js';
 
 // Games
 export * from '../src/Games/GameClass.js';

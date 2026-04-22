@@ -3,6 +3,8 @@ import { NexusElement } from './parentNexus.js';
 export class NexusButton extends NexusElement {
     constructor(options = {}) {
         super('Button', options);
+
+        this.mode = options.mode ?? 'Button'
     }
 
     flip(){

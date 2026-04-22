@@ -4039,7 +4039,7 @@ class NexusElement{
     }
 
     updateColors(){
-        console.log(window.Nexus.colors)
+        //console.log(window.Nexus.colors)
         this.colorize('fill', this.colors.border)
         this.colorize('accent', this.colors.accent)
         this.colorize('dark', this.colors.text)
@@ -4273,6 +4273,8 @@ class NexusElement{
 class NexusButton extends NexusElement {
     constructor(options = {}) {
         super('Button', options);
+
+        this.mode = options.mode ?? 'Button'
     }
 
     flip(){
@@ -6968,6 +6970,21 @@ class NexusTextButton extends NexusElement {
         super('TextButton', options);
         this.text = this.label
         if(this.mode == 'toggle') this.altText =this.label
+
+        if(this.value ) this.turnOn()
+    }
+
+    flip(){
+        this.element.flip()
+    }
+
+    //button functions
+    turnOn(){
+        this.element.turnOn()
+    }
+
+    turnOff(){
+        this.element.turnOff()
     }
 
     set text(value) {

@@ -6,6 +6,21 @@ export class NexusTextButton extends NexusElement {
         super('TextButton', options);
         this.text = this.label
         if(this.mode == 'toggle') this.altText =this.label
+
+        if(this.value ) this.turnOn()
+    }
+
+    flip(){
+        this.element.flip()
+    }
+
+    //button functions
+    turnOn(){
+        this.element.turnOn()
+    }
+
+    turnOff(){
+        this.element.turnOff()
     }
 
     set text(value) {

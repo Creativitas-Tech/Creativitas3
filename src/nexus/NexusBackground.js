@@ -39,9 +39,50 @@ export class NexusBackground {
 
         this.backgroundColor = options.backgroundColor ?? this.colors['background'];
         this.updateColors();
+
+        // Use ResizeObserver to handle container resizing (e.g. split pane drag)
+        if (container) {
+            this.resizeObserver = new ResizeObserver(() => {
+                window.requestAnimationFrame(() => {
+                    if (!this.element ?? !this.element.element ?? !document.body.contains(this.element.element)) {
+                        if (this.resizeObserver) this.resizeObserver.disconnect();
+                        return;
+                    }
+                    this.updatePositionAndSize();
+                });
+            });
+            this.resizeObserver.observe(container);
+        } else {
+            // Fallback to window resize if container not found immediately
+            window.addEventListener("resize", () => this.updatePositionAndSize());
+        }
     }
 
     updateColors() {
         this.elementContainer.style.backgroundColor = this.backgroundColor;
+    }
+
+    updatePositionAndSize() {
+        if(!this.initialized) return
+        // Update pixel values based on percentages and current container size
+        const container = this.container ?? document.getElementById('Canvas');
+        if (!container) return;
+
+        this.containerWidth = (container.clientWidth ?? window.innerWidth);
+        this.containerHeight = Math.floor(this.containerWidth * this.containerRatio)
+
+        let elementWidth = this.baseSize * this._size * this.widthPercent
+        let elementHeight = this.baseSize * this._size * this.heightPercent
+        
+        // Position our wrapper container
+        if (this.elementContainer) {
+            this.elementContainer.style.left = (this.xPercent * (this.containerWidth- elementWidth)) + "px";
+            this.elementContainer.style.top = (this.yPercent * (this.containerHeight- elementHeight)) + "px";
+        }
+        
+        // Resize the NexusUI element
+        if (this.element && this.element.resize) {
+            this.element.resize(   elementWidth, elementHeight );
+        }
     }
 }

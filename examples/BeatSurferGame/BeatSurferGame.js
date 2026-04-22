@@ -40,15 +40,15 @@
 
       this.resetState('idle')
 
-      // P1: 1–6. P2 split: q–y → indices 0–5 (matches GRID_ROWS / pads).
+      // P1: 1–7. P2 split: q–u → indices 0–6 (matches GRID_ROWS / pads).
       this._onKeyDown = (e) => {
         if (e.repeat) return
         if (this.gameState !== 'playing') return
-        const nPads = (this.config && this.config.GRID_BUTTON_COUNT) || 6
+        const nPads = (this.config && this.config.GRID_BUTTON_COUNT) || 7
         const maxDigit = String.fromCharCode(48 + nPads)
         let idx = -1
         if (this.splitRole === 'secondary') {
-          const map = { q: 0, w: 1, e: 2, r: 3, t: 4, y: 5 }
+          const map = { q: 0, w: 1, e: 2, r: 3, t: 4, y: 5, u: 6 }
           const ch = e.key.length === 1 ? e.key.toLowerCase() : ''
           if (ch && Object.prototype.hasOwnProperty.call(map, ch)) idx = map[ch]
         } else {
@@ -77,10 +77,10 @@
       this.currentBPM = this.config.DEFAULT_BPM
       this.useProcedural = true
       this.PREDEFINED = [
-        [0, 1, 2, 3],
-        [3, 2, 1, 0],
-        [0, 0, 1, 1],
-        [2, 3, 0, 1],
+        [0, 1, 2, 3, 4, 5, 6],
+        [6, 5, 4, 3, 2, 1, 0],
+        [0, 2, 4, 6, 5, 3, 1],
+        [1, 3, 5, 6, 4, 2, 0],
       ]
       this.gameOverReason = null
       this.eighthIndexInPhrase = -1
@@ -146,8 +146,8 @@
       if (this.useProcedural) {
         const seq = []
         let prev = -1
-        const cap = this.config.TARGET_NOTE_COUNT != null ? this.config.TARGET_NOTE_COUNT : 4
-        const degLen = (this.config.MELODY_DEGREES && this.config.MELODY_DEGREES.length) || this.config.GRID_ROWS || 6
+        const cap = this.config.TARGET_NOTE_COUNT != null ? this.config.TARGET_NOTE_COUNT : 7
+        const degLen = (this.config.MELODY_DEGREES && this.config.MELODY_DEGREES.length) || this.config.GRID_ROWS || 7
         const numNotes = Math.min(cap, degLen)
         for (let i = 0; i < this.config.TARGET_LEN; i++) {
           let n = Math.floor(Math.random() * numNotes)

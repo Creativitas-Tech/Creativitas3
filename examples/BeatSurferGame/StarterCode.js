@@ -20,39 +20,72 @@
   function runLoaded() {
     const canvasHost = typeof Canvas !== 'undefined' ? Canvas : document.getElementById('Canvas')
     let gridRow = document.getElementById('beatSurferGridRow')
+    let centerLane = document.getElementById('beatSurferCenterLane')
     let gridMount = document.getElementById('beatSurferGridMount')
     let statBarsHost = document.getElementById('beatSurferStatBars')
+
+    const centerLaneCss =
+      'position:relative;z-index:1;width:100%;max-width:min(1200px,calc(100vw - 32px));margin:0 auto;' +
+      'box-sizing:border-box;padding:0 clamp(72px,10vw,120px);' +
+      'display:flex;flex-direction:column;align-items:center;'
+    const gridMountCss =
+      'width:auto;max-width:100%;min-width:0;margin-left:auto;margin-right:auto;display:flex;justify-content:center;box-sizing:border-box;'
 
     if (!gridRow && canvasHost && canvasHost.parentNode) {
       gridRow = document.createElement('div')
       gridRow.id = 'beatSurferGridRow'
       gridRow.style.cssText =
-        'display:flex;flex-direction:row;align-items:stretch;gap:14px;margin:12px 0;width:100%;max-width:680px;'
+        'position:relative;margin:12px 0;width:100%;max-width:100%;min-height:clamp(180px,32dvh,420px);'
+      centerLane = document.createElement('div')
+      centerLane.id = 'beatSurferCenterLane'
+      centerLane.style.cssText = centerLaneCss
 
       if (gridMount && gridMount.parentNode) {
         gridMount.parentNode.insertBefore(gridRow, gridMount)
-        gridMount.style.cssText = 'flex:1 1 auto;min-width:0;margin:0;max-width:520px;'
-        gridRow.appendChild(gridMount)
+        gridMount.style.cssText = gridMountCss
+        gridRow.appendChild(centerLane)
+        centerLane.appendChild(gridMount)
       } else {
         gridMount = document.createElement('div')
         gridMount.id = 'beatSurferGridMount'
-        gridMount.style.cssText = 'flex:1 1 auto;min-width:0;margin:0;max-width:520px;'
+        gridMount.style.cssText = gridMountCss
         if (canvasHost.nextSibling) canvasHost.parentNode.insertBefore(gridRow, canvasHost.nextSibling)
         else canvasHost.parentNode.appendChild(gridRow)
-        gridRow.appendChild(gridMount)
+        gridRow.appendChild(centerLane)
+        centerLane.appendChild(gridMount)
       }
 
       statBarsHost = document.createElement('div')
       statBarsHost.id = 'beatSurferStatBars'
       statBarsHost.style.cssText =
-        'flex:0 0 auto;display:flex;flex-direction:row;align-items:flex-end;gap:12px;padding-bottom:2px;'
+        'position:absolute;inset:0;z-index:2;pointer-events:none;'
       gridRow.appendChild(statBarsHost)
     } else if (gridRow && !statBarsHost) {
       statBarsHost = document.createElement('div')
       statBarsHost.id = 'beatSurferStatBars'
       statBarsHost.style.cssText =
-        'flex:0 0 auto;display:flex;flex-direction:row;align-items:flex-end;gap:12px;padding-bottom:2px;'
+        'position:absolute;inset:0;z-index:2;pointer-events:none;'
       gridRow.appendChild(statBarsHost)
+    }
+
+    if (gridRow && !centerLane) {
+      centerLane = document.createElement('div')
+      centerLane.id = 'beatSurferCenterLane'
+      centerLane.style.cssText = centerLaneCss
+      if (gridMount && gridMount.parentNode === gridRow) {
+        gridRow.insertBefore(centerLane, gridMount)
+        centerLane.appendChild(gridMount)
+      } else {
+        gridRow.appendChild(centerLane)
+      }
+    }
+
+    if (gridMount && centerLane && gridMount.parentNode !== centerLane) {
+      centerLane.appendChild(gridMount)
+    }
+
+    if (gridMount) {
+      gridMount.style.cssText = gridMountCss
     }
 
     const sequenceGrid = typeof window.createBeatSurferSequenceGrid === 'function'

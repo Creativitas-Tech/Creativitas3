@@ -354,7 +354,7 @@ export class NexusElement{
     }
 
     updateColors(){
-        console.log(window.Nexus.colors)
+        //console.log(window.Nexus.colors)
         this.colorize('fill', this.colors.border)
         this.colorize('accent', this.colors.accent)
         this.colorize('dark', this.colors.text)
