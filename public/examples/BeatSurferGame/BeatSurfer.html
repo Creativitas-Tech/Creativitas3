@@ -575,38 +575,33 @@
     const canvasHost = canvasEl || (typeof Canvas !== 'undefined' ? Canvas : document.getElementById('Canvas'))
     let gridRow = document.getElementById(pfx + 'GridRow')
     let gridMount = document.getElementById(pfx + 'GridMount')
-    let statBarsHost = document.getElementById(pfx + 'StatBars')
 
     if (!gridRow && canvasHost && canvasHost.parentNode) {
       gridRow = document.createElement('div')
       gridRow.id = pfx + 'GridRow'
       gridRow.style.cssText =
-        'display:flex;flex-direction:row;align-items:stretch;gap:clamp(8px,2vw,14px);margin:12px 0;width:100%;max-width:100%;box-sizing:border-box;'
+        'display:flex;flex-direction:column;align-items:stretch;margin:12px 0;width:100%;max-width:100%;' +
+        'box-sizing:border-box;position:relative;z-index:0;'
 
       if (gridMount && gridMount.parentNode) {
         gridMount.parentNode.insertBefore(gridRow, gridMount)
-        gridMount.style.cssText = 'flex:1 1 50%;min-width:0;margin:0;width:100%;'
+        gridMount.style.cssText =
+          'width:100%;max-width:100%;min-width:0;margin:0;display:flex;justify-content:center;box-sizing:border-box;'
         gridRow.appendChild(gridMount)
       } else {
         gridMount = document.createElement('div')
         gridMount.id = pfx + 'GridMount'
-        gridMount.style.cssText = 'flex:1 1 50%;min-width:0;margin:0;width:100%;'
+        gridMount.style.cssText =
+          'width:100%;max-width:100%;min-width:0;margin:0;display:flex;justify-content:center;box-sizing:border-box;'
         if (canvasHost.nextSibling) canvasHost.parentNode.insertBefore(gridRow, canvasHost.nextSibling)
         else canvasHost.parentNode.appendChild(gridRow)
         gridRow.appendChild(gridMount)
       }
+    }
 
-      statBarsHost = document.createElement('div')
-      statBarsHost.id = pfx + 'StatBars'
-      statBarsHost.style.cssText =
-        'flex:1 1 50%;min-width:0;display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;gap:clamp(8px,2vw,16px);padding-bottom:2px;box-sizing:border-box;'
-      gridRow.appendChild(statBarsHost)
-    } else if (gridRow && !statBarsHost) {
-      statBarsHost = document.createElement('div')
-      statBarsHost.id = pfx + 'StatBars'
-      statBarsHost.style.cssText =
-        'flex:1 1 50%;min-width:0;display:flex;flex-direction:row;align-items:stretch;justify-content:space-between;gap:clamp(8px,2vw,16px);padding-bottom:2px;box-sizing:border-box;'
-      gridRow.appendChild(statBarsHost)
+    if (gridRow && (instanceId === 'P1' || instanceId === 'P2')) {
+      gridRow.style.position = 'relative'
+      gridRow.style.zIndex = '0'
     }
 
     const ui = window.createBeatSurferUI(instanceId)
