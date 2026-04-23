@@ -306,6 +306,12 @@
       const ny = (config && config.NEXUS_BUTTON_HEIGHT) || DEFAULT_NEXUS_BUTTON_H
       const buttons = []
       const colors = config.NOTE_COLORS || DEFAULT_NOTE_COLORS
+      /** Nexus can emit many `change` events while a touch moves; normalize to boolean down state. */
+      function nexusPayloadToPressed(v) {
+        if (v && typeof v === 'object' && v !== null && 'state' in v) return !!v.state
+        if (typeof v === 'number') return v > 0
+        return !!v
+      }
       for (let i = 0; i < count; i++) {
         const btn = new NexusButton(0, 0, nx, ny)
         if (typeof btn.colorize === 'function') {
@@ -335,20 +341,27 @@
         }
         if (btn.resizeObserver) btn.resizeObserver.disconnect()
         const noteIndex = i
+        let lastSentPressed = false
         if (btn.element && typeof btn.element.on === 'function') {
           btn.element.on('change', (v) => {
+            const pressed = nexusPayloadToPressed(v)
+            if (pressed === lastSentPressed) return
+            lastSentPressed = pressed
             try {
-              onGridChange(noteIndex, v)
+              onGridChange(noteIndex, { state: pressed })
             } catch (err) {
               console.error('[BeatSurfer] grid button change error:', err)
               throw err
             }
           })
         } else if (typeof btn.mapTo === 'function') {
+          let lastMapPressed = false
           btn.mapTo((v) => {
-            if (!v) return
+            const pressed = nexusPayloadToPressed(v)
+            if (pressed === lastMapPressed) return
+            lastMapPressed = pressed
             try {
-              onGridChange(noteIndex, { state: true })
+              onGridChange(noteIndex, { state: pressed })
             } catch (err) {
               console.error('[BeatSurfer] grid button press error:', err)
               throw err
