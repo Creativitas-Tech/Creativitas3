@@ -39,7 +39,9 @@
       this._bassPatternSteps = []
       this._bassStep = 0
       this._bassTestLoop = null
-      this._debugBass = true
+      this._debugBass = false
+      this._warnedDrumsNotReady = false
+      this._pendingDrumRetry = null
 
       this.loop = null // Tone.Loop → onEighth
       this.displayInterval = null // UI refresh timer
@@ -262,6 +264,38 @@
       return steps.length > 0 ? steps : [0, null, 4, null]
     }
 
+    drumsReady() {
+      if (!this.d) return false
+      const voices = ['kick', 'snare', 'hat', 'p1', 'p2', 'p3']
+      for (let i = 0; i < voices.length; i++) {
+        const v = this.d[voices[i]]
+        const b = v && v.voice ? v.voice.buffer : null
+        if (!b) return false
+        if (typeof b.loaded === 'boolean' && !b.loaded) return false
+        const dur = typeof b.duration === 'number' ? b.duration : 0
+        if (!(dur > 0)) return false
+      }
+      return true
+    }
+
+    safeDrumSequence(pattern, subdivision) {
+      if (!this.d) return
+      if (this.drumsReady()) {
+        this.d.sequence(pattern, subdivision)
+        this._warnedDrumsNotReady = false
+        return
+      }
+      if (!this._warnedDrumsNotReady) {
+        this._warnedDrumsNotReady = true
+        console.warn('[BeatSurfer] drums not ready yet, deferring drum sequence')
+      }
+      if (this._pendingDrumRetry) clearTimeout(this._pendingDrumRetry)
+      this._pendingDrumRetry = setTimeout(() => {
+        if (this.gameState === 'gameOver') return
+        this.safeDrumSequence(pattern, subdivision)
+      }, 250)
+    }
+
     syncBassPattern() {
       if (!this.bass || this.gameState !== 'playing') return
       const tier = this.bassTierFromBoring()
@@ -346,7 +380,7 @@
     /** Pad down: legato attack then same rules as onInput (no extra one-shot note). */
     onGridPress(i) {
       if (this.gameState !== 'playing') return
-      this.s.triggerAttack(this.midiForNoteIndex(i), 100, this.Tone.immediate())
+      this.s.triggerAttack(this.midiForNoteIndex(i), 100, this.Tone.now())
       this.onInput(i, { fromGrid: true })
     }
 
@@ -380,8 +414,8 @@
 
       if (register && i === exp) {
         if (!fromGrid) {
-          this.s.triggerAttackRelease(this.config.MELODY_DEGREES[i] + 60, 100, 0.1, Tone.immediate())
-          console.log(this.config.MELODY_DEGREES[i] + 60, Tone.immediate())
+          const t = this.Tone.now()
+          this.s.triggerAttackRelease(this.config.MELODY_DEGREES[i] + 60, 100, 0.1, t)
         }
         // this.s.play([this.config.MELODY_DEGREES[i]], '16n')
         this.health = Math.min(100, this.health + this.config.HEALTH_PER_CORRECT_NOTE)
@@ -441,7 +475,7 @@
           this._skipNextPhraseAdvance = true
           this.sequenceBeatsLeft = this.config.LAP_EIGHTHS * this.config.PHRASE_LAPS
           this._drumTier = 'good'
-          if (this.d) this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
+          this.safeDrumSequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
         }
         this.updateDisplay()
         return
@@ -462,7 +496,7 @@
         const pattern = tier === 'good' ? this.config.DRUM_TRACK_GOOD
           : tier === 'mid' ? this.config.DRUM_TRACK_MID
           : this.config.DRUM_TRACK_BAD
-        this.d.sequence(pattern, this.config.DRUM_SUBDIVISION)
+        this.safeDrumSequence(pattern, this.config.DRUM_SUBDIVISION)
       }
 
       this.beat = (this.beat + 1) % this.config.BEATS_PER_BAR
@@ -563,7 +597,7 @@
       this.Tone.Transport.start()
 
       this._drumTier = 'good'
-      if (this.d) this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
+      this.safeDrumSequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
       this._bassTier = null
       this._bassPatternSteps = []
       this._bassStep = 0
@@ -601,6 +635,10 @@
         if (this._debugBass) console.log('[BeatSurfer][bass] stopped on game over', { reason })
       }
       if (this._bassTestLoop) this._bassTestLoop.stop()
+      if (this._pendingDrumRetry) {
+        clearTimeout(this._pendingDrumRetry)
+        this._pendingDrumRetry = null
+      }
 
       const split = this.splitRole === 'primary' || this.splitRole === 'secondary'
       if (!split) {

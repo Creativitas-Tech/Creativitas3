@@ -252,6 +252,9 @@
     // Functions for timing control
     function startTiming() {
         console.log('Starting timing manager');
+        Tone.start().catch((err) => {
+            console.warn('Tone.start() failed from Start click:', err);
+        });
         // Ensure window.timing is initialized before calling start
         if (window.timing && typeof window.timing.start === 'function') {
             window.timing.start();
