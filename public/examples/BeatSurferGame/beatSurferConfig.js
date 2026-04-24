@@ -55,8 +55,8 @@
     /** Subtracted on any failed attempt (wrong pitch in window, or off-time when a note was expected). */
     HEALTH_LOSS_FAILED_ATTEMPT: 4,
     BORING_UP_ON_CORRECT_NOTE: 5,
+    /** Subtracted on any input that is not a perfect on-time hit (wrong pitch, bad timing, rest eighth). */
     BORING_DOWN_ON_VARY_NOTE: 2,
-    BORING_UP_ON_OFF_GRID: 3,
 
     TIMING_WINDOW_MS: 400,
 

@@ -536,9 +536,9 @@
      * | Situation | Health | Boring | Sound |
      * |-----------|--------|--------|--------|
      * | Correct (on-time, right pitch) | + | + | melody |
-     * | Wrong pitch but on-time (`register` && wrong key) | − failed | − variety | dissonant |
-     * | Expected note exists but not on-time (late/early) | − failed | — | melody |
-     * | No expected note this eighth (odd eighth / rest) | — | — | melody (free play) |
+     * | Wrong pitch but on-time (`register` && wrong key) | − failed | − non-perfect | dissonant |
+     * | Expected note exists but not on-time (late/early) | − failed | − non-perfect | melody |
+     * | No expected note this eighth (odd eighth / rest) | — | − non-perfect | melody (free play) |
      *
      * @param {number} i - note index
      * @param {{ fromGrid?: boolean }} [opts] - grid uses attack/release; skip one-shot synth here
@@ -586,11 +586,7 @@
       }
       this._onMelodyRowPlayed(i)
 
-      if (onTime) {
-        this.boring = Math.max(0, this.boring - this.config.BORING_DOWN_ON_VARY_NOTE)
-      } else {
-        this.boring = Math.min(100, this.boring + this.config.BORING_UP_ON_OFF_GRID)
-      }
+      this.boring = Math.max(0, this.boring - this.config.BORING_DOWN_ON_VARY_NOTE)
 
       const flashType = wrongPitchInWindow ? 'wrong' : (offTimeButNoteExpected ? 'wrong' : 'neutral')
       this.ui.flashButton({ buttons: this.gridButtons, Canvas: this.Canvas, config: this.config }, i, flashType)
