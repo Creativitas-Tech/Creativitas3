@@ -23,6 +23,16 @@
     DRUM_TRACK_BAD:  '[O...][....]',
     DRUM_HEALTH_MID_THRESHOLD: 60,
     DRUM_HEALTH_BAD_THRESHOLD: 30,
+    /** Boring meter thresholds for baseline texture tiers. */
+    BORING_BASELINE_MID_AT: 50,
+    BORING_BASELINE_SPARSE_AT: 75,
+    /** Background baseline settings (low boring = funky, high boring = sparse). */
+    BASELINE_SUBDIVISION: '8n',
+    BASELINE_GAIN: 0.34,
+    /** Patterns use grid-note indices 0..6 ('.' = rest), one step per BASELINE_SUBDIVISION. */
+    BASELINE_PATTERN_FUNKY: '0 2 4 6 4 2 1 3',
+    BASELINE_PATTERN_MID: '0 . 4 . 0 . 3 .',
+    BASELINE_PATTERN_SPARSE: '0 . . . 0 . . .',
 
     // Phrase content: random length TARGET_LEN, note pool TARGET_NOTE_COUNT; bar length for UI.
     PLAYER_MAX: 20,

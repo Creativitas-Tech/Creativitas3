@@ -33,6 +33,13 @@
       this.verb = null
       this.d = null // DrumSampler; null for split secondary
       this.s = null // Polyphony melody
+      this.bass = null // Polyphony bass bed (disabled for split secondary)
+      this.bassGain = null
+      this._bassTier = null
+      this._bassPatternSteps = []
+      this._bassStep = 0
+      this._bassTestLoop = null
+      this._debugBass = true
 
       this.loop = null // Tone.Loop → onEighth
       this.displayInterval = null // UI refresh timer
@@ -88,6 +95,9 @@
       this._skipNextPhraseAdvance = false
       this.nextTargetSequence = []
       this._drumTier = 'good'
+      this._bassTier = null
+      this._bassPatternSteps = []
+      this._bassStep = 0
     }
 
     /** Build audio graph, create Nexus pads in #beatSurfer{instanceId}GridRow, register keys, start(). */
@@ -114,6 +124,15 @@
       this.s.connect(this.output)
       this.s.connect(this.verb)
       this.verb.connect(this.output)
+      const ownsBass = this.splitRole !== 'secondary'
+      if (ownsBass) {
+        const bassGainVal = this.config.BASELINE_GAIN != null ? this.config.BASELINE_GAIN : 0.34
+        this.bassGain = new this.Tone.Multiply(bassGainVal)
+        this.bass = new this.Polyphony(this.Daisy)
+        this.bass.connect(this.bassGain)
+        this.bassGain.connect(this.output)
+        if (this._debugBass) console.log('[BeatSurfer][bass] init ok', { instanceId: this.instanceId || 'single', bassGainVal })
+      }
 
       const gridRow = document.getElementById('beatSurfer' + this.instanceId + 'GridRow')
       if (gridRow && typeof this.ui.createGridButtons === 'function') {
@@ -137,6 +156,36 @@
       if (typeof window.updateBPM === 'function') window.updateBPM(DEFAULT_BPM)
       this.Theory.tempo = DEFAULT_BPM
       this.Tone.Transport.bpm.value = DEFAULT_BPM
+
+      if (ownsBass) {
+        // Temporary debug helpers: call from console to test audio path directly.
+        window.beatSurferTestBass = (pattern, subdivision) => {
+          const p = pattern || '0 2 4 6 4 2 1 3'
+          const sub = subdivision || (this.config.BASELINE_SUBDIVISION || '8n')
+          if (!this.bass) return console.warn('[BeatSurfer][bass] test skipped: no bass instance')
+          this._bassPatternSteps = this.parseBassPatternSteps(p)
+          this._bassStep = 0
+          if (this._bassTestLoop) this._bassTestLoop.stop()
+          this._bassTestLoop = new this.Tone.Loop((t) => {
+            const stepVal = this._bassPatternSteps[this._bassStep % this._bassPatternSteps.length]
+            this._bassStep++
+            if (stepVal == null) return
+            const rowCount = (this.config && this.config.GRID_ROWS) || 7
+            const idx = ((Math.round(stepVal) % rowCount) + rowCount) % rowCount
+            const midi = this.midiForNoteIndex(idx) - 12
+            this.bass.triggerAttackRelease(midi, 110, 0.2, t)
+          }, sub)
+          this._bassTestLoop.start(0)
+          this.Tone.Transport.start()
+          console.log('[BeatSurfer][bass] test start', { p, sub, steps: this._bassPatternSteps })
+        }
+        window.beatSurferStopBass = () => {
+          if (!this.bass) return
+          if (this._bassTestLoop) this._bassTestLoop.stop()
+          this.bass.stop('all')
+          console.log('[BeatSurfer][bass] test stop')
+        }
+      }
 
       this.start()
     }
@@ -179,6 +228,62 @@
     /** Eighth-note steps in one full phrase (laps × lap length). */
     phraseTotalEighths() {
       return this.config.LAP_EIGHTHS * this.config.PHRASE_LAPS
+    }
+
+    bassTierFromBoring() {
+      const midAt = this.config.BORING_BASELINE_MID_AT != null ? this.config.BORING_BASELINE_MID_AT : 50
+      const sparseAt = this.config.BORING_BASELINE_SPARSE_AT != null ? this.config.BORING_BASELINE_SPARSE_AT : 75
+      if (this.boring >= sparseAt) return 'sparse'
+      if (this.boring >= midAt) return 'mid'
+      return 'funky'
+    }
+
+    bassPatternForTier(tier) {
+      if (tier === 'sparse') return this.config.BASELINE_PATTERN_SPARSE || '0 . . . 0 . . .'
+      if (tier === 'mid') return this.config.BASELINE_PATTERN_MID || '0 . 4 . 0 . 3 .'
+      return this.config.BASELINE_PATTERN_FUNKY || '0 2 4 6 4 2 1 3'
+    }
+
+    parseBassPatternSteps(patternString) {
+      const raw = String(patternString || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+      const steps = []
+      for (let i = 0; i < raw.length; i++) {
+        const token = raw[i]
+        if (token === '.') {
+          steps.push(null)
+          continue
+        }
+        const n = Number(token)
+        steps.push(Number.isFinite(n) ? n : null)
+      }
+      return steps.length > 0 ? steps : [0, null, 4, null]
+    }
+
+    syncBassPattern() {
+      if (!this.bass || this.gameState !== 'playing') return
+      const tier = this.bassTierFromBoring()
+      if (tier === this._bassTier) return
+      this._bassTier = tier
+      const pattern = this.bassPatternForTier(tier)
+      this._bassPatternSteps = this.parseBassPatternSteps(pattern)
+      this._bassStep = 0
+      if (this._debugBass) console.log('[BeatSurfer][bass] tier switch', { tier, boring: this.boring, pattern, steps: this._bassPatternSteps })
+    }
+
+    playBassAtStep(time) {
+      if (!this.bass || this.gameState !== 'playing') return
+      if (!Array.isArray(this._bassPatternSteps) || this._bassPatternSteps.length === 0) return
+      const stepVal = this._bassPatternSteps[this._bassStep % this._bassPatternSteps.length]
+      this._bassStep++
+      if (stepVal == null) return
+      const rowCount = (this.config && this.config.GRID_ROWS) || 7
+      const idx = ((Math.round(stepVal) % rowCount) + rowCount) % rowCount
+      const midi = this.midiForNoteIndex(idx) - 12
+      this.bass.triggerAttackRelease(midi, 95, 0.18, time)
+      if (this._debugBass) console.log('[BeatSurfer][bass] hit', { idx, midi, step: this._bassStep })
     }
 
     /** Position within one 8-eighth lap (0–7). */
@@ -346,6 +451,8 @@
 
       // Passive drain; drum pattern tier follows health bands.
       this.health = Math.max(0, this.health - this.config.HEALTH_DECAY_PER_EIGHTH)
+      this.syncBassPattern()
+      this.playBassAtStep(time)
 
       const tier = this.health > this.config.DRUM_HEALTH_MID_THRESHOLD ? 'good'
         : this.health > this.config.DRUM_HEALTH_BAD_THRESHOLD ? 'mid'
@@ -457,6 +564,12 @@
 
       this._drumTier = 'good'
       if (this.d) this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
+      this._bassTier = null
+      this._bassPatternSteps = []
+      this._bassStep = 0
+      if (this.bass) this.bass.stop('all')
+      if (this._bassTestLoop) this._bassTestLoop.stop()
+      if (this._debugBass && this.bass) console.log('[BeatSurfer][bass] reset at start')
 
       if (this.loop) this.loop.stop()
       this.loop = new this.Tone.Loop((time) => this.onEighth(time), '8n')
@@ -482,6 +595,12 @@
       if (this.displayInterval) clearInterval(this.displayInterval)
 
       this.s.play('7 4 2 0')
+      if (this.bass) {
+        this.bass.stop('all')
+        this._bassTier = null
+        if (this._debugBass) console.log('[BeatSurfer][bass] stopped on game over', { reason })
+      }
+      if (this._bassTestLoop) this._bassTestLoop.stop()
 
       const split = this.splitRole === 'primary' || this.splitRole === 'secondary'
       if (!split) {
