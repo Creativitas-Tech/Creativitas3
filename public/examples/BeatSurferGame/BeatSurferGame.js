@@ -9,6 +9,17 @@
 (() => {
   'use strict'
 
+  const DUO_STATE_KEY = '__beatSurferDuoHarmony'
+
+  /** @returns {{ active: Record<string, boolean>, leaderId: string, lastMidi: Record<string, number> }} */
+  function getBeatSurferDuoState() {
+    if (typeof window === 'undefined') return { active: {}, leaderId: '', lastMidi: {} }
+    if (!window[DUO_STATE_KEY]) {
+      window[DUO_STATE_KEY] = { active: {}, leaderId: '', lastMidi: {} }
+    }
+    return window[DUO_STATE_KEY]
+  }
+
   class BeatSurferGame {
     constructor({ Canvas, Tone, Theory, DrumSampler, Polyphony, Daisy, Reverb, NexusButton, config, util, ui, sequenceGrid, instanceId, splitRole }) {
       // Host element for HUD placement; per-instance in split-screen.
@@ -379,6 +390,120 @@
       return (d != null ? d : 0) + 60
     }
 
+    _isSplitPane() {
+      return this.splitRole === 'primary' || this.splitRole === 'secondary'
+    }
+
+    _duoHarmonyEnabled() {
+      return this._isSplitPane() && this.config && this.config.DUO_HARMONIZE_ENABLED !== false
+    }
+
+    /** Stable id for shared duo state (split uses P1 / P2 from HTML). */
+    _duoInstanceKey() {
+      if (this.instanceId) return this.instanceId
+      if (this.splitRole === 'primary') return 'P1'
+      if (this.splitRole === 'secondary') return 'P2'
+      return 'single'
+    }
+
+    _duoActiveIds(st) {
+      return Object.keys(st.active).filter((k) => st.active[k])
+    }
+
+    _duoSortInstanceIds(ids) {
+      const order = this.config.DUO_LEADER_INSTANCE_ORDER || ['P1', 'P2']
+      return ids.slice().sort((a, b) => {
+        const ia = order.indexOf(a)
+        const ib = order.indexOf(b)
+        const ra = ia === -1 ? 999 : ia
+        const rb = ib === -1 ? 999 : ib
+        return ra - rb
+      })
+    }
+
+    /**
+     * Pick / refresh leader: if none or leader left, first active in DUO_LEADER_INSTANCE_ORDER wins.
+     * With one active player they become leader (no follower → no harmonization).
+     */
+    _duoReconcileLeader() {
+      if (!this._duoHarmonyEnabled()) return
+      const st = getBeatSurferDuoState()
+      const ids = this._duoSortInstanceIds(this._duoActiveIds(st))
+      if (ids.length === 0) {
+        st.leaderId = ''
+        return
+      }
+      if (!st.leaderId || !st.active[st.leaderId]) {
+        st.leaderId = ids[0]
+      }
+    }
+
+    _duoRegisterActive() {
+      if (!this._duoHarmonyEnabled()) return
+      const st = getBeatSurferDuoState()
+      st.active[this._duoInstanceKey()] = true
+      this._duoReconcileLeader()
+    }
+
+    _duoUnregisterActive() {
+      if (!this._duoHarmonyEnabled()) return
+      const st = getBeatSurferDuoState()
+      const key = this._duoInstanceKey()
+      delete st.active[key]
+      if (st.leaderId === key) st.leaderId = ''
+      this._duoReconcileLeader()
+    }
+
+    _duoAmIFollower() {
+      if (!this._duoHarmonyEnabled()) return false
+      const st = getBeatSurferDuoState()
+      const me = this._duoInstanceKey()
+      if (!st.active[me]) return false
+      if (this._duoActiveIds(st).length < 2) return false
+      return !!(st.leaderId && st.leaderId !== me)
+    }
+
+    /** Natural row MIDI for this instance (leader line for harmonizer). */
+    _onMelodyRowPlayed(i) {
+      if (!this._duoHarmonyEnabled()) return
+      const st = getBeatSurferDuoState()
+      st.lastMidi[this._duoInstanceKey()] = this.midiForNoteIndex(i)
+    }
+
+    _closestHarmonyMidi(leaderMidi, rowIndex) {
+      const intervals = (this.config.DUO_HARMONY_INTERVALS_SEMITONES && this.config.DUO_HARMONY_INTERVALS_SEMITONES.length)
+        ? this.config.DUO_HARMONY_INTERVALS_SEMITONES
+        : [3, 4, 5, 7, 9]
+      const natural = this.midiForNoteIndex(rowIndex)
+      const base = (typeof leaderMidi === 'number' && Number.isFinite(leaderMidi)) ? leaderMidi : 60
+      let best = natural
+      let bestDist = Infinity
+      for (let ii = 0; ii < intervals.length; ii++) {
+        const semi = intervals[ii]
+        for (let s = 0; s < 2; s++) {
+          const signed = s === 0 ? semi : -semi
+          const root = base + signed
+          for (let o = -4; o <= 4; o++) {
+            const cand = root + o * 12
+            const dist = Math.abs(cand - natural)
+            if (dist < bestDist) {
+              bestDist = dist
+              best = cand
+            }
+          }
+        }
+      }
+      return Math.round(best)
+    }
+
+    /** Melody synth pitch for pad row i (follower snaps to harmony of leader’s last natural pitch). */
+    melodyMidiForRowIndex(i) {
+      if (!this._duoAmIFollower()) return this.midiForNoteIndex(i)
+      const st = getBeatSurferDuoState()
+      const lm = st.lastMidi[st.leaderId]
+      return this._closestHarmonyMidi(lm, i)
+    }
+
     /**
      * Nexus grid: full change payload (advisor pattern — branch on v.state).
      */
@@ -393,14 +518,16 @@
     /** Pad down: legato attack then same rules as onInput (no extra one-shot note). */
     onGridPress(i) {
       if (this.gameState !== 'playing') return
-      this.s.triggerAttack(this.midiForNoteIndex(i), 100, this.Tone.now())
+      const midi = this.melodyMidiForRowIndex(i)
+      this.s.triggerAttack(midi, 100, this.Tone.now())
       this.onInput(i, { fromGrid: true })
+      this._onMelodyRowPlayed(i)
     }
 
     /** Pad up: release envelope only. */
     onGridRelease(i) {
       if (this.gameState !== 'playing') return
-      this.s.triggerRelease(this.midiForNoteIndex(i))
+      this.s.triggerRelease(this.melodyMidiForRowIndex(i))
     }
 
     /**
@@ -428,7 +555,8 @@
       if (register && i === exp) {
         if (!fromGrid) {
           const t = this.Tone.now()
-          this.s.triggerAttackRelease(this.config.MELODY_DEGREES[i] + 60, 100, 0.1, t)
+          this.s.triggerAttackRelease(this.melodyMidiForRowIndex(i), 100, 0.1, t)
+          this._onMelodyRowPlayed(i)
         }
         // this.s.play([this.config.MELODY_DEGREES[i]], '16n')
         this.health = Math.min(100, this.health + this.config.HEALTH_PER_CORRECT_NOTE)
@@ -448,12 +576,15 @@
       if (failedAttempt && this.applyHealthLossForFailedAttempt()) return
 
       if (!fromGrid) {
+        const t = this.Tone.now()
+        const mid = this.melodyMidiForRowIndex(i)
         if (wrongPitchInWindow) {
-          this.s.play([this.config.MELODY_DEGREES[i] + 7], '32n')
+          this.s.triggerAttackRelease(mid + 7, 90, 0.08, t)
         } else {
-          this.s.play([this.config.MELODY_DEGREES[i]], '32n')
+          this.s.triggerAttackRelease(mid, 90, 0.08, t)
         }
       }
+      this._onMelodyRowPlayed(i)
 
       if (onTime) {
         this.boring = Math.max(0, this.boring - this.config.BORING_DOWN_ON_VARY_NOTE)
@@ -600,6 +731,8 @@
 
       this.lastBeatTime = this.Tone.now()
 
+      this._duoRegisterActive()
+
       this.Theory.tempo = this.config.DEFAULT_BPM
       this.Tone.Transport.bpm.value = this.config.DEFAULT_BPM
       // Split-screen: one shared Tone.Transport; never clear() (would drop the other player's Tone.Loop). Single-player: clear for a clean restart.
@@ -634,6 +767,8 @@
      * Split: only primary stops Transport on manual stop; primary always stops drums when present.
      */
     stop(reason) {
+      this._duoUnregisterActive()
+
       this.gameOverReason = reason
       this.gameState = 'gameOver'
       this.updateDisplay()

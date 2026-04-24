@@ -71,6 +71,16 @@
     NEXUS_BUTTON_WIDTH: 96,
     NEXUS_BUTTON_HEIGHT: 80,
 
+    /**
+     * Split-screen duo: follower’s *sound* snaps to a harmony of the leader’s last natural row pitch.
+     * Scoring still uses the pressed grid index vs the phrase target (unchanged).
+     */
+    DUO_HARMONIZE_ENABLED: true,
+    /** Semitone offsets from leader MIDI (± each are tried; closest to natural pad pitch wins). */
+    DUO_HARMONY_INTERVALS_SEMITONES: [3, 4, 5, 7, 8, 9],
+    /** Leader tie-break when both register at once: lower index wins. */
+    DUO_LEADER_INSTANCE_ORDER: ['P1', 'P2'],
+
     NOTE_COLORS,
     NOTE_COLORS_RGB,
   })
