@@ -27,12 +27,14 @@
     BORING_BASELINE_MID_AT: 50,
     BORING_BASELINE_SPARSE_AT: 75,
     /** Background baseline settings (low boring = funky, high boring = sparse). */
-    BASELINE_SUBDIVISION: '8n',
-    BASELINE_GAIN: 0.34,
+    BASELINE_SUBDIVISION: '32n',
+    BASELINE_GAIN: 1.0,
+    /** Extra semitone drop from mapped melody note to place line in bass register. */
+    BASELINE_OCTAVE_DROP_SEMITONES: 24,
     /** Patterns use grid-note indices 0..6 ('.' = rest), one step per BASELINE_SUBDIVISION. */
-    BASELINE_PATTERN_FUNKY: '0 2 4 6 4 2 1 3',
-    BASELINE_PATTERN_MID: '0 . 4 . 0 . 3 .',
-    BASELINE_PATTERN_SPARSE: '0 . . . 0 . . .',
+    BASELINE_PATTERN_FUNKY: '0 . 3 2 . 4 . 1 5 . 2 . 6 4 . 3 0 . 4 . 2 5 . 1 6 . 3 . 4 2 . 5',
+    BASELINE_PATTERN_MID: '0 . . 3 . . 0 . 4 . . 2 . . 0 . 3 . . 0 . 4 . . 2 . . 0 . 3 . .',
+    BASELINE_PATTERN_SPARSE: '0 . . . . . . . . . . . . . . . 0 . . . . . . . . . . . . . . .',
 
     // Phrase content: random length TARGET_LEN, note pool TARGET_NOTE_COUNT; bar length for UI.
     PLAYER_MAX: 20,

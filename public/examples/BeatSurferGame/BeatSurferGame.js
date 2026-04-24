@@ -35,6 +35,7 @@
       this.s = null // Polyphony melody
       this.bass = null // Polyphony bass bed (disabled for split secondary)
       this.bassGain = null
+      this.bassFilter = null
       this._bassTier = null
       this._bassPatternSteps = []
       this._bassStep = 0
@@ -130,8 +131,14 @@
       if (ownsBass) {
         const bassGainVal = this.config.BASELINE_GAIN != null ? this.config.BASELINE_GAIN : 0.34
         this.bassGain = new this.Tone.Multiply(bassGainVal)
+        this.bassFilter = new this.Tone.Filter({
+          type: 'lowpass',
+          cutoff: 260,
+          Q: 1.1,
+        })
         this.bass = new this.Polyphony(this.Daisy)
-        this.bass.connect(this.bassGain)
+        this.bass.connect(this.bassFilter)
+        this.bassFilter.connect(this.bassGain)
         this.bassGain.connect(this.output)
         if (this._debugBass) console.log('[BeatSurfer][bass] init ok', { instanceId: this.instanceId || 'single', bassGainVal })
       }
@@ -174,7 +181,10 @@
             if (stepVal == null) return
             const rowCount = (this.config && this.config.GRID_ROWS) || 7
             const idx = ((Math.round(stepVal) % rowCount) + rowCount) % rowCount
-            const midi = this.midiForNoteIndex(idx) - 12
+            const bassDrop = this.config.BASELINE_OCTAVE_DROP_SEMITONES != null
+              ? this.config.BASELINE_OCTAVE_DROP_SEMITONES
+              : 24
+            const midi = this.midiForNoteIndex(idx) - bassDrop
             this.bass.triggerAttackRelease(midi, 110, 0.2, t)
           }, sub)
           this._bassTestLoop.start(0)
@@ -315,8 +325,11 @@
       if (stepVal == null) return
       const rowCount = (this.config && this.config.GRID_ROWS) || 7
       const idx = ((Math.round(stepVal) % rowCount) + rowCount) % rowCount
-      const midi = this.midiForNoteIndex(idx) - 12
-      this.bass.triggerAttackRelease(midi, 95, 0.18, time)
+      const bassDrop = this.config.BASELINE_OCTAVE_DROP_SEMITONES != null
+        ? this.config.BASELINE_OCTAVE_DROP_SEMITONES
+        : 24
+      const midi = this.midiForNoteIndex(idx) - bassDrop
+      this.bass.triggerAttackRelease(midi, 120, 0.24, time)
       if (this._debugBass) console.log('[BeatSurfer][bass] hit', { idx, midi, step: this._bassStep })
     }
 
