@@ -28,14 +28,13 @@ Theory.tempo = tempo
 let output = new Tone.Multiply(.1).toDestination()
 let ptsPerLevel = 4
 
-
 // Instruments
 let s = new Twinkle() // Player 1 Synth
 let s1 = new Twinkle() // Player 2 Synth
 let pad = new Polyphony(Twinkle) // Player 2 Synth
 let d = new DrumSampler()
 let d1 = new DrumSampler()
-let verb = new Reverb()
+let verb = new Delay()
 s.connect(output)
 s1.connect(output)
 d.connect(output)
@@ -74,8 +73,9 @@ pad.level = .05
 pad.output.factor.value = .1
 verb.delayTime = .1
 //
-verb.type = 'hall'
 verb.level = .3
+verb.time = 60/Theory.tempo
+verb.feedback = .7
 
 // ── Game Constants & Variables ────────────────────────────────────────────────
 let p1 = .50 // Player 1 paddle Y position
@@ -178,13 +178,13 @@ function getPitchFromPosition(yPos) {
 let note = []
 function getchord2(){
   console.log(seq1, seq2)
-  if(seq1.length == 8){
+  if(seq1.length == ptsPerLevel){
     for(let i=0; i<seq1.length; i++){
       let t = seq1[i].substring(0,1)
       note.push(t)
     }
   }
-  if(seq2.length == 8){
+  if(seq2.length == ptsPerLevel){
     for(let i=0; i<seq2.length; i++){
       let t = seq2[i].substring(0,1)
       note.push(t)
@@ -200,16 +200,14 @@ function getchord2(){
   })
   const sorted = Object.entries(freqMap).sort((a, b) => b[1] - a[1])
   const top3 = '[' + sorted.slice(0, 3).map(item => item[0])+']'
-  console.log(top3)
+  console.log('top3', top3, sorted)
   pad.sequence([top3, '.','.','.'])
 }
 
 let seq1 = []
 let seq2 = []
-let indseq1 = 0
-let indseq2 = 0
 const MAX_BOUNCE_ANGLE = Math.PI / 3; // 45 degrees in radians
-const BALL_SPEED = 0.005; // Keep this constant
+let BALL_SPEED = 0.005; // Keep this constant
 // ── Main Game Loop ─────────────────────────────────────────────────────────────
 let loop = new Tone.Loop(time => {
   let ball = buttons[0];
@@ -227,29 +225,17 @@ let loop = new Tone.Loop(time => {
   
   // 2. Left Paddle (Player 1) Collision
   if(ball.x <= Slide1.x + .02 && dx < 0) {
-    //console.log(ball.y - p1/100)
     if (Math.abs(ball.y - p1/100) <= paddleHeight/2) {
       console.log(ball.y - p1/100)
-     // dx = Math.abs(dx) + dxIncrement; // Bounce back and speed up slightly
+      let relativeIntersectY = (p1/100) - ball.y;
+      let normalizedRelativeIntersectionY = (relativeIntersectY / (paddleHeight / 2));
       
-
-    let relativeIntersectY = (p1/100) - ball.y;
-    let normalizedRelativeIntersectionY = (relativeIntersectY / (paddleHeight / 2));
-    
-    // 2. Calculate the bounce angle 
-    // If it hits the center, angle is 0 (perfectly horizontal)
-    let bounceAngle = normalizedRelativeIntersectionY * MAX_BOUNCE_ANGLE;
-    
-    // 3. Update velocities using Trigonometry
-    // We use Math.abs for dx to ensure it always goes "away" from the paddle (Right for P1)
-    dx = Math.cos(bounceAngle) * BALL_SPEED;
-    dy = -Math.sin(bounceAngle) * BALL_SPEED; // Negative because Y is usually inverted in Canvas
-
-    // Optional: Increment the base speed slightly each hit
-    BALL_SPEED += dxIncrement;
-
-
-
+      // 2. Calculate the bounce angle 
+      let bounceAngle = normalizedRelativeIntersectionY * MAX_BOUNCE_ANGLE;
+      // 3. Update velocities using Trigonometry
+      dx = Math.cos(bounceAngle) * BALL_SPEED;
+      dy = -Math.sin(bounceAngle) * BALL_SPEED; // Negative because Y is usually inverted in Canvas
+      BALL_SPEED += dxIncrement;
 
       s.play(getPitchFromPosition(p1)); // Play mapped pitch
       seq1.push(getPitchFromPosition(p1))
@@ -259,7 +245,6 @@ let loop = new Tone.Loop(time => {
         s.seq[0].octave = -1
         s.seq[1].velocity = 60
         getchord2()
-        indseq1 = 0
       }
     } else if (ball.x <= 0) {
       // Missed: Player 2 Scores
@@ -276,35 +261,24 @@ let loop = new Tone.Loop(time => {
   // 3. Right Paddle (Player 2) Collision
   if(ball.x >= Slide2.x - .02 && dx > 0) {
     //console.log(ball.y - p1/100)
-    if (Math.abs(ball.y - p2/100) <= paddleHeight/2) {
-      //dx = -(Math.abs(dx) + dxIncrement); // Bounce back and speed up slightly
-      
-    let relativeIntersectY = (p2/100) - ball.y;
-    let normalizedRelativeIntersectionY = (relativeIntersectY / (paddleHeight / 2));
-    
-    // 2. Calculate the bounce angle 
-    // If it hits the center, angle is 0 (perfectly horizontal)
-    let bounceAngle = normalizedRelativeIntersectionY * MAX_BOUNCE_ANGLE;
-    
-    // 3. Update velocities using Trigonometry
-    // We use Math.abs for dx to ensure it always goes "away" from the paddle (Right for P1)
-    dx = -Math.cos(bounceAngle) * BALL_SPEED;
-    dy = -Math.sin(bounceAngle) * BALL_SPEED; // Negative because Y is usually inverted in Canvas
-
-    // Optional: Increment the base speed slightly each hit
-    BALL_SPEED += dxIncrement;
-
+      if (Math.abs(ball.y - p2/100) <= paddleHeight/2) {
+      let relativeIntersectY = (p2/100) - ball.y;
+      let normalizedRelativeIntersectionY = (relativeIntersectY / (paddleHeight / 2));
+      // 2. Calculate the bounce angle 
+      let bounceAngle = normalizedRelativeIntersectionY * MAX_BOUNCE_ANGLE;
+      // 3. Update velocities using Trigonometry
+      dx = -Math.cos(bounceAngle) * BALL_SPEED;
+      dy = -Math.sin(bounceAngle) * BALL_SPEED; // Negative because Y is usually inverted in Canvas
+      BALL_SPEED += dxIncrement;
 
       s1.play(getPitchFromPosition(p2)); // Play mapped pitch
       seq2.push(getPitchFromPosition(p2))
       if(seq2.length%ptsPerLevel == 0 && seq2.length > 0){
-        
         s1.sequence(seq2.slice(-ptsPerLevel),'8n', 1)
         s1.seq[1].octave = 1
         s1.seq[0].octave = -1
         s1.seq[1].velocity = 30
         getchord2()
-        indseq2 = 0
       }
     } else if (ball.x >= 1) {
       // Missed: Player 1 Scores
@@ -315,7 +289,6 @@ let loop = new Tone.Loop(time => {
       updateScore('p1');
       resetBall();
     }
-
     checkLevel()
   }
 }, '128n') // Use a fast subdivision for smoother UI tick-rate
@@ -328,8 +301,8 @@ loop.start();
 let curLevel = 0
 let checkLevel = ()=>{
   let sum = seq1.length + seq2.length
-  if( Math.floor(sum/8) != curLevel) {
-    curLevel = Math.floor(sum/8)
+  if( Math.floor(sum/ptsPerLevel) != curLevel) {
+    curLevel = Math.floor(sum/ptsPerLevel)
     console.log('level', curLevel, seq1, seq2)
     if( curLevel == 0) section1()
     if( curLevel == 2) section2()

@@ -9,6 +9,17 @@
 (() => {
   'use strict'
 
+  const DUO_STATE_KEY = '__beatSurferDuoHarmony'
+
+  /** @returns {{ active: Record<string, boolean>, leaderId: string, lastMidi: Record<string, number> }} */
+  function getBeatSurferDuoState() {
+    if (typeof window === 'undefined') return { active: {}, leaderId: '', lastMidi: {} }
+    if (!window[DUO_STATE_KEY]) {
+      window[DUO_STATE_KEY] = { active: {}, leaderId: '', lastMidi: {} }
+    }
+    return window[DUO_STATE_KEY]
+  }
+
   class BeatSurferGame {
     constructor({ Canvas, Tone, Theory, DrumSampler, Polyphony, Daisy, Reverb, NexusButton, config, util, ui, sequenceGrid, instanceId, splitRole }) {
       // Host element for HUD placement; per-instance in split-screen.
@@ -33,6 +44,16 @@
       this.verb = null
       this.d = null // DrumSampler; null for split secondary
       this.s = null // Polyphony melody
+      this.bass = null // Polyphony bass bed (disabled for split secondary)
+      this.bassGain = null
+      this.bassFilter = null
+      this._bassTier = null
+      this._bassPatternSteps = []
+      this._bassStep = 0
+      this._bassTestLoop = null
+      this._debugBass = false
+      this._warnedDrumsNotReady = false
+      this._pendingDrumRetry = null
 
       this.loop = null // Tone.Loop → onEighth
       this.displayInterval = null // UI refresh timer
@@ -88,6 +109,9 @@
       this._skipNextPhraseAdvance = false
       this.nextTargetSequence = []
       this._drumTier = 'good'
+      this._bassTier = null
+      this._bassPatternSteps = []
+      this._bassStep = 0
     }
 
     /** Build audio graph, create Nexus pads in #beatSurfer{instanceId}GridRow, register keys, start(). */
@@ -114,6 +138,21 @@
       this.s.connect(this.output)
       this.s.connect(this.verb)
       this.verb.connect(this.output)
+      const ownsBass = this.splitRole !== 'secondary'
+      if (ownsBass) {
+        const bassGainVal = this.config.BASELINE_GAIN != null ? this.config.BASELINE_GAIN : 0.34
+        this.bassGain = new this.Tone.Multiply(bassGainVal)
+        this.bassFilter = new this.Tone.Filter({
+          type: 'lowpass',
+          cutoff: 260,
+          Q: 1.1,
+        })
+        this.bass = new this.Polyphony(this.Daisy)
+        this.bass.connect(this.bassFilter)
+        this.bassFilter.connect(this.bassGain)
+        this.bassGain.connect(this.output)
+        if (this._debugBass) console.log('[BeatSurfer][bass] init ok', { instanceId: this.instanceId || 'single', bassGainVal })
+      }
 
       const gridRow = document.getElementById('beatSurfer' + this.instanceId + 'GridRow')
       if (gridRow && typeof this.ui.createGridButtons === 'function') {
@@ -137,6 +176,39 @@
       if (typeof window.updateBPM === 'function') window.updateBPM(DEFAULT_BPM)
       this.Theory.tempo = DEFAULT_BPM
       this.Tone.Transport.bpm.value = DEFAULT_BPM
+
+      if (ownsBass) {
+        // Temporary debug helpers: call from console to test audio path directly.
+        window.beatSurferTestBass = (pattern, subdivision) => {
+          const p = pattern || '0 2 4 6 4 2 1 3'
+          const sub = subdivision || (this.config.BASELINE_SUBDIVISION || '8n')
+          if (!this.bass) return console.warn('[BeatSurfer][bass] test skipped: no bass instance')
+          this._bassPatternSteps = this.parseBassPatternSteps(p)
+          this._bassStep = 0
+          if (this._bassTestLoop) this._bassTestLoop.stop()
+          this._bassTestLoop = new this.Tone.Loop((t) => {
+            const stepVal = this._bassPatternSteps[this._bassStep % this._bassPatternSteps.length]
+            this._bassStep++
+            if (stepVal == null) return
+            const rowCount = (this.config && this.config.GRID_ROWS) || 7
+            const idx = ((Math.round(stepVal) % rowCount) + rowCount) % rowCount
+            const bassDrop = this.config.BASELINE_OCTAVE_DROP_SEMITONES != null
+              ? this.config.BASELINE_OCTAVE_DROP_SEMITONES
+              : 24
+            const midi = this.midiForNoteIndex(idx) - bassDrop
+            this.bass.triggerAttackRelease(midi, 110, 0.2, t)
+          }, sub)
+          this._bassTestLoop.start(0)
+          this.Tone.Transport.start()
+          console.log('[BeatSurfer][bass] test start', { p, sub, steps: this._bassPatternSteps })
+        }
+        window.beatSurferStopBass = () => {
+          if (!this.bass) return
+          if (this._bassTestLoop) this._bassTestLoop.stop()
+          this.bass.stop('all')
+          console.log('[BeatSurfer][bass] test stop')
+        }
+      }
 
       this.start()
     }
@@ -179,6 +251,97 @@
     /** Eighth-note steps in one full phrase (laps × lap length). */
     phraseTotalEighths() {
       return this.config.LAP_EIGHTHS * this.config.PHRASE_LAPS
+    }
+
+    bassTierFromBoring() {
+      const midAt = this.config.BORING_BASELINE_MID_AT != null ? this.config.BORING_BASELINE_MID_AT : 50
+      const sparseAt = this.config.BORING_BASELINE_SPARSE_AT != null ? this.config.BORING_BASELINE_SPARSE_AT : 75
+      if (this.boring >= sparseAt) return 'sparse'
+      if (this.boring >= midAt) return 'mid'
+      return 'funky'
+    }
+
+    bassPatternForTier(tier) {
+      if (tier === 'sparse') return this.config.BASELINE_PATTERN_SPARSE || '0 . . . 0 . . .'
+      if (tier === 'mid') return this.config.BASELINE_PATTERN_MID || '0 . 4 . 0 . 3 .'
+      return this.config.BASELINE_PATTERN_FUNKY || '0 2 4 6 4 2 1 3'
+    }
+
+    parseBassPatternSteps(patternString) {
+      const raw = String(patternString || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+      const steps = []
+      for (let i = 0; i < raw.length; i++) {
+        const token = raw[i]
+        if (token === '.') {
+          steps.push(null)
+          continue
+        }
+        const n = Number(token)
+        steps.push(Number.isFinite(n) ? n : null)
+      }
+      return steps.length > 0 ? steps : [0, null, 4, null]
+    }
+
+    drumsReady() {
+      if (!this.d) return false
+      const voices = ['kick', 'snare', 'hat', 'p1', 'p2', 'p3']
+      for (let i = 0; i < voices.length; i++) {
+        const v = this.d[voices[i]]
+        const b = v && v.voice ? v.voice.buffer : null
+        if (!b) return false
+        if (typeof b.loaded === 'boolean' && !b.loaded) return false
+        const dur = typeof b.duration === 'number' ? b.duration : 0
+        if (!(dur > 0)) return false
+      }
+      return true
+    }
+
+    safeDrumSequence(pattern, subdivision) {
+      if (!this.d) return
+      if (this.drumsReady()) {
+        this.d.sequence(pattern, subdivision)
+        this._warnedDrumsNotReady = false
+        return
+      }
+      if (!this._warnedDrumsNotReady) {
+        this._warnedDrumsNotReady = true
+        console.warn('[BeatSurfer] drums not ready yet, deferring drum sequence')
+      }
+      if (this._pendingDrumRetry) clearTimeout(this._pendingDrumRetry)
+      this._pendingDrumRetry = setTimeout(() => {
+        if (this.gameState === 'gameOver') return
+        this.safeDrumSequence(pattern, subdivision)
+      }, 250)
+    }
+
+    syncBassPattern() {
+      if (!this.bass || this.gameState !== 'playing') return
+      const tier = this.bassTierFromBoring()
+      if (tier === this._bassTier) return
+      this._bassTier = tier
+      const pattern = this.bassPatternForTier(tier)
+      this._bassPatternSteps = this.parseBassPatternSteps(pattern)
+      this._bassStep = 0
+      if (this._debugBass) console.log('[BeatSurfer][bass] tier switch', { tier, boring: this.boring, pattern, steps: this._bassPatternSteps })
+    }
+
+    playBassAtStep(time) {
+      if (!this.bass || this.gameState !== 'playing') return
+      if (!Array.isArray(this._bassPatternSteps) || this._bassPatternSteps.length === 0) return
+      const stepVal = this._bassPatternSteps[this._bassStep % this._bassPatternSteps.length]
+      this._bassStep++
+      if (stepVal == null) return
+      const rowCount = (this.config && this.config.GRID_ROWS) || 7
+      const idx = ((Math.round(stepVal) % rowCount) + rowCount) % rowCount
+      const bassDrop = this.config.BASELINE_OCTAVE_DROP_SEMITONES != null
+        ? this.config.BASELINE_OCTAVE_DROP_SEMITONES
+        : 24
+      const midi = this.midiForNoteIndex(idx) - bassDrop
+      this.bass.triggerAttackRelease(midi, 120, 0.24, time)
+      if (this._debugBass) console.log('[BeatSurfer][bass] hit', { idx, midi, step: this._bassStep })
     }
 
     /** Position within one 8-eighth lap (0–7). */
@@ -227,6 +390,120 @@
       return (d != null ? d : 0) + 60
     }
 
+    _isSplitPane() {
+      return this.splitRole === 'primary' || this.splitRole === 'secondary'
+    }
+
+    _duoHarmonyEnabled() {
+      return this._isSplitPane() && this.config && this.config.DUO_HARMONIZE_ENABLED !== false
+    }
+
+    /** Stable id for shared duo state (split uses P1 / P2 from HTML). */
+    _duoInstanceKey() {
+      if (this.instanceId) return this.instanceId
+      if (this.splitRole === 'primary') return 'P1'
+      if (this.splitRole === 'secondary') return 'P2'
+      return 'single'
+    }
+
+    _duoActiveIds(st) {
+      return Object.keys(st.active).filter((k) => st.active[k])
+    }
+
+    _duoSortInstanceIds(ids) {
+      const order = this.config.DUO_LEADER_INSTANCE_ORDER || ['P1', 'P2']
+      return ids.slice().sort((a, b) => {
+        const ia = order.indexOf(a)
+        const ib = order.indexOf(b)
+        const ra = ia === -1 ? 999 : ia
+        const rb = ib === -1 ? 999 : ib
+        return ra - rb
+      })
+    }
+
+    /**
+     * Pick / refresh leader: if none or leader left, first active in DUO_LEADER_INSTANCE_ORDER wins.
+     * With one active player they become leader (no follower → no harmonization).
+     */
+    _duoReconcileLeader() {
+      if (!this._duoHarmonyEnabled()) return
+      const st = getBeatSurferDuoState()
+      const ids = this._duoSortInstanceIds(this._duoActiveIds(st))
+      if (ids.length === 0) {
+        st.leaderId = ''
+        return
+      }
+      if (!st.leaderId || !st.active[st.leaderId]) {
+        st.leaderId = ids[0]
+      }
+    }
+
+    _duoRegisterActive() {
+      if (!this._duoHarmonyEnabled()) return
+      const st = getBeatSurferDuoState()
+      st.active[this._duoInstanceKey()] = true
+      this._duoReconcileLeader()
+    }
+
+    _duoUnregisterActive() {
+      if (!this._duoHarmonyEnabled()) return
+      const st = getBeatSurferDuoState()
+      const key = this._duoInstanceKey()
+      delete st.active[key]
+      if (st.leaderId === key) st.leaderId = ''
+      this._duoReconcileLeader()
+    }
+
+    _duoAmIFollower() {
+      if (!this._duoHarmonyEnabled()) return false
+      const st = getBeatSurferDuoState()
+      const me = this._duoInstanceKey()
+      if (!st.active[me]) return false
+      if (this._duoActiveIds(st).length < 2) return false
+      return !!(st.leaderId && st.leaderId !== me)
+    }
+
+    /** Natural row MIDI for this instance (leader line for harmonizer). */
+    _onMelodyRowPlayed(i) {
+      if (!this._duoHarmonyEnabled()) return
+      const st = getBeatSurferDuoState()
+      st.lastMidi[this._duoInstanceKey()] = this.midiForNoteIndex(i)
+    }
+
+    _closestHarmonyMidi(leaderMidi, rowIndex) {
+      const intervals = (this.config.DUO_HARMONY_INTERVALS_SEMITONES && this.config.DUO_HARMONY_INTERVALS_SEMITONES.length)
+        ? this.config.DUO_HARMONY_INTERVALS_SEMITONES
+        : [3, 4, 5, 7, 9]
+      const natural = this.midiForNoteIndex(rowIndex)
+      const base = (typeof leaderMidi === 'number' && Number.isFinite(leaderMidi)) ? leaderMidi : 60
+      let best = natural
+      let bestDist = Infinity
+      for (let ii = 0; ii < intervals.length; ii++) {
+        const semi = intervals[ii]
+        for (let s = 0; s < 2; s++) {
+          const signed = s === 0 ? semi : -semi
+          const root = base + signed
+          for (let o = -4; o <= 4; o++) {
+            const cand = root + o * 12
+            const dist = Math.abs(cand - natural)
+            if (dist < bestDist) {
+              bestDist = dist
+              best = cand
+            }
+          }
+        }
+      }
+      return Math.round(best)
+    }
+
+    /** Melody synth pitch for pad row i (follower snaps to harmony of leader’s last natural pitch). */
+    melodyMidiForRowIndex(i) {
+      if (!this._duoAmIFollower()) return this.midiForNoteIndex(i)
+      const st = getBeatSurferDuoState()
+      const lm = st.lastMidi[st.leaderId]
+      return this._closestHarmonyMidi(lm, i)
+    }
+
     /**
      * Nexus grid: full change payload (advisor pattern — branch on v.state).
      */
@@ -241,14 +518,16 @@
     /** Pad down: legato attack then same rules as onInput (no extra one-shot note). */
     onGridPress(i) {
       if (this.gameState !== 'playing') return
-      this.s.triggerAttack(this.midiForNoteIndex(i), 100, this.Tone.immediate())
+      const midi = this.melodyMidiForRowIndex(i)
+      this.s.triggerAttack(midi, 100, this.Tone.now())
       this.onInput(i, { fromGrid: true })
+      this._onMelodyRowPlayed(i)
     }
 
     /** Pad up: release envelope only. */
     onGridRelease(i) {
       if (this.gameState !== 'playing') return
-      this.s.triggerRelease(this.midiForNoteIndex(i))
+      this.s.triggerRelease(this.melodyMidiForRowIndex(i))
     }
 
     /**
@@ -257,9 +536,9 @@
      * | Situation | Health | Boring | Sound |
      * |-----------|--------|--------|--------|
      * | Correct (on-time, right pitch) | + | + | melody |
-     * | Wrong pitch but on-time (`register` && wrong key) | − failed | − variety | dissonant |
-     * | Expected note exists but not on-time (late/early) | − failed | — | melody |
-     * | No expected note this eighth (odd eighth / rest) | — | — | melody (free play) |
+     * | Wrong pitch but on-time (`register` && wrong key) | − failed | − non-perfect | dissonant |
+     * | Expected note exists but not on-time (late/early) | − failed | − non-perfect | melody |
+     * | No expected note this eighth (odd eighth / rest) | — | − non-perfect | melody (free play) |
      *
      * @param {number} i - note index
      * @param {{ fromGrid?: boolean }} [opts] - grid uses attack/release; skip one-shot synth here
@@ -275,8 +554,9 @@
 
       if (register && i === exp) {
         if (!fromGrid) {
-          this.s.triggerAttackRelease(this.config.MELODY_DEGREES[i] + 60, 100, 0.1, Tone.immediate())
-          console.log(this.config.MELODY_DEGREES[i] + 60, Tone.immediate())
+          const t = this.Tone.now()
+          this.s.triggerAttackRelease(this.melodyMidiForRowIndex(i), 100, 0.1, t)
+          this._onMelodyRowPlayed(i)
         }
         // this.s.play([this.config.MELODY_DEGREES[i]], '16n')
         this.health = Math.min(100, this.health + this.config.HEALTH_PER_CORRECT_NOTE)
@@ -296,18 +576,17 @@
       if (failedAttempt && this.applyHealthLossForFailedAttempt()) return
 
       if (!fromGrid) {
+        const t = this.Tone.now()
+        const mid = this.melodyMidiForRowIndex(i)
         if (wrongPitchInWindow) {
-          this.s.play([this.config.MELODY_DEGREES[i] + 7], '32n')
+          this.s.triggerAttackRelease(mid + 7, 90, 0.08, t)
         } else {
-          this.s.play([this.config.MELODY_DEGREES[i]], '32n')
+          this.s.triggerAttackRelease(mid, 90, 0.08, t)
         }
       }
+      this._onMelodyRowPlayed(i)
 
-      if (onTime) {
-        this.boring = Math.max(0, this.boring - this.config.BORING_DOWN_ON_VARY_NOTE)
-      } else {
-        this.boring = Math.min(100, this.boring + this.config.BORING_UP_ON_OFF_GRID)
-      }
+      this.boring = Math.max(0, this.boring - this.config.BORING_DOWN_ON_VARY_NOTE)
 
       const flashType = wrongPitchInWindow ? 'wrong' : (offTimeButNoteExpected ? 'wrong' : 'neutral')
       this.ui.flashButton({ buttons: this.gridButtons, Canvas: this.Canvas, config: this.config }, i, flashType)
@@ -336,7 +615,7 @@
           this._skipNextPhraseAdvance = true
           this.sequenceBeatsLeft = this.config.LAP_EIGHTHS * this.config.PHRASE_LAPS
           this._drumTier = 'good'
-          if (this.d) this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
+          this.safeDrumSequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
         }
         this.updateDisplay()
         return
@@ -346,6 +625,8 @@
 
       // Passive drain; drum pattern tier follows health bands.
       this.health = Math.max(0, this.health - this.config.HEALTH_DECAY_PER_EIGHTH)
+      this.syncBassPattern()
+      this.playBassAtStep(time)
 
       const tier = this.health > this.config.DRUM_HEALTH_MID_THRESHOLD ? 'good'
         : this.health > this.config.DRUM_HEALTH_BAD_THRESHOLD ? 'mid'
@@ -355,7 +636,7 @@
         const pattern = tier === 'good' ? this.config.DRUM_TRACK_GOOD
           : tier === 'mid' ? this.config.DRUM_TRACK_MID
           : this.config.DRUM_TRACK_BAD
-        this.d.sequence(pattern, this.config.DRUM_SUBDIVISION)
+        this.safeDrumSequence(pattern, this.config.DRUM_SUBDIVISION)
       }
 
       this.beat = (this.beat + 1) % this.config.BEATS_PER_BAR
@@ -446,6 +727,8 @@
 
       this.lastBeatTime = this.Tone.now()
 
+      this._duoRegisterActive()
+
       this.Theory.tempo = this.config.DEFAULT_BPM
       this.Tone.Transport.bpm.value = this.config.DEFAULT_BPM
       // Split-screen: one shared Tone.Transport; never clear() (would drop the other player's Tone.Loop). Single-player: clear for a clean restart.
@@ -456,7 +739,13 @@
       this.Tone.Transport.start()
 
       this._drumTier = 'good'
-      if (this.d) this.d.sequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
+      this.safeDrumSequence(this.config.DRUM_TRACK_GOOD, this.config.DRUM_SUBDIVISION)
+      this._bassTier = null
+      this._bassPatternSteps = []
+      this._bassStep = 0
+      if (this.bass) this.bass.stop('all')
+      if (this._bassTestLoop) this._bassTestLoop.stop()
+      if (this._debugBass && this.bass) console.log('[BeatSurfer][bass] reset at start')
 
       if (this.loop) this.loop.stop()
       this.loop = new this.Tone.Loop((time) => this.onEighth(time), '8n')
@@ -474,6 +763,8 @@
      * Split: only primary stops Transport on manual stop; primary always stops drums when present.
      */
     stop(reason) {
+      this._duoUnregisterActive()
+
       this.gameOverReason = reason
       this.gameState = 'gameOver'
       this.updateDisplay()
@@ -482,6 +773,16 @@
       if (this.displayInterval) clearInterval(this.displayInterval)
 
       this.s.play('7 4 2 0')
+      if (this.bass) {
+        this.bass.stop('all')
+        this._bassTier = null
+        if (this._debugBass) console.log('[BeatSurfer][bass] stopped on game over', { reason })
+      }
+      if (this._bassTestLoop) this._bassTestLoop.stop()
+      if (this._pendingDrumRetry) {
+        clearTimeout(this._pendingDrumRetry)
+        this._pendingDrumRetry = null
+      }
 
       const split = this.splitRole === 'primary' || this.splitRole === 'secondary'
       if (!split) {

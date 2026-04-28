@@ -332,6 +332,7 @@ export class NexusElement{
         this.colorize('fill', this.colors.border)
         this.colorize('accent', this.colors.accent)
         this.colorize('dark', this.colors.text)
+        //this.colorize('dark', this.colors.alt)
     }
 
     set accentColor(color){
@@ -344,6 +345,10 @@ export class NexusElement{
     }
     set textColor(color){
         this.colors['text'] = color
+        this.updateColors()
+    }
+    set altColor(color){
+        this.colors['alt'] = color
         this.updateColors()
     }
 

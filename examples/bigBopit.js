@@ -1,3 +1,12 @@
+//Bopit
+
+let colors = {
+  'border': '#777',
+  'accent': '#FFF',
+  'text': '#000',
+  'alt': '#222'
+  }
+
 let myGame = new Game()
 //
 let mysynth = (val)=>{
@@ -13,6 +22,7 @@ myGame.makeSynth = ()=> mysynth()
 myGame.curPlayer = 0
 
 myGame.numPlayers = 4
+myGame.playersInGame = []
 myGame.playerColors = ['#F00', '#0F0', '#00F', '#0FF']
 myGame.curPlayer = 0
 myGame.points = [0,0,0,0]
@@ -23,7 +33,6 @@ let mydisplay = ()=>{
   const num_rows = 4
   const num_columns = 6
   const button_spacing = 1.2
-  
   
 //
   for(let i=0;i< num_rows*num_columns; i++){
@@ -44,27 +53,54 @@ let mydisplay = ()=>{
 
     console.log(button_offset, y_offset_px)
   }
-  let startB = new NexusTextButton({
-    x:.1, y:.9,size:1, label:'start'
-  })
-    startB.element.on('change', x=> {
-      console.log(x)
-      if(x) myGame.start()
-    })
 
-  return { b, startB }
+    
+
+    let pColors = ['red', 'green', 'blue', 'aqua']
+    let startButtons = []
+    for(let i=0;i<4;i++){
+      startButtons.push(new NexusTextButton({
+        x:Math.floor(i/2)*.85+.025, y:i%2*.6+.1,size:1, label:'JOIN',
+        textColor:'#000', borderColor:myGame.playerColors[i],
+      }))
+      startButtons[i].altText = 'PLAY'
+
+      startButtons[i].element.on('change', x=> {
+      console.log(x)
+      if (x) {
+        if (myGame.playersInGame.includes(i)) {
+          myGame.playersInGame = myGame.playersInGame.filter(player => player !== i);
+        } else {
+          myGame.playersInGame.push(i);
+        }
+        // 2. Check game start condition (e.g., if we now have players)
+        if (myGame.playersInGame.length  == 1) {
+          myGame.init(); 
+        }
+      }
+    })
+    }
+
+  return { b }
 }
 myGame.makeDisplay = ()=> mydisplay()
 
-myGame.init()
+
+//myGame.init()
 
 //
 let userInput = (num,val)=>{
-  // console.log('played', num, val)
+  console.log('played', num, val, myGame.targets)
+
   if(val > 0) {
-    myGame.audio.s.play(expr(i=>myGame.gui.b[num].note-7, (myGame.level_number)%8+1),'16n')
-    myGame.targets = myGame.targets.filter(t => t.num !== num);
-    //myGame.gui.b[num].colorize('accent', myGame.color['default'])
+    const isTarget = myGame.targets.find(t => t.num === num);
+    if(isTarget){
+      const playerID = isTarget.player
+      myGame.audio.s.play(seqs[playerID],'16n', playerID)
+      myGame.targets = myGame.targets.filter(t => t.num !== num);
+      myGame.gui.b[num].borderColor = colors.border
+      console.log(myGame.gui.b[num], colors.border)
+    }
   }
 }
 myGame.onUserInput = userInput
@@ -75,13 +111,13 @@ let onBar = (time)=>{
   if(myGame.curBar%4 == 0){
     myGame.chord = Math.floor(Math.random()*6)
     let root =  myGame.chord
-    myGame.audio.s.sequence([
-      root,
-      root+Math.floor(Math.random()*3*2+4),
-      root+Math.floor(Math.random()*1*2+2),
-      root+Math.floor(Math.random()*3*2+4)
-    ], '8n',1)
-    myGame.audio.s.seq[1].velocity = 60
+    // myGame.audio.s.sequence([
+    //   root,
+    //   root+Math.floor(Math.random()*3*2+4),
+    //   root+Math.floor(Math.random()*1*2+2),
+    //   root+Math.floor(Math.random()*3*2+4)
+    // ], '8n',1)
+    //myGame.audio.s.seq[1].velocity = 60
     myGame.level_number += 0
     myGame.audio.d.sequence(Array.from({length:16},(x,i)=>i%3==0 ? 'O' : '*'))
   }
@@ -100,8 +136,12 @@ myGame.onBeat = (time)=>{
 }
 
 let myFunc = (root)=>{
-  myGame.curPlayer = (myGame.curPlayer+1)%myGame.numPlayers
-  myGame.targets = []
+  myGame.numPlayers= myGame.playersInGame.length
+  console.log(myGame.playersInGame)
+  if( myGame.numPlayers < 1) return
+  myGame.curPlayer = Math.floor(Math.random()*myGame.numPlayers)
+  myGame.curPlayer = myGame.playersInGame[myGame.curPlayer]
+  //myGame.targets = []
   myGame.played = []
   let curNote = Math.floor(Math.random()*23)//*6+root
   let newTarget = {'player':myGame.curPlayer, 'num':curNote}
@@ -113,5 +153,17 @@ myGame.updateTarget = myFunc
 
 myGame.init()
 
+
+
 myGame.updateRate = 4
 // console.log(myGame.updateRate)
+
+const seq1 = [0,1,2,3]
+const seq2 = [4,5,6,7]
+const seq3 = [8,9,10,11]
+const seq4 = [12,13,14,15]
+const seqs = []
+seqs.push(seq1)
+seqs.push(seq2)
+seqs.push(seq3)
+seqs.push(seq4)

@@ -7,6 +7,14 @@ export class NexusButton extends NexusElement {
         this.mode = options.mode ?? 'Button'
     }
 
+    updateColors(){
+        // console.log(this.colors)
+        this.colorize('fill', this.colors.alt)
+        this.colorize('mediumLight', this.colors.border)
+        this.colorize('dark', this.colors.text)
+        this.colorize('accent', this.colors.accent)
+    }
+
     flip(){
         this.element.flip()
     }
