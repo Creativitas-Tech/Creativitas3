@@ -23,6 +23,18 @@
     DRUM_TRACK_BAD:  '[O...][....]',
     DRUM_HEALTH_MID_THRESHOLD: 60,
     DRUM_HEALTH_BAD_THRESHOLD: 30,
+    /** Boring meter thresholds for baseline texture tiers. */
+    BORING_BASELINE_MID_AT: 50,
+    BORING_BASELINE_SPARSE_AT: 75,
+    /** Background baseline settings (low boring = funky, high boring = sparse). */
+    BASELINE_SUBDIVISION: '32n',
+    BASELINE_GAIN: 1.0,
+    /** Extra semitone drop from mapped melody note to place line in bass register. */
+    BASELINE_OCTAVE_DROP_SEMITONES: 24,
+    /** Patterns use grid-note indices 0..6 ('.' = rest), one step per BASELINE_SUBDIVISION. */
+    BASELINE_PATTERN_FUNKY: '0 . 3 2 . 4 . 1 5 . 2 . 6 4 . 3 0 . 4 . 2 5 . 1 6 . 3 . 4 2 . 5',
+    BASELINE_PATTERN_MID: '0 . . 3 . . 0 . 4 . . 2 . . 0 . 3 . . 0 . 4 . . 2 . . 0 . 3 . .',
+    BASELINE_PATTERN_SPARSE: '0 . . . . . . . . . . . . . . . 0 . . . . . . . . . . . . . . .',
 
     // Phrase content: random length TARGET_LEN, note pool TARGET_NOTE_COUNT; bar length for UI.
     PLAYER_MAX: 20,
@@ -43,8 +55,8 @@
     /** Subtracted on any failed attempt (wrong pitch in window, or off-time when a note was expected). */
     HEALTH_LOSS_FAILED_ATTEMPT: 4,
     BORING_UP_ON_CORRECT_NOTE: 5,
+    /** Subtracted on any input that is not a perfect on-time hit (wrong pitch, bad timing, rest eighth). */
     BORING_DOWN_ON_VARY_NOTE: 2,
-    BORING_UP_ON_OFF_GRID: 3,
 
     TIMING_WINDOW_MS: 400,
 
@@ -58,6 +70,16 @@
     /** Nexus circular pad pixel size (createGridButtons). */
     NEXUS_BUTTON_WIDTH: 96,
     NEXUS_BUTTON_HEIGHT: 80,
+
+    /**
+     * Split-screen duo: follower’s *sound* snaps to a harmony of the leader’s last natural row pitch.
+     * Scoring still uses the pressed grid index vs the phrase target (unchanged).
+     */
+    DUO_HARMONIZE_ENABLED: true,
+    /** Semitone offsets from leader MIDI (± each are tried; closest to natural pad pitch wins). */
+    DUO_HARMONY_INTERVALS_SEMITONES: [3, 4, 5, 7, 8, 9],
+    /** Leader tie-break when both register at once: lower index wins. */
+    DUO_LEADER_INSTANCE_ORDER: ['P1', 'P2'],
 
     NOTE_COLORS,
     NOTE_COLORS_RGB,

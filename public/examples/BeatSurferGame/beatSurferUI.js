@@ -161,7 +161,7 @@
       return el
     }
 
-    /** Match Health/Boring columns to piano-roll canvas top/height (same overlay host as StarterCode). */
+    /** Match Health/Boring columns to piano-roll canvas top/height (host is #StatBars over #Playfield). */
     function syncStatBarsLayoutToGrid() {
       const host = document.getElementById(pfx + 'StatBars')
       const mount = document.getElementById(pfx + 'GridMount')
@@ -195,6 +195,8 @@
       const gridMount = document.getElementById(pfx + 'GridMount')
       if (!gridMount) return []
 
+      const mountParent = gridMount.parentNode || gridRow
+
       gridRow.style.width = '100%'
       gridRow.style.maxWidth = '100%'
       gridRow.style.boxSizing = 'border-box'
@@ -206,11 +208,37 @@
         leftCol.id = pfx + 'LeftCol'
         leftCol.style.cssText =
           'display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;max-width:100%;margin:0;gap:6px;box-sizing:border-box;'
-        gridRow.insertBefore(leftCol, gridMount)
+        mountParent.insertBefore(leftCol, gridMount)
         leftCol.appendChild(gridMount)
       } else {
         leftCol.style.cssText =
           'display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;max-width:100%;margin:0;gap:6px;box-sizing:border-box;'
+      }
+
+      /** Wraps only the sequence grid; StatBars overlay uses this box so meters align with the canvas width. */
+      let playfield = document.getElementById(pfx + 'Playfield')
+      if (!playfield) {
+        playfield = document.createElement('div')
+        playfield.id = pfx + 'Playfield'
+        playfield.style.cssText =
+          'position:relative;width:100%;max-width:100%;align-self:stretch;box-sizing:border-box;'
+        if (gridMount.parentNode === leftCol) {
+          leftCol.insertBefore(playfield, gridMount)
+        } else {
+          leftCol.insertBefore(playfield, leftCol.firstChild)
+        }
+        playfield.appendChild(gridMount)
+      } else if (gridMount.parentNode !== playfield) {
+        playfield.insertBefore(gridMount, playfield.firstChild)
+      }
+
+      let statHost = document.getElementById(pfx + 'StatBars')
+      if (!statHost) {
+        statHost = document.createElement('div')
+        statHost.id = pfx + 'StatBars'
+        playfield.appendChild(statHost)
+      } else if (statHost.parentNode !== playfield) {
+        playfield.appendChild(statHost)
       }
 
       let wrap = document.getElementById(pfx + 'GridButtons')
@@ -278,6 +306,12 @@
       const ny = (config && config.NEXUS_BUTTON_HEIGHT) || DEFAULT_NEXUS_BUTTON_H
       const buttons = []
       const colors = config.NOTE_COLORS || DEFAULT_NOTE_COLORS
+      /** Nexus can emit many `change` events while a touch moves; normalize to boolean down state. */
+      function nexusPayloadToPressed(v) {
+        if (v && typeof v === 'object' && v !== null && 'state' in v) return !!v.state
+        if (typeof v === 'number') return v > 0
+        return !!v
+      }
       for (let i = 0; i < count; i++) {
         const btn = new NexusButton(0, 0, nx, ny)
         if (typeof btn.colorize === 'function') {
@@ -307,20 +341,27 @@
         }
         if (btn.resizeObserver) btn.resizeObserver.disconnect()
         const noteIndex = i
+        let lastSentPressed = false
         if (btn.element && typeof btn.element.on === 'function') {
           btn.element.on('change', (v) => {
+            const pressed = nexusPayloadToPressed(v)
+            if (pressed === lastSentPressed) return
+            lastSentPressed = pressed
             try {
-              onGridChange(noteIndex, v)
+              onGridChange(noteIndex, { state: pressed })
             } catch (err) {
               console.error('[BeatSurfer] grid button change error:', err)
               throw err
             }
           })
         } else if (typeof btn.mapTo === 'function') {
+          let lastMapPressed = false
           btn.mapTo((v) => {
-            if (!v) return
+            const pressed = nexusPayloadToPressed(v)
+            if (pressed === lastMapPressed) return
+            lastMapPressed = pressed
             try {
-              onGridChange(noteIndex, { state: true })
+              onGridChange(noteIndex, { state: pressed })
             } catch (err) {
               console.error('[BeatSurfer] grid button press error:', err)
               throw err
