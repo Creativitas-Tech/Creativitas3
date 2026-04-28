@@ -24,6 +24,38 @@
     return config.NOTE_COLORS || DEFAULT_NOTE_COLORS
   }
 
+  /** Brighten/darken a hex color by a percentage; negative darkens. */
+  function shadeHexColor(hex, percent) {
+    if (typeof hex !== 'string') return '#2563eb'
+    const normalized = hex.trim()
+    const fullHex = normalized.length === 4
+      ? ('#' + normalized[1] + normalized[1] + normalized[2] + normalized[2] + normalized[3] + normalized[3])
+      : normalized
+    if (!/^#[0-9a-fA-F]{6}$/.test(fullHex)) return '#2563eb'
+    const amount = Math.max(-1, Math.min(1, Number(percent) || 0))
+    const raw = parseInt(fullHex.slice(1), 16)
+    const r = (raw >> 16) & 255
+    const g = (raw >> 8) & 255
+    const b = raw & 255
+    const mix = amount < 0 ? 0 : 255
+    const p = Math.abs(amount)
+    const nr = Math.round(r + ((mix - r) * p))
+    const ng = Math.round(g + ((mix - g) * p))
+    const nb = Math.round(b + ((mix - b) * p))
+    const packed = (nr << 16) | (ng << 8) | nb
+    return '#' + packed.toString(16).padStart(6, '0')
+  }
+
+  /** Keep each pad on its base note color; shift shade only while pressed. */
+  function applyPadColorState(btn, baseColor, isPressed) {
+    if (!btn || typeof btn.colorize !== 'function') return
+    const idleColor = baseColor || '#2563eb'
+    const pressedColor = shadeHexColor(idleColor, -0.26)
+    const activeColor = isPressed ? pressedColor : idleColor
+    btn.colorize('fill', activeColor)
+    btn.colorize('accent', shadeHexColor(activeColor, 0.12))
+  }
+
   /** HTML fragment for count-in column (number + label). */
   function formatCountdownColumn(shown, countColor) {
     return (
@@ -394,63 +426,63 @@
         const built = []
         for (let i = 0; i < count; i++) {
           const btn = new NexusButton(0, 0, btnW, btnH)
-        if (typeof btn.colorize === 'function') {
-          btn.colorize('accent', colors[i] || DEFAULT_NOTE_COLORS[i % DEFAULT_NOTE_COLORS.length])
-          btn.colorize('fill', '#1a1a24')
-        }
-        if (btn.elementContainer) {
-          btn.elementContainer.style.left = ''
-          btn.elementContainer.style.top = ''
-          btn.elementContainer.style.position = 'relative'
-          btn.elementContainer.style.flex = '0 0 auto'
-          btn.elementContainer.style.width = btnW + 'px'
-          btn.elementContainer.style.minWidth = btnW + 'px'
-          btn.elementContainer.style.maxWidth = btnW + 'px'
-          btn.elementContainer.style.height = btnH + 'px'
-          btn.elementContainer.style.minHeight = btnH + 'px'
-          btn.elementContainer.style.maxHeight = btnH + 'px'
-          btn.elementContainer.style.display = 'flex'
-          btn.elementContainer.style.alignItems = 'center'
-          btn.elementContainer.style.justifyContent = 'center'
-          wrap.appendChild(btn.elementContainer)
-          const label = document.createElement('div')
-          label.setAttribute('data-bsnp-grid-label', '1')
-          label.textContent = String(i + 1)
-          label.style.cssText =
-            'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;padding:0;' +
-            'pointer-events:none;z-index:1;white-space:nowrap;' +
-            'font-size:clamp(22px,3.4vw,28px);font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);line-height:1;'
-          btn.elementContainer.appendChild(label)
-        }
-        if (btn.resizeObserver) btn.resizeObserver.disconnect()
-        const noteIndex = i
-        let lastSentPressed = false
-        if (btn.element && typeof btn.element.on === 'function') {
-          btn.element.on('change', (v) => {
-            const pressed = nexusPayloadToPressed(v)
-            if (pressed === lastSentPressed) return
-            lastSentPressed = pressed
-            try {
-              onGridChange(noteIndex, { state: pressed })
-            } catch (err) {
-              console.error('[BeatSurfer] grid button change error:', err)
-              throw err
-            }
-          })
-        } else if (typeof btn.mapTo === 'function') {
-          let lastMapPressed = false
-          btn.mapTo((v) => {
-            const pressed = nexusPayloadToPressed(v)
-            if (pressed === lastMapPressed) return
-            lastMapPressed = pressed
-            try {
-              onGridChange(noteIndex, { state: pressed })
-            } catch (err) {
-              console.error('[BeatSurfer] grid button press error:', err)
-              throw err
-            }
-          })
-        }
+          const baseColor = colors[i] || DEFAULT_NOTE_COLORS[i % DEFAULT_NOTE_COLORS.length]
+          applyPadColorState(btn, baseColor, false)
+          if (btn.elementContainer) {
+            btn.elementContainer.style.left = ''
+            btn.elementContainer.style.top = ''
+            btn.elementContainer.style.position = 'relative'
+            btn.elementContainer.style.flex = '0 0 auto'
+            btn.elementContainer.style.width = btnW + 'px'
+            btn.elementContainer.style.minWidth = btnW + 'px'
+            btn.elementContainer.style.maxWidth = btnW + 'px'
+            btn.elementContainer.style.height = btnH + 'px'
+            btn.elementContainer.style.minHeight = btnH + 'px'
+            btn.elementContainer.style.maxHeight = btnH + 'px'
+            btn.elementContainer.style.display = 'flex'
+            btn.elementContainer.style.alignItems = 'center'
+            btn.elementContainer.style.justifyContent = 'center'
+            wrap.appendChild(btn.elementContainer)
+            const label = document.createElement('div')
+            label.setAttribute('data-bsnp-grid-label', '1')
+            label.textContent = String(i + 1)
+            label.style.cssText =
+              'position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;padding:0;' +
+              'pointer-events:none;z-index:1;white-space:nowrap;' +
+              'font-size:clamp(22px,3.4vw,28px);font-weight:bold;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5);line-height:1;'
+            btn.elementContainer.appendChild(label)
+          }
+          if (btn.resizeObserver) btn.resizeObserver.disconnect()
+          const noteIndex = i
+          let lastSentPressed = false
+          if (btn.element && typeof btn.element.on === 'function') {
+            btn.element.on('change', (v) => {
+              const pressed = nexusPayloadToPressed(v)
+              if (pressed === lastSentPressed) return
+              lastSentPressed = pressed
+              applyPadColorState(btn, baseColor, pressed)
+              try {
+                onGridChange(noteIndex, { state: pressed })
+              } catch (err) {
+                console.error('[BeatSurfer] grid button change error:', err)
+                throw err
+              }
+            })
+          } else if (typeof btn.mapTo === 'function') {
+            let lastMapPressed = false
+            btn.mapTo((v) => {
+              const pressed = nexusPayloadToPressed(v)
+              if (pressed === lastMapPressed) return
+              lastMapPressed = pressed
+              applyPadColorState(btn, baseColor, pressed)
+              try {
+                onGridChange(noteIndex, { state: pressed })
+              } catch (err) {
+                console.error('[BeatSurfer] grid button press error:', err)
+                throw err
+              }
+            })
+          }
           built.push(btn)
         }
         return built
