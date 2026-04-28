@@ -1,6 +1,6 @@
 import { getBundledTimingPackages, getBundledSynthCode } from '../utils/bundleLoader.ts';
 import { generateTimingIntegrationCode, generateTimingControlCode } from './timingIntegration.ts';
-import { generateMidiIntegrationCode } from './midiIntegration.ts';
+//import { generateMidiIntegrationCode } from './midiIntegration.ts';
 import {
     generateVolumeWarningCode,
     generateBPMControlCode,
@@ -75,14 +75,15 @@ const generateControls = `
             value="100" 
             oninput="updateVolume(this.value)" 
             style="vertical-align: middle; margin-right: 10px;"
-        >
-        
+        >` + 
+        /*
         <label for="timingStrategySelect" style="margin-right: 5px;">Timing:</label>
         <select id="timingStrategySelect" title="Select Timing Strategy" style="padding: 2px; vertical-align: middle;">
             <option value="tone_js">Tone.js</option>
             <option value="midi_clock">Midi Clock</option>
             <option value="timing_object">Timing Object</option>
         </select>
+
     </div>
     <div style="margin-top: 10px;">
         <label for="midiInputSelect" style="margin-right: 5px;">MIDI Input:</label>
@@ -118,6 +119,8 @@ const generateControls = `
         >
         <button id="joinRoomBtn" style="padding: 2px 8px; vertical-align: middle;">Join Room</button>
         <span id="currentRoomDisplay" style="margin-left: 5px; font-style: italic;"></span>
+    */
+    `
     </div>
 </div>
     `;
@@ -143,17 +146,17 @@ const generateWindowInitializers = `
     window.setAsciiHandler = asciiCallbackInstance.setHandler.bind(asciiCallbackInstance);
     window.enableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = true;
     window.disableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = false;
-
-    // Initialize MIDI
-    window.midiHandlerInstance = midiHandlerInstance;
-    window.setNoteOnHandler = midiHandlerInstance.setNoteOnHandler.bind(midiHandlerInstance);
-    window.setNoteOffHandler = midiHandlerInstance.setNoteOffHandler.bind(midiHandlerInstance);
-    window.setCCHandler = midiHandlerInstance.setCCHandler.bind(midiHandlerInstance);
-    window.sendCC = midiHandlerInstance.sendCC.bind(midiHandlerInstance);
-    window.sendNote = midiHandlerInstance.sendNoteOn.bind(midiHandlerInstance);
-    window.sendNoteOff = midiHandlerInstance.sendNoteOff.bind(midiHandlerInstance);
-    window.midiHandler = midiHandlerInstance
-    `;
+    `
+    // // Initialize MIDI
+    // window.midiHandlerInstance = midiHandlerInstance;
+    // window.setNoteOnHandler = midiHandlerInstance.setNoteOnHandler.bind(midiHandlerInstance);
+    // window.setNoteOffHandler = midiHandlerInstance.setNoteOffHandler.bind(midiHandlerInstance);
+    // window.setCCHandler = midiHandlerInstance.setCCHandler.bind(midiHandlerInstance);
+    // window.sendCC = midiHandlerInstance.sendCC.bind(midiHandlerInstance);
+    // window.sendNote = midiHandlerInstance.sendNoteOn.bind(midiHandlerInstance);
+    // window.sendNoteOff = midiHandlerInstance.sendNoteOff.bind(midiHandlerInstance);
+    // window.midiHandler = midiHandlerInstance
+    // `;
 
 // Helper function to generate the user code script block
 // Takes userCode as parameter
@@ -185,7 +188,7 @@ async function generateBodyScript(): Promise<string> {
     ${generateVolumeWarningCode}
     ${generateTimingControlCode}
     ${generateTimingIntegrationCode}
-    ${generateMidiIntegrationCode}
+    
     ${generateCodeExecutionCode}
     ${generateBPMControlCode}
     ${generateVolumeControlCode}
@@ -193,6 +196,7 @@ async function generateBodyScript(): Promise<string> {
 </script>
     `;
 }
+//${generateMidiIntegrationCode}
 
 // Async function to generate the complete HTML template.
 // Only requires the userCode.

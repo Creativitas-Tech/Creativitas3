@@ -1,5 +1,26 @@
+const BUTTON_X = .02
+const TOP_Y = .02
+const SLIDER_X = .15
+const SLIDER_OFFSET = .09
+const ROW_1_Y = .3
+const ROW_2_Y = .7
+const FADER_BUTTON_OFFSET = .07
+const PLAYER_A_COLOR = "#FF0000"
+const PLAYER_B_COLOR = "#0000FF"
+const ENABLE_BUTTON_X_OFFSET = 0.01
+
+const colors = {
+      'background': "#7AF",
+      'border': "#800",
+      'accent': "#75523f",
+      'mid': "#e9b74c",
+      'text': "#FFF"
+}
+
+setTimeout(()=>Nexus.backgroundColor = colors.background, 100)
+
+
 let output = new Tone.Multiply(.1).toDestination()
-let gui = new p5(sketch, Canvas)
 let s = new Twinkle()
 s.connect(output)
 let s2 = new Twinkle()
@@ -21,31 +42,27 @@ s2.connect(dist)
 dist.type = 'fold'
 dist.level = 0.7
 //==octave function==
-let octaveA = new NexusDial(.90,.45,20)
-octaveA.min = -2
-octaveA.max = 3
-octaveA.curve = 1
+let octaveA = new NexusDial({
+  label:'octave',
+  x: .90, y: ROW_1_Y, size: 0.5,
+  min:-2, max: 3, accentColor:PLAYER_A_COLOR,
+  borderColor: colors.border
+})
 octaveA.mapTo(x => {
     s.octave = Math.floor(x);
 } )
-octaveA.colorize('accent', '#8200C8')
-octaveA.width = 40
-octaveA.x=.9
-octaveA.y=.06
-console.log(octaveA)
-
-let octaveB = new NexusDial(.90,.45,20)
-octaveB.min = -2
-octaveB.max = 3
-octaveB.curve = 1
+// console.log(octaveA)
+//
+let octaveB = new NexusDial({
+  label:'octave',
+  x: .90, y: ROW_2_Y, size: 0.5,
+  min:-2, max: 3, accentColor:PLAYER_B_COLOR,
+  borderColor: colors.border
+})
 octaveB.mapTo(x => {
     s2.octave = Math.floor(x);
 } )
-octaveB.colorize('accent', '#8200C8')
-octaveB.width = 40
-octaveB.x=.9
-octaveB.y=.3
-console.log(octaveB)
+// console.log(octaveB)
 
 
 //==part function==
@@ -56,16 +73,16 @@ let seq2 = ['.','.','.','.','.','.','.','.']
 s.sequence(". . . . . . . .","8n")
 // s.stop()
 s2.sequence(". . . . . . . .","8n")
-
+//
 let button1 = new NexusTextButton({
   label:'A Enable', altText:'A Disable',
-  x:.02, y:.3, size:.5, mode:'toggle',
-  accentColor:'#FFF', borderColor:'#FF0000',
-  width:2, height: .5, textColor:'#000', value:true
+  x:BUTTON_X, y:ROW_1_Y, size:.5, mode:'toggle',
+  borderColor:"#ddd", accentColor:PLAYER_A_COLOR,
+  textColor:colors.text,
+  width:2, height: .5,  value:true
 })
-button1.textColor = '#000'
 button1.altText = 'A Disable'
-
+//
 button1.element.on('change', (x)=>{
     if(x) {
       //part1=true
@@ -76,14 +93,14 @@ button1.element.on('change', (x)=>{
       s.stop()
     }
 })
-  
+  //
 let button2 = new NexusTextButton({
-  x:.02, y:.7, size:.5, label:'B Enable',
-  accentColor:'#FFF', borderColor:'#FF0000',
-  width:2, height: .5, textColor:'#000', value: true
+  x:BUTTON_X, y:ROW_2_Y, size:.5, label:'B Enable',
+  borderColor:"#ddd", accentColor:PLAYER_B_COLOR,
+  textColor:colors.text,
+  width:2, height: .5, value: true
 })
 button2.altText = 'B Disable'
-button2.textColor = '#000'
 button2.element.on('change', (x)=>{
   console.log(x)
     if(x) {
@@ -95,19 +112,34 @@ button2.element.on('change', (x)=>{
       s2.stop()
     }
 })
+let scorekeep = new NexusText({
+  label:'Score', size:1, height:.5,
+  x:.5, y:TOP_Y, accentColor:'#0000c8',
+  textColor:colors.text
+
+})
+scorekeep.text = 'Score'
+//
+let bestScoreDisplay = new NexusText({
+  label:'Score', size:1, height:.5,
+  x:.5, y:TOP_Y+.1,accentColor:'#0000c8',
+  textColor:colors.text
+})
+bestScoreDisplay.text = 'Best:'
+//
+let timerDisplay = new NexusText({
+  label:'Score', size:1, height:.5,
+  x:.75, y:TOP_Y, accentColor:'#0000c8',
+  textColor:colors.text
+})
+timerDisplay.text = 'Timer:'
 
 
 //==timer==
 let curLevel = 1
 let timeLeft = 80;
-let timerDisplay = gui.Text({
-  label: 'time: 80',
-  x: 85, y: 8,
-  textSize: 1.2,
-  textColor: [255, 255, 255]
-});
  let finalScore =  0
-
+//
 let loop = new Tone.Loop(time =>{
     if (timeLeft >= 16) {//set timeLEft to 64 + 16
     timeLeft--;
@@ -122,27 +154,26 @@ let loop = new Tone.Loop(time =>{
       s2.stop()
     }
 }, '2n').start()
-
+//
 //==faders/toggles for blue and red==
-gui.backgroundColor = [100,200,255]
+// gui.backgroundColor = [100,200,255]
 let notes = []
 let notes2 = []
 let keySpacing = 10
 let enableButton = []
 let enableButton2 = []
 let vals = ['.','.','.','.','.','.','.','.']
-
-const SLIDER_X = .15
-const SLIDER_OFFSET = .11
+//
 for(let i=0;i<8;i++){
     notes.push(new NexusSlider({
-      x:SLIDER_X + i*SLIDER_OFFSET, y:.5, size:1, mode:'toggle',
-      accentColor:'#FFF', borderColor:'#FF0000',
-      width:.3, height:1.2
+      x:SLIDER_X + i*SLIDER_OFFSET, y:ROW_1_Y+FADER_BUTTON_OFFSET, size:1, mode:'toggle',
+      borderColor:'#FFF', accentColor:PLAYER_A_COLOR,
+      width:.5, height:1.2
     }))
 
     notes[i].callback = x=> {
       if(1) {
+        console.log(i, s2.seq[0], seq1)
         if(x==0) {
           
           s.seq[0].vals[i]='.'
@@ -159,23 +190,20 @@ for(let i=0;i<8;i++){
     }
 
     enableButton.push(new NexusButton({
-      x:SLIDER_X + i*SLIDER_OFFSET, y:.35, size:0.25, mode:'toggle',
-      accentColor:'#FFF', borderColor:'#FF0000'
+      x:SLIDER_X + i*SLIDER_OFFSET + ENABLE_BUTTON_X_OFFSET, y:ROW_1_Y, size:0.25, mode:'toggle',
+      borderColor:'#FFF', accentColor:PLAYER_A_COLOR
     }))
     enableButton[i].callback = x=> {
       s.seq[0].vals[i] = x ? seq1[i] : '.' 
     }
-
-
 }
-
-
+//
 //the red on3
 for(let i=0;i<8;i++){
     notes2.push(new NexusSlider({
-      x:SLIDER_X + i*SLIDER_OFFSET, y:1, size:1, mode:'toggle',
-      accentColor:'#FFF', borderColor:'#FF0000',
-      width:.3, height:1.2
+      x:SLIDER_X + i*SLIDER_OFFSET, y:ROW_2_Y+FADER_BUTTON_OFFSET, size:1, mode:'toggle',
+      borderColor:'#FFF', accentColor:PLAYER_B_COLOR,
+      width:.5, height:1.2
     }))
     notes2[i].callback = x=> {
       if(1) {
@@ -194,17 +222,16 @@ for(let i=0;i<8;i++){
     }
 
     enableButton2.push(new NexusButton({
-      x:SLIDER_X + i*SLIDER_OFFSET, y:.75, size:0.25, mode:'toggle',
-      accentColor:'#FFF', borderColor:'#FF0000'
+      x:SLIDER_X + i*SLIDER_OFFSET + ENABLE_BUTTON_X_OFFSET, y:ROW_2_Y, size:0.25, mode:'toggle',
+      borderColor:'#FFF', accentColor:PLAYER_B_COLOR
     }))
     enableButton2[i].callback = x=> {
       s2.seq[0].vals[i] = x ? seq2[i] : '.' 
     }
-
 }
-
+//
 let bestScore = 0;
-
+//
 //==scoring system==
 let int = (x)=>{
   if(x<0.5) return 0
@@ -217,21 +244,7 @@ let int = (x)=>{
   else if (x<7.5) return 7
   else if (x<8.5) return 8
 }
-
-let scorekeep = gui.Text({
-  label: 'p1: 0',
-  x: 95, y: 8,
-  textSize: 1.2,
-  textColor: [255, 255, 255]
-})
-
-let bestScoreDisplay = gui.Text({ //my best score system
-  label: 'Best: 0',
-  x: 95, y: 15, 
-  textSize: 0.8,
-  textColor: [255,255,255]
-});
-
+//
 let scoreMelody = ()=>{
   let points=0
   let harmonyPoints= {
@@ -253,7 +266,7 @@ let scoreMelody = ()=>{
       if(diff<0) diff=-diff
       diff=int(diff)
       points+=harmonyPoints[diff]
-      console.log(diff)
+      // console.log(diff)
     }
   }
   scorekeep.label = 'pts: '+ points
@@ -264,8 +277,8 @@ let scoreMelody = ()=>{
   return points
 }
 let ans=scoreMelody()
-console.log(ans)
-
+// console.log(ans)
+//
 //==reset==
 let resetEverything = () => {
   scorekeep.label = 'pts: 0'
@@ -277,8 +290,8 @@ let resetEverything = () => {
     s2.seq[0].vals[i] = '.'
     notes[i].set(0)     
   }
-  button1.set(0)
-  button2.set(0)
+  button1.set(1)
+  button2.set(1)
   part1=false;
   part2=false;
   s.stop()
@@ -287,47 +300,33 @@ let resetEverything = () => {
   // timerDisplay.label = 'Time: 80'
   console.log("round reset")
 };
-
-let resetButton = new NexusButton({x:.05,y:.35,size:.5})
-resetButton.colorize('accent', '#F00')
-resetButton.colorize('fill', '#FFF')
-resetButton.colorize('dark', '#FF0000')
-resetButton.colorize('light', '#FF0000')
-resetButton.colorize('mediumDark', '#FF0000')
-resetButton.colorize('mediumLight', '#0F0')
-resetButton.x=SLIDER_X+.4
-resetButton.y=.0
-resetButton.element.on('change',function(){
-  if(!x.state) return
-  resetEverything()
+//
+let resetButton = new NexusTextButton({
+  label:'Reset', x:SLIDER_X+.2,y:TOP_Y,size:.5,
+  accentColor:colors.background, borderColor:colors.border,
+  textColor:colors.text,
 })
-
-let finishButton = new NexusButton({x:.05,y:.35,size:.5})
-finishButton.colorize('accent', '#F00')
-finishButton.colorize('fill', '#FFF')
-finishButton.colorize('dark', '#FF0000')
-finishButton.colorize('light', '#FF0000')
-finishButton.colorize('mediumDark', '#FF0000')
-finishButton.colorize('mediumLight', '#0F0')
-finishButton.x=SLIDER_X+.5
-finishButton.y=.0
-finishButton.element.on('change', function(){
+resetButton.element.on('change',function(x){
+  if(x) resetEverything()
+})
+//
+let finishButton = new NexusTextButton({
+  label:'Finish', x:SLIDER_X+.3,y:TOP_Y,size:.5,
+  accentColor:colors.background, borderColor:colors.border,
+  textColor:colors.text,
+})
+finishButton.element.on('change', function(x){
   if(!x.state) return
     timeLeft=1
     timerDisplay.label="Time: 1"
 })
-
-
-let newA = new NexusButton({x:.05,y:.1,size:.5})
-newA.colorize('accent', '#FFF')
-newA.colorize('fill', '#00F')
-newA.colorize('dark', '#FF0000')
-newA.colorize('light', '#FF0000')
-newA.colorize('mediumDark', '#FF0000')
-newA.colorize('mediumLight', '#0F0')
-newA.x=SLIDER_X
-newA.y=.0
-newA.element.on('change', () => {
+//
+let newA = new NexusTextButton({
+  label:'ALead', x:BUTTON_X,y:TOP_Y,size:1, height:.3,
+  accentColor:colors.accent, borderColor:colors.border,
+  textColor:colors.text,
+})
+newA.element.on('change', (x) => {
   if(!x.state) return
     timeLeft = 80
     timerDisplay.label = 'Time: 80'
@@ -335,17 +334,13 @@ newA.element.on('change', () => {
     part1=true;
     s.start()
   })
-
-let newB = new NexusButton({x:.05,y:.1,size:.5})
-newB.colorize('accent', '#FFF')
-newB.colorize('fill', '#F00')
-newB.colorize('dark', '#FF0000')
-newB.colorize('light', '#FF0000')
-newB.colorize('mediumDark', '#FF0000')
-newB.colorize('mediumLight', '#0F0')
-newB.x = SLIDER_X+.1
-newB.y=.0
-newB.element.on('change', () => {
+//
+let newB = new NexusTextButton({
+  label:'BLead', x:BUTTON_X,y:TOP_Y+.1,size:1, height:.3,
+  accentColor:colors.accent, borderColor:colors.border,
+  textColor:colors.text,
+})
+newB.element.on('change', (x) => {
   if(!x.state) return
     timeLeft = 80
     timerDisplay.label = 'Time: 80'
@@ -353,17 +348,13 @@ newB.element.on('change', () => {
     part2=true;
     s2.start()
   })
-
-let newC = new NexusButton({x:.05,y:.1,size:.5})
-newC.colorize('accent', '#FFF')
-newC.colorize('fill', '#0F0')
-newC.colorize('dark', '#FF0000')
-newC.colorize('light', '#FF0000')
-newC.colorize('mediumDark', '#FF0000')
-newC.colorize('mediumLight', '#0F0')
-newC.x=SLIDER_X+.2
-newC.y=0.0
-newC.element.on('change', () => {
+//
+let newC = new NexusTextButton({
+  label:'Both',x:BUTTON_X,y:TOP_Y+.2,size:1, height:.3,
+  accentColor:colors.accent, borderColor:colors.border,
+  textColor:colors.text,
+})
+newC.element.on('change', (x) => {
   if(!x.state) return
     timeLeft = 80
     timerDisplay.label = 'Time: 80'
@@ -374,62 +365,3 @@ newC.element.on('change', () => {
     s.start()
     s2.start()
   })
-
-
-// //==radiobutton==
-// let presets = gui.RadioButton({
-//   label: 'types', 
-//   x:58, y:8, 
-//   size:0.5, 
-//   radioOptions:['preset1', 'preset2', 'preset3', 'preset4'],
-//   callback: x=> {
-//     if(x == 'preset1'){
-//       s.loadPreset("default")
-//       s2.loadPreset("default")
-//       gui.backgroundColor = [100, 200, 255]
-//       for(let i = 0; i < 8; i++) {
-//         if (i < 4) {
-//           setStepActive(i, true);
-//         } else {
-//           setStepActive(i, false);
-//         }
-//       }
-//     }
-
-//     if(x == 'preset2'){
-//       s.loadPreset('banjo')
-//       s2.loadPreset('guitar')
-//       gui.backgroundColor = [100, 200, 255]
-//       for(let i = 0; i < 8; i++) {
-//         if (i < 4) {
-//           setStepActive(i, true);
-//         } else {
-//           setStepActive(i, false);
-//         }
-//       }
-//     }
-    
-//     if(x == 'preset3'){
-//       s.loadPreset("brass")
-//       s2.loadPreset("marimba")
-//       gui.backgroundColor = [20, 50, 120]
-//       for(let i = 0; i < 8; i++) {
-//         setStepActive(i, true);
-//       }
-//     }
-    
-//     if(x == 'preset4'){
-//       s.loadPreset("flute")
-//       s2.loadPreset("chirp")
-//       for(let i = 0; i < 8; i++) {
-//         setStepActive(i, true)
-//       }
-//     }
-    
-//   },
-//   orientation: 'horizontal',
-//   textColor: [255, 255, 255],
-//   border: 2,        
-// })
-// presets.setLink('presettype')
-// presets.size = 0.5

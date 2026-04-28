@@ -26,11 +26,13 @@ let tempoIncrement = 1
 let dxIncrement = 0.0001
 Theory.tempo = tempo
 let output = new Tone.Multiply(.1).toDestination()
+let ptsPerLevel = 4
 
 
 // Instruments
 let s = new Twinkle() // Player 1 Synth
 let s1 = new Twinkle() // Player 2 Synth
+let pad = new Polyphony(Twinkle) // Player 2 Synth
 let d = new DrumSampler()
 let d1 = new DrumSampler()
 let verb = new Reverb()
@@ -38,6 +40,7 @@ s.connect(output)
 s1.connect(output)
 d.connect(output)
 d1.connect(output)
+pad.connect(verb)
 s.connect(verb)
 s1.connect(verb)
 verb.connect(output)
@@ -63,6 +66,14 @@ d1.kick_rate = 4
 d1.kick_decay = 1
 d1.dryKick = 1
 //
+pad.duration = .9
+pad.release = 8
+pad.attack = .4
+pad.octave = 1
+pad.level = .05
+pad.output.factor.value = .1
+verb.delayTime = .1
+//
 verb.type = 'hall'
 verb.level = .3
 
@@ -73,7 +84,7 @@ let paddleHeight = .25 // Collision tolerance for paddles
 
 // Player 1 Control (Left)
 let Slide1 = new NexusSlider({
-  x: .01, y: .5, width:0.5, height:5, style:'new',
+  x: .01, y: .0, width:0.5, height:5, style:'new',
   min: 0, max: 1, curve: 1,
   callback: function(a){
     p1 = 100-a*100
@@ -85,7 +96,7 @@ let Slide1 = new NexusSlider({
 
 // Player 1 Control (Left)
 let Slide2 = new NexusSlider({
-  x: .95, y: .5, width:.5, height:5, style:'new',
+  x: .95, y: .0, width:.5, height:5, style:'new',
   min: 0, max: 1, curve: 1,
   callback: function(b){
     p2 = 100-b*100
@@ -163,6 +174,36 @@ function getPitchFromPosition(yPos) {
   
 }
 
+/////
+let note = []
+function getchord2(){
+  console.log(seq1, seq2)
+  if(seq1.length == 8){
+    for(let i=0; i<seq1.length; i++){
+      let t = seq1[i].substring(0,1)
+      note.push(t)
+    }
+  }
+  if(seq2.length == 8){
+    for(let i=0; i<seq2.length; i++){
+      let t = seq2[i].substring(0,1)
+      note.push(t)
+    }
+  }
+  console.log(note)
+  note.sort()
+  console.log(note)
+  
+  const freqMap = {}
+  note.forEach(item => {
+    freqMap[item] = (freqMap[item] || 0) + 1
+  })
+  const sorted = Object.entries(freqMap).sort((a, b) => b[1] - a[1])
+  const top3 = '[' + sorted.slice(0, 3).map(item => item[0])+']'
+  console.log(top3)
+  pad.sequence([top3, '.','.','.'])
+}
+
 let seq1 = []
 let seq2 = []
 let indseq1 = 0
@@ -212,11 +253,12 @@ let loop = new Tone.Loop(time => {
 
       s.play(getPitchFromPosition(p1)); // Play mapped pitch
       seq1.push(getPitchFromPosition(p1))
-      if(seq1.length%8 == 0 && seq1.length > 0){
-        s.sequence(seq1.slice(-8), '8n', 1)
+      if(seq1.length%ptsPerLevel == 0 && seq1.length > 0){
+        s.sequence(seq1.slice(-ptsPerLevel), '8n', 1)
         s.seq[1].octave = 1
         s.seq[0].octave = -1
         s.seq[1].velocity = 60
+        getchord2()
         indseq1 = 0
       }
     } else if (ball.x <= 0) {
@@ -255,12 +297,13 @@ let loop = new Tone.Loop(time => {
 
       s1.play(getPitchFromPosition(p2)); // Play mapped pitch
       seq2.push(getPitchFromPosition(p2))
-      if(seq2.length%8 == 0 && seq2.length > 0){
+      if(seq2.length%ptsPerLevel == 0 && seq2.length > 0){
         
-        s1.sequence(seq2.slice(-8),'8n', 1)
-        s1.seq[1].octave = 2
+        s1.sequence(seq2.slice(-ptsPerLevel),'8n', 1)
+        s1.seq[1].octave = 1
         s1.seq[0].octave = -1
-        s1.seq[1].velocity = 60
+        s1.seq[1].velocity = 30
+        getchord2()
         indseq2 = 0
       }
     } else if (ball.x >= 1) {

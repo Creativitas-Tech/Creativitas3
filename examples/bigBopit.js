@@ -10,46 +10,49 @@ let mysynth = (val)=>{
 }
 myGame.makeSynth = ()=> mysynth()
 
+myGame.curPlayer = 0
+
 myGame.numPlayers = 4
-myGame.color = {
-  'default':'#FEC6CF'
-}
 myGame.playerColors = ['#F00', '#0F0', '#00F', '#0FF']
 myGame.curPlayer = 0
 myGame.points = [0,0,0,0]
-startB.colorize('accent', '#FEC6CF')
-     startB.colorize('fill', '#3F3030')
 
 //
 let mydisplay = ()=>{
   let b = []
   const num_rows = 4
   const num_columns = 6
+  const button_spacing = 1.2
+  
+  
 //
   for(let i=0;i< num_rows*num_columns; i++){
     b.push(new NexusButton())
-    b[i].x = (i%num_columns)* 1/(num_columns)
-    b[i].mode = 'toggle'
-    b[i].y = Math.floor((23-i)/num_columns) * 1/(num_columns*1.5)
-    b[i].height = 80,  b[i].width = 80
-    b[i].colorize('accent', '#FEC6CF'), b[i].colorize('fill', '#3F3030')
+    const button_offset = b[i].size*0.7
+    
+    b[i].x = (i%num_columns)/num_columns* button_offset + .2
+    b[i].y = 0
+    b[i].mode = 'button'
+    b[i].size = .8
     b[i].note = (i%6) + Math.floor((i)/6)*2
-    b[i].element.on('change', x=>  myGame.onUserInput(i,x))
+    b[i].element.on('change', x=>  {
+      myGame.onUserInput(i,x)
+    })
+    //b[i].y = Math.floor((num_rows*num_columns-i-1)/num_columns) * x_offset
+    const y_offset_px = (button_offset*Math.floor(i/num_columns)/num_columns + .03) * b[i].containerWidth;
+    b[i].elementContainer.style.transform = `translate(${0}px, ${y_offset_px}px)`;
+
+    console.log(button_offset, y_offset_px)
   }
-  let startB = new NexusButton()
-  startB.x = .10
-    startB.mode = 'button'
-    startB.y = .50
-    startB.height = 40,  startB.width = 80
-   startB.colorize('accent', '#FEC6CF')
-     startB.colorize('fill', '#3F3030')
+  let startB = new NexusTextButton({
+    x:.1, y:.9,size:1, label:'start'
+  })
     startB.element.on('change', x=> {
       console.log(x)
       if(x) myGame.start()
-        })
-  startB.label = 'start'
+    })
 
-  return { b, startB}
+  return { b, startB }
 }
 myGame.makeDisplay = ()=> mydisplay()
 
@@ -61,7 +64,7 @@ let userInput = (num,val)=>{
   if(val > 0) {
     myGame.audio.s.play(expr(i=>myGame.gui.b[num].note-7, (myGame.level_number)%8+1),'16n')
     myGame.targets = myGame.targets.filter(t => t.num !== num);
-    myGame.gui.b[num].colorize('accent', myGame.color['default'])
+    //myGame.gui.b[num].colorize('accent', myGame.color['default'])
   }
 }
 myGame.onUserInput = userInput
@@ -101,7 +104,7 @@ let myFunc = (root)=>{
   myGame.targets = []
   myGame.played = []
   let curNote = Math.floor(Math.random()*23)//*6+root
-  let newTarget = {'player':curPlayer, 'num':curNote}
+  let newTarget = {'player':myGame.curPlayer, 'num':curNote}
   myGame.targets.push(newTarget)
   myGame.gui.b[curNote].colorize('mediumLight', myGame.playerColors[myGame.curPlayer])
   myGame.gui.b[curNote].colorize('accent', myGame.playerColors[myGame.curPlayer])
@@ -112,4 +115,3 @@ myGame.init()
 
 myGame.updateRate = 4
 // console.log(myGame.updateRate)
-

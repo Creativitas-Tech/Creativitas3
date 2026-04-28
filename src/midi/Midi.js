@@ -1,3 +1,5 @@
+const ENABLE_MIDI = false
+
 export var midi = null;
 export var muted = false;
 
@@ -8,14 +10,14 @@ export var ccCallbacks = {};
 
 /****** load webMIDI API ******/
 //comment out to disable MIDI
-if (navigator.requestMIDIAccess) {
-    navigator.requestMIDIAccess()
-        .then(onMIDISuccess)
-        .catch(onMIDIFailure);
-} else {
-    console.log("Web MIDI API is not supported in this browser.");
-    // Handle the situation gracefully, e.g., show a notification to the user
-}
+// if (navigator.requestMIDIAccess) {
+//     navigator.requestMIDIAccess()
+//         .then(onMIDISuccess)
+//         .catch(onMIDIFailure);
+// } else {
+//     console.log("Web MIDI API is not supported in this browser.");
+//     // Handle the situation gracefully, e.g., show a notification to the user
+// }
 
 export function onMIDISuccess(midiAccess) {
     console.log("MIDI ready!");
