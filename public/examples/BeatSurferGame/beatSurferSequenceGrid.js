@@ -12,7 +12,7 @@
   /** 1 = full mount width; lower = narrower columns (same GRID_COLS); height still uses fullW below. */
   const SEQUENCE_GRID_WIDTH_RATIO = 0.82
 
-  /** Applied after all height scaling; 0.5 = half the previous grid height. */
+  /** Applied after all height scaling when config does not override. */
   const SEQUENCE_GRID_HEIGHT_RATIO = 0.5
 
   /**
@@ -74,7 +74,10 @@
         ? Math.max(180, window.innerHeight - 220)
         : expandedH
       const hRaw = Math.max(1, Math.min(expandedH, viewportMaxH))
-      const h = Math.max(1, Math.round(hRaw * SEQUENCE_GRID_HEIGHT_RATIO))
+      const heightRatio = (config && typeof config.SEQUENCE_GRID_HEIGHT_RATIO === 'number')
+        ? config.SEQUENCE_GRID_HEIGHT_RATIO
+        : SEQUENCE_GRID_HEIGHT_RATIO
+      const h = Math.max(1, Math.round(hRaw * heightRatio))
       return { w, h }
     }
 

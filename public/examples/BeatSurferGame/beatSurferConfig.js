@@ -67,9 +67,11 @@
     GRID_ROWS: 7,
     GRID_COLS: 8,
     GRID_BUTTON_COUNT: 7,
+    /** Compact layout factor for sequence-grid canvas height (smaller => shorter total grid block). */
+    SEQUENCE_GRID_HEIGHT_RATIO: 0.42,
     /** Nexus circular pad pixel size (createGridButtons). */
     NEXUS_BUTTON_WIDTH: 96,
-    NEXUS_BUTTON_HEIGHT: 80,
+    NEXUS_BUTTON_HEIGHT: 68,
 
     /**
      * Split-screen duo: follower’s *sound* snaps to a harmony of the leader’s last natural row pitch.
