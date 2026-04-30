@@ -143,7 +143,7 @@ export class Seq {
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
         this.subdivision = subdivision;
-
+        // console.log('drum seq', phraseLength)
         this.start()   
     }
 
@@ -155,14 +155,14 @@ export class Seq {
         }    
         //console.log('createLoop', this.subdivision)
         this.loopInstance = new Tone.Loop(time => {
-            //console.log('loop', time)
+            // console.log('loop', time, this.phraseLength)
             
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
             this.rawIndex = this.index
             this.index = (this.index + this._rotate) % this.vals.length//ask ian if he wants offset to only be implemented for play with limited amount of loops, or as an infinite variable
             // console.log('ind ', this.index)
             if(this._offset !== null){//this makes offset an inperminent variable exceptfor infinite case
-                console.log(this._offset)
+                //console.log(this._offset)
                 this.index = this._offset % this.vals.length                 
                 this._offset += 1
                 if (this.phraseLength !== 'infinite' && this.offset >= this.vals.length*this.phraseLength)

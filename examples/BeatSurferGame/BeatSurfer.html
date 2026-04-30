@@ -15,7 +15,22 @@
     <!-- Styles -->
     <style>
 
-    body.beat-surfer-page { margin: 0; padding: 12px; font-family: Arial, sans-serif; box-sizing: border-box; min-height: 100vh; display: flex; flex-direction: column; }
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+    }
+    body.beat-surfer-page {
+      margin: 0;
+      padding: 12px;
+      font-family: Arial, sans-serif;
+      box-sizing: border-box;
+      height: 50vh;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
     #controls { flex: 0 0 auto; }
     #beatSurferSplitRoot {
       flex: 1 1 auto;
@@ -27,7 +42,7 @@
       position: relative;
       flex: 1;
       min-height: 0;
-      overflow: auto;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
@@ -54,6 +69,18 @@
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+    /* Legacy canvas hosts are not used for gameplay rendering in current layout. */
+    #Canvas, #CanvasP2 {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      min-height: 0 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden !important;
     }
     .span-container {
         display: flex;
@@ -147,47 +174,13 @@
             style="vertical-align: middle; margin-right: 10px;"
         >
 
-        <label for="timingStrategySelect" style="margin-right: 5px;">Timing:</label>
-        <select id="timingStrategySelect" title="Select Timing Strategy" style="padding: 2px; vertical-align: middle;">
-            <option value="tone_js">Tone.js</option>
-            <option value="midi_clock">Midi Clock</option>
-            <option value="timing_object">Timing Object</option>
-        </select>
+
     </div>
     <div style="margin-top: 10px;">
-        <label for="midiInputSelect" style="margin-right: 5px;">MIDI Input:</label>
-        <select id="midiInputSelect" title="Select MIDI Input Device" style="padding: 2px; vertical-align: middle; margin-right: 10px;">
-            <option value="">None</option>
-        </select>
 
-        <label for="midiOutputSelect" style="margin-right: 5px;">MIDI Output:</label>
-        <select id="midiOutputSelect" title="Select MIDI Output Device" style="padding: 2px; vertical-align: middle; margin-right: 10px;">
-            <option value="">None</option>
-        </select>
-
-        <button id="refreshMidiBtn" style="padding: 2px 8px; vertical-align: middle;">Refresh MIDI</button>
     </div>
     <div style="margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px;">
-        <label for="usernameInput" style="margin-right: 5px;">Username:</label>
-        <input
-            type="text"
-            id="usernameInput"
-            placeholder="Enter username"
-            style="padding: 2px; vertical-align: middle; margin-right: 5px; width: 150px;"
-        >
-        <button id="setUsernameBtn" style="padding: 2px 8px; vertical-align: middle; margin-right: 10px;">Set Username</button>
-        <span id="currentUsernameDisplay" style="margin-left: 5px; font-style: italic;"></span>
 
-        <label for="roomInput" style="margin-right: 5px; margin-left: 10px;">Room:</label>
-        <input
-            type="text"
-            id="roomInput"
-            placeholder="Enter room name"
-            value="famleLounge"
-            style="padding: 2px; vertical-align: middle; margin-right: 5px; width: 150px;"
-        >
-        <button id="joinRoomBtn" style="padding: 2px 8px; vertical-align: middle;">Join Room</button>
-        <span id="currentRoomDisplay" style="margin-left: 5px; font-style: italic;"></span>
     </div>
 </div>
 
@@ -576,6 +569,10 @@
     const pfx = 'beatSurfer' + instanceId
 
     const canvasHost = canvasEl || (typeof Canvas !== 'undefined' ? Canvas : document.getElementById('Canvas'))
+    if (canvasHost && canvasHost.style) {
+      canvasHost.style.background = 'transparent'
+      canvasHost.style.backgroundColor = 'transparent'
+    }
     let gridRow = document.getElementById(pfx + 'GridRow')
     let gridMount = document.getElementById(pfx + 'GridMount')
 
@@ -645,6 +642,35 @@
   window.beatSurferGames = {}
   runLoaded('P1', document.getElementById('Canvas'), { splitRole: 'primary' })
   runLoaded('P2', document.getElementById('CanvasP2'), { splitRole: 'secondary' })
+
+  function logBeatSurferViewportDiagnostics(tag) {
+    const html = document.documentElement
+    const body = document.body
+    const root = document.getElementById('beatSurferSplitRoot')
+    const p1 = document.getElementById('playerPaneP1')
+    const p2 = document.getElementById('playerPaneP2')
+    const payload = {
+      tag: tag || 'runtime',
+      innerHeight: window.innerHeight,
+      clientHeight: html ? html.clientHeight : null,
+      htmlScrollHeight: html ? html.scrollHeight : null,
+      bodyScrollHeight: body ? body.scrollHeight : null,
+      rootHeight: root ? Math.round(root.getBoundingClientRect().height) : null,
+      p1Height: p1 ? Math.round(p1.getBoundingClientRect().height) : null,
+      p2Height: p2 ? Math.round(p2.getBoundingClientRect().height) : null,
+      scrollY: window.scrollY,
+    }
+    console.log('[BeatSurfer][viewport]', payload)
+    if (html && html.scrollHeight > html.clientHeight + 1) {
+      console.warn('[BeatSurfer][viewport] page overflow detected', {
+        scrollHeight: html.scrollHeight,
+        clientHeight: html.clientHeight,
+      })
+    }
+  }
+  window.logBeatSurferViewportDiagnostics = logBeatSurferViewportDiagnostics
+  logBeatSurferViewportDiagnostics('init')
+  window.addEventListener('resize', () => logBeatSurferViewportDiagnostics('resize'))
 
   window.beatSurferGameInstance = window.beatSurferGames.P1
   window.startGame = () => {

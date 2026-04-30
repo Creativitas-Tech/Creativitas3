@@ -91,7 +91,7 @@ export class DrumVoice extends DrumTemplate{
       //this.voice.start()
       this.env.triggerAttackRelease(0.001, time)
     } catch(e){
-        console.log('time error', e)
+        //console.log('time error', e)
     }
   }
     trigger(amplitude, decay,time){

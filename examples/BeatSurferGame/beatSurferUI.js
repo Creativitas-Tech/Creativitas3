@@ -27,14 +27,14 @@
   /** HTML fragment for count-in column (number + label). */
   function formatCountdownColumn(shown, countColor) {
     return (
-      '<div style="font-size:12px;color:#9ca3af;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px">Countdown</div>' +
-      '<span style="font-size:56px;font-weight:bold;color:' + countColor + ';line-height:1.1">' + shown + '</span>'
+      '<div style="font-size:24px;color:#9ca3af;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px">Countdown</div>' +
+      '<span style="font-size:112px;font-weight:bold;color:' + countColor + ';line-height:1.1">' + shown + '</span>'
     )
   }
 
   const NUM_GRID_BUTTONS = 7
   const DEFAULT_NEXUS_BUTTON_W = 88
-  const DEFAULT_NEXUS_BUTTON_H = 80
+  const DEFAULT_NEXUS_BUTTON_H = 68
 
   function createBeatSurferUI(instanceId) {
     const pfx = 'beatSurfer' + (instanceId || '')
@@ -87,9 +87,9 @@
         playAgainBtn.id = pfx + 'PlayAgain'
         playAgainBtn.textContent = 'Play again'
         playAgainBtn.style.cssText =
-          'margin-left: 8px; padding: 10px 20px; cursor: pointer; display: none;' +
-          'border: none; border-radius: 10px; font-weight: bold; font-size: 14px;' +
-          'background: #2563eb; color: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.2);' +
+          'position:absolute;cursor:pointer;display:block;pointer-events:auto;z-index:6;' +
+          'padding:6px 10px;border:none;border-radius:8px;font-weight:700;font-size:11px;' +
+          'background:#2563eb;color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.22);' +
           'transition: transform 0.1s, box-shadow 0.1s;'
         playAgainBtn.onmouseover = function () { this.style.background = '#1d4ed8'; this.style.transform = 'scale(1.02)'; this.style.boxShadow = '0 3px 8px rgba(0,0,0,0.25)'; }
         playAgainBtn.onmouseout = function () { this.style.background = '#2563eb'; this.style.transform = 'scale(1)'; this.style.boxShadow = '0 2px 6px rgba(0,0,0,0.2)'; }
@@ -141,24 +141,60 @@
       p.style.display = 'none'
     }
 
-    /** Big countdown during countIn; lives above LeftCol or before GridRow. */
+    /** Big countdown during countIn; centered overlay on top of #Playfield. */
     function ensureCountdownEl() {
       let el = document.getElementById(pfx + 'Countdown')
       if (el) return el
       el = document.createElement('div')
       el.id = pfx + 'Countdown'
       el.style.cssText =
-        'font-family:monospace;text-align:left;margin-bottom:6px;display:none;'
-      const leftCol = document.getElementById(pfx + 'LeftCol')
-      if (leftCol) {
-        leftCol.insertBefore(el, leftCol.firstChild)
-      } else {
-        const gridRow = document.getElementById(pfx + 'GridRow')
-        if (gridRow && gridRow.parentNode) {
-          gridRow.parentNode.insertBefore(el, gridRow)
+        'position:absolute;inset:0;display:none;align-items:center;justify-content:center;' +
+        'font-family:monospace;text-align:center;z-index:4;pointer-events:none;'
+      const playfield = document.getElementById(pfx + 'Playfield')
+      if (playfield) {
+        if (playfield.style && (!playfield.style.position || playfield.style.position === 'static')) {
+          playfield.style.position = 'relative'
         }
+        playfield.appendChild(el)
+      } else {
+        const leftCol = document.getElementById(pfx + 'LeftCol')
+        if (leftCol) leftCol.appendChild(el)
       }
       return el
+    }
+
+    /** Reserve horizontal gutters so stat bars never overlap the grid drawing area. */
+    function syncPlayfieldGuttersToBars() {
+      const host = document.getElementById(pfx + 'StatBars')
+      const mount = document.getElementById(pfx + 'GridMount')
+      if (!mount) return
+      if (!host) {
+        mount.style.width = '100%'
+        mount.style.maxWidth = '100%'
+        mount.style.marginLeft = 'auto'
+        mount.style.marginRight = 'auto'
+        return
+      }
+      const healthCol = host.querySelector('[data-bsnp-stat-col="Health"]')
+      const boringCol = host.querySelector('[data-bsnp-stat-col="Boring"]')
+      const healthW = healthCol ? Math.round(healthCol.getBoundingClientRect().width) : 64
+      const boringW = boringCol ? Math.round(boringCol.getBoundingClientRect().width) : 64
+      const reserveLeft = healthW + 0
+      const reserveRight = boringW + 0
+      const parent = mount.parentNode
+      const parentW = parent && parent.clientWidth ? parent.clientWidth : 0
+      if (parentW > 0) {
+        const totalReserve = Math.min(reserveLeft + reserveRight, Math.max(0, parentW - 140))
+        const usableW = Math.max(140, parentW - totalReserve)
+        mount.style.width = usableW + 'px'
+        mount.style.maxWidth = usableW + 'px'
+      } else {
+        mount.style.width = 'calc(100% - ' + (reserveLeft + reserveRight) + 'px)'
+        mount.style.maxWidth = 'calc(100% - ' + (reserveLeft + reserveRight) + 'px)'
+      }
+      mount.style.marginLeft = 'auto'
+      mount.style.marginRight = 'auto'
+      mount.style.boxSizing = 'border-box'
     }
 
     /** Match Health/Boring columns to piano-roll canvas top/height (host is #StatBars over #Playfield). */
@@ -166,6 +202,7 @@
       const host = document.getElementById(pfx + 'StatBars')
       const mount = document.getElementById(pfx + 'GridMount')
       if (!host || !mount) return
+      syncPlayfieldGuttersToBars()
       const canvas = mount.querySelector('canvas')
       if (!canvas || canvas.offsetHeight <= 0) return
       const hostRect = host.getBoundingClientRect()
@@ -186,6 +223,8 @@
         tracks[ti].style.minHeight = '0'
         tracks[ti].style.height = '100%'
       }
+      syncPlayfieldGuttersToBars()
+      positionRestartButtonNearHealth()
     }
 
     /** Builds LeftCol + NexusButton strip; pads reparent from global #Canvas into GridButtons. */
@@ -200,19 +239,19 @@
       gridRow.style.width = '100%'
       gridRow.style.maxWidth = '100%'
       gridRow.style.boxSizing = 'border-box'
-      gridRow.style.minHeight = 'clamp(180px,32dvh,420px)'
+      gridRow.style.minHeight = 'clamp(148px,27dvh,340px)'
 
       let leftCol = document.getElementById(pfx + 'LeftCol')
       if (!leftCol) {
         leftCol = document.createElement('div')
         leftCol.id = pfx + 'LeftCol'
         leftCol.style.cssText =
-          'display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;max-width:100%;margin:0;gap:6px;box-sizing:border-box;'
+          'display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;max-width:100%;margin:0;gap:4px;box-sizing:border-box;'
         mountParent.insertBefore(leftCol, gridMount)
         leftCol.appendChild(gridMount)
       } else {
         leftCol.style.cssText =
-          'display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;max-width:100%;margin:0;gap:6px;box-sizing:border-box;'
+          'display:flex;flex-direction:column;align-items:center;min-width:0;width:100%;max-width:100%;margin:0;gap:4px;box-sizing:border-box;'
       }
 
       /** Wraps only the sequence grid; StatBars overlay uses this box so meters align with the canvas width. */
@@ -256,6 +295,10 @@
           leftCol._bsStripResizeObserver.disconnect()
         } catch (e) { /* ignore */ }
         leftCol._bsStripResizeObserver = null
+        if (leftCol._bsButtonResizeTimer) {
+          clearTimeout(leftCol._bsButtonResizeTimer)
+          leftCol._bsButtonResizeTimer = null
+        }
         const prevMount = document.getElementById(pfx + 'GridMount')
         const prevCv = prevMount && prevMount.querySelector('canvas')
         if (prevCv) prevCv.removeAttribute('data-bs-strip-ro')
@@ -273,8 +316,9 @@
           } catch (e) { /* ignore */ }
         }
         const cw = canvas && canvas.offsetWidth > 0 ? canvas.offsetWidth : 0
-        const nPads = (config && config.GRID_BUTTON_COUNT) || NUM_GRID_BUTTONS
-        const padW = (config && config.NEXUS_BUTTON_WIDTH) || DEFAULT_NEXUS_BUTTON_W
+        const nPads = count
+        const pad = targetPadSize(cw)
+        const padW = pad.w
         if (cw > 0 && nPads > 0 && padW > 0) {
           strip.style.width = cw + 'px'
           strip.style.maxWidth = cw + 'px'
@@ -290,11 +334,26 @@
           strip.style.marginRight = 'auto'
           strip.style.gap = '0'
         }
+        const sizeChanged = Math.abs(pad.w - lastButtonW) >= sizeEpsilon || Math.abs(pad.h - lastButtonH) >= sizeEpsilon
+        if (sizeChanged || buttons.length !== count) {
+          const rebuilt = buildButtons(pad.w, pad.h)
+          buttons.length = 0
+          for (let i = 0; i < rebuilt.length; i++) buttons.push(rebuilt[i])
+          lastButtonW = pad.w
+          lastButtonH = pad.h
+        }
       }
 
       if (gridMount && typeof ResizeObserver !== 'undefined') {
         const ro = new ResizeObserver(function () {
-          syncGridButtonStripToCanvas()
+          if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer)
+          resizeDebounceTimer = setTimeout(() => {
+            resizeDebounceTimer = null
+            syncPlayfieldGuttersToBars()
+            syncGridButtonStripToCanvas()
+          }, resizeDebounceMs)
+          leftCol._bsButtonResizeTimer = resizeDebounceTimer
+          syncPlayfieldGuttersToBars()
           syncStatBarsLayoutToGrid()
         })
         ro.observe(gridMount)
@@ -306,14 +365,35 @@
       const ny = (config && config.NEXUS_BUTTON_HEIGHT) || DEFAULT_NEXUS_BUTTON_H
       const buttons = []
       const colors = config.NOTE_COLORS || DEFAULT_NOTE_COLORS
+      const sizeFactor = (config && config.NEXUS_BUTTON_SIZE_FACTOR) || 0.65
+      const minPadW = (config && config.NEXUS_BUTTON_MIN_WIDTH) || Math.max(34, Math.round(nx * 0.58))
+      const maxPadW = (config && config.NEXUS_BUTTON_MAX_WIDTH) || Math.max(nx, Math.round(nx * 1.3))
+      const sizeEpsilon = (config && config.NEXUS_BUTTON_RESIZE_EPSILON) || 2
+      const resizeDebounceMs = (config && config.NEXUS_BUTTON_RESIZE_DEBOUNCE_MS) || 80
+      const aspect = nx > 0 ? (ny / nx) : (DEFAULT_NEXUS_BUTTON_H / DEFAULT_NEXUS_BUTTON_W)
+      let lastButtonW = nx
+      let lastButtonH = ny
+      let resizeDebounceTimer = null
+      function clamp(v, lo, hi) {
+        return Math.max(lo, Math.min(hi, v))
+      }
+      function targetPadSize(canvasWidth) {
+        if (!(canvasWidth > 0) || !(count > 0)) return { w: nx, h: ny }
+        const w = clamp(Math.round((canvasWidth / count) * sizeFactor), minPadW, maxPadW)
+        const h = Math.max(24, Math.round(w * aspect))
+        return { w, h }
+      }
       /** Nexus can emit many `change` events while a touch moves; normalize to boolean down state. */
       function nexusPayloadToPressed(v) {
         if (v && typeof v === 'object' && v !== null && 'state' in v) return !!v.state
         if (typeof v === 'number') return v > 0
         return !!v
       }
-      for (let i = 0; i < count; i++) {
-        const btn = new NexusButton(0, 0, nx, ny)
+      function buildButtons(btnW, btnH) {
+        wrap.innerHTML = ''
+        const built = []
+        for (let i = 0; i < count; i++) {
+          const btn = new NexusButton(0, 0, btnW, btnH)
         if (typeof btn.colorize === 'function') {
           btn.colorize('accent', colors[i] || DEFAULT_NOTE_COLORS[i % DEFAULT_NOTE_COLORS.length])
           btn.colorize('fill', '#1a1a24')
@@ -323,9 +403,12 @@
           btn.elementContainer.style.top = ''
           btn.elementContainer.style.position = 'relative'
           btn.elementContainer.style.flex = '0 0 auto'
-          btn.elementContainer.style.width = nx + 'px'
-          btn.elementContainer.style.minWidth = nx + 'px'
-          btn.elementContainer.style.maxWidth = nx + 'px'
+          btn.elementContainer.style.width = btnW + 'px'
+          btn.elementContainer.style.minWidth = btnW + 'px'
+          btn.elementContainer.style.maxWidth = btnW + 'px'
+          btn.elementContainer.style.height = btnH + 'px'
+          btn.elementContainer.style.minHeight = btnH + 'px'
+          btn.elementContainer.style.maxHeight = btnH + 'px'
           btn.elementContainer.style.display = 'flex'
           btn.elementContainer.style.alignItems = 'center'
           btn.elementContainer.style.justifyContent = 'center'
@@ -368,29 +451,38 @@
             }
           })
         }
-        buttons.push(btn)
+          built.push(btn)
+        }
+        return built
       }
+      const initialButtons = buildButtons(nx, ny)
+      for (let i = 0; i < initialButtons.length; i++) buttons.push(initialButtons[i])
 
       function scheduleStripSync() {
+        syncPlayfieldGuttersToBars()
         syncGridButtonStripToCanvas()
         syncStatBarsLayoutToGrid()
         if (typeof requestAnimationFrame === 'function') {
           requestAnimationFrame(function () {
+            syncPlayfieldGuttersToBars()
             syncGridButtonStripToCanvas()
             syncStatBarsLayoutToGrid()
           })
           requestAnimationFrame(function () {
             requestAnimationFrame(function () {
+              syncPlayfieldGuttersToBars()
               syncGridButtonStripToCanvas()
               syncStatBarsLayoutToGrid()
             })
           })
         } else {
           setTimeout(function () {
+            syncPlayfieldGuttersToBars()
             syncGridButtonStripToCanvas()
             syncStatBarsLayoutToGrid()
           }, 0)
           setTimeout(function () {
+            syncPlayfieldGuttersToBars()
             syncGridButtonStripToCanvas()
             syncStatBarsLayoutToGrid()
           }, 120)
@@ -407,12 +499,12 @@
       col.setAttribute('data-bsnp-stat-col', idBase)
       col.style.cssText =
         'position:relative;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;' +
-        'width:clamp(69px,8vw,96px);min-width:69px;box-sizing:border-box;'
+        'width:clamp(56px,7vw,90px);min-width:56px;box-sizing:border-box;'
       const lab = document.createElement('div')
       lab.textContent = title
       lab.style.cssText =
         'position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:6px;white-space:nowrap;' +
-        'font-size:clamp(9px, 1.8vw, 11px);font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.03em;' +
+        'font-size:clamp(8px, 1.6vw, 11px);font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:0.03em;' +
         'text-align:center;line-height:1.1;'
       const track = document.createElement('div')
       track.setAttribute('data-bsnp-stat-track', idBase)
@@ -501,6 +593,53 @@
       syncStatBarsLayoutToGrid()
     }
 
+    /** Scales restart button from current grid/canvas width with bounds. */
+    function applyRestartButtonResponsiveSize(btn, healthCol, mount) {
+      const canvas = mount ? mount.querySelector('canvas') : null
+      const canvasW = canvas && canvas.offsetWidth > 0 ? canvas.offsetWidth : 0
+      const colRect = healthCol ? healthCol.getBoundingClientRect() : null
+      const colW = colRect && colRect.width > 0 ? colRect.width : 56
+      const scaleBase = canvasW > 0 ? canvasW : (colW * 7)
+      const widthPx = Math.max(56, Math.min(128, Math.round(scaleBase * 0.14)))
+      const fontPx = Math.max(9, Math.min(14, Math.round(scaleBase * 0.019)))
+      const padY = Math.max(4, Math.min(9, Math.round(scaleBase * 0.0085)))
+      const padX = Math.max(7, Math.min(14, Math.round(scaleBase * 0.0135)))
+      const radiusPx = Math.max(6, Math.min(11, Math.round(scaleBase * 0.010)))
+      btn.style.width = widthPx + 'px'
+      btn.style.padding = padY + 'px ' + padX + 'px'
+      btn.style.fontSize = fontPx + 'px'
+      btn.style.borderRadius = radiusPx + 'px'
+    }
+
+    /** Anchors restart under the Health column and keeps it clickable. */
+    function positionRestartButtonNearHealth() {
+      const btn = document.getElementById(pfx + 'PlayAgain')
+      if (!btn) return
+      const host = document.getElementById(pfx + 'StatBars')
+      const mount = document.getElementById(pfx + 'GridMount')
+      const healthCol = host ? host.querySelector('[data-bsnp-stat-col="Health"]') : null
+      if (!host || !healthCol) {
+        btn.style.position = 'relative'
+        btn.style.left = ''
+        btn.style.top = ''
+        btn.style.width = ''
+        btn.style.padding = '5px 8px'
+        btn.style.fontSize = '10px'
+        btn.style.borderRadius = '7px'
+        return
+      }
+      if (btn.parentNode !== host) host.appendChild(btn)
+      applyRestartButtonResponsiveSize(btn, healthCol, mount)
+      const hostRect = host.getBoundingClientRect()
+      const colRect = healthCol.getBoundingClientRect()
+      const left = Math.max(2, Math.round(colRect.left - hostRect.left))
+      const top = Math.round(colRect.top - hostRect.top + colRect.height + 6)
+      btn.style.position = 'absolute'
+      btn.style.left = left + 'px'
+      btn.style.top = top + 'px'
+      btn.style.transform = 'none'
+    }
+
     /** countIn: countdown + stat bars; otherwise clears countdown, updates stats. */
     function updateDisplay({ state, config, util }) {
       const {
@@ -512,7 +651,7 @@
       textSpan.style.width = '100%'
 
       const playAgainBtn = document.getElementById(pfx + 'PlayAgain')
-      if (playAgainBtn) playAgainBtn.style.display = gameState === 'gameOver' ? 'inline-block' : 'none'
+      if (playAgainBtn) playAgainBtn.style.display = 'block'
 
       const countdownEl = ensureCountdownEl()
 
@@ -523,10 +662,11 @@
         const colorIndex = ((4 - shown) % nPal + nPal) % nPal
         const countColor = colors[colorIndex] || colors[0]
         countdownEl.innerHTML = formatCountdownColumn(shown, countColor)
-        countdownEl.style.display = 'block'
+        countdownEl.style.display = 'flex'
         textSpan.innerHTML = ''
         syncPhrasePreview({ Canvas })
         syncStatBars(health, boring)
+        positionRestartButtonNearHealth()
         return
       }
 
@@ -536,6 +676,7 @@
 
       syncPhrasePreview({ Canvas })
       syncStatBars(health, boring)
+      positionRestartButtonNearHealth()
     }
 
     return { createGridButtons, flashButton, updateDisplay, prefix: pfx }

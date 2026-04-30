@@ -1,12 +1,13 @@
 //Match Melody
 
 const BUTTON_X = .02
-const TOP_Y = .02
+const TOP_Y = .4
 const SLIDER_X = .15
 const SLIDER_OFFSET = .09
-const ROW_1_Y = .3
-const ROW_2_Y = .7
+const ROW_1_Y = .0
+const ROW_2_Y = .6
 const FADER_BUTTON_OFFSET = .07
+const FADER1_BUTTON_OFFSET = .31
 const PLAYER_A_COLOR = "#FF0000"
 const PLAYER_B_COLOR = "#0000FF"
 const ENABLE_BUTTON_X_OFFSET = 0.01
@@ -65,6 +66,8 @@ octaveB.mapTo(x => {
     s2.octave = Math.floor(x);
 } )
 // console.log(octaveB)
+dist.level = 0
+s2.level = 1
 
 
 //==part function==
@@ -139,22 +142,31 @@ timerDisplay.text = 'Timer:'
 
 //==timer==
 let curLevel = 1
-let timeLeft = 80;
+let timeLeft = 64;
  let finalScore =  0
 //
 let loop = new Tone.Loop(time =>{
-    if (timeLeft >= 16) {//set timeLEft to 64 + 16
+    if (timeLeft >= 1) {//set timeLEft to 64 + 16
     timeLeft--;
     timerDisplay. label = 'Time: ' + timeLeft;
-  } else if (timeLeft > 0) {
+  } else if (curLevel > 6){
     timerDisplay. label = "time is up";
     part1=false
     part2=false
     finalScore = scoreMelody();
- } else {
-      s.stop()
-      s2.stop()
-    }
+    s.stop()
+    s2.stop()
+    d.stop()
+    b.stop()
+  }
+  else {
+    curLevel += 1
+    timeLeft = 64 - (curLevel-1)*8
+    timerDisplay. label = 'Time: ' + timeLeft;
+    endRound()
+    clearPresets()
+
+ } 
 }, '2n').start()
 //
 //==faders/toggles for blue and red==
@@ -168,13 +180,14 @@ let vals = ['.','.','.','.','.','.','.','.']
 //
 for(let i=0;i<8;i++){
     notes.push(new NexusSlider({
-      x:SLIDER_X + i*SLIDER_OFFSET, y:ROW_1_Y+FADER_BUTTON_OFFSET, size:1, mode:'toggle',
-      borderColor:'#FFF', accentColor:PLAYER_A_COLOR,
-      width:.5, height:1.2
+      x:SLIDER_X + i*SLIDER_OFFSET, y:ROW_1_Y, size:1, mode:'toggle',
+      accentColor:'#FFF', borderColor:PLAYER_A_COLOR,
+      width:.5, height:1.5, value: 1
     }))
 
     notes[i].callback = x=> {
       if(1) {
+        x = 1-x
         console.log(i, s2.seq[0], seq1)
         if(x==0) {
           
@@ -192,7 +205,7 @@ for(let i=0;i<8;i++){
     }
 
     enableButton.push(new NexusButton({
-      x:SLIDER_X + i*SLIDER_OFFSET + ENABLE_BUTTON_X_OFFSET, y:ROW_1_Y, size:0.25, mode:'toggle',
+      x:SLIDER_X + i*SLIDER_OFFSET + ENABLE_BUTTON_X_OFFSET, y:ROW_1_Y + FADER1_BUTTON_OFFSET, size:0.25, mode:'toggle',
       borderColor:'#FFF', accentColor:PLAYER_A_COLOR
     }))
     enableButton[i].callback = x=> {
@@ -205,7 +218,7 @@ for(let i=0;i<8;i++){
     notes2.push(new NexusSlider({
       x:SLIDER_X + i*SLIDER_OFFSET, y:ROW_2_Y+FADER_BUTTON_OFFSET, size:1, mode:'toggle',
       borderColor:'#FFF', accentColor:PLAYER_B_COLOR,
-      width:.5, height:1.2
+      width:.5, height:1.5
     }))
     notes2[i].callback = x=> {
       if(1) {
@@ -282,7 +295,7 @@ let ans=scoreMelody()
 // console.log(ans)
 //
 //==reset==
-let resetEverything = () => {
+let endRound = () => {
   scorekeep.label = 'pts: 0'
   for (let i = 0; i < 8; i++) {
     s.seq[0].vals[i] = '.'
@@ -290,17 +303,25 @@ let resetEverything = () => {
   }
   for (let i = 0; i < 8; i++) {
     s2.seq[0].vals[i] = '.'
-    notes[i].set(0)     
+    notes[i].set(1)     
   }
   button1.set(1)
   button2.set(1)
   part1=false;
   part2=false;
+  console.log("new round")
+  Theory.tempo = Theory.tempo + 5
+  setPreset(curLevel)
+};
+//
+let resetEverything = () => {
+  endRound()
   s.stop()
   s2.stop()
   // timeLeft = 80
   // timerDisplay.label = 'Time: 80'
   console.log("round reset")
+  Theory.tempo = 60
 };
 //
 let resetButton = new NexusTextButton({
@@ -323,47 +344,138 @@ finishButton.element.on('change', function(x){
     timerDisplay.label="Time: 1"
 })
 //
-let newA = new NexusTextButton({
-  label:'ALead', x:BUTTON_X,y:TOP_Y,size:1, height:.3,
-  accentColor:colors.accent, borderColor:colors.border,
-  textColor:colors.text,
-})
-newA.element.on('change', (x) => {
-  if(!x.state) return
-    timeLeft = 80
-    timerDisplay.label = 'Time: 80'
-    button5.set(1)
-    part1=true;
-    s.start()
-  })
-//
-let newB = new NexusTextButton({
-  label:'BLead', x:BUTTON_X,y:TOP_Y+.1,size:1, height:.3,
-  accentColor:colors.accent, borderColor:colors.border,
-  textColor:colors.text,
-})
-newB.element.on('change', (x) => {
-  if(!x.state) return
-    timeLeft = 80
-    timerDisplay.label = 'Time: 80'
-    button6.set(1)
-    part2=true;
-    s2.start()
-  })
-//
-let newC = new NexusTextButton({
-  label:'Both',x:BUTTON_X,y:TOP_Y+.2,size:1, height:.3,
-  accentColor:colors.accent, borderColor:colors.border,
-  textColor:colors.text,
-})
-newC.element.on('change', (x) => {
-  if(!x.state) return
-    timeLeft = 80
-    timerDisplay.label = 'Time: 80'
-    button5.set(1)
-    button6.set(1)
-    part1=true;
-    part2=true;
-    s.start()
-    s2.start()
-  })
+// let newA = new NexusTextButton({
+//   label:'ALead', x:BUTTON_X,y:TOP_Y,size:1, height:.3,
+//   accentColor:colors.accent, borderColor:colors.border,
+//   textColor:colors.text,
+// })
+// newA.element.on('change', (x) => {
+//   if(!x.state) return
+//     timeLeft = 80
+//     timerDisplay.label = 'Time: 80'
+//     button5.set(1)
+//     part1=true;
+//     s.start()
+//   })
+// //
+// let newB = new NexusTextButton({
+//   label:'BLead', x:BUTTON_X,y:TOP_Y+.1,size:1, height:.3,
+//   accentColor:colors.accent, borderColor:colors.border,
+//   textColor:colors.text,
+// })
+// newB.element.on('change', (x) => {
+//   if(!x.state) return
+//     timeLeft = 80
+//     timerDisplay.label = 'Time: 80'
+//     button6.set(1)
+//     part2=true;
+//     s2.start()
+//   })
+// //
+// let newC = new NexusTextButton({
+//   label:'Both',x:BUTTON_X,y:TOP_Y+.2,size:1, height:.3,
+//   accentColor:colors.accent, borderColor:colors.border,
+//   textColor:colors.text,
+// })
+// newC.element.on('change', (x) => {
+//   if(!x.state) return
+//     timeLeft = 80
+//     timerDisplay.label = 'Time: 80'
+//     button5.set(1)
+//     button6.set(1)
+//     part1=true;
+//     part2=true;
+//     s.start()
+//     s2.start()
+//   })
+
+
+
+let clearPresets = ()=>{
+  verb.level = 0
+  dist.level = 0
+  // s1.stop()
+  //other things
+  s.level = 1
+  s2.level = 1
+  d.level = 2
+}
+
+// //==radiobutton==
+
+const setPreset = (x)=> {
+  console.log('load preset ', x)
+  clearPresets()
+  x = x % 4
+  if(x == 0){
+      s.loadPreset("default")
+      s2.loadPreset("default")
+      d.sequence('O.**', '8n')
+      b.sequence('.')
+      Nexus.backgroundColor = '#7AF'
+      // for(let i = 0; i < 8; i++) {
+      //   if (i < 4) {
+      //     setStepActive(i, true);
+      //   } else {
+      //     setStepActive(i, false);
+      //   }
+      // }
+      s2.level = 1
+      s.level = 1.6
+      verb.level = .5
+    }
+
+    if(x == 1){
+      verb.type = 'hall'
+      verb.level = 0.2
+      b.sequence('-1-3-5-5 -2-4-6-6')
+      s.loadPreset("bowedString")
+      s2.loadPreset("piano")
+      d.sequence('O*** X*** O*** O**x', '16n')
+      Nexus.backgroundColor = '#f38'
+      // for(let i = 0; i < 8; i++) {
+      //   if (i < 4) {
+      //     setStepActive(i, true);
+      //   } else {
+      //     setStepActive(i, false);
+      //   }
+      // }
+      s2.level = 2
+      s.level = 1.
+      verb.level = .7
+    }
+    
+    if(x == 2){
+      d.sequence('O.^* [O]*^.', '16n')
+      d.velocity = 45
+      s.loadPreset("chirp")
+      s.velocity = 40
+      s2.loadPreset("guitar")
+      Nexus.backgroundColor = '#5c3'
+      // for(let i = 0; i < 8; i++) {
+      //   setStepActive(i, true);
+      // }
+      // s2.level = .8
+      // s.level = 1.4
+
+      s.level = 1.2
+      s2.level = .6
+      verb.level = .3
+    }
+    
+    if(x == 3){
+      d.sequence('O*.o X.2x .xO* X*^3', '16n')
+      //s2.connect(dist)
+      //dist.type = 'fold'
+      //dist.level = 0.2
+      Nexus.backgroundColor = '#077'
+      s.loadPreset("flute")
+      s2.loadPreset("chirp")
+      // for(let i = 0; i < 8; i++) {
+      //   setStepActive(i, true)
+      // }
+      s2.level = 1
+      s.level = 1.6
+      verb.level = .1
+    }
+  }

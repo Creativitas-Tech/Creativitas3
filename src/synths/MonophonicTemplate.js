@@ -1213,6 +1213,7 @@ export class MonophonicTemplate {
     }
 
     play(arr, subdivision = '8n', num = 0, phraseLength = 1) {
+        // console.log('play', phraseLength)
         if (!this.seq[num]) {
             // this.seq[num]._offset = 0//make sure the new one starts at the beginning as well
             this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));

@@ -25,4 +25,16 @@ export class DrumTemplate extends MonophonicTemplate {
       this.env.triggerAttackRelease(0.001);
     }
 
+    play(arr, subdivision = '8n', num = 0, phraseLength = 1) {
+        
+            this.seq[num]._offset = 0//there is a time delay between this and where the index is, but i can set it such as this so that I know that is started
+            this.seq[num].drumSequence(arr, subdivision, phraseLength);
+        
+        this.start(num);
+
+        // if (this.seq[num]) {
+        //     this.seq[num].play(length);
+        // }
+    }
+
 }

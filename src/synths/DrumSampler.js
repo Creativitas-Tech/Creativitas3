@@ -229,6 +229,9 @@ export class DrumSampler extends DrumTemplate{
                   this.parent.triggerDrum(val[0], time + val[1] * (Tone.Time(this.subdivision)), this.index, this.num);
                 }
                 
+                if (this.phraseLength === 'infinite') return;
+                this.phraseLength -= 1;
+                if (this.phraseLength < 1) this.stop();
             }, this.subdivision).start(0);
 
             this.setSubdivision(this.subdivision);
