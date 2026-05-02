@@ -1,0 +1,1 @@
+Prototype 4: Beat Surfer Nexus with Config / Util / Display / Game / SequenceGrid. Phrase scroll does not snap at phrase boundaries; boring and health rules match Prototype 3 (scored downbeats; passive health decay per eighth).

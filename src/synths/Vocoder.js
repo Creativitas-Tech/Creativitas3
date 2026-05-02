@@ -70,7 +70,7 @@ export class Vocoder extends MonophonicTemplate {
       this.bands.push({ filter, gain, freq });
     });
 
-    // // Update gains based on FFT values
+    // Update gains based on FFT values
     // this.loop = new Tone.Loop((time) => {
     //   const spectrum = this.fft.getValue(); // returns an array of decibel values
     //   this.bands.forEach(({ gain, freq }, i) => {

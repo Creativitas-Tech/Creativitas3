@@ -1,0 +1,1 @@
+Beat Surfer Game: Config, Util, UI, SequenceGrid, Game modules. Scrolling piano-roll lane with **continuous scroll across phrase changes**, `laneEighthGlobal` + next-phrase lookahead, Guitar Hero–style HUD. See `BeatSurferGame.js` for class layout.
