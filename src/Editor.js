@@ -62,6 +62,7 @@ import WebSocketClient from './collabSocket';
 import { CollabSlobClient } from './CollabSlob.js';
 import {makeCollaborativeObject, ctx} from './CollabLink.js'
 
+//MIDI and input handlers
 import MidiKeyboard2 from './midi/MidiKeyboard2.js';
 import MidiKeyboard from './midi/MidiKeyboard.js';
 import { asciiCallbackInstance } from './AsciiKeyboard.js';
@@ -69,6 +70,8 @@ import { AsciiGrid } from './AsciiGrid.js';
 import webExportHTMLContentGenerator from './webExport/WebExportGenerator.ts';
 import {MidiDevice} from './midi/MidiDevice.js';
 import {ControlSource} from './midi/ControlSource.js';
+import MidiPort from './midi/MidiPort.js';
+import { Displays } from './midi/MidiDisplay.js';
 
 
 const SPLIT_PREFERENCE_KEY = 'creativitas-editor-split-percentage';
@@ -271,6 +274,8 @@ function Editor(props) {
     window.midiHandler = midi.midiHandlerInstance
     //window.disableAsciiGrid = asciiGridInstance.disable.bind(asciiGridInstance);
     //window.setAsciiGridHandler = asciiGridInstance.setHandler.bind(asciiGridInstance);
+    window.midiPort = MidiPort
+    window.display = Displays
 
     window.enableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = true;
     window.disableAsciiRepeat = () => asciiCallbackInstance.allowRepeat = false;
@@ -293,6 +298,8 @@ function Editor(props) {
     window.setNoteOffHandler = midi.midiHandlerInstance.setNoteOffHandler.bind(midi.midiHandlerInstance);
     window.setCCHandler = midi.midiHandlerInstance.setCCHandler.bind(midi.midiHandlerInstance);
     window.sendCC = midi.midiHandlerInstance.sendCC.bind(midi.midiHandlerInstance);
+    // window.send = midi.midiHandlerInstance.send.bind(midi.midiHandlerInstance);
+    window.sendSysex = midi.midiHandlerInstance.sendSysex.bind(midi.midiHandlerInstance);
     window.sendNote = midi.midiHandlerInstance.sendNoteOn.bind(midi.midiHandlerInstance);
     window.sendNoteOff = midi.midiHandlerInstance.sendNoteOff.bind(midi.midiHandlerInstance);
     window.timingStrategyManager = timingStrategyManager;

@@ -1,16 +1,15 @@
 import { ControlSource } from './ControlSource.js';
-import { midi } from './Midi.js';
+import { midiHost } from './Midi.js';
 /*
-Hex   Binary      Meaning    Channel
-0x80  1000 xxxx   Note Off   0–15
-0x90   1001 xxxx   Note On   0–15
-0xA0   1010 xxxx   Polyphonic Aftertouch   0–15
-0xB0   1011 xxxx   Control Change (CC)   0–15
-0xC0   1100 xxxx   Program Change   0–15
-0xD0   1101 xxxx   Channel Pressure   0–15
-0xE0   1110 xxxx   Pitch Bend   0–15
-0xF0   1111 xxxx   System messages   N/A
-
+Hex   Binary      Decimal   Meaning    Channel
+0x80  1000 xxxx   128       Note Off   0–15
+0x90   1001 xxxx  144       Note On   0–15
+0xA0   1010 xxxx  160       Polyphonic Aftertouch   0–15
+0xB0   1011 xxxx  176       Control Change (CC)   0–15
+0xC0   1100 xxxx  192       Program Change   0–15
+0xD0   1101 xxxx  208       Channel Pressure   0–15
+0xE0   1110 xxxx  224       Pitch Bend   0–15
+0xF0   1111 xxxx  240       System messages   N/A
 */
 
 export class MidiDevice {
@@ -41,14 +40,14 @@ export class MidiDevice {
 
   // 🔍 Device lookup
   findInput(id) {
-    const inputs = [...midi.inputs.values()];
+    const inputs = [...midiHost.inputs.values()];
     if (typeof id === 'number') return inputs[id];
     return inputs.find(i => i.name === id);
   }
 
   findMatchingOutput(input) {
     if (!input) return null;
-    const outputs = [...midi.outputs.values()];
+    const outputs = [...midiHost.outputs.values()];
     return outputs.find(o => o.name === input.name);
   }
 
