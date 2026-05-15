@@ -22,6 +22,7 @@ import DrumSamplerPresets from './synthPresets/DrumSamplerPresets.json';
 import {parseStringSequence, parseStringBeat} from '../TheoryModule'
 import {Parameter} from './ParameterModule.js'
 import { Seq } from '../Seq'
+import { SeqDrum} from '../SeqDrum'
 import { Theory } from '../TheoryModule';
 import Groove from '../Groove.js'
 import paramDefinitions from './params/drumSamplerParams.js';
@@ -160,28 +161,27 @@ export class DrumSampler extends DrumTemplate{
   sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
         if (!this.seq[num]) {
           //console.log(num, this.seq[num])
-            this.seq[num] = new Seq(this, '0', subdivision, phraseLength, num, this.triggerDrum.bind(this));
+            this.seq[num] = new SeqDrum(this, '0', subdivision, phraseLength, num, this.triggerDrum.bind(this));
             this.seq[num].parent = this
             this.seq[num].vals = parseStringSequence(arr)
-            this.seq[num].loopInstance.stop()
-            this.seq[num].createLoop = this.newCreateLoop
             this.seq[num].createLoop()
         } else {
             //console.log('update seq')
-            this.seq[num].drumSequence(arr, subdivision, phraseLength);
+            this.seq[num].sequence(arr, subdivision, phraseLength);
+            this.seq[num].start()
         }
     }
     createSequence(num){
-      this.seq[num] = new Seq(this, '0', '16n', 'infinite', num, this.triggerDrum.bind(this));
+      this.seq[num] = new SeqDrum(this, '0', '16n', 'infinite', num, this.triggerDrum.bind(this));
       this.seq[num].parent = this
       this.seq[num].vals = ['.']
       this.seq[num].loopInstance.stop()
-      this.seq[num].createLoop = this.newCreateLoop
+      //this.seq[num].createLoop = this.    
       this.seq[num].createLoop()
     }
     expr(func, len = 32, subdivision = '16n', num = 0) {
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, '0', subdivision, 'infinite', num, this.triggerDrum.bind(this));
+            this.seq[num] = new SeqDrum(this, '0', subdivision, 'infinite', num, this.triggerDrum.bind(this));
         }
         this.seq[num].expr(func, len, subdivision);
         this.start(num);
@@ -210,38 +210,6 @@ export class DrumSampler extends DrumTemplate{
         this.seq[num] = parseStringSequence(arr)
 
         if (subdivision) this.setSubdivision(subdivision, num) 
-    }
-
-    newCreateLoop (){
-        // Create a Tone.Loop
-      //console.log('loop made')
-            this.loopInstance = new Tone.Loop(time => {
-              //console.log(this.num)
-                if(this.enable=== 0) return
-                this.index = Math.floor(Tone.Transport.ticks / Tone.Time(this.subdivision).toTicks());
-                let curBeat = this.vals[this.index % this.vals.length];
-
-                curBeat = this.checkForRandomElement(curBeat);
-
-                const event = parseStringBeat(curBeat, time);
-                //console.log(event,curBeat, this.vals,time,this.index, this.subdivision)
-                for (const val of event) {
-                  this.parent.triggerDrum(val[0], time + val[1] * (Tone.Time(this.subdivision)), this.index, this.num);
-                }
-                
-                if (this.phraseLength === 'infinite') return;
-                this.phraseLength -= 1;
-                if (this.phraseLength < 1) this.stop();
-            }, this.subdivision).start(0);
-
-            this.setSubdivision(this.subdivision);
-            // Start the Transport
-            Tone.Transport.start();
-            //console.log("loop started")
-        
-        
-        this.loopInstance.start()
-        Tone.Transport.start()
     }
 
   triggerDrum = (val, time=Tone.immediate(), index = 0, num=0)=>{
