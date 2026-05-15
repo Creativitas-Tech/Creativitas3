@@ -181,7 +181,7 @@ export class DrumSampler extends DrumTemplate{
     }
     expr(func, len = 32, subdivision = '16n', num = 0) {
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
+            this.seq[num] = new Seq(this, '0', subdivision, 'infinite', num, this.triggerDrum.bind(this));
         }
         this.seq[num].expr(func, len, subdivision);
         this.start(num);

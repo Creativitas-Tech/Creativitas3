@@ -930,16 +930,19 @@ export function pitchNameToMidi(name) {
  */
 export function intervalToMidi(interval, min=12, max = 127) {
     // Normalize input to remove spaces
-  //console.log(interval)
-  let degree = 0
-  let accidental = null
-  let midiNote = -1
+    //console.log(interval)
+    let degree = 0
+    let accidental = null
+    let midiNote = -1
     if (typeof interval === 'string') {
-      interval = interval.trim()
-    
-    // Determine the pitch class and accidental if present
-     degree = interval.match(/\[.*?\]|-?\d+|@(\d+)|\./g)[0];
-     accidental = interval.match(/[b#]+/g);
+      try{
+        interval = interval.trim()
+      
+        // Determine the pitch class and accidental if present
+         degree = interval.match(/\[.*?\]|-?\d+|@(\d+)|\./g)[0];
+         accidental = interval.match(/[b#]+/g);
+       }
+       catch(e){ console.log('invalid string', interval)}
    }
    else degree = interval
 

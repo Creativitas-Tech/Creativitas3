@@ -53,13 +53,13 @@ export class MidiPort {
         // Handle Output Namespace
         this.send = {
             cc: (num, val, channel = 0) => this.sendCC(num, val, channel),
-            noteOn: (num, vel, channel = 0) => this.sendNote(num, vel, channel),
-            noteOff: (num, channel = 0) => this.sendNote(num, 0, channel)
+            note: (num, vel, channel = 0) => this.sendNote(num, vel, channel)
         };
         
         this.ccs = {};
         this.notes = {};
         this._createIOObjects()
+        this.verbose = true
     }
 
     _createIOObjects() {
@@ -85,21 +85,40 @@ Hex   Binary      Decimal   Meaning    Channel
     _onMessage(msg) {
         const [status, data1, data2] = msg.data;
         const type = status & 0xf0;
+        const channel = (status & 0x0f) + 1;
+        if(0) console.log('raw', type, channel, data1, data2)
+        if(1) console.log('raw', msg.data)
 
         if (type === 0xb0) {
             this.ccs[data1]?.trigger(data2, this);
+            if(this.verbose) console.log('cc', data1, data2)
             //this.CCHandler(data1,data2)
         }
-        if (type === 0x90 && data2 > 0) {
+        else if (type === 0x90 && data2 > 0) {
 
             this.notes[data1]?.triggerFunc(data2, this);
+            if(this.verbose) console.log('note', data1, data2, channel)
             // this.notes[data1]?.on(data2)
             //this.noteOnHandler(data1,data2)
         }
-        if (type === 0x80 || (type === 0x90 && data2 === 0)) {
+        else if (type === 0x80 || (type === 0x90 && data2 === 0)) {
             this.notes[data1]?.triggerFunc(0, this);
+            if(this.verbose) console.log('note', data1, data2)
             //this.notes[data1]?.triggerOff(data2, this);
             //this.noteOnHandler(data1,0)
+        }
+        else if (type === 192 ) {
+            //this.notes[data1]?.triggerFunc(0, this);
+            if(this.verbose) console.log('program change', data1, channel)
+            //this.notes[data1]?.triggerOff(data2, this);
+            //this.noteOnHandler(data1,0)
+        }
+        else{
+            try{
+                if(this.verbose) console.log('other', type, channel, data1, data2)
+            } catch(e){
+                console.log(msg, e)
+            }
         }
     }
 
@@ -124,7 +143,7 @@ Hex   Binary      Decimal   Meaning    Channel
     sendNote(num, vel, channel = 0) {
         if (!this.output) return;
         const status = vel > 0 ? 0x90 : 0x80;
-        console.log([status + channel, num, vel])
+        //console.log([status + channel, num, vel])
         this.output.send([status + channel, num, vel]);
     }
     
