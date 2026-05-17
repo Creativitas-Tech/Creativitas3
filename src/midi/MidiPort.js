@@ -1,3 +1,15 @@
+class MidiVal {
+    constructor() {
+        this.value = 0;
+        this.display = null;
+    }
+    triggerFunc(){
+        //
+    }
+    on(func) { this.triggerFunc = func }
+    cb(){}
+}
+
 class MidiCC {
     constructor(num) {
         this.num = num;
@@ -10,6 +22,7 @@ class MidiCC {
         if (this.on) this.on(val, device);
         if (device.showVisuals && this.display) this.display(val, this.num, device);
     }
+    cb(){}
 }
 
 class MidiNote {
@@ -35,6 +48,7 @@ class MidiNote {
         //if (device.showVisuals && this.display) this.display(vel, this.num, device, "off");
     }
     on(func) { this.triggerFunc = func }
+    cb(){}
 
 }
 
@@ -58,8 +72,15 @@ export class MidiPort {
         
         this.ccs = {};
         this.notes = {};
+        this.note = new MidiVal()
+        this.cc = new MidiVal()
+
         this._createIOObjects()
         this.verbose = true
+
+        this.noteHandler = ()=>{}
+        this.ccHandler = ()=>{}
+        this.clockHandler = ()=>{}
     }
 
     _createIOObjects() {
@@ -87,23 +108,26 @@ Hex   Binary      Decimal   Meaning    Channel
         const type = status & 0xf0;
         const channel = (status & 0x0f) + 1;
         if(0) console.log('raw', type, channel, data1, data2)
-        if(1) console.log('raw', msg.data)
+        //if(1) console.log('raw', msg.data)
 
         if (type === 0xb0) {
-            this.ccs[data1]?.trigger(data2, this);
+            this.ccs[data1]?.cb(data2, this);
+            this.cc.cb(data1, data2)
             if(this.verbose) console.log('cc', data1, data2)
             //this.CCHandler(data1,data2)
         }
         else if (type === 0x90 && data2 > 0) {
 
-            this.notes[data1]?.triggerFunc(data2, this);
-            if(this.verbose) console.log('note', data1, data2, channel)
+            this.notes[data1]?.cb(data2);
+            this.note.cb(data1, data2)
+            if(this.verbose) console.log('note on', data1, data2, channel)
             // this.notes[data1]?.on(data2)
             //this.noteOnHandler(data1,data2)
         }
         else if (type === 0x80 || (type === 0x90 && data2 === 0)) {
-            this.notes[data1]?.triggerFunc(0, this);
-            if(this.verbose) console.log('note', data1, data2)
+            this.notes[data1]?.cb(0);
+            this.note.cb(data1, data2)
+            if(this.verbose) console.log('note off', data1, data2, this.notes[data1])
             //this.notes[data1]?.triggerOff(data2, this);
             //this.noteOnHandler(data1,0)
         }
@@ -123,13 +147,14 @@ Hex   Binary      Decimal   Meaning    Channel
     }
 
     onNote(func) {
-        this.noteOnHandler = func
+        console.log(func)
+        this.noteHandler = func
     }
     onCC(func) {
         this.CCHandler = func
     }
     onClock(func) {
-        this.midiClockHandler = func
+        this.clockHandler = func
     }
 
     // --- Output Methods ---
