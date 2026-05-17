@@ -27,8 +27,11 @@ export class Seq {
         this._transform = synth._transform;      // Local alias
         this._orn = synth._orn
         this.pianoRoll = synth._pianoRoll
+        this._range = null
         //internal variables
         this.phraseLength = phraseLength === 'infinite' ? 'infinite' : phraseLength * this.vals.length;
+        this.seqLength = 8
+        this.length = this.seqLength
         this.enable = 1;
         this.min = 24;
         this.max = 127;
@@ -85,6 +88,12 @@ export class Seq {
     get offset() { return this._offset;}
     set offset(val) {this._offset = val}
     get transform() {  return this._transform;}
+    set range(val) {
+        if( Array.isArray(val)) this._range = val
+        else if (val > 0) this._range = [0,val]
+        else this._range = null 
+    }
+    get range() {  return this._range;}
     set transform(val) {
         if (typeof val !== 'function') {
             throw new TypeError('Transform must be a function');
@@ -138,36 +147,20 @@ export class Seq {
         }
     }
 
-    drumSequence(arr, subdivision = '8n', phraseLength = 'infinite') {
-        this.vals = Array.isArray(arr) ? arr : parseStringSequence(arr);
-        if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
-        else this.phraseLength = phraseLength
-        this.subdivision = subdivision;
-        // console.log('drum seq', phraseLength)
-        this.start()   
-    }
-
     createLoop() {
         // Create a Tone.Loop
         if (this.loopInstance) {
             //this.loopInstance.stop();
             this.loopInstance.dispose();  // or .cancel() + .dispose()
         }    
+        this.seqLength = this.vals.length
+        this.length = this.vals.length
         //console.log('createLoop', this.subdivision)
         this.loopInstance = new Tone.Loop(time => {
             // console.log('loop', time, this.phraseLength)
             
-            this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
-            this.rawIndex = this.index
-            this.index = (this.index + this._rotate) % this.vals.length//ask ian if he wants offset to only be implemented for play with limited amount of loops, or as an infinite variable
-            // console.log('ind ', this.index)
-            if(this._offset !== null){//this makes offset an inperminent variable exceptfor infinite case
-                //console.log(this._offset)
-                this.index = this._offset % this.vals.length                 
-                this._offset += 1
-                if (this.phraseLength !== 'infinite' && this.offset >= this.vals.length*this.phraseLength)
-                    {this._offset = null}
-            }
+            this.index = this.calcIndex()
+
             if (this.enable === 0) return;
             let curBeat = this.vals[this.index];
             if (curBeat == undefined) curBeat = '.'
@@ -219,6 +212,59 @@ export class Seq {
         this.setSubdivision(this.subdivision);
 
         Tone.Transport.start();
+    }
+
+    retrigger(num = 0){
+        this._offset = 0
+        let index = this.calcIndex()
+        num = Math.floor(num*this.seqLength)
+        //console.log(index)
+        //console.log(index, num, index+1 - num)
+        this._offset =  this.vals.length - (index - num) + this.vals.length
+        //console.log(this._offset)
+    }
+
+
+
+    calcIndex(){
+        let index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+        this.rawIndex = index
+        let len = this.seqLength
+        if (this._range) {
+            const r = this._range;
+            const start = r[0];
+            const end = r[1];
+            let length = end - start; // Positive means forward, negative means backward
+
+            if (length > 0) {
+                // 1. Calculate how far the index is from the start of the range
+                let offset = index - start;
+                // 2. Apply true modulo to handle both positive and negative wrapping
+                length += 1
+                offset = ((offset % length) + length) % length;
+                // 3. Project the wrapped offset back into the absolute timeline
+                index = start + offset;
+            } else if (length < 0) {
+                let offset = index - start;
+                length -= 1
+                offset = ((offset % length) + length) % length;
+                index = Math.abs(offset) + end;
+            } else {
+                // Edge case: If start and end are identical, index freezes at start
+                index = start;
+            }
+        }
+
+        index = (((index + this._rotate) % len) + len) % len;//ask ian if he wants offset to only be implemented for play with limited amount of loops, or as an infinite variable
+        // console.log('ind ', this.index)
+        if(this._offset !== null){//this makes offset an inperminent variable exceptfor infinite case
+            //console.log(this._offset)
+            index = (index + this._offset + this.vals.length) % len                 
+            //this._offset += 1
+            if (this.phraseLength !== 'infinite' && this.offset >= len*this.phraseLength)
+                {this._offset = null}
+        }
+        return index
     }
 
     //new: ornaments are arrays of modifiers to be applied
@@ -437,14 +483,15 @@ export class Seq {
         const log = false
         this.calcNextBeat(func, len, log)
         this.subdivision = subdivision
+        this.seqLength = len
+        this.length = len
         if (this.loopInstance) {
             //this.loopInstance.stop();
             this.loopInstance.dispose();  // or .cancel() + .dispose()
         }        
         this.loopInstance = new Tone.Loop(time => {
             //console.log('loop', time)
-            this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
-            this.rawIndex = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
+            this.index = this.calcIndex()
             this.index = this.index % len
             //console.log('ind ', this.index)
             if (this.enable === 0) return;

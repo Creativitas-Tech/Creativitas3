@@ -13,42 +13,46 @@ export class SeqDrum extends Seq {
         this.stop()
     }
 
-
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parseStringSequence(arr);
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
         this.subdivision = subdivision;
         // console.log('drum seq', phraseLength)
+        this.seqLength = this.vals.length
+        this.length = this.vals.length
         this.start()   
     }
 
     createLoop (){
-        // Create a Tone.Loop
-      //console.log('loop made')
-            this.loopInstance = new Tone.Loop(time => {
-                // console.log(this.num)
-                if(this.enable=== 0) return
-                this.index = Math.floor(Tone.Transport.ticks / Tone.Time(this.subdivision).toTicks());
-                let curBeat = this.vals[this.index % this.vals.length];
+        this.seqLength = this.vals.length
+        this.length = this.vals.length
 
-                curBeat = this.checkForRandomElement(curBeat);
-                
-                const event = parseStringBeat(curBeat, time);
-                //console.log(event,curBeat, this.vals,time,this.index, this.subdivision)
-                for (const val of event) {
-                  this.parent.triggerDrum(val[0], time + val[1] * (Tone.Time(this.subdivision)), this.index, this.num);
-                }
-                
-                if (this.phraseLength === 'infinite') return;
-                this.phraseLength -= 1;
-                if (this.phraseLength < 1) this.stop();
-            }, this.subdivision).start(0);
+        this.loopInstance = new Tone.Loop(time => {
+            // console.log(this.num)
+            if(this.enable=== 0) return
+            this.index = this.calcIndex()
+            //console.log(this.num, this.index)
+            
+            let curBeat = this.vals[this.index];
 
-            this.setSubdivision(this.subdivision);
-            // Start the Transport
-            Tone.Transport.start();
-            //console.log("loop started")
+            curBeat = this.checkForRandomElement(curBeat);
+            // console.log(curBeat, this.index)
+            const event = parseStringBeat(curBeat, time);
+            //console.log(event,curBeat, this.vals,time,this.index, this.subdivision)
+            for (const val of event) {
+              this.parent.triggerDrum(val[0], time + val[1] * (Tone.Time(this.subdivision)), this.index, this.num);
+            }
+            
+            if (this.phraseLength === 'infinite') return;
+            this.phraseLength -= 1;
+            if (this.phraseLength < 1) this.stop();
+        }, this.subdivision).start(0);
+
+        this.setSubdivision(this.subdivision);
+        // Start the Transport
+        Tone.Transport.start();
+        //console.log("loop started")
         
         
         this.loopInstance.start()
@@ -87,7 +91,7 @@ export class SeqDrum extends Seq {
             this.index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
             this.rawIndex = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
             this.index = this.index % len
-            //console.log('ind ', this.index)
+            // console.log('ind ', this.index)
             if (this.enable === 0) return;
             
             let event = parseStringBeat(this.nextBeat, time);

@@ -213,7 +213,7 @@ export class DrumSampler extends DrumTemplate{
     }
 
   triggerDrum = (val, time=Tone.immediate(), index = 0, num=0)=>{
-    // console.log(val,time,index,num)
+    //console.log(val,time,index,num)
     val = val[0]
 
     let octave = this.getSeqParam(this.seq[num].octave, index);
