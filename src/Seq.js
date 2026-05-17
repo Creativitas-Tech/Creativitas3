@@ -162,7 +162,16 @@ export class Seq {
             this.index = this.calcIndex()
 
             if (this.enable === 0) return;
-            let curBeat = this.vals[this.index];
+            this.functionOnBeat(this.index, time)
+        }, this.subdivision).start(0);
+
+        this.setSubdivision(this.subdivision);
+
+        Tone.Transport.start();
+    }
+
+    functionOnBeat(index, time){
+        let curBeat = this.vals[index];
             if (curBeat == undefined) curBeat = '.'
 
             curBeat = this.checkForRandomElement(curBeat);
@@ -174,27 +183,27 @@ export class Seq {
             //console.log(event)
             // Roll chords
             const event_timings = event.map(subarray => subarray[1]);
-            let roll = this.getNoteParam(this.roll, this.index);
+            let roll = this.getNoteParam(this.roll, index);
             roll = roll * Tone.Time(this.subdivision)
             for (let i = 1; i < event.length; i++) {
                 if (event_timings[i] === event_timings[i - 1]) event[i][1] = event[i - 1][1] + roll;
             }
 
             //main callback for triggering notes
-            //console.log(event, time, this.index, this.num)
+            //console.log(event, time, index, this.num)
             //if( this._pedal === "legato" ) this.synth.releaseAll()
-            for (const val of event) this.synth.parseNoteString(val, time, this.index, this.num);
+            for (const val of event) this.synth.parseNoteString(val, time, index, this.num);
             //console.log('loop', time, event, this.callback)
             if(this.userCallback){
                 this.userCallback();
             }
 
             if(this.drawing){
-                this.updateDrawing(curBeat, time, this.index, this.num);
+                this.updateDrawing(curBeat, time, index, this.num);
             }
             if(this.pianoRoll){
                 for (const val of event){
-                    this.updatePianoRoll(val,time,this.index,this.num)
+                    this.updatePianoRoll(val,time,index,this.num)
                 }
             }
 
@@ -207,17 +216,14 @@ export class Seq {
             if (this.phraseLength === 'infinite') return;
             this.phraseLength -= 1;
             if (this.phraseLength < 1) this.stop();
-        }, this.subdivision).start(0);
-
-        this.setSubdivision(this.subdivision);
-
-        Tone.Transport.start();
     }
 
     retrigger(num = 0){
+
         this._offset = 0
         let index = this.calcIndex()
         num = Math.floor(num*this.seqLength)
+        this.functionOnBeat(num, Tone.immediate())
         //console.log(index)
         //console.log(index, num, index+1 - num)
         this._offset =  this.vals.length - (index - num) + this.vals.length
@@ -495,54 +501,10 @@ export class Seq {
             this.index = this.index % len
             //console.log('ind ', this.index)
             if (this.enable === 0) return;
+
+            this.functionOnBeat(this.index, time)
             
-            let event = parsePitchStringBeat(this.nextBeat, time);
-            //console.log('1', event)
-            event = this.applyOrnamentation(event)
-            event = event.map(([x, y]) => [this.perform_transform(x), y])
-            //console.log(event)
-            // Roll chords
-            const event_timings = event.map(subarray => subarray[1]);
-            let roll = this.getNoteParam(this.roll, this.index);
-            roll = roll * Tone.Time(this.subdivision)
-            for (let i = 1; i < event.length; i++) {
-                if (event_timings[i] === event_timings[i - 1]) event[i][1] = event[i - 1][1] + roll;
-            }
-
-            //main callback for triggering notes
-            //console.log(event, time, this.index, this.num)
-            for (const val of event) this.synth.parseNoteString(val, time, this.index, this.num);
-            //console.log('loop', time, event, this.callback)
-            if(this.userCallback){
-                this.userCallback();
-            }
-
-            if(this.drawing){
-                this.updateDrawing(event, time, this.index, this.num);
-            }
-            if(this.pianoRoll){
-                for (const val of event){
-                    this.updatePianoRoll(val,time,this.index,this.num)
-                }
-            }
-
-            //check for sequencing params
-            // try{
-            // for(params in this.synth.param){
-            //     if(Array.isArray(params)) this.synth.setValueAtTime
-            // }}
-            //console.log('len ', this.phraseLength)
-            this.calcNextBeat(func, len, log)
-
-            //if(this.drawing){
-                this.updateDrawing(event, time, this.index, this.num);
-            //}
-
-
-
-            if (this.phraseLength === 'infinite') return;
-            this.phraseLength -= 1;
-            if (this.phraseLength < 1) this.stop();
+            
         }, this.subdivision).start(0);
 
         this.setSubdivision(this.subdivision);
