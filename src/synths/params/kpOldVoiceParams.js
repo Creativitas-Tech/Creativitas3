@@ -1,8 +1,8 @@
 const paramDefinitions = (synth) => [
     { 
-        name: 'resonA', type: 'vco', 
+        name: 'resonance', type: 'vco', 
         min: 0, max: 1, curve: 2,
-        isSignal: 'true',
+        isSignal: 'true', connectTo: synth=>synth.resonance, 
         callback: (val, time = null) => {
           if(val<0.2) val = (val/0.2)*0.9
           else if (val < 0.5) val = (val-0.2)/0.3 *0.08 + 0.9
@@ -10,60 +10,9 @@ const paramDefinitions = (synth) => [
           val = val<0 ? 0 : val>0.9999 ? 0.9999 : val
           //console.log('fb', val)
           if(time){
-            synth.delay_1.resonance.setValueAtTime(val, time)
+            synth.resonanceAmount.setValueAtTime(val, time)
           } else {
-            synth.delay_1.resonance.rampTo(val, .01)
-          }
-        }
-    },
-    { 
-        name: 'resonB', type: 'vco', 
-        min: 0, max: 1, curve: 2,
-        isSignal: 'true',
-        callback: (val, time = null) => {
-          if(val<0.2) val = (val/0.2)*0.9
-          else if (val < 0.5) val = (val-0.2)/0.3 *0.08 + 0.9
-          else val = (val-0.5)/0.5*0.01 + 0.99
-          val = val<0 ? 0 : val>0.9999 ? 0.9999 : val
-          //console.log('fb', val)
-          if(time){
-            synth.delay_2.resonance.setValueAtTime(val, time)
-          } else {
-            synth.delay_2.resonance.rampTo(val, .01)
-          }
-        }
-    },
-    { 
-        name: 'resonC', type: 'vco', 
-        min: 0, max: 1, curve: 2,
-        isSignal: 'true',
-        callback: (val, time = null) => {
-          if(val<0.2) val = (val/0.2)*0.9
-          else if (val < 0.5) val = (val-0.2)/0.3 *0.08 + 0.9
-          else val = (val-0.5)/0.5*0.01 + 0.99
-          val = val<0 ? 0 : val>0.9999 ? 0.9999 : val
-          //console.log('fb', val)
-          if(time){
-            synth.delay_3.resonance.setValueAtTime(val, time)
-          } else {
-            synth.delay_3.resonance.rampTo(val, .01)
-          }
-        }
-    },
-    { 
-        name: 'resonD', type: 'vco', 
-        min: 0, max: 1, curve: 2,
-        isSignal: 'true',
-        callback: (val, time = null) => {
-          if(val<0.2) val = (val/0.2)*0.9
-          else if (val < 0.5) val = (val-0.2)/0.3 *0.08 + 0.9
-          else val = (val-0.5)/0.5*0.01 + 0.99
-          val = val<0 ? 0 : val>0.9999 ? 0.9999 : val
-          //console.log('fb', val)
-          if(time){
-            synth.delay_4.resonance.setValueAtTime(val, time)
-          } else {
-            synth.delay_4.resonance.rampTo(val, .01)
+            synth.resonanceAmount.rampTo(val, .1)
           }
         }
     },
@@ -90,9 +39,21 @@ const paramDefinitions = (synth) => [
         isSignal: 'true', connectTo: synth=>synth.lowpassCutoffSignal, 
         callback: function(x, time = null) {
             if (time) {
-                synth.lpf.frequency.setValueAtTime(x, time);
+                synth.lowpassCutoffSignal.setValueAtTime(x, time);
             } else {
-                synth.lpf.frequency.value = x;
+                synth.lowpassCutoffSignal.value = x;
+            }
+        }
+    },
+    { 
+        name: 'highpass', type: 'vcf', 
+        min: 20, max: 10000, curve: 2,
+        isSignal: 'true', connectTo: synth=>synth.highpassCutoffSignal, 
+        callback: function(x, time = null) {
+            if (time) {
+                synth.highpassCutoffSignal.setValueAtTime(x, time);
+            } else {
+                synth.highpassCutoffSignal.rampTo(  x, .1);
             }
         }
     },
@@ -101,6 +62,16 @@ const paramDefinitions = (synth) => [
         min: 0, max: 30, curve: 2, 
         callback: function(x) { synth.lpf.Q.value = x; } 
     },
+    /*
+    { 
+        name: 'keyTrack', type: 'hidden', 
+        min: 0, max: 2, curve: 1, 
+        callback: function(x) { synth.keyTracker.factor.value = x; } },
+        */
+    { 
+        name: 'envDepth', type: 'vcf', 
+        min: -1000, max: 5000, curve: 2, value:0,
+        callback: function(x) { synth.lpf_env_depth.factor.value = x; } },
     { 
         name: 'level', type: 'vca', 
         min: 0, max: 1, curve: 1, default: 1, 

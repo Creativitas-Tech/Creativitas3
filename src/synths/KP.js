@@ -34,10 +34,220 @@ export class KP extends MonophonicTemplate{
       this.isGlide = false
       this.backgroundColor = [200,50,50]
       this.name = "Twinkle"
-      this.guiHeight = 1
+      this.guiHeight = 0.5
       this.layout = basicLayout
-      this.detuneVal = 0
 
+      this.detuneVal = 0
+      this.frequency = new Tone.Signal(100)
+
+      this.impulse = new Tone.Noise().start()
+      this.lpf = new Tone.Filter({frequency: 1000, type:'lowpass', Q: 0, rolloff:-12})
+      this.vca = new Tone.Multiply(.1)
+      this.delay_1 = new Tone.LowpassCombFilter({delayTime:.01, resonance:.45,dampening:10000, volume:-36})
+      this.delay_2 = new Tone.LowpassCombFilter({delayTime:.01, resonance:.45,dampening:10000, volume:-36})
+      this.delay_3 = new Tone.LowpassCombFilter({delayTime:.01, resonance:.45,dampening:10000, volume:-36})
+      this.delay_4 = new Tone.LowpassCombFilter({delayTime:.01, resonance:.45,dampening:10000, volume:-36})
+      this.dcBlocker = new Tone.Filter({frequency: 20, type:'highpass', Q: 0, rolloff:-48})
+      this.gain = new Tone.Multiply(.1)
+      this.waveShaper = new Tone.WaveShaper({
+        curve: this.makeDistortionCurve(30), // Adjust number for drive amount
+        oversample: "4x" // Reduces digital aliasing harshness
+      })
+      this.wsVolume = new Tone.Gain({gain:-24})
+      this.resonator = new Tone.Filter({frequency: 1000, type:'lowpass', Q: 0, rolloff:-12})
+      this.output = new Tone.Multiply(1)
+
+      //control
+      this.env = new Tone.Envelope()
+      this.env_depth = new Tone.Multiply(1)
+      this.pitch_env = new Tone.Envelope()
+      this.pitch_env_depth1 = new Tone.Multiply(0)
+      this.pitch_env_depth2 = new Tone.Multiply(0)
+      this.pitch_env_depth3 = new Tone.Multiply(0)
+      this.pitch_env_depth4 = new Tone.Multiply(0)
+
+      this.detune1 = new Tone.Multiply(1)
+      this.detune2 = new Tone.Multiply(1)
+      this.detune3 = new Tone.Multiply(1)
+      this.detune4 = new Tone.Multiply(1)
+      
+      //connections
+      this.impulse.connect(this.lpf)
+      this.lpf.connect(this.vca)
+      this.vca.connect(this.delay_1)
+      this.vca.connect(this.delay_3)
+      this.delay_1.connect(this.delay_2)
+      this.delay_2.connect(this.gain)
+      this.delay_3.connect(this.delay_4)
+      this.delay_4.connect(this.dcBlocker)
+      this.dcBlocker.connect(this.gain)
+      this.gain.connect(this.waveShaper)
+      this.waveShaper.connect(this.wsVolume)
+      this.wsVolume.connect(this.resonator)
+      this.resonator.connect(this.output)
+
+      this.frequency.connect( this.detune1)
+      this.detune1.connect( this.delay_1.delayTime)
+      this.frequency.connect( this.detune2)
+      this.detune2.connect( this.delay_2.delayTime)
+      this.frequency.connect( this.detune3)
+      this.detune3.connect( this.delay_3.delayTime)
+      this.frequency.connect( this.detune4)
+      this.detune4.connect( this.delay_4.delayTime)
+
+      this.env.connect(this.env_depth)
+      this.env_depth.connect(this.vca.factor)
+      this.pitch_env.connect(this.pitch_env_depth1)
+      this.pitch_env.connect(this.pitch_env_depth2)
+      this.pitch_env.connect(this.pitch_env_depth3)
+      this.pitch_env.connect(this.pitch_env_depth4)
+      this.pitch_env_depth1.connect(this.delay_1.delayTime)
+      this.pitch_env_depth2.connect(this.delay_2.delayTime)
+      this.pitch_env_depth3.connect(this.delay_3.delayTime)
+      this.pitch_env_depth4.connect(this.delay_4.delayTime)
+      
+
+    // Bind parameters with this instance
+    this.paramDefinitions = paramDefinitions(this)
+    //console.log(this.paramDefinitions)
+    this.param = this.generateParameters(this.paramDefinitions)
+    this.createAccessors(this, this.param);
+
+    //for autocomplete
+    this.autocompleteList = this.paramDefinitions.map(def => def.name);;
+    //for(let i=0;i<this.paramDefinitions.length;i++)this.autocompleteList.push(this.paramDefinitions[i].name)
+    setTimeout(()=>{this.loadPreset('default')}, 500);
+
+  }
+  
+  setFrequency = function(val,time=null){
+    if(time){
+    	this.frequency.setValueAtTime(1/val, time)
+    }
+    else {
+    	this.frequency.rampTo( 1/val, .01)
+    }
+  }
+  setDamping = function(val){
+      this.delay_1.dampening = val
+      this.delay_2.dampening = val
+  }
+  
+  triggerAttack(val, vel = 100, time = null) {
+        vel = vel / 127;
+        if (time) {
+            this.frequency.setValueAtTime(1 / Tone.Midi(val).toFrequency(), time);
+            this.env.triggerAttack(time);
+            this.pitch_env.triggerAttack(time)
+        } else {
+            this.frequency.value = 1 / Tone.Midi(val).toFrequency();
+            this.env.triggerAttack();
+            this.pitch_env.triggerAttack()
+        }
+    }
+  triggerRelease = function(val, time=null){
+    if(time) {
+      this.env.triggerRelease(time)
+      this.pitch_env.triggerRelease(time)
+    }
+    else {
+      this.env.triggerRelease()
+      this.pitch_env.triggerRelease()
+    }
+  }
+  triggerAttackRelease(val, vel = 100, dur = 0.01, time = null) {
+        //console.log('AR ',val,vel,dur,time)
+        let amp = vel/127
+        if (time) {
+          this.frequency.setValueAtTime(this.frequency.value,time);
+          this.frequency.exponentialRampToValueAtTime(1 / Tone.Midi(val).toFrequency(), time + 0.02);
+            //this.frequency.linearRampToValueAtTime(1 / Tone.Midi(val).toFrequency(), time);
+            //this.velocitySig.setValueAtTime(amp, time); // 0.03s time constant for smoother fade
+            this.env.triggerAttackRelease(dur, time);
+            this.pitch_env.triggerAttackRelease(dur, time)
+            //this.updateDetune(1 / Tone.Midi(val).toFrequency(), time)
+        } else {
+            this.frequency.rampTo( 1 / Tone.Midi(val).toFrequency() , .1);
+            //this.velocitySig.rampTo(amp, 0.005); // 0.03s time constant for smoother fade
+            this.env.triggerAttackRelease(dur);
+            this.pitch_env.triggerRelease(dur)
+            //this.updateDetune( 1 / Tone.Midi(val).toFrequency(), time)
+        }
+    }
+
+    setDetune(val) {
+      let normalizedVal = Math.max(0., Math.min(1, val));
+      if( normalizedVal < 0.01) normalizedVal = 0
+      this.detuneVal = this.detuneFocusCurve(normalizedVal)
+      this.updateDetune(this.frequency.value, null)
+    }
+
+    updateDetune(val, time) {
+    
+      if( time) {
+        //this.detuneAmount.setValueAtTime (this.frequency.value * this.detuneVal, time)
+        //this.detuneAmount.exponentialRampToValueAtTime(val * this.detuneVal, time + 0.02);
+           
+      }
+      //else this.detuneAmount.value =  val * this.detuneVal
+    }
+
+    detuneFocusCurve(x) {
+    // Center at 1, 1.5, 2 with slight flattening using tanh or logistic smoothing
+    // Use a weighted sum of bumps
+    const centerVals = [0, 0.5, 1];
+    const numDivisions = centerVals.length - 1;
+    const divisionSize = 1 / numDivisions;
+    let outputVal = 0
+
+    const sigmoid = (x) => 1 / (1 + Math.exp(-x * 8)); // steeper sigmoid
+
+      for (let i = 0; i < numDivisions; i++) {
+        const start = i * divisionSize;
+        const end = (i + 1) * divisionSize;
+        const center = centerVals[i + 1];
+
+        if (x >= start && x < end) {
+          const normalized = (x - start) / divisionSize; // maps to 0–1
+          const curved = sigmoid(normalized * 2 - 1);     // sigmoid centered at 0
+          let outputVal =  start + curved * divisionSize;          // remap to original range
+          //if(outputVal < 0.00001) outputVal = 0
+          return outputVal
+        }
+      }
+      return x; // fallback
+  }
+
+  makeDistortionCurve(amount = 20) {
+    const k = typeof amount === 'number' ? amount : 20;
+    const n_samples = 44100;
+    const curve = new Float32Array(n_samples);
+    const deg = Math.PI / 180;
+    
+    for (let i = 0; i < n_samples; ++i) {
+      // Map array index to a symmetrical input range of [-1, 1]
+      const x = (i * 2) / n_samples - 1;
+      
+      // Standard arctan transfer function
+      curve[i] = (Math.PI + k) * x / (Math.PI + k * Math.abs(x));
+    }
+    return curve;
+  }
+}
+
+class KP_old extends MonophonicTemplate{
+  constructor(color = [200,200,200]){
+      super()
+      this.presets = TwinklePresets
+      this.synthPresetName = "TwinklePresets"
+      //this.accessPreset()
+      this.isGlide = false
+      this.backgroundColor = [200,50,50]
+      this.name = "Twinkle"
+      this.guiHeight = 0.5
+      this.layout = basicLayout
+
+      this.detuneVal = 0
       this.frequency = new Tone.Signal(100)
 
       this.impulse = new Tone.Noise().start()
@@ -49,6 +259,8 @@ export class KP extends MonophonicTemplate{
       this.vca= new Tone.Multiply(1)
       this.delay_1 = new Tone.LowpassCombFilter({resonance:.95,dampening:10000})
       this.delay_2 = new Tone.LowpassCombFilter({resonance:.95,dampening:10000})
+      this.output = new Tone.Multiply(1)
+      
       //control
       this.env = new Tone.Envelope()
       this.env_depth = new Tone.Multiply(1)
@@ -63,7 +275,7 @@ export class KP extends MonophonicTemplate{
       this.hpf_env_depth = new Tone.Multiply()
       this.lpf_env_depth = new Tone.Multiply()
       this.detuneAmount = new Tone.Signal(0)
-      this.output = new Tone.Multiply(1)
+      
       //connections
       this.impulse.connect(this.hpf)
       this.hpf.connect(this.lpf)
@@ -102,7 +314,7 @@ export class KP extends MonophonicTemplate{
       // this.bandwidthSignal.connect( this.lpf.frequency)
       // this.bandwidthSignal.connect(this.hpfBandWidthNegate)
       // this.hpfBandWidthNegate.connect(this.hpf.frequency)
-	
+  
 
     // Bind parameters with this instance
     this.paramDefinitions = paramDefinitions(this)
@@ -132,10 +344,10 @@ export class KP extends MonophonicTemplate{
   }
   setFrequency = function(val,time=null){
     if(time){
-    	this.frequency.setValueAtTime(1/val, time)
+      this.frequency.setValueAtTime(1/val, time)
     }
     else {
-    	this.frequency.rampTo( 1/val, .01)
+      this.frequency.rampTo( 1/val, .01)
     }
   }
   setDamping = function(val){
