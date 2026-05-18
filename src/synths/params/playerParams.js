@@ -10,6 +10,11 @@ const paramDefinitions = (synth) => [
           synth.output.factor.value = x*3;
         }
       },
+      { 
+        name: 'level', type: 'vca', 
+        min: 0, max: 1, curve: 1, default: 1, 
+        callback: function(x) { synth.output.factor.rampTo(x, 0.01) } },
+    
       {
         name: 'playbackrate', type: 'input',
         value: 1, 

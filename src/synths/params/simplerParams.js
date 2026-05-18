@@ -87,7 +87,12 @@ const paramDefinitions = (synth) => [
     callback: function(x) {
       synth.sampler._startTime = x;
     }
-  }
+  },
+  { 
+        name: 'level', type: 'vca', 
+        min: 0, max: 1, curve: 1, default: 1, 
+        callback: function(x) { synth.output.factor.rampTo(x, 0.01) } },
+  
   // {
   //   name: 'endTime',
   //   type: 'hidden',

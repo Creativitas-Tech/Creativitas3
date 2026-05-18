@@ -89,6 +89,7 @@ export class Simpler extends MonophonicTemplate {
         this.backgroundColor = [0,0,50]
 
         this.pitchOffset = 0
+        this._duration = 1;
         
         //audio objects
         this.sampler = new ExtendedSampler()
@@ -149,13 +150,17 @@ export class Simpler extends MonophonicTemplate {
 
         //console.log(this.autocompleteList)
         if(file) this.loadSample(file)
+
+        this.release = 1
     }
 
     /**
    * Load a specific sample.
    * @param {string} file - The name of the sample to load.
    */
-    load(file = 'piano'){this.loadSample(file)}
+    load(file = 'piano'){
+        this.loadSample(file)
+    }
     loadSample(file = null){
         //clear all previously playing notes
         if(this.sampler) {
@@ -199,6 +204,7 @@ export class Simpler extends MonophonicTemplate {
                 [60]: this.baseUrl.concat(url)
             }
         }).connect(this.vcf)
+        //setTimeout(()=>{this.release = this._duration},1000)
     }
 
     listSamples(){

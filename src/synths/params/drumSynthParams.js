@@ -142,6 +142,11 @@ const paramDefinitions = (synth) => [
             else synth.vcfEnvDepth.factor.value = x
             }
         },
+        { 
+        name: 'level', type: 'vca', 
+        min: 0, max: 1, curve: 1, default: 1, 
+        callback: function(x) { synth.output.factor.rampTo(x, 0.01) } },
+    
     // {name:'adsr',type:'env',min:0,max:1,curve:2,value:[.01,.1,.5,.5],
     //     labels:['attack','decay','sustain','release'],
     //     callback:(x,i=null)=>{ synth.setADSR('env',x, i) }

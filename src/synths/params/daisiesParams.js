@@ -156,6 +156,10 @@ export const paramDefinitions = (synth) => [
             else synth.crossfade_lfo_depth.factor.rampTo( x, .005)
         }
     },
+    { 
+        name: 'level', type: 'vca', 
+        min: 0, max: 1, curve: 1, default: 1, 
+        callback: function(x) { synth.output.factor.rampTo(x, 0.01) } },
     // Fix pan in polyphony template
     // {
     //     name: 'pan', type: 'vca', min: 0, max: 1, curve: .5,

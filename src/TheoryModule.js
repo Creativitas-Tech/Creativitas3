@@ -688,14 +688,16 @@ export function parsePitchStringSequence(str) {
   const usesPitchNames = /^[A-Ga-g?]$/.test(firstChar);
 
   if( usesPitchNames ) str = str.replace(/\s+/g, "");
+  console.log(str)
 
   // Tokenizers
   const pitchRegex = /\[.*?\]|[A-Ga-g][#b]?\d*|@\d+|\.|\?|~|\*/g;
-  const numRegex   = /\[.*?\]|-?\d+|@\d+|\.|\?|~|\*/g;
+  const numRegex   = /\[.*?\]|-?\d+[#b]?|@\d+|\.|\?|~|\*/g; 
 
   const regex = usesPitchNames ? pitchRegex : numRegex;
-
   let arr = str.match(regex) ?? [];
+
+  console.log(arr)
 
   // Expand @N: repeat the previous token N-1 additional times
   for (let i = 0; i < arr.length; i++) {

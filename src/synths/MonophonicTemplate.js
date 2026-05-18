@@ -1633,14 +1633,14 @@ export class MonophonicTemplate {
     }
 
     parseNoteString(val, time, index, num=null) {
-       //console.log(val,time,index, num, isNaN(Number(val[0])))
+       // console.log(val,time,index, num, isNaN(Number(val[0])))
         let lag = this.getSeqParam(this.seq[num].lag, index);
         let subdivision = this.getSeqParam(this.seq[num].subdivision, index);
         let groove = Groove.get(subdivision,index);
         const timeOffset = val[1] * (Tone.Time(subdivision)) + lag + groove.timing
         let curEventTiming = val[1] + index
 
-        if (val[0] === "~") {  return; }
+        if (val[0] === "~" || val[0] === "/") {  return; }
         else if (val[0] === "*") {
             this.releaseAll(time + timeOffset)
             return;

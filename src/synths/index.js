@@ -32,6 +32,7 @@ export { Chorus } from './Chorus.js';
 export { Distortion } from './Distortion.js';
 export { Delay } from './Delay.js';
 export { Vocoder } from './Vocoder.js';
+export { OutputClass } from './Output.js';
 
 export { MidiOut } from './MidiOut.js';
 

@@ -27,6 +27,8 @@ export class Strings extends MonophonicTemplate {
     this.layout = basicLayout
     //console.log(this.name, " loaded, available preset: ", this.presets)
 
+    this._duration = 1;
+
     // Initialize the main frequency control
     this.frequency = new Tone.Signal(200);
 

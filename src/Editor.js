@@ -17,7 +17,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 import './Editor-Initalizer.js';
 
 //tone
-import { Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { OutputClass, Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 // NexusUI wrappers
 import { NexusDial } from './nexus/Dial.js';
@@ -340,6 +340,7 @@ function Editor(props) {
     window.FM = FM;
     window.FM4 = FM4;
     window.Strings = Strings;
+    window.Output = OutputClass;
 
     window.Feedback = Feedback;
     window.MidiOut = MidiOut;

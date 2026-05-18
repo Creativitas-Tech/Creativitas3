@@ -40,6 +40,8 @@ export class Player extends MonophonicTemplate {
 		// this.accessPreset()
         this.name = "Player"
         this.guiHeight = .25
+
+        this._duration = .5;
         
         //audio objects
         this.player = new CustomPlayer()

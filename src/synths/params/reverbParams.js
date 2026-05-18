@@ -106,5 +106,17 @@ export const paramDefinitions = (synth) => [
       synth.delayL.delayTime.rampTo(synth.curDelayTime*(1+value/2),.01)
       synth.delayR.delayTime.rampTo(synth.curDelayTime*(1-value/2),.01)
     }
+  },
+  {
+    name: "size",
+    type: "hidden",
+    min: 0,
+    max: 5,
+    default: 1,
+    curve: 1,
+    callback: (value) => {
+      try{ synth.stretchIR(value)}
+      catch(e){console.log('reverb: invalid size')}
+    }
   }
 ];
