@@ -28,7 +28,9 @@ export class Seq {
         this._orn = synth._orn
         this.pianoRoll = synth._pianoRoll
         this._range = null
+
         //internal variables
+        this.type = 'seq'
         this.phraseLength = phraseLength === 'infinite' ? 'infinite' : phraseLength * this.vals.length;
         this.seqLength = 8
         this.length = this.seqLength
@@ -65,6 +67,8 @@ export class Seq {
 
         this.createLoop();
     }
+
+    exprFunc(i){return i}
 
     get subdivision() { return this._subdivision;}
     set subdivision(val) {
@@ -122,6 +126,7 @@ export class Seq {
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
         this.subdivision = subdivision;
+        this.type = 'seq'
 
         this.createLoop();
         //this.start()
@@ -155,6 +160,7 @@ export class Seq {
         }    
         this.seqLength = this.vals.length
         this.length = this.vals.length
+        this.type = 'seq'
         //console.log('createLoop', this.subdivision)
         this.loopInstance = new Tone.Loop(time => {
             // console.log('loop', time, this.phraseLength)
@@ -162,6 +168,9 @@ export class Seq {
             this.index = this.calcIndex()
 
             if (this.enable === 0) return;
+
+            this.curBeat = this.vals[this.index];
+
             this.functionOnBeat(this.index, time)
         }, this.subdivision).start(0);
 
@@ -171,51 +180,53 @@ export class Seq {
     }
 
     functionOnBeat(index, time){
-        let curBeat = this.vals[index];
-            if (curBeat == undefined) curBeat = '.'
+        let curBeat = this.curBeat
+        //console.log(curBeat)
+        if (curBeat == undefined) curBeat = '.'
 
-            curBeat = this.checkForRandomElement(curBeat);
 
-            let event = parsePitchStringBeat(curBeat, time);
-            //console.log('1', event)
-            event = this.applyOrnamentation(event)
-            event = event.map(([x, y]) => [this.perform_transform(x), y])
-            //console.log(event)
-            // Roll chords
-            const event_timings = event.map(subarray => subarray[1]);
-            let roll = this.getNoteParam(this.roll, index);
-            roll = roll * Tone.Time(this.subdivision)
-            for (let i = 1; i < event.length; i++) {
-                if (event_timings[i] === event_timings[i - 1]) event[i][1] = event[i - 1][1] + roll;
+        curBeat = this.checkForRandomElement(curBeat);
+
+        let event = parsePitchStringBeat(curBeat, time);
+        //console.log('1', event)
+        event = this.applyOrnamentation(event)
+        event = event.map(([x, y]) => [this.perform_transform(x), y])
+        //console.log(event)
+        // Roll chords
+        const event_timings = event.map(subarray => subarray[1]);
+        let roll = this.getNoteParam(this.roll, index);
+        roll = roll * Tone.Time(this.subdivision)
+        for (let i = 1; i < event.length; i++) {
+            if (event_timings[i] === event_timings[i - 1]) event[i][1] = event[i - 1][1] + roll;
+        }
+
+        //main callback for triggering notes
+        //console.log(event, time, index, this.num)
+        //if( this._pedal === "legato" ) this.synth.releaseAll()
+        for (const val of event) this.synth.parseNoteString(val, time, index, this.num);
+        //console.log('loop', time, event, this.callback)
+        if(this.userCallback){
+            this.userCallback();
+        }
+
+        if(this.drawing){
+            this.updateDrawing(curBeat, time, index, this.num);
+        }
+        if(this.pianoRoll){
+            for (const val of event){
+                this.updatePianoRoll(val,time,index,this.num)
             }
+        }
 
-            //main callback for triggering notes
-            //console.log(event, time, index, this.num)
-            //if( this._pedal === "legato" ) this.synth.releaseAll()
-            for (const val of event) this.synth.parseNoteString(val, time, index, this.num);
-            //console.log('loop', time, event, this.callback)
-            if(this.userCallback){
-                this.userCallback();
-            }
-
-            if(this.drawing){
-                this.updateDrawing(curBeat, time, index, this.num);
-            }
-            if(this.pianoRoll){
-                for (const val of event){
-                    this.updatePianoRoll(val,time,index,this.num)
-                }
-            }
-
-            //check for sequencing params
-            // try{
-            // for(params in this.synth.param){
-            //     if(Array.isArray(params)) this.synth.setValueAtTime
-            // }}
-            //console.log('len ', this.phraseLength)
-            if (this.phraseLength === 'infinite') return;
-            this.phraseLength -= 1;
-            if (this.phraseLength < 1) this.stop();
+        //check for sequencing params
+        // try{
+        // for(params in this.synth.param){
+        //     if(Array.isArray(params)) this.synth.setValueAtTime
+        // }}
+        //console.log('len ', this.phraseLength)
+        if (this.phraseLength === 'infinite') return;
+        this.phraseLength -= 1;
+        if (this.phraseLength < 1) this.stop();
     }
 
     retrigger(num = 0){
@@ -223,11 +234,19 @@ export class Seq {
         this._offset = 0
         let index = this.calcIndex()
         num = Math.floor(num*this.seqLength)
+        if(this.type === 'expr') this.curBeat = this.calcNextBeat(this.exprFunc, this.length, false)
+        else this.curBeat = this.vals[num]
         this.functionOnBeat(num, Tone.immediate())
-        //console.log(index)
-        //console.log(index, num, index+1 - num)
-        this._offset =  this.vals.length - (index - num) + this.vals.length
-        //console.log(this._offset)
+        
+        this._offset = -(index - num) % this.seqLength;
+    
+        // Handle negative modulo in JavaScript just in case
+        // if (this._offset < 0) {
+        //     this._offset += this.seqLength;
+        // }
+
+        //this._offset =  this.vals.length - (index - num) + this.vals.length
+        console.log(num, index, this._offset)
     }
 
 
@@ -443,6 +462,7 @@ export class Seq {
 
     expr(func, len = 32, subdivision = '16n') {
         this.createExpr(func, len, subdivision)
+        this.type = 'expr'
         return
         const arr = Array.from({ length: len }, (_, i) => {
             return func(i);
@@ -487,10 +507,11 @@ export class Seq {
     createExpr(func, len=32, subdivision = '16n') {
         // Create a Tone.Loop
         const log = false
-        this.calcNextBeat(func, len, log)
+        this.curBeat = this.calcNextBeat(func, len, log)
         this.subdivision = subdivision
         this.seqLength = len
         this.length = len
+        this.exprFunc = func
         if (this.loopInstance) {
             //this.loopInstance.stop();
             this.loopInstance.dispose();  // or .cancel() + .dispose()
@@ -501,28 +522,29 @@ export class Seq {
             this.index = this.index % len
             //console.log('ind ', this.index)
             if (this.enable === 0) return;
-
             this.functionOnBeat(this.index, time)
             
-            
+            this.curBeat = this.calcNextBeat(func, len, log)
         }, this.subdivision).start(0);
 
         this.setSubdivision(this.subdivision);
 
         Tone.Transport.start();
+        this.type = 'expr'
     }
     calcNextBeat(func, length, log){
         let i = (this.index + 1) % length
-            let curBeat = func(i)
+        let curBeat = func(i)
 
-            //console.log(curBeat, i, func)
-            //let curBeat = this.vals[this.index ];
-            if (curBeat == undefined) curBeat = '.'
+        //console.log(curBeat, i, func)
+        //let curBeat = this.vals[this.index ];
+        if (curBeat == undefined) curBeat = '.'
 
-            curBeat = this.checkForRandomElement(curBeat);
-            this.nextBeat = curBeat
-            if(log) console.log(this.nextBeat)
+        curBeat = this.checkForRandomElement(curBeat);
+        this.nextBeat = curBeat
+        if(log) console.log(curBeat)
 
+        return curBeat
     }
 
     setSubdivision(sub = '8n') {

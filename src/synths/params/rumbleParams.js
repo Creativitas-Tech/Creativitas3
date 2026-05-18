@@ -160,6 +160,11 @@ const paramDefinitions = (synth) => [
     name: 'mix', type: 'vca', min: 0, max: 1, curve: 1,
     value: 1,
     callback(x) { synth.direct_level.factor.value = x; }
+  },
+  {
+    name: 'level', type: 'vca', min: 0, max: 1, curve: 1,
+    value: 1,
+    callback(x) { synth.output.factor.value = x; }
   }
 ];
 

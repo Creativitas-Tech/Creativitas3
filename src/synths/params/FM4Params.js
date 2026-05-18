@@ -106,6 +106,12 @@ const paramDefinitions = (synth) => [
             synth.updateMacroMapping()
         }
     },
+    {
+        name: 'level', type: 'hidden',value:1,
+        callback: function(x) {
+            synth.output.factor.value = Math.pow(x,2)
+        }
+    },
     // {
     //     name: 'vcfAttack', type: 'env', min: 0.005, max: 0.5, curve: 2,
     //     value: 0.01,

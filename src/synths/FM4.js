@@ -14,6 +14,7 @@ import basicLayout from './layouts/daisyLayout.json';
 import paramDefinitions from './params/FM4Params.js';
 import {Theory} from '../TheoryModule.js'
 import { FMOperator} from './FM.js'
+import presets from './synthPresets/FM4Presets.json';
 
 export class FM4 extends MonophonicTemplate {
   constructor(gui = null) {
@@ -23,6 +24,7 @@ export class FM4 extends MonophonicTemplate {
     this.isGlide = false;
     this.guiHeight = 0.6;
     this.layout = basicLayout;
+    this.presets = presets
 
     // Fundamental frequency
     this.frequency = new Tone.Signal(200);
@@ -218,8 +220,8 @@ export class FM4 extends MonophonicTemplate {
     // === Param registration ===
     this.paramDefinitions = paramDefinitions(this);
     this.param = this.generateParameters(this.paramDefinitions);
-    //this.createAccessors(this, this.param);
-    //this.autocompleteList = this.paramDefinitions.map(def => def.name);
+    this.createAccessors(this, this.param);
+    this.autocompleteList = this.paramDefinitions.map(def => def.name);
 
     this.updateMacroMapping();
   }

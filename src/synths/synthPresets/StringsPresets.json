@@ -1,15 +1,15 @@
 {
   "default": {
     "type": "square",
-    "cutoff": 2750.48799999999994,
+    "cutoff": 2750.488,
     "Q": 0,
     "keyTrack": 0,
     "envDepth": 0.5999999999976,
     "level": 0.5,
-    "attack":  0.4,
-    "decay":  0.89062500000000155,
-    "sustain":  0.6,
-    "release":  1
+    "attack": 0.4,
+    "decay": 0.8906250000000016,
+    "sustain": 0.6,
+    "release": 1
   },
   "chirp": {
     "type": "saw",
@@ -18,10 +18,10 @@
     "keyTrack": 0,
     "envDepth": 2557.399999999998,
     "level": 0,
-    "attack":  0.01000000000000004,
-    "decay":    0.3500694444444451,
-    "sustain":    0.08999999999999969,
-    "release":    0.21777777777777863
+    "attack": 0.01000000000000004,
+    "decay": 0.3500694444444451,
+    "sustain": 0.08999999999999969,
+    "release": 0.21777777777777863
   },
   "pluck": {
     "type": "square",
@@ -39,17 +39,15 @@
   },
   "flute": {
     "type": "tri",
-    "cutoff": 20,
-    "Q": 0,
-    "keyTrack": 0,
-    "envDepth": 2197.4000000000037,
+    "cutoff": 950,
+    "Q": 11,
+    "keyTrack": 1,
+    "envDepth": 0,
     "level": 0,
-    "adsr": [
-      0.8402777777777787,
-      1,
-      1,
-      1
-    ]
+    "attack": 0.2,
+    "decay": 0.2,
+    "sustain": 0.9,
+    "release": 0.4
   },
   "drone": {
     "type": "saw",
@@ -68,7 +66,7 @@
   "piano": {
     "type": "saw",
     "cutoff": 100,
-    "Q": 0.0,
+    "Q": 0,
     "keyTrack": 1,
     "envDepth": 1200,
     "level": 0,
@@ -88,18 +86,6 @@
     "decay": 0.7,
     "sustain": 0.05,
     "release": 0.1
-  },
-  "flute": {
-    "type": "tri",
-    "cutoff": 950,
-    "Q": 11,
-    "keyTrack": 1.0,
-    "envDepth": 0,
-    "level": 0,
-    "attack": 0.2,
-    "decay": 0.2,
-    "sustain": 0.9,
-    "release": 0.4
   },
   "brass": {
     "type": "saw",
@@ -134,7 +120,7 @@
     "level": 0,
     "attack": 0.001,
     "decay": 0.15,
-    "sustain": 0.0,
+    "sustain": 0,
     "release": 0.15
   },
   "marimba": {
@@ -143,10 +129,66 @@
     "Q": 2,
     "keyTrack": 1,
     "envDepth": 4000,
-    "level": 0.0,
+    "level": 0,
     "attack": 0.001,
     "decay": 0.08,
-    "sustain": 0.0,
+    "sustain": 0,
     "release": 0.1
+  },
+  "thick": {
+    "shape": 0.13299999999999942,
+    "rate": 1.25,
+    "depth": 0.33250000000000013,
+    "cutoff": 3262.501999999996,
+    "Q": 11.532000000000012,
+    "keyTrack": 1.2,
+    "envDepth": 0.5999999999976,
+    "level": 0.1,
+    "attack": 0.11052668077979443,
+    "decay": 0.8906250000000016,
+    "sustainTime": 1,
+    "release": 0.9999999999999989
+  },
+  "violin": {
+    "shape": 0.6935000000000002,
+    "rate": 4.418000000000004,
+    "depth": 0.3040000000000001,
+    "cutoff": 1952.1279999999956,
+    "Q": 7.500000000000007,
+    "keyTrack": 1.2,
+    "envDepth": 4000,
+    "level": 0.1,
+    "attack": 0.37510177871865297,
+    "decay": 0.8906250000000016,
+    "sustainTime": 1,
+    "release": 0.6565266807797934
+  },
+  "cello": {
+    "shape": 0.8740000000000004,
+    "rate": 5.000000000000004,
+    "depth": 0.14250000000000002,
+    "cutoff": 3377.271999999996,
+    "Q": 7.500000000000007,
+    "keyTrack": 0.8799999999999997,
+    "envDepth": 1000,
+    "level": 0.1,
+    "attack": 0.37510177871865297,
+    "decay": 0.8906250000000016,
+    "sustainTime": 1,
+    "release": 0.8775088935932638
+  },
+  "swell": {
+    "shape": 0.23749999999999988,
+    "rate": 1.4580000000000002,
+    "depth": 0.028499999999999998,
+    "cutoff": 5485.047999999996,
+    "Q": 1.3230000000000024,
+    "keyTrack": 0.8799999999999997,
+    "envDepth": 1000,
+    "level": 0.1,
+    "attack": 1.3746519745963708,
+    "decay": 0.8906250000000016,
+    "sustainTime": 1,
+    "release": 4.709085468524605
   }
 }
