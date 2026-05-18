@@ -125,12 +125,19 @@ export class Seq {
         this.prevVals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
-        this.subdivision = subdivision;
+        if(this.subdivision !== subdivision) this.subdivision = subdivision;
+        
+        this.seqLength = this.vals.length
+        this.length = this.vals.length
+        
+        if( this.type === 'expr' ){
+            this.loopInstance.dispose();  // or .cancel() + .dispose()
+            this.createLoop();
+        }
+        //this.createLoop();
+        this.start()
         this.type = 'seq'
-
-        this.createLoop();
-        //this.start()
-        this.updateGui()
+        //this.updateGui()
     }
 
     updateGui(){
@@ -166,8 +173,9 @@ export class Seq {
             // console.log('loop', time, this.phraseLength)
             
             this.index = this.calcIndex()
-
             if (this.enable === 0) return;
+
+            if( !Array.isArray(this.vals)) this.vals = parsePitchStringSequence(this.vals);
 
             this.curBeat = this.vals[this.index];
 
@@ -191,7 +199,7 @@ export class Seq {
         //console.log('1', event)
         event = this.applyOrnamentation(event)
         event = event.map(([x, y]) => [this.perform_transform(x), y])
-        //console.log(event)
+        // console.log(event)
         // Roll chords
         const event_timings = event.map(subarray => subarray[1]);
         let roll = this.getNoteParam(this.roll, index);
@@ -203,6 +211,7 @@ export class Seq {
         //main callback for triggering notes
         //console.log(event, time, index, this.num)
         //if( this._pedal === "legato" ) this.synth.releaseAll()
+
         for (const val of event) this.synth.parseNoteString(val, time, index, this.num);
         //console.log('loop', time, event, this.callback)
         if(this.userCallback){
@@ -295,11 +304,15 @@ export class Seq {
     //new: ornaments are arrays of modifiers to be applied
     //to every element of a sequence.
     applyOrnamentation(event) {
+        // console.log('0',event)
+
+        if (typeof event[0][0] === 'string') return event; // e.g., '.' or 'r'
         if (typeof event === 'string') return event; // e.g., '.' or 'r'
-        //console.log(event)
+        // console.log('1', event)
 
         //check if there is an array of ornaments
         let ornIndex;
+        // console.log(this.num,this._orn[0], event)
         if (Array.isArray(this._orn[0])) {
             ornIndex = this._orn[this.index % this._orn.length];
         } else {
@@ -512,9 +525,14 @@ export class Seq {
         this.seqLength = len
         this.length = len
         this.exprFunc = func
-        if (this.loopInstance) {
-            //this.loopInstance.stop();
+        if( this.type === 'seq' ){
             this.loopInstance.dispose();  // or .cancel() + .dispose()
+        }
+        else if (this.loopInstance) {
+            this.setSubdivision(this.subdivision);
+            Tone.Transport.start();
+            this.type = 'expr'
+            return 
         }        
         this.loopInstance = new Tone.Loop(time => {
             //console.log('loop', time)
