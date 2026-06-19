@@ -174,5 +174,32 @@
     "Closed Decay": 0.059,
     "Open Decay": 1.1045000000000003,
     "kit": "LINN"
+  },
+  "hiphop1": {
+    "kick_vca": 1.4800000000000004,
+    "kick_start": 0,
+    "snare_vca": 0.5499999999999998,
+    "snare_start": 0,
+    "hat_vca": 0.12999999999999992,
+    "hat_start": 0,
+    "toms_vca": 0.7,
+    "toms_start": 0,
+    "kick_rate": 0.8200000000000001,
+    "kick_decay": 4,
+    "snare_rate": 0.8999999999999999,
+    "snare_decay": 0.16839999999999994,
+    "dryKick": 0,
+    "hat_rate": 1,
+    "closed_decay": 0.15474169305880553,
+    "open_decay": 1,
+    "tom1_rate": 1,
+    "tom2_rate": 1,
+    "tom3_rate": 1,
+    "toms_decay": 1,
+    "comp_threshold": -5,
+    "comp_ratio": 3.09,
+    "gain": 0.8,
+    "level": 2,
+    "kit1": "KPR77"
   }
 }

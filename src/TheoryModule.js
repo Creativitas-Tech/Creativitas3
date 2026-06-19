@@ -683,21 +683,80 @@ export function parseStringSequence(str){
     return str
 }
 
+//properly handled nested arrays
+function splitStringToEvents(str) {
+  let tokens = [];
+  let i = 0;
+  
+  while (i < str.length) {
+    // Skip whitespace
+    if (/\s/.test(str[i])) {
+      i++;
+      continue;
+    }
+    
+    // Match bracketed content (with nesting)
+    if (str[i] === '[') {
+      let bracketDepth = 1;
+      let start = i;
+      i++;
+      while (i < str.length && bracketDepth > 0) {
+        if (str[i] === '[') bracketDepth++;
+        if (str[i] === ']') bracketDepth--;
+        i++;
+      }
+      tokens.push(str.substring(start, i));
+      continue;
+    }
+    
+    // Match numbers with optional - prefix and #b suffix
+    if (/\d/.test(str[i]) || (str[i] === '-' && /\d/.test(str[i+1]))) {
+      let start = i;
+      if (str[i] === '-') i++;
+      while (i < str.length && /\d/.test(str[i])) i++;
+      if (str[i] === '#' || str[i] === 'b') i++;
+      tokens.push(str.substring(start, i));
+      continue;
+    }
+    
+    // Match @ followed by digits
+    if (str[i] === '@' && /\d/.test(str[i+1])) {
+      let start = i;
+      i++;
+      while (i < str.length && /\d/.test(str[i])) i++;
+      tokens.push(str.substring(start, i));
+      continue;
+    }
+    
+    // Match special single characters
+    if (/[.?~*#b]/.test(str[i])) {
+      tokens.push(str[i]);
+      i++;
+      continue;
+    }
+    
+    i++;
+  }
+  
+  return tokens;
+}
+
+//replaced with splitStringToEvents up to @ handlib
 export function parsePitchStringSequence(str) {
-  const firstChar = str.replace(/\[/g, "")[0];
+  const firstChar = str.replace(/\[/g, "")[0]; //remove 
   const usesPitchNames = /^[A-Ga-g?]$/.test(firstChar);
 
   if( usesPitchNames ) str = str.replace(/\s+/g, "");
-  console.log(str)
+  //console.log(str)
 
   // Tokenizers
   const pitchRegex = /\[.*?\]|[A-Ga-g][#b]?\d*|@\d+|\.|\?|~|\*/g;
   const numRegex   = /\[.*?\]|-?\d+[#b]?|@\d+|\.|\?|~|\*/g; 
 
   const regex = usesPitchNames ? pitchRegex : numRegex;
-  let arr = str.match(regex) ?? [];
-
-  console.log(arr)
+  // let arr = str.match(regex) ?? [];
+  let arr = splitStringToEvents(str)
+  //console.log(arr)
 
   // Expand @N: repeat the previous token N-1 additional times
   for (let i = 0; i < arr.length; i++) {
@@ -830,9 +889,81 @@ export function parsePitchStringBeat(curBeat, time, parentStart=0, parentDuratio
 }
 */
 
+function countEvents(tokenString) {
+  const regex = /\[.*?\]|[A-Ga-g][#b]?\d*(@\d+)?|-?\d+(@\d+)?|\.|\?|~|\*/g;
+  let tokens = tokenString.match(regex) || [];
+  return tokens.length;
+}
+
+function parseTokens(tokenString, startTime,endTime) {
+  const originalToken = tokenString //for debugging
+  let tokens = tokenString //if it is already an array
+  if( !Array.isArray(tokenString)){ //else split into arrays
+    if (tokenString.startsWith('[')) {
+        tokenString = tokenString.slice(1, -1)
+      }
+    const regex = /\[.*?\]|[A-Ga-g][#b]?\d*(@\d+)?|-?\d+(@\d+)?|\.|\?|~|\*/g;
+    tokens = splitStringToEvents(tokens)
+  }
+  // console.log(originalToken, tokens)
+
+  let events = [];
+  const numTotalEvents = tokens.length
+  const eventDuration = endTime-startTime
+
+  //recursively handle events in brackets
+  for (let [i, token] of tokens.entries()) {
+    if (token.startsWith('[') && token.endsWith(']')) {
+      token = token.slice(1, -1)
+
+      token = token.split(',')
+      for (let toke of token){
+        let parsedToken = parsePitchStringSequence(toke)
+        // console.log(toke, token, parsedToken)
+        // Recursively parse inner content
+        const inner = parsedToken
+        const numEvents = parsedToken.length
+        
+        const startPoint = startTime + i*eventDuration/numEvents
+        const endPoint = startTime + ((i+1)/numTotalEvents)*(eventDuration/numEvents)
+        
+        const result = parseTokens(inner,startPoint, endTime)
+        if( Array.isArray(result)) events = events.concat( result );
+        else events.push( result )
+      }
+
+    } else if (token.includes('@')) {
+      // console.log('at', token)
+      // Handle individual event with @repeat (e.g., 0@3 or C4@3)
+      const [event, repeatStr] = token.split('@');
+      const repeatCount = parseInt(repeatStr, 10);
+      for (let r = 0; r < repeatCount; r++) {
+        events.push(event);
+      }
+      
+    } else if(Array.isArray(token)){
+      events.push(token)
+    }
+    else if (token.trim()) {
+      events.push([token, startTime + i*(eventDuration/numTotalEvents) ]);
+    }else  {
+      events.push([token, startTime + i*(eventDuration/numTotalEvents) ]);
+    }
+  }
+  
+  // Normalize positions: each event gets position i/length
+  const length = events.length;
+  return events
+  return events.map((event, i) => [event, i / length]);
+}
+
 export function parsePitchStringBeat(curBeat, time){
   //console.log('pitch', curBeat)
   try{
+    let event = parseTokens(curBeat,0,1)
+    console.log('event', event)
+    return event
+
     if (typeof curBeat === 'number')  curBeat = curBeat.toString();
     const firstElement = curBeat.replace(/\[/g, "")[0]
     const usesPitchNames = /^[a-ac-zA-Z]$/.test(firstElement);
@@ -874,7 +1005,7 @@ export function parsePitchStringBeat(curBeat, time){
       return  outArr 
     }
   catch(e){
-    console.log('error with parsePitchStringBeat', curBeat)
+    console.log('error with parsePitchStringBeat',e, curBeat)
     return ['.']
   }
 }

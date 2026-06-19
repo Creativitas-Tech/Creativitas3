@@ -1189,7 +1189,7 @@ export class MonophonicTemplate {
      */
     sequence(arr, subdivision = '8n', num = 0, phraseLength = 'infinite') {
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this);
+            this.seq[num] = new Seq(this, arr, subdivision, phraseLength, num, this.parseNoteString.bind(this));
         } else {
             this.seq[num].sequence(arr, subdivision, phraseLength);
         }
@@ -1231,7 +1231,7 @@ export class MonophonicTemplate {
 
     expr(func, len = 32, subdivision = '16n', num = 0) {
         if (!this.seq[num]) {
-            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this);
+            this.seq[num] = new Seq(this, [], subdivision, 'infinite', num, this.parseNoteString.bind(this));
         }
         this.seq[num].expr(func, len, subdivision);
         this.start(num);

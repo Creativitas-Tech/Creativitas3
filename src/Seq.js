@@ -19,13 +19,12 @@ export class Seq {
         this._duration = synth._duration;             // Local alias
         this._roll = synth._roll;               // Local alias
         this._velocity = synth._velocity;            // Local alias
-        this._orn = synth._orn;            // Local alias
         this._lag = synth._lag;            // Local alias
-        this._pedal = synth._pedal;
-        this._rotate = synth._rotate;   //actual permanent rotate amount, about the thoery.tick
-        this._offset = synth._offset;   //internal variable for calculating rotation specifically for play
+        this._pedal = synth._pedal || 0;
+        this._rotate = synth._rotate || 0;   //actual permanent rotate amount, about the thoery.tick
+        this._offset = synth._offset || 0;   //internal variable for calculating rotation specifically for play
         this._transform = synth._transform;      // Local alias
-        this._orn = synth._orn
+        this._orn = synth._orn || [0]
         this.pianoRoll = synth._pianoRoll
         this._range = null
 
@@ -121,7 +120,7 @@ export class Seq {
 
     sequence(arr, subdivision = '8n', phraseLength = 'infinite') {
         this.vals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
-        //console.log('vals', this.vals)
+        console.log('vals', arr, this.vals)
         this.prevVals = Array.isArray(arr) ? arr : parsePitchStringSequence(arr);
         if(phraseLength !== 'infinite') this.phraseLength = phraseLength * this.vals.length;
         else this.phraseLength = phraseLength
@@ -168,17 +167,17 @@ export class Seq {
         this.seqLength = this.vals.length
         this.length = this.vals.length
         this.type = 'seq'
-        //console.log('createLoop', this.subdivision)
+        console.log('createLoop', this.subdivision)
         this.loopInstance = new Tone.Loop(time => {
             // console.log('loop', time, this.phraseLength)
             
             this.index = this.calcIndex()
             if (this.enable === 0) return;
-
+            //console.log('loopa', this.index, this.vals)
             if( !Array.isArray(this.vals)) this.vals = parsePitchStringSequence(this.vals);
 
             this.curBeat = this.vals[this.index];
-
+            //console.log('loop',  this.curBeat, this.vals)
             this.functionOnBeat(this.index, time)
         }, this.subdivision).start(0);
 
@@ -189,31 +188,32 @@ export class Seq {
 
     functionOnBeat(index, time){
         let curBeat = this.curBeat
-        //console.log(curBeat)
+        //console.log('func on beat', curBeat)
         if (curBeat == undefined) curBeat = '.'
 
 
         curBeat = this.checkForRandomElement(curBeat);
 
-        let event = parsePitchStringBeat(curBeat, time);
-        //console.log('1', event)
-        event = this.applyOrnamentation(event)
-        event = event.map(([x, y]) => [this.perform_transform(x), y])
+        let events = parsePitchStringBeat(curBeat, time);
+        // console.log('1', event)
+
+        events = this.applyOrnamentation(events)
+        if( this._transform) events = events.map(([x, y]) => [this.perform_transform(x), y])
         // console.log(event)
         // Roll chords
-        const event_timings = event.map(subarray => subarray[1]);
+        const event_timings = events.map(subarray => subarray[1]);
         let roll = this.getNoteParam(this.roll, index);
         roll = roll * Tone.Time(this.subdivision)
-        for (let i = 1; i < event.length; i++) {
-            if (event_timings[i] === event_timings[i - 1]) event[i][1] = event[i - 1][1] + roll;
+        for (let i = 1; i < events.length; i++) {
+            if (event_timings[i] === event_timings[i - 1]) events[i][1] = events[i - 1][1] + roll;
         }
 
         //main callback for triggering notes
         //console.log(event, time, index, this.num)
         //if( this._pedal === "legato" ) this.synth.releaseAll()
-
-        for (const val of event) this.synth.parseNoteString(val, time, index, this.num);
         //console.log('loop', time, event, this.callback)
+        for (const val of events) this.callback(val, time, index, this.num);
+        
         if(this.userCallback){
             this.userCallback();
         }
@@ -222,7 +222,7 @@ export class Seq {
             this.updateDrawing(curBeat, time, index, this.num);
         }
         if(this.pianoRoll){
-            for (const val of event){
+            for (const val of events){
                 this.updatePianoRoll(val,time,index,this.num)
             }
         }
@@ -255,7 +255,7 @@ export class Seq {
         // }
 
         //this._offset =  this.vals.length - (index - num) + this.vals.length
-        console.log(num, index, this._offset)
+        //console.log(num, index, this._offset)
     }
 
 
@@ -264,6 +264,7 @@ export class Seq {
         let index = Math.floor(Theory.ticks / Tone.Time(this.subdivision).toTicks());
         this.rawIndex = index
         let len = this.seqLength
+
         if (this._range) {
             const r = this._range;
             const start = r[0];
@@ -288,9 +289,10 @@ export class Seq {
                 index = start;
             }
         }
+        //console.log('ind ', index)
 
         index = (((index + this._rotate) % len) + len) % len;//ask ian if he wants offset to only be implemented for play with limited amount of loops, or as an infinite variable
-        // console.log('ind ', this.index)
+        //console.log('ind ', index, this._rotate,len)
         if(this._offset !== null){//this makes offset an inperminent variable exceptfor infinite case
             //console.log(this._offset)
             index = (index + this._offset + this.vals.length) % len                 
@@ -298,40 +300,25 @@ export class Seq {
             if (this.phraseLength !== 'infinite' && this.offset >= len*this.phraseLength)
                 {this._offset = null}
         }
+        //console.log('ind ', index)
         return index
     }
 
     //new: ornaments are arrays of modifiers to be applied
     //to every element of a sequence.
-    applyOrnamentation(event) {
+    applyOrnamentation(events) {
         // console.log('0',event)
 
-        if (typeof event[0][0] === 'string') return event; // e.g., '.' or 'r'
-        if (typeof event === 'string') return event; // e.g., '.' or 'r'
+        // if (typeof events[0][0] === 'string') return event; // e.g., '.' or 'r'
+        // if (typeof events === 'string') return event; // e.g., '.' or 'r'
         // console.log('1', event)
 
-        //check if there is an array of ornaments
-        let ornIndex;
-        // console.log(this.num,this._orn[0], event)
-        if (Array.isArray(this._orn[0])) {
-            ornIndex = this._orn[this.index % this._orn.length];
-        } else {
-            ornIndex = 0;
-        }
-
-        // Ensure index is valid
-        const ornament = this.ornaments[ornIndex % this.ornaments.length];
-        if (!ornament) return event;
-
-        let [pattern, scalar, length] = ornament;
-
         const ornamentedEvent = [];
-
-        const uniqueTimeSteps = [...new Set(event.map(e => e[1]))];
-        const numSourceNotes = uniqueTimeSteps.length;
-        const noteSpacing = 1 / length;
-
-        for (let [pitch, t] of event) {
+        const numEvents = events.length
+        for(let [i, event] of events.entries()){
+            let event_length = i<numEvents-1 ? events[i+1][1]-events[i][1] : 1 - events[i][1]
+            let pitch = event[0]
+            let t = event[1]
             if (pitch === '.' || !(typeof pitch === 'number' || /^-?\d+$/.test(pitch))) {
                 ornamentedEvent.push([pitch, t]);
                 //console.log('orn',pitch)
@@ -340,13 +327,14 @@ export class Seq {
                 const ornNotes = this._orn;
                 const ornLength = ornNotes.length
 
-                ornNotes.forEach((ornPitch, i) => {
+                ornNotes.forEach((ornPitch, j) => {
                     const ornEvent = typeof ornPitch === 'number' ? Number(pitch)+ornPitch : ornPitch 
 
-                    const timeOffset = i / ornLength / numSourceNotes;
-                    ornamentedEvent.push([ornEvent, t + timeOffset]);
+                    const timeOffset = t + j*event_length/ornLength
+                    ornamentedEvent.push([ornEvent, timeOffset]);
                     
                 });
+                
             }
         }
         //console.log(ornamentedEvent)
@@ -538,11 +526,13 @@ export class Seq {
             //console.log('loop', time)
             this.index = this.calcIndex()
             this.index = this.index % len
-            //console.log('ind ', this.index)
+            this.curBeat = this.calcNextBeat(this.exprFunc, len, log)
+            
             if (this.enable === 0) return;
             this.functionOnBeat(this.index, time)
             
-            this.curBeat = this.calcNextBeat(func, len, log)
+            // this.curBeat = this.calcNextBeat(this.exprFunc, len, log)
+            // console.log('ind ', this.index, this.curBeat)
         }, this.subdivision).start(0);
 
         this.setSubdivision(this.subdivision);
@@ -551,7 +541,8 @@ export class Seq {
         this.type = 'expr'
     }
     calcNextBeat(func, length, log){
-        let i = (this.index + 1) % length
+        //let i = (this.index + 1) % length
+        let i = (this.index + 0) % length
         let curBeat = func(i)
 
         //console.log(curBeat, i, func)
