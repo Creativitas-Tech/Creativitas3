@@ -2277,7 +2277,7 @@ function Editor(props) {
         // .replace(/\+/g, '-')
         // .replace(/\//g, '_')
         // .replace(/=+$/, ''); // Removes padding
-        const url = `https://ianhattwick.com/m080/?code=${compressedCode}`;
+        const url = `https://ianhattwick.com/creativitas/?code=${compressedCode}`;
         //const url = `http://localhost:3000/m361/?code=${compressedCode}`;
         navigator.clipboard.writeText(url);
         console.log('URL copied to clipboard');

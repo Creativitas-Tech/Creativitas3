@@ -120,20 +120,20 @@ Hex   Binary      Decimal   Meaning    Channel
 
             this.notes[data1]?.cb(data2);
             this.note.cb(data1, data2)
-            if(this.verbose) console.log('note on', data1, data2, channel)
+            if(this.verbose) console.log('note on', data1, data2)
             // this.notes[data1]?.on(data2)
             //this.noteOnHandler(data1,data2)
         }
         else if (type === 0x80 || (type === 0x90 && data2 === 0)) {
             this.notes[data1]?.cb(0);
             this.note.cb(data1, data2)
-            if(this.verbose) console.log('note off', data1, data2, this.notes[data1])
+            if(this.verbose) console.log('note off', data1, data2)
             //this.notes[data1]?.triggerOff(data2, this);
             //this.noteOnHandler(data1,0)
         }
         else if (type === 192 ) {
             //this.notes[data1]?.triggerFunc(0, this);
-            if(this.verbose) console.log('program change', data1, channel)
+            if(this.verbose) console.log('program change', data1)
             //this.notes[data1]?.triggerOff(data2, this);
             //this.noteOnHandler(data1,0)
         }
