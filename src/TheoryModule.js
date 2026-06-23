@@ -898,12 +898,13 @@ function countEvents(tokenString) {
 function parseTokens(tokenString, startTime,endTime) {
   const originalToken = tokenString //for debugging
   let tokens = tokenString //if it is already an array
-  if( !Array.isArray(tokenString)){ //else split into arrays
+  if( !Array.isArray(tokens) ){ //else split into arrays
+    if(typeof tokenString !== 'string') tokenString = String(tokenString)
     if (tokenString.startsWith('[')) {
         tokenString = tokenString.slice(1, -1)
       }
     const regex = /\[.*?\]|[A-Ga-g][#b]?\d*(@\d+)?|-?\d+(@\d+)?|\.|\?|~|\*/g;
-    tokens = splitStringToEvents(tokens)
+    tokens = splitStringToEvents(tokenString)
   }
   // console.log(originalToken, tokens)
 
@@ -960,8 +961,9 @@ function parseTokens(tokenString, startTime,endTime) {
 export function parsePitchStringBeat(curBeat, time){
   //console.log('pitch', curBeat)
   try{
+    // console.log('curBeat', curBeat)
     let event = parseTokens(curBeat,0,1)
-    console.log('event', event)
+    // console.log('event', event)
     return event
 
     if (typeof curBeat === 'number')  curBeat = curBeat.toString();
