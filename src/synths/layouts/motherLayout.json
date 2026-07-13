@@ -1,0 +1,55 @@
+{
+
+    "vco": {
+      "color": [255, 165, 0],
+      "boundingBox": { "x": 5, "y": 15, "width": 50, "height": 30 },
+      "offsets": { "x": 11, "y": 30 },
+      "groupA": ["type","vcoModDest"],
+      "controlTypeA": "radioButton",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.75,
+      "theme": "dark"
+    },
+    "vcf": {
+      "color": [0, 165, 255],
+      "boundingBox": { "x": 50, "y": 15, "width": 50, "height": 50 },
+      "offsets": { "x": 10, "y": 30 },
+      "groupA": [""],
+      "controlTypeA": "radioButton",
+      "controlTypeB": "knob",
+      "sizeA": 1,
+      "sizeB": 0.6
+    },
+    "vca": {
+      "color": [100, 50, 100],
+      "boundingBox": { "x": 80, "y": 15, "width": 20, "height": 50 },
+      "offsets": { "x": 11, "y": 10 },
+      "groupA": [""],
+      "controlTypeA": "radioButton",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.6
+    },
+    "env": {
+      "color": [165, 0, 255],
+      "boundingBox": { "x": 50, "y": 70, "width": 50, "height": 30 },
+      "offsets": { "x": 11, "y": 30 },
+      "groupA": [],
+      "controlTypeA": "knob",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.7
+    },
+    "lfo": {
+      "color": [200, 200, 180],
+      "boundingBox": { "x": 10, "y": 70, "width": 50, "height": 30 },
+      "offsets": { "x": 11, "y": 30 },
+      "groupA": ["lfoType"],
+      "controlTypeA": "radioButton",
+      "controlTypeB": "knob",
+      "sizeA": 0.8,
+      "sizeB": 0.6
+    }
+  
+}

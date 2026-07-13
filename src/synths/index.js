@@ -31,8 +31,10 @@ export { Strings } from './Strings.js';
 export { Chorus } from './Chorus.js';
 export { Distortion } from './Distortion.js';
 export { Delay } from './Delay.js';
+export { Delay2 } from './Delay2.js';
 export { Vocoder } from './Vocoder.js';
 export { OutputClass } from './Output.js';
+export { Mother } from './Mother.js';
 
 export { MidiOut } from './MidiOut.js';
 

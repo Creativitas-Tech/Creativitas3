@@ -3,8 +3,8 @@ import * as Tone from 'tone';
 export class GraphVisualizer {
     constructor(size = 64, ratio = 1, color = 0,  _target = 'Canvas',) {
         this.parent = document.getElementById(_target);
-        this.target = document.createElement("div");
-        this.parent.appendChild(this.target);
+        this._target = document.createElement("div");
+        this.parent.appendChild(this._target);
     
         this._array = new Array(size).fill(0);
         this._index = 0
@@ -88,8 +88,8 @@ export class GraphVisualizer {
         //clear min and max values
         this._min = this._minActive
         this._max = this._maxActive
-        this._minActive = null
-        this._maxActive = null
+        this._minActive = 0
+        this._maxActive = 1
         this._seqNum = 0
         this._displayLength = this._activeLength
         this._activeLength = 8
@@ -99,7 +99,7 @@ export class GraphVisualizer {
         if (arr.length > this._activeLength) this._activeLength = arr.length;
 
         arr = this.transformArray(arr);
-        this.calculateMinMax(arr);
+        // this.calculateMinMax(arr);
 
         switch (this._type) {
             case 'horizontal':
@@ -124,8 +124,8 @@ export class GraphVisualizer {
             .map(item => Number(item));  // Convert numeric strings to numbers
 
         // Calculate min and max
-        const min = Math.min(...numericValues)-.6;
-        const max = Math.max(...numericValues)+.6;
+        const min = Math.min(...numericValues)-.1;
+        const max = Math.max(...numericValues)+.1;
 
         //apply if there is a new min or max
         if(this._minActive === null || min < this._minActive ) this._minActive = min
@@ -268,8 +268,14 @@ export class GraphVisualizer {
         this._svg = null;
     }
     add(val){
-        this.addCCValue(val)
+        this._index = (this._index+1)%this._array.length
+        this._array[ this._index] = val
+        //console.log(normalized)
+        this.startVisualFrame();
+        this.visualize(this._array);
+        
     }
+    addCC(val){this.addCCValue(val)}
     addCCValue(val) {
         // Convert BigInt or other inputs explicitly to Number
         val = Number(val);
@@ -278,17 +284,13 @@ export class GraphVisualizer {
         val = Math.max(0, Math.min(127, val));
 
         // Normalize if needed: 0–127 → 0–1
-        const normalized = val// / 127 //*2-1;
+        const normalized = val/127 // / 127 //*2-1;
 
         // Push to buffer and trim
         // this._array.push(normalized);
         // if (this._array.length > this._columns) {
         //     this._array.shift();
         // }
-        this._index = (this._index+1)%this._array.length
-        this._array[ this._index] = normalized
-        //console.log(normalized)
-        this.startVisualFrame();
-        this.visualize(this._array);
+        this.add(normalized)
     }
 }

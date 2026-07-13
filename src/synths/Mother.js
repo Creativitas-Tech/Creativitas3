@@ -1,8 +1,13 @@
 /*
-Twinkle
+ Mother - approximation of a mother-32
 
-Single vco monosynth
-* vco->vcf->vca->output
+Saw / PWM VCO
+VCO mod depth with lfo and env inputs, and freq and pwm outputs
+Mixer with Noise
+VCF w/cutoff and resonance, and mod_depth either LFO or Env
+Env with AD controls
+VCA with env/on
+LFO with shape and rate controls
 
 */
 
@@ -10,11 +15,11 @@ import * as Tone from 'tone';
 import TwinklePresets from './synthPresets/TwinklePresets.json';
 import { MonophonicTemplate } from './MonophonicTemplate.js';
 import {Parameter} from './ParameterModule.js'
-import basicLayout from './layouts/halfLayout.json';
-import paramDefinitions from './params/twinkleParams.js';
+import basicLayout from './layouts/motherLayout.json';
+import paramDefinitions from './params/motherParams.js';
 import {Theory} from '../TheoryModule.js'
  
-export class Twinkle extends MonophonicTemplate {
+export class Mother extends MonophonicTemplate {
   constructor (gui = null) {
     super()
     this.gui = gui
@@ -22,32 +27,36 @@ export class Twinkle extends MonophonicTemplate {
 		this.synthPresetName = "TwinklePresets"
 		//this.accessPreset()
     this.isGlide = false
-    this.name = "Twinkle"
-    this.guiHeight = 0.5
+    this.name = "Mother"
+    this.guiHeight = 1
     this.layout = basicLayout
     //console.log(this.name, " loaded, available preset: ", this.presets)
 
     // Initialize the main frequency control
     this.frequency = new Tone.Signal(200);
-    this.bend = new Tone.Signal(0);
+    this.frequencyMod = new Tone.Multiply(1);
+    this.cutoffCV = new Tone.Signal()
+    this.frequency.connect(this.frequencyMod)
 
     // VCOs
-    this.vco = new Tone.OmniOscillator({ type:'pulse'}).start();
-    this.frequency.connect(this.vco.frequency)
-    this.bend.connect(this.vco.frequency)
+    this.vco_pulse = new Tone.PulseOscillator().start();
+    this.vco_noise = new Tone.Noise().start();
+    this.vco_saw = new Tone.Oscillator({type:'sawtooth'}).start();
+    this.frequencyMod.connect(this.vco_pulse.frequency)
+    this.frequencyMod.connect(this.vco_saw.frequency)
 
-    this.waveShaper = new Tone.WaveShaper()
-    this.bias = new Tone.Signal()
-    this.vco.connect(this.waveShaper);
-    this.bias.connect(this.waveShaper);
+    //MIXER
+    this.vco_mixer = new Tone.CrossFade()
+    // this.noise_mixer = new Tone.Gain()
+    this.vco_saw.connect(this.vco_mixer.a)
+    this.vco_pulse.connect(this.vco_mixer.a)
+    this.vco_noise.connect(this.vco_mixer.b)
 
-    this.formant = new Tone.Filter({type:'bandpass', frequency:1800, Q:0})
 
     // VCF
     this.vcf = new Tone.Filter({type:"lowpass", rolloff:-24});
-    this.waveShaper.connect(this.vcf);
-    this.formant.connect(this.vcf);
-    this.waveShaper.connect(this.formant);
+    this.vco_mixer.connect(this.vcf);
+    // this.vco_noise.connect(this.vcf);
 
     // VCF, VCA, output
     this.vca = new Tone.Multiply()
@@ -79,6 +88,29 @@ export class Twinkle extends MonophonicTemplate {
     this.cutoff_cv.connect(this.vcf.frequency)
     this.frequency.connect(this.keyTracker)
     this.keyTracker.connect(this.vcf.frequency)
+
+
+
+    //LFO
+    this.lfo = new Tone.LFO(1,-1,1).start()
+    this.lfo_vco_frequency = new Tone.Multiply(0)
+    this.lfo_vco_width = new Tone.Multiply(0)
+    this.vco_mod_depth = new Tone.Multiply(0)
+    this.lfo_filter_depth = new Tone.Multiply(0)
+    //
+    this.lfo.connect( this.vco_mod_depth)
+    this.lfo.connect( this.lfo_filter_depth)
+    //
+    this.vco_mod_depth.connect(this.lfo_vco_width)
+    this.vco_mod_depth.connect(this.lfo_vco_frequency)
+    this.lfo_vco_frequency.connect(this.vco_pulse.frequency)
+    this.lfo_vco_frequency.connect(this.vco_saw.frequency)
+    this.lfo_vco_width.connect(this.vco_pulse.width)
+    this.frequencyMod.factor.value = 1
+    
+
+    this.lfo.connect( this.lfo_filter_depth)
+    this.lfo_filter_depth.connect(this.vcf.frequency)
 
     // Bind parameters with this instance
     this.paramDefinitions = paramDefinitions(this)

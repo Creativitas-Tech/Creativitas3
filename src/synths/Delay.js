@@ -36,8 +36,8 @@ export class Delay extends EffectTemplate {
     super();
     this.gui = gui;
     this.presets = {};
-		this.synthPresetName = "DelayPresets"
-		this.accessPreset()
+    this.synthPresetName = "DelayPresets"
+    this.accessPreset()
     this.name = "Delay"
     this.layout = layout;
     this.backgroundColor = [0,0,50]

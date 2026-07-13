@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musical Grid Memory Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            user-select: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 90vw;
+            height: 90vw;
+            max-width: 600px;
+            max-height: 600px;
+            background: #1e1e1e;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .game-button {
+            position: absolute;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), left 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275), top 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .game-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.3);
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 20;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        #reset-btn {
+            background: #333;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #reset-btn:hover { background: #444; }
+
+        .status-bar {
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        #stats {
+            font-size: 0.9rem;
+            color: #aaa;
+            letter-spacing: 1px;
+        }
+
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        #overlay h1 { color: #ff4136; margin-bottom: 20px; font-size: 2.5rem; }
+        
+        #retry-btn {
+            background: #ff4136;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        #button-field {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="overlay">
+            <h1>STABILITY LOST</h1>
+            <p>Harmonic integrity reached zero.</p>
+            <button id="retry-btn">REBOOT SYSTEM</button>
+        </div>
+
+        <div id="ui-layer">
+            <div class="header">
+                <div id="level-display">Level: 1x1</div>
+                <button id="reset-btn">RESET</button>
+            </div>
+            
+            <div class="status-bar">
+                <div id="stats">Tempo: 80 BPM</div>
+            </div>
+        </div>
+
+        <div id="button-field"></div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        const colors = [
+            { name: 'White', hex: '#FFFFFF' },
+            { name: 'Red', hex: '#FF4136' },
+            { name: 'Blue', hex: '#0074D9' },
+            { name: 'Green', hex: '#2ECC40' }
+        ];
+
+        let currentGridSize = 1; 
+        let lastCorrectIndex = 3; 
+        let buttons = [];
+        let isStarted = false;
+        let isGameOver = false;
+        let isVictory = false;
+        let wrongColorClickCount = 0;
+        let targetColor = colors[0];
+
+        // --- AUDIO ENGINE ---
+        const masterOut = new Tone.Gain(0.4).toDestination();
+        const dist = new Tone.Distortion(0).connect(masterOut);
+        const reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 }).connect(dist);
+        
+        const synth = new Tone.PolySynth(Tone.Synth).connect(reverb);
+        synth.set({
+            oscillator: { type: "fatsquare", count: 3, spread: 20 },
+            envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 1 }
+        });
+
+        const vibrato = new Tone.Vibrato(0, 0).connect(reverb);
+        synth.disconnect(reverb);
+        synth.connect(vibrato);
+
+        const bass = new Tone.MonoSynth({
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.05, release: 0.2 }
+        }).connect(dist);
+
+        const kick = new Tone.MembraneSynth().connect(masterOut);
+        const snare = new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { decay: 0.15 } }).connect(masterOut);
+        const hihat = new Tone.MetalSynth({ envelope: { decay: 0.05 } }).connect(masterOut);
+
+        const getScaleNote = (n, oct = 4) => {
+            const scale = ["C", "D", "E", "F", "G", "A", "B"];
+            return scale[n % 7] + (oct + Math.floor(n/7));
+        };
+
+        // --- SEQUENCE DATA ---
+        const sSequenceNormal = [
+            [getScaleNote(0), getScaleNote(4)], null, [getScaleNote(0)], [getScaleNote(0), getScaleNote(5)],
+            [getScaleNote(4), getScaleNote(7)], [getScaleNote(0), getScaleNote(4)], null, [getScaleNote(0)],
+            [getScaleNote(0), getScaleNote(5)], [getScaleNote(4), getScaleNote(7)], [getScaleNote(0), getScaleNote(4)], [getScaleNote(0), getScaleNote(3)],
+            [getScaleNote(4)], [getScaleNote(0), getScaleNote(2)], [getScaleNote(0), getScaleNote(1)], [getScaleNote(0), getScaleNote(1)]
+        ];
+
+        const bSequenceNormal = [
+            getScaleNote(0, 2), null, null, getScaleNote(0, 2), 
+            getScaleNote(0, 2), null, null, getScaleNote(0, 2), 
+            getScaleNote(0, 2), null, null, getScaleNote(0, 2), 
+            getScaleNote(0, 2), null, null, getScaleNote(0, 2), 
+            getScaleNote(0, 2), null, getScaleNote(1, 2), null, 
+            getScaleNote(2, 2), null, getScaleNote(4, 2), null, 
+            getScaleNote(0, 2), null, null, getScaleNote(0, 2), 
+            getScaleNote(0, 2), null, null, getScaleNote(0, 2)
+        ];
+
+        const sSequenceVictory = [
+            [getScaleNote(0), getScaleNote(2), getScaleNote(4)], null, 
+            [getScaleNote(3), getScaleNote(5), getScaleNote(7)], 
+            [getScaleNote(4), getScaleNote(6), getScaleNote(1, 5)]
+        ];
+        const bSequenceVictory = [getScaleNote(0, 2), null, getScaleNote(3, 2), getScaleNote(4, 2)];
+
+        let step = 0;
+        const mainLoop = new Tone.Loop(time => {
+            if (isGameOver) return;
+
+            const curS = isVictory ? sSequenceVictory : sSequenceNormal;
+            const curB = isVictory ? bSequenceVictory : bSequenceNormal;
+
+            if (currentGridSize >= 1 || isVictory) {
+                const notes = curS[step % curS.length];
+                if (notes) synth.triggerAttackRelease(notes, "16n", time);
+            }
+
+            if (currentGridSize >= 3 || isVictory) {
+                const bNote = curB[step % curB.length];
+                if (bNote) bass.triggerAttackRelease(bNote, "16n", time);
+            }
+
+            if (currentGridSize >= 4 || isVictory) {
+                if (isVictory) {
+                    const vStep = step % 4;
+                    if (vStep === 0 || vStep === 2) {
+                        kick.triggerAttackRelease("C1", "16n", time);
+                        hihat.triggerAttackRelease("16n", time);
+                    } else if (vStep === 1 || vStep === 3) {
+                        hihat.triggerAttackRelease("8n", time); 
+                        snare.triggerAttack(time);
+                    }
+                } else {
+                    if (step % 2 === 0) hihat.triggerAttackRelease("16n", time);
+                    if (step % 8 === 4) snare.triggerAttack(time);
+                    if (step % 8 === 0) kick.triggerAttackRelease("C1", "16n", time);
+                }
+            }
+
+            step++;
+        }, "16n");
+
+        // --- GAME LOGIC ---
+        const field = document.getElementById('button-field');
+        const levelDisplay = document.getElementById('level-display');
+        const statsDisplay = document.getElementById('stats');
+        const overlay = document.getElementById('overlay');
+
+        function createButtons() {
+            field.innerHTML = "";
+            buttons = [];
+            for (let i = 0; i < 49; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'game-button';
+                field.appendChild(btn);
+                const btnObj = { element: btn, id: i, colorData: null, isCorrect: false };
+                btn.onclick = () => handleInput(btnObj);
+                buttons.push(btnObj);
+                hideButton(btnObj);
+            }
+        }
+
+        function hideButton(btnObj) {
+            btnObj.element.style.opacity = '0';
+            btnObj.element.style.pointerEvents = 'none';
+            const angle = Math.random() * Math.PI * 2;
+            btnObj.element.style.left = (300 + Math.cos(angle) * 800) + 'px';
+            btnObj.element.style.top = (300 + Math.sin(angle) * 800) + 'px';
+        }
+
+        function updateParameters() {
+            // Audio worsens ONLY based on wrong COLOR choices
+            const errorFactor = wrongColorClickCount / 18; 
+            const detuneVal = errorFactor * 2800; 
+            
+            dist.distortion = errorFactor * 0.9;
+            vibrato.frequency.value = errorFactor * 15;
+            vibrato.depth.value = errorFactor * 0.6;
+            
+            const envVal = errorFactor * 0.6;
+            synth.set({ detune: detuneVal, envelope: { attack: 0.02 + envVal, release: 1 + envVal * 2 } });
+            bass.set({ detune: detuneVal, envelope: { attack: 0.05 + envVal, release: 0.2 + envVal } });
+            
+            statsDisplay.innerText = `Tempo: ${Tone.Transport.bpm.value.toFixed(0)} BPM`;
+            
+            if (wrongColorClickCount >= 18) failGame();
+        }
+
+        function failGame() {
+            isGameOver = true;
+            Tone.Transport.stop();
+            overlay.style.display = 'flex';
+            buttons.forEach(hideButton);
+        }
+
+        function setupLevel() {
+            if (isVictory) return;
+            isGameOver = false;
+            overlay.style.display = 'none';
+            
+            Tone.Transport.bpm.value = 80 + ((currentGridSize - 1) * 10);
+            levelDisplay.innerText = `Level: ${currentGridSize}x${currentGridSize}`;
+            
+            // mistakes are level-specific
+            wrongColorClickCount = 0; 
+            updateParameters();
+
+            const totalNeeded = currentGridSize * currentGridSize;
+            const targetColorIndex = (lastCorrectIndex + 1) % colors.length;
+            targetColor = colors[targetColorIndex];
+
+            const padding = 60;
+            const availableSpace = 600 - (padding * 2);
+            const btnSize = (availableSpace / currentGridSize) * 0.85;
+            const stepDist = availableSpace / currentGridSize;
+
+            buttons.forEach((btnObj, i) => {
+                if (i < totalNeeded) {
+                    btnObj.element.style.opacity = '1';
+                    btnObj.element.style.pointerEvents = 'auto';
+                    btnObj.element.style.width = btnSize + 'px';
+                    btnObj.element.style.height = btnSize + 'px';
+                    const row = Math.floor(i / currentGridSize);
+                    const col = i % currentGridSize;
+                    btnObj.element.style.left = (padding + (col * stepDist) + (stepDist - btnSize) / 2) + 'px';
+                    btnObj.element.style.top = (padding + (row * stepDist) + (stepDist - btnSize) / 2) + 'px';
+
+                    const randColorIdx = Math.floor(Math.random() * colors.length);
+                    btnObj.colorData = colors[randColorIdx];
+                    btnObj.element.style.backgroundColor = btnObj.colorData.hex;
+                    btnObj.isCorrect = false;
+                } else {
+                    hideButton(btnObj);
+                }
+            });
+
+            if (currentGridSize === 1) {
+                buttons[0].colorData = colors[0];
+                buttons[0].element.style.backgroundColor = colors[0].hex;
+                buttons[0].isCorrect = true;
+                targetColor = colors[0];
+            } else {
+                let targets = buttons.slice(0, totalNeeded).filter(b => b.colorData === targetColor);
+                if (targets.length === 0) {
+                    const lucky = buttons[Math.floor(Math.random() * totalNeeded)];
+                    lucky.colorData = targetColor;
+                    lucky.element.style.backgroundColor = targetColor.hex;
+                    lucky.isCorrect = true;
+                } else {
+                    targets[Math.floor(Math.random() * targets.length)].isCorrect = true;
+                }
+            }
+        }
+
+        async function handleInput(btnObj) {
+            if (isGameOver) return;
+            if (!isStarted) {
+                await Tone.start();
+                Tone.Transport.start();
+                mainLoop.start(0);
+                isStarted = true;
+            }
+
+            if (isVictory) {
+                synth.triggerAttackRelease(getScaleNote(Math.floor(Math.random() * 14)), "8n");
+                return;
+            }
+
+            if (btnObj.isCorrect) {
+                lastCorrectIndex = colors.indexOf(btnObj.colorData);
+                if (currentGridSize < 7) {
+                    currentGridSize++;
+                    setTimeout(setupLevel, 400);
+                } else {
+                    winGame();
+                }
+            } else {
+                // Logic check: Is the button we clicked the WRONG color?
+                if (btnObj.colorData.hex !== targetColor.hex) {
+                    // Only worsen sound if the color itself is wrong
+                    wrongColorClickCount++;
+                    updateParameters();
+                }
+                
+                // Always hide clicked wrong buttons to provide visual feedback of exploration
+                btnObj.element.style.opacity = '0';
+                btnObj.element.style.pointerEvents = 'none';
+            }
+        }
+
+        function winGame() {
+            isVictory = true;
+            levelDisplay.innerText = "Level: MAX";
+            Tone.Transport.bpm.value = 60; 
+            
+            buttons.forEach((btnObj, i) => {
+                const padding = 60;
+                const availableSpace = 600 - (padding * 2);
+                const btnSize = (availableSpace / 7) * 0.85;
+                const stepDist = availableSpace / 7;
+                
+                btnObj.element.style.opacity = '1';
+                btnObj.element.style.pointerEvents = 'auto';
+                btnObj.element.style.width = btnSize + 'px';
+                btnObj.element.style.height = btnSize + 'px';
+                
+                const row = Math.floor(i / 7);
+                const col = i % 7;
+                btnObj.element.style.left = (padding + (col * stepDist) + (stepDist - btnSize) / 2) + 'px';
+                btnObj.element.style.top = (padding + (row * stepDist) + (stepDist - btnSize) / 2) + 'px';
+                
+                btnObj.element.style.backgroundColor = `hsl(${(i * 360 / 49)}, 70%, 60%)`;
+            });
+            
+            wrongColorClickCount = 0;
+            updateParameters();
+        }
+
+        const resetAll = () => {
+            currentGridSize = 1;
+            lastCorrectIndex = 3;
+            wrongColorClickCount = 0;
+            isGameOver = false;
+            isVictory = false;
+            overlay.style.display = 'none';
+            createButtons();
+            if (isStarted) Tone.Transport.start();
+            setupLevel();
+        };
+
+        document.getElementById('reset-btn').onclick = resetAll;
+        document.getElementById('retry-btn').onclick = resetAll;
+
+        window.onload = () => {
+            createButtons();
+            setupLevel();
+        };
+    </script>
+</body>
+</html>
+

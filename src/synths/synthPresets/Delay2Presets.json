@@ -1,0 +1,9 @@
+{
+  "default": {
+    "level": 0.2,
+    "hicut": 100,
+    "time": 0.12,
+    "feedback": 0.25,
+    "damping": 6000
+  }
+}
