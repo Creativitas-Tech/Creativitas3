@@ -1,62 +1,41 @@
-//look in the console for the MIDI port for Wifiduino, and Tiny USB
-//it will probably be MIDI input 1, but maybe not!
-setMidiInput(1)
-setMidiOutput(1)
-
-//OPTIONAL: messages to control incoming midi data
-//limit rate of cc messages
-// sendCC(10, 3) //sets 10ms limit
-// sendCC(110, 50) //sets accelX smoothing
-// sendCC(111, 30) //sets accelY smoothing
-// sendCC(112, 50) //sets accelZ smoothing
-//sendCC(127, 50) //software reset
-
-let s = new Polyphony(Daisy)
-let verb = new Reverb()
-let output = new Tone.Gain(0.1).toDestination()
+let s = new Twinkle()
+let output= new Output()
 s.connect(output)
-s.connect( verb )
-verb.connect(output)
-s.initGui(s)
-verb.initGui()
+//
+let m = midi.device('waveshare')
+m.verbose = false
+//
+let gui = new p5(sketch, Canvas)
+let b = []
+for(let i=0;i<11;i++){
+  b.push( gui.Toggle({
+    label:i.toString(),
+    callback: x=> console.log()
+  }))
+}
+//
+let graph_y = new Graph()
+let graph_z = new Graph()
+let graph_mag = new Graph()
 
-let ax = new Graph(128, .4, 0)
-let ay = new Graph(128, .4, 0)
-let az = new Graph(128, .4, 0)
-let roll = new Graph(128, .4, 1)
-let pitch = new Graph(128, .4, 1)
-let yaw = new Graph(128, .4, 1)
-let magnitude = new Graph(128, .4, 1)
+//tilt - pitch/roll/yaw
+m.cc3.cb = val => {}
+m.cc4.cb = val => {
+  graph_y.addCC(val)
+}
+m.cc5.cb = val => graph_z.addCC(val)
+//magnitude of acceleration
+m.cc6.cb = val => graph_mag.addCC(val) //console.log('cc', 6, val)
+//potentiometer
+m.cc0.cb = val => console.log('cc', 0, val)
 
-setNoteOnHandler((note,vel)=>{
-  console.log('on', note)
-})
-setNoteOffHandler((note)=>{
-  console.log('off', note)
-})
-setCCHandler((num, val)=>{
-  if(num == 10) console.log(num, val)
-  switch(num){
-    case 10:
-      ax.add(val)
-      break;
-    case 11:
-      ay.add(val)
-      break;
-    case 12:
-      az.add(val)
-      break;
-    case 20:
-      roll.add(val)
-      break;
-    case 21:
-      pitch.add(val)
-      break;
-    case 22:
-      yaw.add(val)
-      break;
-    case 30:
-      magnitude.add(val)
-      break;
-  }
-})
+//handle all midi notes
+m.note.cb = (note,vel)=>{
+  console.log(note,vel)
+  b[note].set(vel > 0 ? 1 : 0)
+}
+//handle individual midi nots
+m.note0.cb = vel => {
+  s.sequence('0 2 3 1')
+}
+m.note1.cb = vel => s.sequence('4 5 3 6')

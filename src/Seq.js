@@ -479,7 +479,7 @@ export class Seq {
     }
 
     euclid(hits, beats, rotate){
-        //console.log('euclid', hits, beats, rotate)
+        console.log('euclid', hits, beats, rotate)
         let pattern = [];
         let bucket = 0;
 
@@ -502,6 +502,7 @@ export class Seq {
       for(let i=0;i<this.vals.length;i++){
         if(pattern[i%pattern.length] == 0)this.vals[i] = '.'
       }
+        this.seqLength = this.vals.length
     }
 
     //createExpr calculates the expression one beat at a time
