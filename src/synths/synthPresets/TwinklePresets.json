@@ -11,6 +11,18 @@
     "sustain":  0.08027777777777759,
     "release":  0.2669444444444446
   },
+  "bass": {
+    "type": "square",
+    "cutoff": 200,
+    "Q": 1,
+    "keyTrack": 0,
+    "envDepth": 100,
+    "level": 1,
+    "attack":  0.003000000000000004,
+    "decay":    1,
+    "sustain":    0,
+    "release":    0.25
+  },
   "chirp": {
     "type": "saw",
     "cutoff": 380.278,

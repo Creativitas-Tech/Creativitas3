@@ -191,7 +191,7 @@ export class DrumSampler extends DrumTemplate{
         if (!this.seq[num]) {
             this.sequence(seq, subdivision='8n', num, 'infinite');
         } else {
-            this.seq[num].drumSequence(seq, subdivision, 'infinite');
+            this.seq[num].sequence(seq, subdivision, 'infinite');
         }
         this.seq[num].euclid(hits, beats,rotate);
         this.start(num);

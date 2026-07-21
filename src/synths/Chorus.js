@@ -1,7 +1,7 @@
 import * as Tone from 'tone';
 import { EffectTemplate } from './EffectTemplate';
 import { Parameter } from './ParameterModule.js';
-// import ChorusPresets from './synthPresets/ChorusPresets.json';
+import ChorusPresets from './synthPresets/ChorusPresets.json';
 import layout from './layouts/EffectLayout.json';
 import {paramDefinitions} from './params/ChorusParams.js';
 
@@ -9,7 +9,7 @@ export class Chorus extends EffectTemplate {
   constructor(gui = null) {
     super();
     this.gui = gui;
-    this.presets = {};
+    this.presets = ChorusPresets;
 		this.synthPresetName = "ChorusPresets"
 		this.accessPreset()
     this.name = "Chorus"

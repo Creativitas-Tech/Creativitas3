@@ -27,7 +27,7 @@ Delay.js
 import * as Tone from 'tone';
 import { EffectTemplate } from './EffectTemplate';
 import { Parameter } from './ParameterModule.js';
-// import DelayPresets from './synthPresets/DelayPresets.json';
+import DelayPresets from './synthPresets/DelayPresets.json';
 import layout from './layouts/EffectLayout.json';
 import {paramDefinitions} from './params/DelayParams.js';
 
@@ -35,7 +35,7 @@ export class Delay extends EffectTemplate {
   constructor(gui = null) {
     super();
     this.gui = gui;
-    this.presets = {};
+    this.presets = DelayPresets;
     this.synthPresetName = "DelayPresets"
     this.accessPreset()
     this.name = "Delay"

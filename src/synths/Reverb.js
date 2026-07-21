@@ -26,7 +26,7 @@ Reverb.js
 import * as Tone from 'tone';
 import { EffectTemplate } from './EffectTemplate';
 import { Parameter } from './ParameterModule.js';
-// import ReverbPresets from './synthPresets/ReverbPresets.json';
+import ReverbPresets from './synthPresets/ReverbPresets.json';
 import layout from './layouts/EffectLayout.json';
 import {paramDefinitions} from './params/reverbParams.js';
 
@@ -35,7 +35,7 @@ export class Reverb extends EffectTemplate {
     constructor(gui = null) {
     super();
     this.gui = gui;
-		this.presets = {}
+		this.presets = ReverbPresets
 		this.synthPresetName = "ReverbPresets"
 		this.accessPreset()
     this.name = "Reverb";
