@@ -37,6 +37,7 @@ export { OutputClass } from './Output.js';
 export { Mother } from './Mother.js';
 
 export { MidiOut } from './MidiOut.js';
+export { Recorder } from './Recorder.js';
 
 export { DrumSynth } from './DrumSynth.js';
 export { DrumVoice } from './DrumVoice.js';

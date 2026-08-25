@@ -1,16 +1,17 @@
 import { NexusElement } from './parentNexus.js';
 
 export class NexusDial extends NexusElement {
-    constructor(x = 0, y = 0, width = 100, height = 100, showValue = false) {
+    constructor(options = {}) {
         // Pass the type "Dial" to the parent constructor
-        super('Dial', x, y, width, height);
+        super('Dial', options);
         
-        this._showValue = showValue;
+        this.showValue = options.showValue
+        this._showValue = this.showValue;
         this._valueDisplay = null;
         
-        if (showValue) {
-            this._createValueDisplay(width);
-        }
+        // if (this.showValue) {
+        //     this._createValueDisplay(width);
+        // }
     }
     
     _createValueDisplay(width) {

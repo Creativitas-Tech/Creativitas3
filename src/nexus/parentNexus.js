@@ -1,6 +1,6 @@
 // NexusUI wrapper base class
 // Uses the global Nexus object from the nexusui npm package
-
+// NexusElement is on line 146
 // Static flag to track if Canvas has been initialized
 let canvasInitialized = false;
 
@@ -147,6 +147,7 @@ export class NexusElement{
     constructor(element_type, options = {}) {
         this.element_type = element_type; 
         this.initialized = false 
+        console.log(options)
 
          // Get the Canvas container - this is where NexusUI elements should appear
         const container = document.getElementById('Canvas');

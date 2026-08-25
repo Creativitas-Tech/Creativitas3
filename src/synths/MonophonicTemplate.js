@@ -894,8 +894,8 @@ export class MonophonicTemplate {
         
         // Calculate dial size - use a fixed base size scaled by the size parameter
         // Target: ~50-70px dials that scale slightly with container
-        const baseDialSize = 55;  // Base dial size in pixels
-        const width = Math.round(baseDialSize * size);
+        const baseDialSize = .9;  // Base dial size in pixels
+        const width = (baseDialSize * size);
         const height = width;  // Keep square for dials
         
         // Get the actual value to use
@@ -925,7 +925,13 @@ export class MonophonicTemplate {
         };
         
         if (controlType === 'knob') {
-            const dial = new NexusDial(pixelX, pixelY, width, height, showValue);
+            const dial = new NexusDial({
+                x:x/100, 
+                y:y/100, 
+                width:width, 
+                height:height, 
+                showValue:showValue
+            });
             
             // IMPORTANT: Set min/max BEFORE value to ensure proper clamping
             dial.min = param.min || 0;

@@ -115,6 +115,7 @@ export class Twinkle extends MonophonicTemplate {
     }
   }
   triggerAttackRelease (freq, amp, dur=0.01, time=null){
+    console.log(freq, amp, dur, time)
     freq = Theory.mtof(freq)
     //console.log('f', freq)
     amp = amp/127

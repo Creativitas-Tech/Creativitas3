@@ -17,7 +17,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 import './Editor-Initalizer.js';
 
 //tone
-import { Delay2, Mother, OutputClass, Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { Recorder, Delay2, Mother, OutputClass, Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 
 // NexusUI wrappers
 import { NexusDial } from './nexus/Dial.js';
@@ -55,6 +55,7 @@ import { EnvelopeLoop } from './synths/EnvelopeLoop.js'
 
 import { GraphVisualizer } from './visualizers/Grapher.js'
 import { MarkovChain } from './generators/MarkovChain.js'
+import { SQ1 } from './generators/SQ1.js'
 import { initConsole, deinitConsole, hasConsole, consoleWrite } from './visualizers/Console.js';
 
 import WebSocketClient from './collabSocket';
@@ -343,6 +344,7 @@ function Editor(props) {
     window.Strings = Strings;
     window.Output = OutputClass;
     window.Mother = Mother;
+    window.Recorder = Recorder
 
     window.Feedback = Feedback;
     window.MidiOut = MidiOut;
@@ -353,6 +355,7 @@ function Editor(props) {
     window.Twinkle = Twinkle;
     window.EnvelopeLoop = EnvelopeLoop;
     window.MarkovChain = MarkovChain;
+    window.SQ1 = SQ1
 
     // NexusUI wrapper classes (for user code)
     window.NexusDial = NexusDial;

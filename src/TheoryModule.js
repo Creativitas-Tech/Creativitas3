@@ -900,9 +900,9 @@ function parseTokens(tokenString, startTime,endTime) {
   let tokens = tokenString //if it is already an array
   if( !Array.isArray(tokens) ){ //else split into arrays
     if(typeof tokenString !== 'string') tokenString = String(tokenString)
-    if (tokenString.startsWith('[')) {
-        tokenString = tokenString.slice(1, -1)
-      }
+    // if (tokenString.startsWith('[')) {
+    //     tokenString = tokenString.slice(1, -1)
+    //   }
     const regex = /\[.*?\]|[A-Ga-g][#b]?\d*(@\d+)?|-?\d+(@\d+)?|\.|\?|~|\*/g;
     tokens = splitStringToEvents(tokenString)
   }

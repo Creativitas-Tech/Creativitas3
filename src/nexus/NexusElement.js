@@ -17,7 +17,7 @@ class NexusElement{
         this.element = new Nexus[this.element_type]("#nexus", {
             size: [width, height]
         });
-        
+        console.log(element_type, x, y, width , height )
         // Set positioning style for the element
         this.element.element.style.position = 'absolute';
 
