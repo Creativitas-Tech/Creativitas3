@@ -7,7 +7,8 @@ module.exports = {
   entry: './scripts/synth-entry.js',
   output: {
     filename: 'synth-bundle.min.js', // Always use the .min.js extension since we're always minifying
-    path: path.resolve(__dirname, 'public'),
+    path: path.resolve(__dirname, 'docs'),  // Changed from 'public'
+    //path: path.resolve(__dirname, 'public'),
     // Use library type 'window' to expose all exports directly on the window object
     library: {
       type: 'window'

@@ -7,7 +7,8 @@ module.exports = {
   entry: './scripts/timing-entry.js',
   output: {
     filename: 'timing-bundle.min.js',
-    path: path.resolve(__dirname, 'public'),
+    path: path.resolve(__dirname, 'docs'),  // Changed from 'public'
+    // path: path.resolve(__dirname, 'public'),
     library: {
       type: 'window' // Expose as global variables on window
     }
