@@ -89,3 +89,13 @@ export * from '../src/Games/GameClass.js';
 export * from '../src/generators/MarkovChain.js';
 
 export * from '../src/midi/MidiKeyboard2.js';
+
+// Export an init function
+export function initializeClasses() {
+    for (const key in window) {
+        if (key[0] === key[0].toUpperCase() && typeof window[key] === 'function') {
+            const lowerKey = key.charAt(0).toLowerCase() + key.slice(1);
+            if (!window[lowerKey]) window[lowerKey] = window[key];
+        }
+    }
+}
