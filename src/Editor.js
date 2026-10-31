@@ -4,6 +4,8 @@ tone/Tone/core/context/Context.ts, line 157
 tone/build/esm/core/context/Context.js, line 84
 */
 
+
+
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { timingStrategyManager } from './timing/TimingStrategyManager.js';
 import { handleTimingInitialization } from './timing/TimingModalDialog.js';
@@ -17,7 +19,9 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 import './Editor-Initalizer.js';
 
 //tone
-import { Recorder, Delay2, Mother, OutputClass, Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { Waveguide, Steampipe_verb, SteampipeVoice, Recorder2, Recorder, Delay2, Mother, OutputClass, Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+// import './worklet.js'
+// import {SimpleAudioWorklet} from './worklet-test.js'
 
 // NexusUI wrappers
 import { NexusDial } from './nexus/Dial.js';
@@ -73,6 +77,7 @@ import {MidiDevice} from './midi/MidiDevice.js';
 import {ControlSource} from './midi/ControlSource.js';
 import MidiPort from './midi/MidiPort.js';
 import { Displays } from './midi/MidiDisplay.js';
+
 
 
 const SPLIT_PREFERENCE_KEY = 'creativitas-editor-split-percentage';
@@ -157,6 +162,7 @@ const decorationsField = StateField.define({
 const wsUrl = 'ws://localhost:8080';
 
 function Editor(props) {
+
 
     // const [Tone, setTone] = useState(null);
 
@@ -345,6 +351,7 @@ function Editor(props) {
     window.Output = OutputClass;
     window.Mother = Mother;
     window.Recorder = Recorder
+    window.Recorder2 = Recorder2
 
     window.Feedback = Feedback;
     window.MidiOut = MidiOut;
@@ -356,6 +363,9 @@ function Editor(props) {
     window.EnvelopeLoop = EnvelopeLoop;
     window.MarkovChain = MarkovChain;
     window.SQ1 = SQ1
+    window.Steampipe = SteampipeVoice
+    window.Steampipe_verb = Steampipe_verb
+    window.Waveguide = Waveguide
 
     // NexusUI wrapper classes (for user code)
     window.NexusDial = NexusDial;

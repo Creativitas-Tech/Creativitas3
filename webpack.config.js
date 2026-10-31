@@ -16,7 +16,13 @@ module.exports = {
 
   },
   resolve: {
-    extensions: ['.ts', '.js']
+    extensions: ['.ts', '.js'],
+    fallback: {
+      fs: false,
+      path: false,
+      crypto: false,
+      stream: false,
+    },
   },
   externals: {
     'tone': 'Tone',
@@ -27,8 +33,12 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.(mjs|wasm)$/,
+        type: 'asset/resource',
+      },
+      {
         test: /\.(ts|js)$/,
-        exclude: /node_modules/,
+        exclude: [/node_modules/, /\.mjs$/, /\.wasm$/],
         use: {
           loader: 'babel-loader',
           options: {

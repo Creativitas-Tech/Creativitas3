@@ -1708,7 +1708,7 @@ export class MonophonicTemplate {
                     time + timeOffset
                 );
             } catch (e) {
-                this.printToConsole('invalid note', note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
+                console.log('invalid note', e, note + octave * 12, velocity, duration, time + val[1] * Tone.Time(subdivision) + lag);
             }
         }
         this.prevEventTiming = curEventTiming

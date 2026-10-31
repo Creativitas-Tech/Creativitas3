@@ -35,6 +35,11 @@ export { Delay2 } from './Delay2.js';
 export { Vocoder } from './Vocoder.js';
 export { OutputClass } from './Output.js';
 export { Mother } from './Mother.js';
+export { Recorder2 } from './Recorder/recorder.js';
+// export { Steampipe } from './steampipe/Steampipe.js';
+export { SteampipeVoice } from './steampipe/Steampipe.js';
+export { Steampipe_verb } from './steampipe/Steampipe_verb.js';
+export { Waveguide } from './waveguide/waveguide.js';
 
 export { MidiOut } from './MidiOut.js';
 export { Recorder } from './Recorder.js';
@@ -44,6 +49,7 @@ export { DrumVoice } from './DrumVoice.js';
 export { FMOperator } from './FM.js';
 export { FM } from './FM.js';
 export { FM4 } from './FM4.js';
+// export { Recorder } from './Recorder/Recorder.js';
 // export { Feedback } from './Feedback.js';
 
 
