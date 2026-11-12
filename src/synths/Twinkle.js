@@ -93,47 +93,22 @@ export class Twinkle extends MonophonicTemplate {
   }//constructor
 
   //envelopes
-  triggerAttack (freq, amp, time=null){
-    freq = Theory.mtof(freq)
-    amp = amp/127
-    if(time){
-      this.env.triggerAttack(time)
-      this.frequency.setValueAtTime(freq, time)
-      this.velocitySig.linearRampToValueAtTime(amp, time + 0.01);
-    } else {
-      this.env.triggerAttack()
-      this.frequency.value = freq
-      this.velocitySig.rampTo(amp,.03)
-    }
+  triggerAttack (pitch, vel=127, time=null){
+    let freq = Theory.mtof(pitch)
+    let amp = vel/127
+    this.triggerRawAttack(freq,amp,time)
   }
   triggerRelease (time=null){
-    if(time) {
-    	this.env.triggerRelease(time)
-    }
-    else {
-      this.env.triggerRelease()
-    }
+    this.triggerRawRelease(time)
   }
-  triggerAttackRelease (freq, amp, dur=0.01, time=null){
-    console.log(freq, amp, dur, time)
-    freq = Theory.mtof(freq)
-    //console.log('f', freq)
-    amp = amp/127
-    if(time){
-      this.env.triggerAttackRelease(dur, time)
-      this.frequency.setValueAtTime(freq, time)
-      //this.velocitySig.cancelScheduledValues(time);
-      this.velocitySig.setTargetAtTime(amp, time, 0.005); // 0.03s time constant for smoother fade
-      //this.velocitySig.linearRampToValueAtTime(amp, time + 0.005);
-    } else{
-      this.env.triggerAttackRelease(dur)
-      this.frequency.value = freq
-      this.velocitySig.rampTo(amp,.03)
-    }
+  triggerAttackRelease (pitch, vel=127, dur=0.01, time=null){
+    let freq = Theory.mtof(pitch)
+    let amp = vel/127
+    this.triggerRawAttackRelease(freq,amp,dur,time)
   }//attackRelease
 
   triggerRawAttack (freq, amp=1, time=null){
-    if(amp > 1) amp = 1
+    if(amp > 2) amp = 2
     if(time){
       this.env.triggerAttack(time)
       this.frequency.setValueAtTime(freq, time)
@@ -153,7 +128,7 @@ export class Twinkle extends MonophonicTemplate {
     }
   }
   triggerRawAttackRelease (freq, amp=1, dur=0.01, time=null){
-    if(amp > 1) amp = 1
+    if(amp > 2) amp = 2
     if(time){
       this.env.triggerAttackRelease(dur, time)
       this.frequency.setValueAtTime(freq, time)

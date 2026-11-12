@@ -61,6 +61,7 @@ export * from '../src/synths/ToneWood.js';
 export * from '../src/synths/Twinkle.js';
 export * from '../src/synths/waveshapers.js';
 export * from '../src/synths/Vocoder.js';
+export * from '../src/synths/steampipe/Steampipe.js';
 
 // Visualizers
 export * from '../src/visualizers/Oscilloscope.js';

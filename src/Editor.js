@@ -19,7 +19,7 @@ import { autocompletion, completeFromList } from "@codemirror/autocomplete";
 import './Editor-Initalizer.js';
 
 //tone
-import { Waveguide, Steampipe_verb, SteampipeVoice, Recorder2, Recorder, Delay2, Mother, OutputClass, Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
+import { Waveguide, Steampipe_verb, SteampipeVoice, Delay2, Mother, OutputClass, Strings, DrumVoice, FM4, FM, FMOperator, Vocoder,Reverb, Delay, Distortion, Chorus, Twinkle, MidiOut, NoiseVoice, Resonator, ToneWood, DelayOp, Caverns, AnalogDelay, DrumSynth, Drummer, Quadrophonic, QuadPanner, Rumble, Daisy, Daisies, DatoDuo, ESPSynth, Polyphony, Stripe, Diffuseur, KP, Sympathy, Feedback, Kick, DrumSampler, Simpler, Snare, Cymbal, Player } from './synths/index.js';
 // import './worklet.js'
 // import {SimpleAudioWorklet} from './worklet-test.js'
 
@@ -350,8 +350,8 @@ function Editor(props) {
     window.Strings = Strings;
     window.Output = OutputClass;
     window.Mother = Mother;
-    window.Recorder = Recorder
-    window.Recorder2 = Recorder2
+    // window.Recorder = Recorder
+    // window.Recorder2 = Recorder2
 
     window.Feedback = Feedback;
     window.MidiOut = MidiOut;

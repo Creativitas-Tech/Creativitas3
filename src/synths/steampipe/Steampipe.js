@@ -4,7 +4,24 @@ import SteampipePresets from '../synthPresets/TwinklePresets.json';
 import { MonophonicTemplate } from '../MonophonicTemplate.js';
 import basicLayout from '../layouts/basicLayout.json';
 import paramDefinitions from './params.js';
-import { loadSteampipeWorklets } from './steampipeWorklets.js';
+// import { loadSteampipeWorklets } from './steampipeWorklets.js';
+
+const WORKLET_URL = `${process.env.PUBLIC_URL}/worklets/steampipeWorklet.js`;
+
+const KEY = Symbol.for('steampipe.worklets');
+
+console.log(`${process.env.PUBLIC_URL}`, WORKLET_URL)
+
+export function loadSteampipeWorklets() {
+  const raw = Tone.getContext().rawContext;   // the context object Tone wraps
+  if (!raw[KEY]) {
+    raw[KEY] = raw.audioWorklet.addModule(WORKLET_URL).catch(err => {
+      delete raw[KEY];                         // allow a retry after a failure
+      throw err;
+    });
+  }
+  return raw[KEY];
+}
 
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
@@ -24,12 +41,14 @@ const PIPE_PASSTHRU = ['tune', 'polarity', 'saturation', 'symmetry', 'symMode', 
 export class SteampipeVoice extends MonophonicTemplate {
   constructor(color = [200, 200, 200]) {
     super();
+
+    console.log("new steampipe")
     this.presets = SteampipePresets;
     this.synthPresetName = 'SteampipePresets';
     this.isGlide = false;
     this.backgroundColor = [60, 60, 70];
     this.name = 'Steampipe';
-    this.guiHeight = 2;
+    this.guiHeight = 1;
     this.layout = basicLayout;
 
     // ---- note-on state
@@ -132,19 +151,6 @@ export class SteampipeVoice extends MonophonicTemplate {
     Tone.connect(this.pipe, this.output);
   }
 
-  /** waveguide **/
-  // _buildPipe() {
-  //   const ctx = Tone.getContext();
-  //   this.pipe = ctx.createAudioWorkletNode('waveguide', {
-  //     numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
-  //     channelCount: 1, channelCountMode: 'explicit',
-  //   });
-  //   // for (const [k, v] of Object.entries(this.pipeValues)) this.pipe.parameters.get(k).value = v;
-  //   ['frequency'].forEach(k => this.mod[k].connect(this.pipe.parameters.get(k)));
-  //   this.genGain.connect(this.pipe);
-  //   Tone.connect(this.pipe, this.output);
-  // }
-
   // ---------------- parameter plumbing
   applyParam(name, value, time = null) {
     const f = this.setters[name];
@@ -166,8 +172,9 @@ export class SteampipeVoice extends MonophonicTemplate {
     const f = this.mod.frequency.addend;
     const hz = mtof(note);
     f.cancelScheduledValues(t);
-    if (glide > 0) f.exponentialRampTo(hz, glide, t);
-    else f.setValueAtTime(hz, t);
+    return hz
+    // if (glide > 0) f.exponentialRampTo(hz, glide, t);
+    // else f.setValueAtTime(hz, t);
   }
   _noteOnSettings(note, vel, t) {
     const k = Math.pow(2, -this._state.envKeytrack * (note - 60) / 12); // ENV keytrack
@@ -182,6 +189,49 @@ export class SteampipeVoice extends MonophonicTemplate {
   }
 
   // ---------------- triggers
+
+  triggerAttack (pitch, vel=127, time=null){
+    // console.log('att',pitch,vel)
+    let freq = mtof(pitch)
+    let amp = vel/127
+
+    this.triggerRawAttack(freq,amp,time)
+  }
+  triggerRelease (time=null){
+    this.triggerRawRelease(time)
+  }
+  triggerAttackRelease (pitch, vel=127, dur=0.01, time=null){
+    let freq = mtof(pitch)
+    let amp = vel/127
+    this.triggerRawAttackRelease(freq,amp,dur,time)
+  }//attackRelease
+
+  triggerRawAttack (freq, amp=1, time=null){
+    if(amp > 2) amp = 2
+    const t = time ?? Tone.now();
+
+    // console.log('raw',freq,amp)
+
+    const f = this.mod.frequency.addend;
+    f.cancelScheduledValues(t);
+
+    if (this.glideTime > 0) f.exponentialRampTo(freq, this.glideTime, t);
+    else f.setValueAtTime(freq, t);
+
+    // this._noteOnSettings(val, vel, t);
+    // this.setPipe('gate', 1, t);
+    this.env.triggerAttack(t);
+  }
+  triggerRawRelease (time=null){
+    const t = time ?? Tone.now();
+    this.env.triggerRelease(t);
+  }
+  triggerRawAttackRelease (freq, amp=1, dur=0.01, time=null){
+    const t = time ?? Tone.now();
+    this.triggerRawAttack(freq, amp, t);
+    this.triggerRawRelease(t + Tone.Time(dur).toSeconds());
+  }//attackRelease
+  /*
   triggerAttack(val, vel = 100, time = null) {
     const t = time ?? Tone.now();
     this.note = val;
@@ -206,6 +256,7 @@ export class SteampipeVoice extends MonophonicTemplate {
     this.triggerAttack(val, vel, t);
     this.triggerRelease(val, t + Tone.Time(dur).toSeconds());
   }
+  */
 
   dispose() {
     if (this.pipe) this.pipe.disconnect();

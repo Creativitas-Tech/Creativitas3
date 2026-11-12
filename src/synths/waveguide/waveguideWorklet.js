@@ -7,74 +7,90 @@ import * as Tone from 'tone';
 function waveguideWorklet(){
 
   const sampleRate = 48000
-
   const MIN_FREQ = 20;
-  // Buffer large enough for the longest rail we'll ever need
-  const SIZE = Math.ceil(sampleRate / MIN_FREQ);
+  const SIZE = Math.ceil(sampleRate / MIN_FREQ) + 4; // ring-buffer length
+  const MAX_M = Math.floor(SIZE / 2) - 2;             // longest rail allowed
 
   class waveguide extends AudioWorkletProcessor {
     static get parameterDescriptors() {
       return [
         { name: 'frequency', defaultValue: 220,   minValue: MIN_FREQ, maxValue: 4000 },
         { name: 'loss',      defaultValue: 0.995, minValue: 0,        maxValue: 0.9999 },
+        { name: 'pluck',     defaultValue: 0.2,   minValue: 0.02,     maxValue: 0.98,  automationRate: 'k-rate' },
+        { name: 'pickup',    defaultValue: 0.8,   minValue: 0.02,     maxValue: 0.98,  automationRate: 'k-rate' },
+        { name: 'lpf',       defaultValue: 5000,  minValue: 20,       maxValue: 20000, automationRate: 'k-rate' },
+        { name: 'hpf',       defaultValue: 20,    minValue: 1,        maxValue: 2000,  automationRate: 'k-rate' },
       ];
     }
 
     constructor() {
       super();
-      this.upper = new Float32Array(SIZE); // y+  rightgoing rail (x=0 → x=L)
-      this.lower = new Float32Array(SIZE); // y-  leftgoing rail  (x=L → x=0)
-      this.w = 0;       // write index (shared by both rails)
-      this.lpPrev = 0;  // one-sample memory for the loss filter
+      this.upper  = new Float32Array(SIZE); // rightgoing entries at x = 0
+      this.lower  = new Float32Array(SIZE); // leftgoing entries at x = L
+      this.inHist = new Float32Array(SIZE); // excitation history for the pluck comb
+      this.w = 0;
+      this.lpY = 0;   // lowpass state
+      this.hpX = 0;   // DC-blocker state (previous input)
+      this.hpY = 0;   // DC-blocker state (previous output)
     }
 
-    process(inputs, outputs, parameters) {
-      const inp  = inputs[0][0];   // undefined if nothing is connected
-      const out  = outputs[0][0];
-      const fArr = parameters.frequency;
-      const gArr = parameters.loss;
-      const { upper, lower } = this;
-      let w = this.w, lpPrev = this.lpPrev;
+    process(inputs, outputs, p) {
+      const inp = inputs[0] && inputs[0][0];
+      const out = outputs[0][0];
+      if (!out) return true;
+
+      const { upper, lower, inHist } = this;
+      const fs = sampleRate;
+
+      // k-rate values, read once per block
+      const pluck  = p.pluck[0];
+      const pickup = p.pickup[0];
+      const aLP = 1 - Math.exp(-2 * Math.PI * p.lpf[0] / fs); // one-pole lowpass coefficient
+      const R   = Math.exp(-2 * Math.PI * p.hpf[0] / fs);     // DC-blocker pole
+      const gdLP = (1 - aLP) / aLP;                            // low-frequency group delay of the lowpass
+
+      let { w, lpY, hpX, hpY } = this;
 
       for (let i = 0; i < out.length; i++) {
-        const f = fArr.length > 1 ? fArr[i] : fArr[0];
-        const g = gArr.length > 1 ? gArr[i] : gArr[0];
+        const f = p.frequency.length > 1 ? p.frequency[i] : p.frequency[0];
+        const g = p.loss.length > 1 ? p.loss[i] : p.loss[0];
 
-        // --- Rail length M --------------------------------------------
-        // A round trip takes 2M samples, plus 0.5 sample of delay from the
-        // averaging filter, so the pitch is sampleRate / (2M + 0.5).
-        let M = Math.round((sampleRate / f - 0.5) / 2);
-        M = Math.max(1, Math.min(SIZE - 1, M));
+        // 1. Rail length. The lowpass adds delay, so subtract it from the loop.
+        let M = Math.round((fs / f - gdLP) / 2);
+        M = Math.max(1, Math.min(MAX_M, M));
 
-        // --- Read the delay-line outputs ------------------------------
-        const r = (w - M + SIZE) % SIZE;
-        const arrivingRight = upper[r]; // y+(n-M): wave hitting the x=L end
-        const arrivingLeft  = lower[r]; // y-(n):   wave hitting the x=0 end
+        // 2. Pluck position: comb 1 - z^-D with D = pluck × loop delay
+        inHist[w] = inp ? inp[i] : 0;
+        const dP = Math.min(SIZE - 1, Math.max(1, Math.round(2 * pluck * M)));
+        const excite = inHist[w] - inHist[(w - dP + SIZE) % SIZE];
 
-        // --- Termination at x = L, with ALL losses lumped here --------
-        // Two-tap average = simplest linear-phase lowpass (Fig. 17),
-        // scaled by g (the consolidated loss g^N of Fig. 16).
-        const filtered = g * 0.5 * (arrivingRight + lpPrev);
-        lpPrev = arrivingRight;
-        const reflectedAtL = -filtered;           // rigid end: invert
+        // 3. Waves arriving at each end this sample
+        const arrivingRight = upper[(w - M + SIZE) % SIZE]; // reaches x = L
+        const arrivingLeft  = lower[(w - M + SIZE) % SIZE]; // reaches x = 0
 
-        // --- Termination at x = 0, plus the excitation ----------------
-        const excite = inp ? inp[i] : 0;
-        const reflectedAt0 = -arrivingLeft + excite; // rigid end: invert
+        // 4. Loss termination at x = L: lowpass -> DC blocker -> gain g
+        lpY += aLP * (arrivingRight - lpY);
+        const hpOut = lpY - hpX + R * hpY;
+        hpX = lpY;
+        hpY = hpOut;
+        const reflectedAtL = -g * hpOut;      // rigid end inverts
 
-        // --- Write the delay-line inputs ------------------------------
-        upper[w] = reflectedAt0;   // y+(n)   enters at x=0
-        lower[w] = reflectedAtL;   // y-(n+M) enters at x=L
+        // 5. Rigid termination at x = 0, plus the excitation
+        const reflectedAt0 = -arrivingLeft + excite;
+
+        // 6. Write the new entries into both rails
+        upper[w] = reflectedAt0;
+        lower[w] = reflectedAtL;
+
+        // 7. Pickup: physical displacement at position u = sum of both rails there
+        const dU = Math.max(1, Math.round(pickup * M));
+        const dL = Math.max(1, Math.round((1 - pickup) * M));
+        out[i] = upper[(w - dU + SIZE) % SIZE] + lower[(w - dL + SIZE) % SIZE];
+
         w = (w + 1) % SIZE;
-
-        // --- Output ---------------------------------------------------
-        // Like Fig. 15's "non-physical" output: the traveling wave arriving
-        // at the far end (think: what reaches the mouth of the pipe).
-        out[i] = arrivingRight;
       }
 
-      this.w = w;
-      this.lpPrev = lpPrev;
+      this.w = w; this.lpY = lpY; this.hpX = hpX; this.hpY = hpY;
       return true;
     }
   }

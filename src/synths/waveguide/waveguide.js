@@ -122,7 +122,6 @@ export class Waveguide extends MonophonicTemplate {
       numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
       channelCount: 1, channelCountMode: 'explicit',
     });
-    console.log(this.pipe.parameters, this.pipeValues)
     for (const [k, v] of Object.entries(this.pipeValues)) this.pipe.parameters.get(k).value = v;
     // ['frequency', 'loss'].forEach(k => this.mod[k].connect(this.pipe.parameters.get(k)));
     this.genGain.connect(this.pipe);
@@ -147,6 +146,7 @@ export class Waveguide extends MonophonicTemplate {
     this.noiseLPF.frequency.setValueAtTime(hz, time ?? Tone.now());
   }
   _setPitch(note, t, glide) {
+    this.setPipe('frequency', mtof(note))
     const f = this.mod.frequency.addend;
     const hz = mtof(note);
     f.cancelScheduledValues(t);

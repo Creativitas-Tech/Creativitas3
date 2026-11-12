@@ -1,5 +1,5 @@
-// steampipeWorklets.js
-import * as Tone from 'tone';
+// // steampipeWorklets.js
+// import * as Tone from 'tone';
 
 const sampleRate = 48000
 
@@ -234,14 +234,16 @@ function steampipeProcessors() {
   registerProcessor('steampipe-reverb', SteampipeReverb);
 }
 
-let modulePromise = null;
-export function loadSteampipeWorklets(context = Tone.getContext()) {
-  if (!modulePromise) {
-    const src = `(${steampipeProcessors.toString()})();`;
-    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
-    // Use rawContext directly: Tone's own addAudioWorkletModule() caches one module per
-    // context, so it can silently skip ours if Tone already loaded its built-in worklets.
-    modulePromise = context.rawContext.audioWorklet.addModule(url);
-  }
-  return modulePromise;
-}
+steampipeProcessors()
+
+// let modulePromise = null;
+// export function loadSteampipeWorklets(context = Tone.getContext()) {
+//   if (!modulePromise) {
+//     const src = `(${steampipeProcessors.toString()})();`;
+//     const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+//     // Use rawContext directly: Tone's own addAudioWorkletModule() caches one module per
+//     // context, so it can silently skip ours if Tone already loaded its built-in worklets.
+//     modulePromise = context.rawContext.audioWorklet.addModule(url);
+//   }
+//   return modulePromise;
+// }

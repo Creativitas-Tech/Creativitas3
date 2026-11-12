@@ -114,7 +114,7 @@ export class SeqDrum extends Seq {
                 }
             //console.log('loop', time, event, this.callback)
             if(this.userCallback){
-                this.userCallback();
+                this.userCallback(event);
             }
 
             if(this.drawing){
